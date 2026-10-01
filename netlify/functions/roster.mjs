@@ -1,4 +1,4 @@
-import { store, json, loadRoster, loadConfirms, checkAdmin, adminIsSet } from "../../lib/core.mjs";
+import { store, json, loadRoster, loadConfirms, loadAcks, checkAdmin, adminIsSet } from "../../lib/core.mjs";
 
 function clean(data) {
   if (!data || !Array.isArray(data.team) || !Array.isArray(data.jobs)) return null;
@@ -7,6 +7,7 @@ function clean(data) {
     const o = { id: str(t.id, 40), name: str(t.name, 80) };
     if (t.owner) o.owner = true;
     if (t.phone) o.phone = str(t.phone, 30);
+    if (t.newStarter) o.newStarter = true;
     return o;
   }).filter((t) => t.id && t.name);
   const ids = new Set(team.map((t) => t.id));
@@ -14,7 +15,7 @@ function clean(data) {
     const o = {
       id: str(j.id, 40), date: str(j.date, 10), start: str(j.start, 5), end: str(j.end, 5),
       client: str(j.client, 120), suburb: str(j.suburb, 80), address: str(j.address, 160),
-      service: str(j.service, 40), notes: str(j.notes, 2000),
+      service: str(j.service, 40), notes: str(j.notes, 2000), meet: str(j.meet, 300),
       staff: (Array.isArray(j.staff) ? j.staff : []).filter((x) => ids.has(x)),
     };
     if (j.shifts && typeof j.shifts === "object") {
@@ -24,7 +25,9 @@ function clean(data) {
     }
     return o;
   }).filter((j) => j.id && /^\d{4}-\d{2}-\d{2}$/.test(j.date));
-  return { team, jobs };
+  const info = {};
+  if (data.info && typeof data.info === "object") for (const k of ["wear", "bring", "meet", "extra"]) info[k] = str(data.info[k], 1500);
+  return { team, jobs, info };
 }
 
 export default async (req) => {
@@ -35,7 +38,8 @@ export default async (req) => {
     const roster = await loadRoster(s);
     const confirms = await loadConfirms(s);
     const team = admin ? roster.team : roster.team.map(({ phone, ...t }) => t);
-    return json({ team, jobs: roster.jobs, confirms, admin, adminSet: await adminIsSet(s) });
+    const acks = await loadAcks(s);
+    return json({ team, jobs: roster.jobs, info: roster.info || {}, confirms, acks, admin, adminSet: await adminIsSet(s) });
   }
 
   if (req.method === "PUT") {

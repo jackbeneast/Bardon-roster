@@ -103,6 +103,15 @@ label.l{font:500 13px/1.3 var(--sans);color:var(--dark);display:block}
 .person .mk{font-weight:700;margin-left:4px}.person .mk.ok{color:#2F5A35}.person .mk.wait{color:#B58A1B}.person .mk.no{color:var(--terracotta-dark)}
 .cf{margin-top:12px;padding-top:12px;border-top:1px solid var(--cream-dark)}
 .cf .ask{font:600 14px/1.3 var(--sans);color:var(--dark);margin:0 0 4px}
+.fd{margin-top:16px;background:var(--white);border:1px solid var(--line);border-top:4px solid var(--terracotta);border-radius:8px;padding:16px}
+.fd .kick{font:600 12px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--terracotta-dark);margin:0 0 6px}
+.fd h2{font:700 22px/1.2 var(--serif);color:var(--dark);margin:0 0 4px}
+.fd .when{font:600 16px/1.35 var(--sans);color:var(--dark);margin:10px 0 0;background:var(--tint);border-radius:6px;padding:10px 12px}
+.fd dl{margin:12px 0 0;display:grid;gap:12px}
+.fd dt{font:600 12px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--meta);margin-bottom:4px}
+.fd dd{margin:0;color:var(--dark);font-size:15px;white-space:pre-wrap;overflow-wrap:anywhere}
+.fd a{color:var(--terracotta-dark)}
+.fd .row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .cf .hint{font-size:13px;color:var(--meta);margin:0 0 10px}
 .cf .row{display:flex;gap:8px;flex-wrap:wrap}
 a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
@@ -130,7 +139,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
 <div id="app"></div>
 <script>
 (function(){
-  var state = {team:[],jobs:[],confirms:{}}, loaded=false, loadErr='', adminSet=true;
+  var state = {team:[],jobs:[],confirms:{},info:{},acks:{}}, loaded=false, loadErr='', adminSet=true;
   var SERVICES = ['Bond clean','Pre-sale clean','Deep clean','Regular clean','Commercial','Other'];
   var AV = ['#1A1A1A','#C06B3C','#7A5A12','#4A4A4A','#A55830','#6B5B4B'];
   var app = document.getElementById('app');
@@ -166,6 +175,27 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
   var CLABEL={yes:'Confirmed',wait:'Not confirmed',no:"Can't make it"}, CMARK={yes:'✓',wait:'•',no:'✕'};
   function shiftLine(j,id){ var s=shiftOf(j,id); return fmtDay(parse(j.date))+', '+range(s.start,s.end)+', '+(j.client||'Job')+(j.suburb?' ('+j.suburb+')':''); }
   function smsHref(num,body){ return 'sms:'+String(num||'').replace(/[^0-9+]/g,'')+'?&body='+encodeURIComponent(body); }
+  var JACK_TEL='0406 216 212';
+  function firstJob(id){ var mine=state.jobs.filter(function(j){return (j.staff||[]).indexOf(id)>=0;}).sort(function(a,b){return (a.date+shiftOf(a,id).start).localeCompare(b.date+shiftOf(b,id).start);}); return mine[0]||null; }
+  function firstDayDue(id){ var m=member(id); if(!m||m.owner||!m.newStarter) return null; var j=firstJob(id); return (j && j.date>=iso(today)) ? j : null; }
+  function mapsUrl(j){ return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([j.address,j.suburb,'QLD'].filter(Boolean).join(', ')); }
+  function firstDayCard(id){
+    var j=firstDayDue(id); if(!j) return '';
+    var m=member(id), sh=shiftOf(j,id), info=state.info||{}, acked=state.acks&&state.acks[id];
+    var h='<section class="fd"><p class="kick">'+(canEdit?'Preview · what '+esc(m.name.split(' ')[0])+' sees':'Read before your first day')+'</p><h2>Your first <em>day</em></h2>';
+    h+='<p class="when">'+fmtDay(parse(j.date))+'. Be there by '+fmtTime(sh.start)+'. Not later.</p><dl>';
+    h+='<div><dt>Address</dt><dd>'+esc([j.address,j.suburb].filter(Boolean).join(', ')||j.client)+(j.address||j.suburb?' · <a href="'+esc(mapsUrl(j))+'" target="_blank" rel="noopener">Open in Maps</a>':'')+'</dd></div>';
+    var meet=j.meet||info.meet; if(meet) h+='<div><dt>Meeting spot</dt><dd>'+esc(meet)+'</dd></div>';
+    if(info.wear) h+='<div><dt>What to wear</dt><dd>'+esc(info.wear)+'</dd></div>';
+    if(info.bring) h+='<div><dt>Bring</dt><dd>'+esc(info.bring)+'</dd></div>';
+    if(j.notes) h+='<div><dt>About this job</dt><dd>'+esc(j.notes)+'</dd></div>';
+    if(info.extra) h+='<div><dt>Good to know</dt><dd>'+esc(info.extra)+'</dd></div>';
+    h+='<div><dt>Running late or stuck?</dt><dd>Call Jack before your start time: <a href="tel:'+JACK_TEL.replace(/ /g,'')+'">'+JACK_TEL+'</a></dd></div></dl>';
+    if(acked) h+='<div class="row"><span class="cs ok">✓ '+(canEdit?esc(m.name.split(' ')[0])+' has read this':'Got it. See you there!')+'</span></div>';
+    else if(canEdit) h+='<div class="row"><span class="cs wait">Not read yet</span></div>';
+    else h+='<div class="row"><button type="button" class="btn yes" data-ack="'+id+'" style="flex:1">Got it</button></div>';
+    return h+'</section>';
+  }
   function needsConfirm(){ var t=iso(today), e=iso(addDays(today,DAYS-1)), out=[]; state.jobs.forEach(function(j){ if(j.example||j.date<t||j.date>e) return; (j.staff||[]).forEach(function(id){ if(!member(id)||isBoss(id)) return; out.push({j:j,id:id,c:cstate(j,id)}); }); }); return out.sort(function(a,b){ return (a.j.date+shiftOf(a.j,a.id).start).localeCompare(b.j.date+shiftOf(b.j,b.id).start); }); }
   function colour(id){ var i=state.team.findIndex(function(t){return t.id===id;}); return AV[(i<0?0:i)%AV.length]; }
 
@@ -216,6 +246,8 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     if (canEdit && open) h+='<div class="warn"><strong>'+open+' job'+(open>1?'s':'')+' unassigned</strong> in this period. Tap Unassigned to see '+(open>1?'them':'it')+'.</div>';
     if (state.jobs.some(function(j){return j.example;})) h+='<div class="warn">The jobs and people marked <strong>Example</strong> are samples. '+(canEdit?'Edit or delete them, and add your real team under Manage team.':'')+'</div>';
 
+    if (filter!=='all' && filter!=='open') h+=firstDayCard(filter);
+    if (canEdit) state.team.forEach(function(t){ var j=firstDayDue(t.id); if(j && j.date<=iso(addDays(today,1)) && !(state.acks&&state.acks[t.id])) h+='<div class="warn"><strong>'+esc(t.name)+' hasn\'t read their first-day info</strong> ('+fmtDay(parse(j.date))+'). <button class="ghost" data-filter="'+t.id+'" style="padding:0;margin:0">Preview</button></div>'; });
     if (!canEdit && filter==='all' && state.team.length) h+='<div class="warn"><strong>Tap your name above</strong> to see your shifts and confirm them.</div>';
     for (var i=0;i<DAYS;i++){
       var d=addDays(start,i), di=iso(d), list=jobsOn(di);
@@ -248,7 +280,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     if (filter!=='all' && !countFor(filter)) h+='<p class="sub" style="margin-top:22px">No jobs in these two weeks.</p>';
 
     if (canEdit){
-      h+='<div class="tools"><button class="ghost" data-act="team">Manage team</button><button class="ghost" data-act="copy">Copy roster to text</button></div>';
+      h+='<div class="tools"><button class="ghost" data-act="team">Manage team</button><button class="ghost" data-act="copy">Copy roster to text</button><button class="ghost" data-act="info">First-day info</button></div>';
       h+='<button class="fab" data-act="add">+ Add job</button>';
     }
     h+='<footer>Bardon Clean · Please don\'t share this link outside the team.<br>'+(canEdit?'<button class="ghost" data-act="logout" style="font-size:12px">Log out of editing</button>':'<button class="ghost" data-act="login" style="font-size:12px;color:var(--meta)">Jack\'s login</button>')+'</footer>';
@@ -351,6 +383,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     if (!state.team.length) h+='<span class="sub">Add people under Manage team first.</span>';
     h+='</div></div>';
     h+='<div id="shiftWrap"><span class="l">Shift times</span><p class="sub" style="margin:2px 0 0">Change a time if someone starts late or leaves early.</p><div class="shifts" id="shiftRows"></div></div>';
+    h+='<label class="l" for="f_meet">Meeting spot <span style="color:var(--meta);font-weight:400">(optional, for new starters)</span><input id="f_meet" name="meet" value="'+esc(job.meet||'')+'" placeholder="'+esc((state.info&&state.info.meet)||'e.g. Out the front')+'"></label>';
     h+='<label class="l" for="f_notes">Notes for the team<textarea id="f_notes" name="notes" placeholder="Access, inclusions, parking. Don\'t put alarm or lockbox codes here.">'+esc(job.notes)+'</textarea></label>';
     h+='<div class="err" id="jobErr" hidden></div>';
     h+='<div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save job</button></div>';
@@ -366,7 +399,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
       e.preventDefault();
       var fd=new FormData(form), err=s.querySelector('#jobErr');
       if(!(fd.get('client')||'').trim() || !fd.get('date')){ err.textContent='Add a client name and a date.'; err.hidden=false; return; }
-      var next={id:job.id,date:fd.get('date'),start:fd.get('start'),end:fd.get('end'),client:fd.get('client').trim(),suburb:(fd.get('suburb')||'').trim(),address:(fd.get('address')||'').trim(),service:fd.get('service'),staff:fd.getAll('staff'),notes:(fd.get('notes')||'').trim()};
+      var next={id:job.id,date:fd.get('date'),start:fd.get('start'),end:fd.get('end'),client:fd.get('client').trim(),suburb:(fd.get('suburb')||'').trim(),address:(fd.get('address')||'').trim(),service:fd.get('service'),staff:fd.getAll('staff'),notes:(fd.get('notes')||'').trim(),meet:(fd.get('meet')||'').trim()};
       var sh={}, raw=readShifts(form); next.staff.forEach(function(id){ var r=raw[id]; if(r && (r.start&&r.start!==next.start || r.end&&r.end!==next.end)) sh[id]={start:r.start||next.start,end:r.end||next.end}; });
       if(Object.keys(sh).length) next.shifts=sh;
       var jobs=state.jobs.filter(function(j){return j.id!==job.id;}); jobs.push(next);
@@ -395,10 +428,20 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     drawShifts(f, c.shifts||{}, c.start, c.end);
   }
 
+  function infoSheet(){
+    var i=state.info||{};
+    function ta(k,label,hint){ return '<label class="l" for="fi_'+k+'">'+label+(hint?' <span style="color:var(--meta);font-weight:400">('+hint+')</span>':'')+'<textarea id="fi_'+k+'" name="'+k+'" style="min-height:100px">'+esc(i[k]||'')+'</textarea></label>'; }
+    var h='<h3>First-day <em>info</em></h3><p class="sub" style="margin:-6px 0 10px">New starters see this on the roster before their first shift, with the date, start time and address filled in from their job.</p><form id="infoForm" class="fgrid" novalidate>';
+    h+=ta('meet','Meeting spot','default, can change per job')+ta('wear','What to wear')+ta('bring','Bring')+ta('extra','Good to know');
+    h+='<div class="err" id="infoErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save</button></div></form>';
+    var s=openSheet(h), f=s.querySelector('#infoForm');
+    s.querySelector('[data-close]').onclick=closeSheet;
+    f.onsubmit=function(e){ e.preventDefault(); var n={}; ['meet','wear','bring','extra'].forEach(function(k){ n[k]=f.elements[k].value.trim(); }); save({info:n,team:state.team,jobs:state.jobs}, f.querySelector('.primary'), s.querySelector('#infoErr'), 'First-day info saved'); };
+  }
   function teamSheet(){
     var h='<h3>Manage <em>team</em></h3><div id="teamList">';
-    state.team.forEach(function(t){ h+='<div class="team-row" style="flex-wrap:wrap"><span class="person"><span class="av" style="background:'+colour(t.id)+'">'+esc(initials(t.name))+'</span>'+esc(t.name)+(t.owner?' <span class="st">· you</span>':'')+'</span>'+(t.owner?'':'<button type="button" class="btn danger" data-rm="'+t.id+'">Remove</button>')+(t.owner?'':'<label class="l" style="width:100%">Mobile<input type="tel" inputmode="tel" data-phone="'+t.id+'" value="'+esc(t.phone||'')+'" placeholder="04xx xxx xxx"></label>')+'</div>'; });
-    if(state.team.some(function(t){return !t.owner;})) h+='<div class="actions"><button type="button" class="btn outline" data-savephones style="flex:1">Save numbers</button></div>';
+    state.team.forEach(function(t){ h+='<div class="team-row" style="flex-wrap:wrap"><span class="person"><span class="av" style="background:'+colour(t.id)+'">'+esc(initials(t.name))+'</span>'+esc(t.name)+(t.owner?' <span class="st">· you</span>':'')+'</span>'+(t.owner?'':'<button type="button" class="btn danger" data-rm="'+t.id+'">Remove</button>')+(t.owner?'':'<label class="l" style="width:100%">Mobile<input type="tel" inputmode="tel" data-phone="'+t.id+'" value="'+esc(t.phone||'')+'" placeholder="04xx xxx xxx"></label><label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--dark);margin-top:8px;width:100%"><input type="checkbox" data-new="'+t.id+'"'+(t.newStarter?' checked':'')+' style="width:20px;height:20px;min-height:0;margin:0">New starter: show first-day info before their first shift</label>')+'</div>'; });
+    if(state.team.some(function(t){return !t.owner;})) h+='<div class="actions"><button type="button" class="btn outline" data-savephones style="flex:1">Save changes</button></div>';
     h+='</div><form id="teamForm" class="fgrid" style="margin-top:16px" novalidate><label class="l" for="f_newname">Add a team member<input id="f_newname" name="name" placeholder="First name and last initial" required></label>';
     h+='<div class="err" id="teamErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Done</button><button type="submit" class="btn primary">Add</button></div></form>';
     var s=openSheet(h);
@@ -406,10 +449,10 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     s.querySelector('#teamForm').onsubmit=function(e){
       e.preventDefault(); var n=(this.elements.name.value||'').trim(), err=s.querySelector('#teamErr');
       if(!n){ err.textContent='Type a name first.'; err.hidden=false; return; }
-      save({team:state.team.concat([{id:uid('t'),name:n}]),jobs:state.jobs}, this.querySelector('.primary'), err, n+' added');
+      save({team:state.team.concat([{id:uid('t'),name:n,newStarter:true}]),jobs:state.jobs}, this.querySelector('.primary'), err, n+' added');
     };
     var sp=s.querySelector('[data-savephones]');
-    if(sp) sp.onclick=function(){ var team=state.team.map(function(t){ var i=s.querySelector('[data-phone="'+t.id+'"]'); var c=Object.assign({},t); if(i){ var v=i.value.trim(); if(v) c.phone=v; else delete c.phone; } return c; }); save({team:team,jobs:state.jobs}, sp, s.querySelector('#teamErr'), 'Numbers saved'); };
+    if(sp) sp.onclick=function(){ var team=state.team.map(function(t){ var i=s.querySelector('[data-phone="'+t.id+'"]'); var c=Object.assign({},t); if(i){ var v=i.value.trim(); if(v) c.phone=v; else delete c.phone; } var nb=s.querySelector('[data-new="'+t.id+'"]'); if(nb){ if(nb.checked) c.newStarter=true; else delete c.newStarter; } return c; }); save({team:team,jobs:state.jobs}, sp, s.querySelector('#teamErr'), 'Team saved'); };
     Array.prototype.forEach.call(s.querySelectorAll('[data-rm]'),function(b){
       b.onclick=function(){
         var id=b.getAttribute('data-rm');
@@ -456,7 +499,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
   function save(next, btn, errEl, doneMsg){
     if (saving) return;
     saving=true; var label=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
-    var body={team:next.team,jobs:next.jobs.map(function(j){ var c=Object.assign({},j); delete c.confirm; delete c.example; return c; })};
+    var body={info:next.info||state.info,team:next.team,jobs:next.jobs.map(function(j){ var c=Object.assign({},j); delete c.confirm; delete c.example; return c; })};
     api('/api/roster',{method:'PUT',body:body}).then(function(){ saving=false; closeSheet(); return refresh(); }).then(function(){ toast(doneMsg||'Saved'); })
     .catch(function(e){
       saving=false; if(btn){ btn.disabled=false; btn.textContent=label; }
@@ -466,7 +509,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
   }
   function refresh(){
     return api('/api/roster').then(function(d){
-      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{}}; adminSet=d.adminSet; loaded=true; loadErr='';
+      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{}}; adminSet=d.adminSet; loaded=true; loadErr='';
       if(key() && !d.admin){ key(null); }
       canEdit=!!d.admin;
       if (filter!=='all' && filter!=='open' && !member(filter)) filter='all';
@@ -488,6 +531,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
 
   // ---------- Events ----------
   app.addEventListener('click', function(e){
+    var ak=e.target.closest('[data-ack]'); if(ak){ ak.disabled=true; ak.textContent='Saving…'; api('/api/ack',{method:'POST',body:{personId:ak.dataset.ack}}).then(function(d){ state.acks[ak.dataset.ack]=d.ack; render(); toast('Thanks! See you there.'); }).catch(function(er){ ak.disabled=false; ak.textContent='Got it'; toast(er.message); }); return; }
     var r=e.target.closest('[data-reply]'); if(r){ if(r.dataset.reply==='yes') sendReply(r.dataset.j, r.dataset.p, 'yes', '', r); else replyNo(r.dataset.j, r.dataset.p); return; }
     var t=e.target.closest('[data-filter],[data-nav],[data-edit],[data-act]'); if(!t) return;
     if (t.dataset.filter){ filter=t.dataset.filter; ls('roster_filter',filter); render(); return; }
@@ -497,6 +541,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     if (t.dataset.act==='team') teamSheet();
     if (t.dataset.act==='copy') copySheet();
     if (t.dataset.act==='confirms') confirmSheet();
+    if (t.dataset.act==='info') infoSheet();
     if (t.dataset.act==='login') loginSheet();
     if (t.dataset.act==='logout'){ key(null); canEdit=false; render(); toast('Logged out'); }
     if (t.dataset.act==='reload'){ loadErr=''; render(); refresh(); }
