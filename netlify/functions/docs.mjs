@@ -116,9 +116,9 @@ export default async (req) => {
   if (b.action === "pay") {
     const amt = Number(b.amt);
     if (!(amt > 0)) return json({ error: "Enter the amount paid" }, 400);
-    await recordPayment(s, d, { amt, date: /^\d{4}-\d{2}-\d{2}$/.test(b.date) ? b.date : today(), method: b.method || "Bank transfer" });
+    const pid = await recordPayment(s, d, { amt, date: /^\d{4}-\d{2}-\d{2}$/.test(b.date) ? b.date : today(), method: b.method || "Bank transfer" });
     delete d.flag; await saveDoc(s, d);
-    return json({ ok: true });
+    return json({ ok: true, pid });
   }
   if (b.action === "unpay") { d.payments = (d.payments || []).filter((p) => p.id !== b.pid); await saveDoc(s, d); return json({ ok: true }); }
   if (b.action === "invoice" && d.kind === "quote") {

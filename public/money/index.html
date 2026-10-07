@@ -378,7 +378,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     } else {
       h+='<div class="card"><h2>Payments</h2>';
       if(!(d.payments||[]).length) h+='<p class="sub" style="margin:0">None yet.'+(S.card?' Card payments are recorded automatically.':'')+'</p>';
-      (d.payments||[]).forEach(function(p){ h+='<div class="pay"><span>'+fdate(p.date)+' · '+esc(p.method)+'</span><span><b>'+money(p.amt)+'</b> <button class="ghost" data-unpay="'+p.id+'" style="margin-left:8px;padding:0">Remove</button></span></div>'; });
+      (d.payments||[]).forEach(function(p){ h+='<div class="pay"><span>'+fdate(p.date)+' · '+esc(p.method)+'</span><span><b>'+money(p.amt)+'</b> <button class="ghost" data-receipt="'+p.id+'" style="margin-left:10px;padding:0">Receipt</button><button class="ghost" data-unpay="'+p.id+'" style="margin-left:8px;padding:0;color:var(--meta)">Remove</button></span></div>'; });
       if(d.quoteId){ var qd=docById(d.quoteId); if(qd) h+='<button class="alert" data-open="'+qd.id+'" style="margin-top:12px">From quote #'+qd.num+'</button>'; }
       h+='</div>';
     }
@@ -446,11 +446,28 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
       setTimeout(function(){ closeSheet(); load(); },400);
     });
   }
+  function receiptSheet(d,pid){
+    var P=d.payments||[], i=P.map(function(x){return x.id;}).indexOf(pid); if(i<0) return;
+    var p=P[i], upTo=P.slice(0,i+1).reduce(function(a,x){return a+x.amt;},0), bal=Math.max(0,r2(d.totals.total-upTo));
+    var l=location.origin+'/r/'+d.token+'?p='+p.id, fn=first(d.client.contact||d.client.name);
+    var msg='Hi '+fn+', thanks for your payment of '+money(p.amt)+' for invoice #'+d.num+'. '+(bal>0.005?money(bal)+' remains on the invoice. ':'It\'s now paid in full. ')+(d.isDeposit&&bal<=0.005?'Your booking is locked in. ':'')+'Here\'s your receipt: '+l+' Thanks, Jack, Bardon Clean';
+    var subj='Receipt R'+d.num+'-'+(i+1)+' from Bardon Clean · '+money(p.amt);
+    var h='<h3>Send a <em>receipt</em></h3><p class="sub" style="margin:-6px 0 12px">'+money(p.amt)+' paid '+fdate(p.date)+' · '+esc(p.method)+'</p><label class="l">Message<textarea id="rmsg" style="min-height:130px">'+esc(msg)+'</textarea></label><div class="sendopt" style="margin-top:12px">'+
+      '<a data-rv="sms" href="#"><span class="ic">✉</span><span>Text message<small>'+(d.client.phone?esc(d.client.phone):'Add the number in Messages')+'</small></span></a>'+
+      '<a data-rv="email" href="#"><span class="ic">@</span><span>Email<small>'+(d.client.email?esc(d.client.email):'Add the address in Mail')+'</small></span></a>'+
+      '<button data-rv="copy"><span class="ic">⧉</span><span>Copy message<small>Paste anywhere</small></span></button>'+
+      '<a href="'+l+'" target="_blank" rel="noopener"><span class="ic">↗</span><span>View receipt<small>Save it as a PDF from there</small></span></a></div><div class="actions"><button class="btn plain grow" data-close>Done</button></div>';
+    var s=sheet(h);
+    s.addEventListener('click',function(e){ var a=e.target.closest('[data-rv]'); if(!a) return; var m=s.querySelector('#rmsg').value;
+      if(a.dataset.rv==='sms') a.href='sms:'+phoneSms(d.client.phone)+'?&body='+encodeURIComponent(m);
+      if(a.dataset.rv==='email') a.href='mailto:'+encodeURIComponent(d.client.email||'')+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(m);
+      if(a.dataset.rv==='copy'){ e.preventDefault(); try{ navigator.clipboard.writeText(m).then(function(){toast('Message copied');}); }catch(x){ toast('Select the text and copy it'); } } });
+  }
   function paySheet(d){
     var h='<h3>Record a <em>payment</em></h3><form id="pf"><div class="grid"><label class="l">Amount<input name="amt" type="number" inputmode="decimal" step="0.01" value="'+d.totals.due.toFixed(2)+'"></label><label class="l">Date<input name="date" type="date" value="'+today()+'"></label><label class="l full">How they paid<select name="method"><option>Bank transfer</option><option>Card</option><option>Cash</option><option>Other</option></select></label></div><div class="err" id="perr" hidden></div><div class="actions"><button type="button" class="btn plain" data-close>Cancel</button><button class="btn primary grow" type="submit">Save payment</button></div></form>';
     var s=sheet(h), f=s.querySelector('#pf');
     f.onsubmit=function(e){ e.preventDefault(); var b=f.querySelector('.primary'); b.disabled=true;
-      api('POST','/api/docs',{action:'pay',id:d.id,amt:+f.elements.amt.value,date:f.elements.date.value,method:f.elements.method.value}).then(function(){ closeSheet(); return load(); }).then(function(){ toast('Payment recorded'); })
+      api('POST','/api/docs',{action:'pay',id:d.id,amt:+f.elements.amt.value,date:f.elements.date.value,method:f.elements.method.value}).then(function(r){ closeSheet(); return load().then(function(){ toast('Payment recorded'); var nd=docById(d.id); if(nd&&r.pid) receiptSheet(nd,r.pid); }); })
       .catch(function(x){ b.disabled=false; var er=s.querySelector('#perr'); er.textContent=x.message; er.hidden=false; }); };
   }
 
@@ -513,6 +530,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if((el=e.target.closest('[data-tab]'))){ tab=el.dataset.tab; lsSet('money_tab',tab); filter='all'; q=''; renderList(); return; }
     if((el=e.target.closest('[data-filter]'))){ filter=el.dataset.filter; renderList(); return; }
     if((el=e.target.closest('[data-libedit]'))){ libEdit(el.dataset.libedit); return; }
+    if((el=e.target.closest('[data-receipt]'))){ var rd=docById(route().id); if(rd) receiptSheet(rd,el.dataset.receipt); return; }
     if((el=e.target.closest('[data-unpay]'))){ if(!el.dataset.sure){ el.dataset.sure=1; el.textContent='Tap to confirm'; return; } api('POST','/api/docs',{action:'unpay',id:route().id,pid:el.dataset.unpay}).then(load).then(function(){toast('Payment removed');}); return; }
     var card=e.target.closest('.item');
     if(card&&draft){ var i=+card.dataset.i;

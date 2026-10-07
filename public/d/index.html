@@ -60,6 +60,11 @@ body{margin:0;background:var(--cream);color:var(--body);font:400 15px/1.6 var(--
 .tot div{display:flex;justify-content:space-between;gap:14px;padding:6px 0;font-size:14px;color:var(--dark)}
 .tot .grand{border-top:2px solid var(--dark);margin-top:6px;padding-top:12px;font:700 22px/1.2 var(--serif)}
 .tot .due{font:700 18px/1.2 var(--serif);color:var(--terracotta-dark)}
+.paidbox{margin-top:22px;background:var(--dark);border-radius:10px;padding:18px 20px;display:grid;gap:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.paidbox span{font-size:13px;color:#BDB5AD}
+.paidbox b{font:700 34px/1.15 var(--serif);color:var(--cream);font-variant-numeric:tabular-nums}
+.ihead.rc,.item.rc,.item.rc{grid-template-columns:1fr 120px!important}
+.item.rc .a{display:block}
 .callout{margin-top:22px;border-left:3px solid var(--terracotta);background:#FBF3EE;border-radius:0 8px 8px 0;padding:12px 14px;color:var(--dark);font-size:14px}
 .sect{margin-top:28px}
 .sect h2{font:700 21px/1.2 var(--serif);color:var(--dark);margin:0 0 12px}
@@ -112,7 +117,7 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
 <div class="wrap" id="app"><div class="center">Loading…</div></div>
 <script>
 (function(){
-  var app=document.getElementById('app'), path=location.pathname.split('/'), kind=path[1]==='i'?'invoice':'quote', token=path[2]||'';
+  var app=document.getElementById('app'), path=location.pathname.split('/'), receipt=path[1]==='r', kind=(path[1]==='i'||receipt)?'invoice':'quote', token=path[2]||'';
   var params=new URLSearchParams(location.search), data=null, err='', isAdmin=false;
   var LOGO='<svg viewBox="0 0 48 48" role="img" aria-label="Bardon Clean"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -145,6 +150,7 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
 
   function render(){
     if(err){ app.innerHTML='<div class="center"><div class="brand" style="justify-content:center">'+LOGO+'</div><p style="margin-top:18px">'+esc(err)+'</p><a class="btn dark" href="tel:+61406216212">Call Jack</a></div>'; return; }
+    if(receipt) return renderReceipt();
     var d=data, b=d.biz, t=d.totals, q=d.kind==='quote', st=d.state;
     document.title=(q?'Quote':'Invoice')+' #'+d.num+' · Bardon Clean';
     var h='<div class="toolbar"><span class="who">'+(isAdmin&&params.has('preview')?'Preview. Clients won\'t see this line.':'')+'</span><button class="btn outline noprint" style="min-height:40px;padding:0 14px;font-size:14px" data-print>Save as PDF</button></div>';
@@ -187,9 +193,34 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
       if(!d.bank.bsb&&!d.card) h+='<p style="margin:0">Call Jack on '+esc(b.phone)+' to arrange payment.</p>';
       h+='</div></div>';
     }
+    if(!q&&(d.payments||[]).length) h+='<div class="btns noprint">'+d.payments.map(function(p,i){ return '<a class="btn outline" href="/r/'+esc(token)+'?p='+esc(p.id)+'">'+(d.payments.length>1?'Receipt '+(i+1)+' · '+money(p.amt):'View receipt')+'</a>'; }).join('')+'</div>';
     if(d.terms) h+='<details class="terms"'+(params.has('terms')?' open':'')+'><summary>Service policies</summary><div class="desc" style="margin-top:10px">'+rich(d.terms)+'</div></details>';
     h+='<div class="foot"><span>'+esc(b.legal||b.name)+(b.abn?' · ABN '+esc(b.abn):'')+'</span><span>Questions? Jack, '+esc(b.phone)+'</span></div>';
     h+='</div>';
+    app.innerHTML=h;
+  }
+
+  function renderReceipt(){
+    var d=data, b=d.biz, t=d.totals, P=d.payments||[];
+    if(d.kind!=='invoice'||!P.length){ err='No payment has been recorded on this invoice yet.'; render(); return; }
+    var pid=params.get('p'), i=Math.max(0,P.map(function(x){return x.id;}).indexOf(pid)); if(!pid) i=P.length-1;
+    var p=P[i], upTo=P.slice(0,i+1).reduce(function(a,x){return a+x.amt;},0), bal=Math.max(0,Math.round((t.total-upTo)*100)/100);
+    var gst=d.gst&&t.total>0?Math.round(p.amt*t.gst/t.total*100)/100:0, no='R'+d.num+'-'+(i+1);
+    document.title='Receipt '+no+' · Bardon Clean';
+    var h='<div class="toolbar"><a class="who" href="/i/'+esc(token)+'" style="color:var(--terracotta-dark)">View invoice #'+d.num+'</a><button class="btn outline noprint" style="min-height:40px;padding:0 14px;font-size:14px" data-print>Save as PDF</button></div><div class="paper">';
+    h+='<div class="head"><div class="brand">'+LOGO+'<div><b>'+esc(b.name)+'</b><small>'+esc(b.address)+'<br>'+esc(b.phone)+' · '+esc(b.email)+'<br>'+esc(b.web)+(b.abn?' · ABN '+esc(b.abn):'')+'</small></div></div>';
+    h+='<div class="dtype"><h1>Payment <em>receipt</em></h1><div class="n">Receipt '+no+' · <span class="state paid">Paid</span></div></div></div>';
+    h+='<div class="paidbox"><span>Amount received</span><b>'+money(p.amt)+'</b><span>'+fdate(p.date)+(p.method?' · '+esc(p.method):'')+'</span></div>';
+    h+='<div class="meta"><div><div class="k">Received from</div><div class="v"><b>'+esc(d.client.name)+'</b>'+(d.client.contact?'\nAttn: '+esc(d.client.contact):'')+(d.client.address?'\n'+esc(d.client.address):'')+'</div>'+(d.site?'<div class="k" style="margin-top:12px">Property</div><div class="v">'+esc(d.site)+(d.suburb&&d.site.indexOf(d.suburb)<0?', '+esc(d.suburb):'')+'</div>':'')+'</div>';
+    h+='<div class="facts"><div><span>Receipt</span><b>'+no+'</b></div><div><span>Date paid</span><b>'+fdate(p.date)+'</b></div><div><span>Paid by</span><b>'+esc(p.method||'—')+'</b></div><div><span>For invoice</span><b>#'+d.num+'</b></div>'+(d.serviceDate?'<div><span>Service date</span><b>'+fdate(d.serviceDate)+'</b></div>':'')+'</div></div>';
+    h+='<div class="items"><div class="ihead rc"><span>Invoice #'+d.num+'</span><span>Amount</span></div>';
+    d.items.forEach(function(it){ h+='<div class="item rc"><div><div class="t" style="font-size:15px">'+esc(it.title)+'</div></div><div class="a">'+money(it.qty*it.price)+'</div></div>'; });
+    h+='</div><div class="tot"><div><span>Invoice total'+(d.gst?' incl. GST':'')+'</span><span>'+money(t.total)+'</span></div>';
+    P.slice(0,i+1).forEach(function(x,k){ h+='<div'+(k===i?' style="font-weight:600"':'')+'><span>Paid '+fdate(x.date)+(k===i?' (this receipt)':'')+'</span><span>−'+money(x.amt)+'</span></div>'; });
+    h+='<div class="grand"><span>'+(bal>0.005?'Balance owing':'Balance')+'</span><span>'+money(bal)+'</span></div></div>';
+    if(gst>0) h+='<p class="small" style="text-align:right">This payment includes GST of '+money(gst)+'.</p>';
+    h+='<div class="banner '+(bal>0.005?'note':'ok')+'">'+(bal>0.005?'Thank you for your payment. '+money(bal)+' remains on invoice #'+d.num+'.':'Thank you. Invoice #'+d.num+' is paid in full.')+'</div>';
+    h+='<div class="foot"><span>'+esc(b.legal||b.name)+(b.abn?' · ABN '+esc(b.abn):'')+'</span><span>Questions? Jack, '+esc(b.phone)+'</span></div></div>';
     app.innerHTML=h;
   }
 
@@ -209,7 +240,7 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
   });
 
   function load(){
-    return api('GET','/api/docs?t='+encodeURIComponent(token)).then(function(d){ if(d.kind!==kind){ history.replaceState(null,'','/'+(d.kind==='invoice'?'i':'q')+'/'+token+location.search); } data=d; err=''; render(); })
+    return api('GET','/api/docs?t='+encodeURIComponent(token)).then(function(d){ if(d.kind!==kind&&!receipt){ history.replaceState(null,'','/'+(d.kind==='invoice'?'i':'q')+'/'+token+location.search); } data=d; err=''; render(); })
       .catch(function(x){ err=x.message; render(); });
   }
   if(!/^[a-f0-9]{16,}$/.test(token)){ err='This link isn\'t complete. Check the message Bardon Clean sent you.'; render(); }
