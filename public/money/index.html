@@ -388,7 +388,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var t=d.totals, l=link(d), fn=first(d.client.contact||d.client.name), what=d.site?d.site:(d.service||'your clean').toLowerCase();
     var msg=reminder?'Hi '+fn+', a friendly reminder that invoice #'+d.num+' for '+money(t.due)+' was due '+fdate(d.dueDate)+'. You can view and pay it here: '+l+' Thanks, Jack, Bardon Clean'
       :d.kind==='quote'?'Hi '+fn+', here\'s your quote from Bardon Clean for '+what+': '+l+' You can accept it online. Any questions, call or text me on '+S.settings.biz.phone+'. Jack'
-      :'Hi '+fn+', here\'s invoice #'+d.num+' from Bardon Clean for '+money(t.due)+': '+l+' Thanks, Jack';
+      :(d.isDeposit?'Hi '+fn+', here\'s your deposit invoice #'+d.num+' from Bardon Clean for '+money(t.due)+', due today: '+l+' Your booking is tentative until the deposit is paid. Thanks, Jack':'Hi '+fn+', here\'s invoice #'+d.num+' from Bardon Clean for '+money(t.due)+': '+l+' Thanks, Jack');
     var subj=reminder?'Reminder: invoice #'+d.num+' from Bardon Clean':(d.kind==='quote'?'Your quote from Bardon Clean':'Invoice #'+d.num+' from Bardon Clean')+(d.site?' · '+d.site:'');
     var h='<h3>'+(reminder?'Send a <em>reminder</em>':'Send '+(d.kind==='quote'?'the <em>quote</em>':'the <em>invoice</em>'))+'</h3><label class="l">Message<textarea id="smsg" style="min-height:120px">'+esc(msg)+'</textarea></label><div class="sendopt" style="margin-top:12px">';
     h+='<a data-sendvia="sms" href="#"><span class="ic">✉</span><span>Text message<small>'+(d.client.phone?esc(d.client.phone):'Opens Messages, add the number')+'</small></span></a>';

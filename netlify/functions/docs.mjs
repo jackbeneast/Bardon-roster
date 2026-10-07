@@ -3,7 +3,7 @@
 import { store, json, checkAdmin } from "../../lib/core.mjs";
 import {
   loadSettings, cleanSettings, cleanDoc, loadDocs, findByToken, saveDoc, newDoc,
-  recordPayment, addJobFromQuote, publicView, totals, statusOf, today, addDays,
+  recordPayment, addJobFromQuote, publicView, totals, statusOf, today, addDays, depositDesc,
 } from "../../lib/docs.mjs";
 
 const r2 = (v) => Math.round(v * 100) / 100;
@@ -59,7 +59,8 @@ export default async (req) => {
         kind: "invoice", status: "sent", sentAt: q.acceptedAt, quoteId: q.id, quoteNum: q.num,
         client: q.client, site: q.site, suburb: q.suburb, service: q.service, serviceDate: q.serviceDate,
         issued: today(), dueDate: today(), gst: q.gst, showTerms: false,
-        items: [{ title: `Deposit (${q.depositPct}%)`, desc: `To secure your booking${q.service ? ` for a ${q.service.toLowerCase()}` : ""}${q.site ? ` at ${q.site}` : ""}. Quote #${q.num}.`, qty: 1, price: r2(t.sub * q.depositPct / 100) }],
+        isDeposit: true,
+        items: [{ title: `${q.depositPct}% deposit${q.site ? ` | ${q.site}` : ""}`, desc: depositDesc(q.depositPct, q.service) + ` Quote #${q.num}.`, qty: 1, price: r2(t.sub * q.depositPct / 100) }],
         notes: "",
       });
       await saveDoc(s, inv);

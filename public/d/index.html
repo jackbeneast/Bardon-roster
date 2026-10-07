@@ -154,13 +154,15 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
     h+='<div class="meta"><div><div class="k">Prepared for</div><div class="v"><b>'+esc(d.client.name)+'</b>'+(d.client.contact?'\nAttn: '+esc(d.client.contact):'')+(d.client.address?'\n'+esc(d.client.address):'')+'</div>'+(d.site?'<div class="k" style="margin-top:12px">Property</div><div class="v">'+esc(d.site)+(d.suburb&&d.site.indexOf(d.suburb)<0?', '+esc(d.suburb):'')+'</div>':'')+'</div>';
     h+='<div class="facts"><div><span>'+(q?'Date':'Issued')+'</span><b>'+fdate(d.issued)+'</b></div>';
     if(q&&d.validUntil) h+='<div><span>Valid until</span><b>'+fdate(d.validUntil)+'</b></div>';
-    if(!q) h+='<div><span>Due</span><b>'+(d.dueDate&&d.dueDate!==d.issued?fdate(d.dueDate):'On receipt')+'</b></div>';
+    var tdy=(function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);})(new Date());
+    if(!q) h+='<div><span>Due</span><b>'+(st==='paid'?fdate(d.dueDate||d.issued):((d.dueDate||d.issued)===tdy?'Today':(d.dueDate&&d.dueDate!==d.issued?fdate(d.dueDate):'On receipt')))+'</b></div>';
     if(d.serviceDate) h+='<div><span>Service date</span><b>'+fdate(d.serviceDate,true)+'</b></div>';
     if(d.quoteNum) h+='<div><span>For quote</span><b>#'+d.quoteNum+'</b></div>';
     h+='<div><span>'+(q?'Total':'Amount due')+'</span><b>'+money(q?t.total:t.due)+'</b></div></div></div>';
 
     if(params.has('paid')&&!q) h+='<div class="banner ok">Thank you. Your card payment has gone through'+(t.due>0.005?'':', and this invoice is now paid')+'.</div>';
-    else if(st==='paid') h+='<div class="banner ok">Paid in full. Thank you.</div>';
+    else if(st==='paid') h+='<div class="banner ok">'+(d.isDeposit?'Deposit received. Your booking is confirmed. Thank you.':'Paid in full. Thank you.')+'</div>';
+    else if(d.isDeposit) h+='<div class="banner warn"><b>Deposit due '+((d.dueDate||d.issued)<=tdy?'today':fdate(d.dueDate))+'.</b> Your booking is tentative until this deposit is paid. Pay '+money(t.due)+' to lock in '+(d.serviceDate?fdate(d.serviceDate,true):'your clean')+'.</div>';
     else if(st==='overdue') h+='<div class="banner warn">This invoice was due '+fdate(d.dueDate)+'. Please pay '+money(t.due)+' at your earliest convenience.</div>';
     if(q&&st==='accepted') h+='<div class="banner ok">Accepted by '+esc(d.acceptedName)+' on '+fdate((function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);})(new Date(d.acceptedAt)))+'. Thank you. Jack will be in touch to confirm the details.</div>';
     if(q&&st==='expired') h+='<div class="banner warn">This quote expired on '+fdate(d.validUntil)+'. Call Jack on '+esc(b.phone)+' for an updated quote.</div>';
