@@ -129,6 +129,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .pay{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--cream-dark);font-size:14px;color:var(--dark)}
 </style></head><body>
 <div id="app"><div class="center">Loading…</div></div>
+<script src="/lib/confirm.js"></script>
 <script>
 (function(){
   var app=document.getElementById('app');
@@ -204,7 +205,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var h=topbar()+'<h1>Quotes &amp; <em>invoices</em></h1>';
     h+='<div class="kpis"><div class="kpi dark"><b>'+money(owed)+'</b><span>Owed to you</span></div><div class="kpi'+(overdue>0?' warn':'')+'"><b>'+money(overdue)+'</b><span>Overdue</span></div><div class="kpi"><b>'+money(out)+'</b><span>'+outN+' quote'+(outN===1?'':'s')+' out</span></div></div>';
     S.docs.filter(function(d){return d.flag;}).slice(0,6).forEach(function(d){
-      var txt=d.flag==='accepted'?'<b>'+title(d)+' accepted</b> by '+esc(d.acceptedName)+'. '+(d.jobId?'Added to the roster for '+fdate(d.serviceDate,true)+'.':'No service date yet, so add it to the roster.')
+      var txt=d.flag==='accepted'?'<b>'+title(d)+' accepted</b> by '+esc(d.acceptedName)+'. '+(d.jobId?'Added to the roster for '+fdate(d.serviceDate,true)+'.':'Tap to turn it into a job.')
         :d.flag==='paid'?'<b>Payment received</b> on '+title(d)+' from '+esc(d.client.name)+'. '+(d.state==='paid'?'Paid in full.':money(d.totals.due)+' still owing.')
         :'<b>'+esc(d.client.name)+' opened '+title(d)+'</b> '+ftime(d.viewedAt)+'.';
       h+='<button class="alert '+(d.flag==='viewed'?'gold':'ok')+'" data-open="'+d.id+'">'+txt+'</button>';
@@ -367,10 +368,10 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
       h+='<div class="card"><h2>Next <em>steps</em></h2>';
       if(d.state==='accepted'){
         if(d.depositInvoice){ var dep=docById(d.depositInvoice); if(dep) h+='<button class="alert '+(dep.state==='paid'?'ok':'gold')+'" data-open="'+dep.id+'">Deposit invoice #'+dep.num+': '+(dep.state==='paid'?'paid':money(dep.totals.due)+' to pay')+'</button>'; }
-        h+=d.jobId?'<div class="hint-card">On the roster for '+fdate(d.serviceDate,true)+'. Assign the team in the hub.</div>':'<div class="hint-card">Not on the roster yet. Add a service date and save, then mark accepted again, or add the job in the hub.</div>';
-        h+='<div class="acts"><button class="btn primary wide" data-act="inv-balance">Invoice the balance</button><button class="btn plain" data-act="inv-full">Invoice in full</button><button class="btn plain" data-act="mark-sent">Undo accepted</button></div>';
+        h+=jobBlock(d);
+        h+='<div class="acts"><button class="btn plain" data-act="inv-balance">Invoice the balance</button><button class="btn plain" data-act="inv-full">Invoice in full</button><button class="btn plain wide" data-act="mark-sent">Undo accepted</button></div>';
       } else {
-        h+='<div class="acts"><button class="btn plain" data-act="mark-accepted">Mark accepted</button><button class="btn plain" data-act="mark-declined">'+(d.state==='declined'?'Declined':'Mark declined')+'</button><button class="btn plain wide" data-act="inv-full">Turn into an invoice</button></div>';
+        h+='<div class="acts"><button class="btn primary wide" data-act="tojob">Approved? Turn into a job</button><button class="btn plain" data-act="mark-accepted">Mark accepted</button><button class="btn plain" data-act="mark-declined">'+(d.state==='declined'?'Declined':'Mark declined')+'</button><button class="btn plain wide" data-act="inv-full">Turn into an invoice</button></div>';
       }
       (d.invoices||[]).forEach(function(iid){ var x=docById(iid); if(x) h+='<button class="alert" data-open="'+x.id+'">Invoice #'+x.num+': '+money(x.totals.total)+' · '+(LABEL[x.state]||x.state)+'</button>'; });
       h+='</div>';
@@ -383,6 +384,48 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     }
     h+='<div class="menu"><button data-act="dup">Duplicate as new '+d.kind+'<span class="chev">›</span></button>'+(isQ?'':'<button data-act="dup-quote">Copy into a new quote<span class="chev">›</span></button>')+'<button data-act="copylink">Copy client link<span class="chev">›</span></button><button data-act="del" style="color:var(--terracotta-dark)">Delete '+d.kind+'<span class="chev">›</span></button></div>';
     app.innerHTML=h;
+  }
+  function jobOf(d){ return d.jobId ? S.jobs.filter(function(j){return j.id===d.jobId;})[0] : null; }
+  function jobBlock(d){
+    var j=jobOf(d);
+    if(!j) return '<div class="hint-card">Not on the roster yet.</div><div class="acts"><button class="btn primary wide" data-act="tojob">Turn into a job</button></div>';
+    var staff=(j.staff||[]).length;
+    return '<div class="hint-card"><b>On the roster</b> · '+fdate(j.date,true)+', '+fmtT(j.start)+'–'+fmtT(j.end)+'<br>'+(staff?staff+' on the team':'No team assigned yet')+(d.confirmedAt?' · Confirmation sent '+ftime(d.confirmedAt):' · Confirmation not sent yet')+'</div>'+
+      '<div class="acts"><button class="btn primary wide" data-act="confirm">'+(d.confirmedAt?'Send booking confirmation again':'Send booking confirmation')+'</button><a class="btn plain" href="/#job='+j.id+'">Open in roster</a><a class="btn plain" href="/v/'+esc(j.share||'')+'" target="_blank" rel="noopener">Client link</a></div>';
+  }
+  function fmtT(t){ if(!t) return ''; var hh=+t.slice(0,2), m=t.slice(3,5); return (hh%12||12)+(m==='00'?'':':'+m)+(hh>=12?'pm':'am'); }
+  function jobSheetQ(d){
+    var h='<h3>Turn into a <em>job</em></h3><p class="sub" style="margin:-6px 0 12px">Adds it to the roster with the client, address and service filled in. Assign the team in the hub.</p><form id="jf"><div class="grid"><label class="l full">Date of the clean<input type="date" name="date" value="'+esc(d.serviceDate||'')+'" required></label><label class="l">Team arrives<input type="time" name="start" value="08:00"></label><label class="l">Finishes around<input type="time" name="end" value="16:00"></label></div><div class="err" id="jerr" hidden></div><div class="actions"><button type="button" class="btn plain" data-close>Cancel</button><button class="btn primary grow" type="submit">Add to roster</button></div></form>';
+    var s=sheet(h), f=s.querySelector('#jf');
+    f.onsubmit=function(e){ e.preventDefault(); var b=f.querySelector('.primary'), er=s.querySelector('#jerr');
+      if(!f.elements.date.value){ er.textContent='Pick the date of the clean.'; er.hidden=false; return; }
+      b.disabled=true; b.textContent='Adding…';
+      api('POST','/api/docs',{action:'tojob',id:d.id,date:f.elements.date.value,start:f.elements.start.value,end:f.elements.end.value})
+        .then(function(){ closeSheet(); return load(); }).then(function(){ toast('Added to the roster'); var nd=docById(d.id); if(nd) confirmSheet(nd); })
+        .catch(function(x){ b.disabled=false; b.textContent='Add to roster'; er.textContent=x.message; er.hidden=false; }); };
+  }
+  function confirmSheet(d){
+    var j=jobOf(d); if(!j){ toast('Add it to the roster first'); return; }
+    var dep=d.depositInvoice?docById(d.depositInvoice):null;
+    var m=BCConfirm.build({job:j,doc:d,deposit:dep,phone:S.settings.biz.phone});
+    var mode='sms';
+    var h='<h3>Booking <em>confirmation</em></h3><div class="seg" role="group" style="margin:0 0 12px"><button data-cm="sms" aria-pressed="true">Text</button><button data-cm="email" aria-pressed="false">Email</button></div>'+
+      '<div data-pane="sms"><label class="l">Text message<textarea id="cSms" style="min-height:220px">'+esc(m.sms)+'</textarea></label></div>'+
+      '<div data-pane="email" hidden><label class="l">Subject<input id="cSub" value="'+esc(m.subject)+'"></label><label class="l" style="margin-top:10px">Email<textarea id="cEmail" style="min-height:360px">'+esc(m.email)+'</textarea></label></div>'+
+      '<div class="sendopt" style="margin-top:12px"><a href="#" data-cgo="open"><span class="ic">✉</span><span data-golabel>Open Messages<small>'+(d.client.phone?esc(d.client.phone):'Add the number in Messages')+'</small></span></a><button data-cgo="copy"><span class="ic">⧉</span><span>Copy<small>Paste anywhere</small></span></button></div>'+
+      '<div class="actions"><button class="btn plain grow" data-close>Close</button></div>';
+    var s=sheet(h);
+    s.addEventListener('click',function(e){
+      var b=e.target.closest('[data-cm]');
+      if(b){ mode=b.dataset.cm; Array.prototype.forEach.call(s.querySelectorAll('[data-cm]'),function(x){x.setAttribute('aria-pressed',String(x===b));}); s.querySelector('[data-pane="sms"]').hidden=mode!=='sms'; s.querySelector('[data-pane="email"]').hidden=mode!=='email';
+        s.querySelector('[data-golabel]').innerHTML=mode==='sms'?'Open Messages<small>'+(d.client.phone?esc(d.client.phone):'Add the number in Messages')+'</small>':'Open Mail<small>'+(d.client.email?esc(d.client.email):'Add the address in Mail')+'</small>'; return; }
+      var g=e.target.closest('[data-cgo]'); if(!g) return;
+      if(g.dataset.cgo==='open'){
+        g.href=mode==='sms'?'sms:'+phoneSms(d.client.phone)+'?&body='+encodeURIComponent(s.querySelector('#cSms').value)
+          :'mailto:'+encodeURIComponent(d.client.email||'')+'?subject='+encodeURIComponent(s.querySelector('#cSub').value)+'&body='+encodeURIComponent(s.querySelector('#cEmail').value);
+      } else { e.preventDefault(); var t=mode==='sms'?s.querySelector('#cSms').value:s.querySelector('#cSub').value+'\n\n'+s.querySelector('#cEmail').value; try{ navigator.clipboard.writeText(t).then(function(){toast('Copied');}); }catch(x){ toast('Select the text and copy it'); } }
+      api('POST','/api/docs',{action:'confirmed',id:d.id}).then(function(){ d.confirmedAt=new Date().toISOString(); }).catch(function(){});
+    });
   }
   function sendSheet(d, reminder){
     var t=d.totals, l=link(d), fn=first(d.client.contact||d.client.name), what=d.site?d.site:(d.service||'your clean').toLowerCase();
@@ -487,6 +530,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(a==='send'&&d){ sendSheet(d,false); return; }
     if(a==='remind'&&d){ sendSheet(d,true); return; }
     if(a==='paid'&&d){ paySheet(d); return; }
+    if(a==='tojob'&&d){ jobSheetQ(d); return; }
+    if(a==='confirm'&&d){ confirmSheet(d); return; }
     if(a==='copylink'&&d){ try{ navigator.clipboard.writeText(link(d)).then(function(){toast('Client link copied');}); }catch(x){ toast(link(d)); } return; }
     if(a==='mark-accepted'||a==='mark-declined'||a==='mark-sent'){ api('POST','/api/docs',{action:'status',id:d.id,status:a.slice(5)}).then(load).then(function(){ toast(a==='mark-accepted'?(d.serviceDate?'Accepted and added to the roster':'Marked accepted'):'Updated'); }).catch(function(x){toast(x.message);}); return; }
     if(a==='inv-full'||a==='inv-balance'){ el.disabled=true; api('POST','/api/docs',{action:'invoice',id:d.id,mode:a==='inv-balance'?'balance':'full'}).then(function(r){ return load().then(function(){ go('doc/'+r.id); toast('Invoice created as a draft. Check it, then send.'); }); }).catch(function(x){ el.disabled=false; toast(x.message); }); return; }

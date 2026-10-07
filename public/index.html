@@ -271,6 +271,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 .lsec h4 .ed{float:right;background:none;border:0;color:var(--terracotta-dark);font:600 12px var(--sans);letter-spacing:0;text-transform:none;text-decoration:underline;cursor:pointer;padding:0}
 </style></head><body>
 <div id="app"></div>
+<script src="/lib/confirm.js"></script>
 <script>
 (function(){
   var state = {team:[],jobs:[],confirms:{},info:{},acks:{},agents:[],live:{},requests:[]}, loaded=false, loadErr='', adminSet=true;
@@ -569,7 +570,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<label class="l" for="f_notes">Notes for the team<textarea id="f_notes" name="notes" placeholder="Access, inclusions, parking. Don\'t put alarm or lockbox codes here.">'+esc(job.notes)+'</textarea></label>';
     h+='<div class="err" id="jobErr" hidden></div>';
     h+='<div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save job</button></div>';
-    if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Copy client link</button>':'')+'</div>';
+    if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Copy client link</button>':'')+'</div>'+(job.share?'<div class="actions" style="margin-top:8px"><button type="button" class="btn primary" data-confirmj style="flex:1">Send booking confirmation</button></div>':'');
     if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-dup>Duplicate</button><button type="button" class="btn danger" data-del>Delete job</button></div>';
     h+='</form>';
     var s=openSheet(h), form=s.querySelector('#jobForm');
@@ -597,6 +598,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       else { del.dataset.sure='1'; del.textContent='Tap again to delete'; }
     };
     var lj=s.querySelector('[data-livej]'); if(lj) lj.onclick=function(){ liveSheet(job.id,''); };
+    var cj=s.querySelector('[data-confirmj]'); if(cj) cj.onclick=function(){ cj.disabled=true; cj.textContent='Loading…';
+      api('/api/docs').then(function(m){ var docs=m.docs||[], d=docs.filter(function(x){return x.jobId===job.id;})[0]||null, dep=d&&d.depositInvoice?docs.filter(function(x){return x.id===d.depositInvoice;})[0]:null; hubConfirm(job,d,dep); })
+        .catch(function(){ hubConfirm(job,null,null); }); };
     var vl=s.querySelector('[data-vlink]'); if(vl) vl.onclick=function(){ copyText(location.origin+'/v/'+job.share); };
     var dup=s.querySelector('[data-dup]');
     if(dup) dup.onclick=function(){ var c=JSON.parse(JSON.stringify(job)); c.id=uid('j'); c.example=false; delete c.confirm; delete c.share; c.date=iso(addDays(parse(job.date),7)); closeSheet(); jobSheet(null); fillForm(c); };
@@ -785,6 +789,23 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     out:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"/></svg>',
     tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg>'
   };
+  function hubConfirm(job, d, dep){
+    var m=BCConfirm.build({job:job,doc:d,deposit:dep}), mode='sms', ph=d&&d.client.phone||'', em=d&&d.client.email||'';
+    var h='<h3>Booking <em>confirmation</em></h3><div class="kindsw"><button type="button" data-cm="sms" aria-pressed="true">Text</button><button type="button" data-cm="email" aria-pressed="false">Email</button></div>'+
+      '<div data-pane="sms"><label class="l">To<input type="tel" id="cTo" value="'+esc(ph)+'" placeholder="Client mobile"></label><label class="l" style="margin-top:10px">Message<textarea id="cSms" style="min-height:220px">'+esc(m.sms)+'</textarea></label></div>'+
+      '<div data-pane="email" hidden><label class="l">To<input type="email" id="cEm" value="'+esc(em)+'" placeholder="Client email"></label><label class="l" style="margin-top:10px">Subject<input id="cSub" value="'+esc(m.subject)+'"></label><label class="l" style="margin-top:10px">Email<textarea id="cEmail" style="min-height:340px">'+esc(m.email)+'</textarea></label></div>'+
+      '<div class="actions"><button type="button" class="btn outline" data-ccopy>Copy</button><a class="btn primary" data-copen href="#" style="flex:1;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">Open Messages</a></div><div class="actions" style="margin-top:8px"><button type="button" class="btn outline" data-close style="flex:1">Close</button></div>';
+    var s=openSheet(h);
+    s.querySelector('[data-close]').onclick=closeSheet;
+    function mark(){ if(d) api('/api/docs',{method:'POST',body:{action:'confirmed',id:d.id}}).catch(function(){}); }
+    s.addEventListener('click',function(e){
+      var b=e.target.closest('[data-cm]');
+      if(b){ mode=b.dataset.cm; Array.prototype.forEach.call(s.querySelectorAll('[data-cm]'),function(x){x.setAttribute('aria-pressed',String(x===b));}); s.querySelector('[data-pane="sms"]').hidden=mode!=='sms'; s.querySelector('[data-pane="email"]').hidden=mode!=='email'; s.querySelector('[data-copen]').textContent=mode==='sms'?'Open Messages':'Open Mail'; return; }
+      var o=e.target.closest('[data-copen]');
+      if(o){ o.href=mode==='sms'?smsHref(s.querySelector('#cTo').value, s.querySelector('#cSms').value):'mailto:'+encodeURIComponent(s.querySelector('#cEm').value)+'?subject='+encodeURIComponent(s.querySelector('#cSub').value)+'&body='+encodeURIComponent(s.querySelector('#cEmail').value); mark(); return; }
+      if(e.target.closest('[data-ccopy]')){ copyText(mode==='sms'?s.querySelector('#cSms').value:s.querySelector('#cSub').value+'\n\n'+s.querySelector('#cEmail').value, mode==='sms'?s.querySelector('#cSms'):s.querySelector('#cEmail')); mark(); }
+    });
+  }
   function addChooser(){
     var s=openSheet('<h3>Add <em>new</em></h3><div class="menu" style="margin-top:0"><button type="button" data-addjob>'+IC.roster+'Job on the roster<span class="chev">›</span></button><a href="/money/#/edit/new-quote">'+IC.text+'Quote<span class="chev">›</span></a><a href="/money/#/edit/new-invoice">'+IC.text+'Invoice<span class="chev">›</span></a></div><div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Cancel</button></div>');
     s.querySelector('[data-close]').onclick=closeSheet;
@@ -1095,6 +1116,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       if(key() && !d.admin){ key(null); }
       if(d.admin) api('/api/docs').then(function(m){ state.money=(m.docs||[]).filter(function(x){ return x.flag||x.state==='overdue'; }).slice(0,8); if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
       canEdit=!!d.admin;
+      var hj=/^#job=([\w-]+)/.exec(location.hash); if(hj && canEdit){ history.replaceState(null,'',location.pathname); var jj=(d.jobs||[]).filter(function(x){return x.id===hj[1];})[0]; if(jj) setTimeout(function(){ view='roster'; render(); jobSheet(state.jobs.filter(function(x){return x.id===hj[1];})[0]); },0); }
       if (filter!=='all' && filter!=='open' && !member(filter)) filter='all';
       if(!document.getElementById('scrim')) render(); else if(liveOpen) drawLive();
     }).catch(function(e){ if(!loaded){ loadErr='Couldn\'t load the roster. Check your signal.'; render(); } });

@@ -73,6 +73,16 @@ button.card:hover{border-color:#C9BBAC}
 .back{background:none;border:0;color:var(--terracotta-dark);font-weight:600;padding:6px 0}
 section.blk{margin-top:24px}
 section.blk>h2{font-size:20px;margin-bottom:10px}
+.bk .bk-when{margin-top:6px}
+.bk .bk-when b{display:block;font:700 23px/1.2 var(--serif);color:var(--dark)}
+.bk .bk-when span{display:block;font-size:15px;color:var(--dark);margin-top:2px}
+.bk-rows{margin:12px 0 0;display:grid;gap:6px}
+.bk-rows div{display:grid;grid-template-columns:84px 1fr;gap:10px;font-size:14px}
+.bk-rows dt{color:var(--meta)}
+.bk-rows dd{margin:0;color:var(--dark);font-weight:500}
+.prep{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.prep li{font-size:14px;color:var(--body);padding-left:16px;border-left:3px solid var(--terracotta)}
+.prep b{display:block;color:var(--dark);font-weight:600}
 .panel{background:var(--white);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
 .tl{list-style:none;margin:0;padding:0}
 .tl li{display:grid;grid-template-columns:16px 1fr auto;gap:10px;padding-block:8px;font-size:14px;color:var(--meta);align-items:start}
@@ -262,6 +272,26 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
     '<div class="err" id="bErr" hidden></div><button class="btn primary" type="submit">Send booking request</button><div class="okmsg" id="bOk" hidden></div></form>';
   }
 
+  var LDAY=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'], LMON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function longDay(s){ var d=parse(s); return LDAY[d.getDay()]+' '+d.getDate()+' '+LMON[d.getMonth()]; }
+  function icsHref(j){
+    var dt=function(t){ return j.date.replace(/-/g,'')+'T'+(t||'08:00').replace(':','')+'00'; };
+    var esc2=function(v){ return String(v||'').replace(/[,;\\]/g,function(c){return '\\'+c;}); };
+    var ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Bardon Clean//Booking//EN','BEGIN:VEVENT','UID:'+j.id+'@bardonclean.au','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z','DTSTART:'+dt(j.start),'DTEND:'+dt(j.end||j.start),
+      'SUMMARY:'+esc2('Bardon Clean: '+(j.service||'clean')),'LOCATION:'+esc2([j.address,j.suburb].filter(Boolean).join(', ')),'DESCRIPTION:'+esc2('Follow your clean live: '+location.href+'  Questions: Jack '+JACK),'END:VEVENT','END:VCALENDAR'].join('\r\n');
+    return 'data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);
+  }
+  function bookingCard(j,L){
+    var started=Object.keys(L.arrived||{}).length||L.done||j.date<today();
+    var h='<div class="panel bk" style="margin-top:12px"><span class="sub">Your booking</span><div class="bk-when"><b>'+esc(longDay(j.date))+'</b><span>Team arrives '+fmtTime(j.start)+(j.end?' · finishing around '+fmtTime(j.end):'')+'</span></div>';
+    h+='<dl class="bk-rows">'+(j.address||j.suburb?'<div><dt>Where</dt><dd>'+esc([j.address,j.suburb].filter(Boolean).join(', '))+'</dd></div>':'')+(j.service?'<div><dt>Service</dt><dd>'+esc(j.service)+'</dd></div>':'')+(j.readyBy?'<div><dt>Ready for</dt><dd>'+esc(j.readyBy)+'</dd></div>':'')+'</dl>';
+    h+='<div class="actions" style="margin-top:12px">'+(started?'':'<a class="btn outline" href="'+icsHref(j)+'" download="bardon-clean.ics">Add to calendar</a>')+'<a class="btn dark" href="sms:+61406216212">Text Jack</a></div></div>';
+    if(!started){
+      h+='<section class="blk"><h2>Before we <em>arrive</em></h2><div class="panel"><ul class="prep"><li><b>Access</b>Let Jack know how the team will get in (keys, lockbox or someone home), if it isn\'t sorted yet.</li><li><b>Power and water</b>Please leave both on. The team needs them to clean.</li><li><b>Pets and hazards</b>Let us know about pets, alarms or anything the team should watch for.</li></ul></div></section>';
+      h+='<section class="blk"><h2>On the <em>day</em></h2><div class="panel sub" style="font-size:14px">Keep this link. As the team works it updates with their arrival, each room as it\'s finished, and before and after photos.</div></section>';
+    }
+    return h;
+  }
   function showDetail(standalone){
     var j=(data.jobs||[]).find(function(x){return x.id===openId;}), el=$('detail');
     if(!j){ if(standalone){ $('main').innerHTML='<div class="empty">This clean is no longer listed. Call Jack on <b>'+JACK+'</b>.</div>'; } closeDetail(); return; }
@@ -269,6 +299,7 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
     if(standalone){ el.hidden=true; }
     h+='<div class="wrap" style="padding-bottom:60px">';
     h+='<div class="intro"><h1>'+esc(j.address||j.suburb)+'</h1><p>'+esc([j.address?j.suburb:'',j.service,fmtDay(j.date)].filter(Boolean).join(' · '))+'</p>'+(standalone&&data.agent?'<p>Arranged by '+esc(data.agent.name)+(data.agent.agency?', '+esc(data.agent.agency):'')+'</p>':'')+'</div>';
+    if(mode==='vendor') h+=bookingCard(j,L);
     h+='<div class="panel" style="margin-top:12px;display:grid;gap:12px"><div class="ctop"><span class="sub">Status</span><span class="pill '+p.cls+'">'+esc(p.label)+'</span></div><div class="bar'+(L.done?' ok':'')+'"><i style="width:'+p.pct+'%"></i></div>';
     h+='<div class="facts"><div class="fact"><span>Start</span><b>'+fmtTime(j.start)+'</b></div><div class="fact"><span>'+(L.done?'Finished':'Est. finish')+'</span><b>'+(L.done?clock(L.done):fmtTime(L.eta||j.end))+'</b></div><div class="fact"><span>Rooms</span><b>'+p.done+' of '+j.rooms.length+'</b></div></div>';
     if(j.readyBy) h+='<div class="ready">Ready for <b>'+esc(j.readyBy)+'</b></div>';

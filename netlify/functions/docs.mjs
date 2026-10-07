@@ -92,6 +92,20 @@ export default async (req) => {
   }
   const d = await s.get(`doc/${String(b.id || "")}`);
   if (!d) return json({ error: "Not found" }, 404);
+  if (b.action === "tojob" && d.kind === "quote") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(b.date || "")) return json({ error: "Pick the date of the clean" }, 400);
+    if (d.jobId) {
+      const roster = await (await import("../../lib/core.mjs")).loadRoster(s);
+      if (roster.jobs.some((j) => j.id === d.jobId)) return json({ ok: true, jobId: d.jobId });
+      d.jobId = ""; // the job was deleted from the roster, so make a new one
+    }
+    if (d.status !== "accepted") { d.status = "accepted"; d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; }
+    d.jobId = await addJobFromQuote(s, d, { date: b.date, start: b.start, end: b.end });
+    for (const iid of [d.depositInvoice, ...(d.invoices || [])].filter(Boolean)) { const x = await s.get(`doc/${iid}`); if (x && !x.serviceDate) { x.serviceDate = d.serviceDate; await saveDoc(s, x); } }
+    await saveDoc(s, d);
+    return json({ ok: true, jobId: d.jobId });
+  }
+  if (b.action === "confirmed") { d.confirmedAt = new Date().toISOString(); await saveDoc(s, d); return json({ ok: true }); }
   if (b.action === "sent") { if (d.status === "draft") d.status = "sent"; d.sentAt ||= new Date().toISOString(); await saveDoc(s, d); return json({ ok: true }); }
   if (b.action === "seen") { delete d.flag; delete d.flagAt; await saveDoc(s, d); return json({ ok: true }); }
   if (b.action === "status" && d.kind === "quote" && ["accepted", "declined", "sent"].includes(b.status)) {
