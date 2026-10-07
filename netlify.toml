@@ -10,3 +10,14 @@
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
     Referrer-Policy = "no-referrer"
+
+# Agent portal: /a/<agent token> and vendor links /v/<job share token>
+[[redirects]]
+  from = "/a/*"
+  to = "/agent/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/v/*"
+  to = "/agent/index.html"
+  status = 200

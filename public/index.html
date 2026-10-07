@@ -141,16 +141,52 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(16px);opacity:.6}to{transform:none;opacity:1}}}
 
 .btn:disabled{opacity:.6}
+.lv{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--sans);border-radius:999px;padding:6px 10px;margin-top:8px;background:var(--cream);color:var(--dark)}
+.lv.on{background:#F6E3D7;color:var(--terracotta-dark)}.lv.on::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--terracotta)}
+.lv.ok{background:#E6EFE3;color:#2F5A35}
+.ag{font-size:12px;color:var(--terracotta-dark);margin-top:6px}
+.lsec{margin-top:18px;padding-top:14px;border-top:1px solid var(--cream-dark)}
+.lsec h4{font:600 12px/1 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--meta);margin:0 0 10px}
+.lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--cream-dark)}
+.lrow:last-child{border:0}
+.lrow .nm{font:600 14px/1.3 var(--sans);color:var(--dark)}
+.lrow .ds{font-size:12px;color:var(--meta)}
+.rseg{display:flex;gap:4px;flex:none}
+.rseg button{min-height:36px;border:1px solid var(--line);background:var(--white);border-radius:6px;font:500 12px var(--sans);color:var(--dark);padding:0 9px;cursor:pointer}
+.rseg button[aria-pressed="true"][data-st="p"]{background:var(--terracotta);border-color:var(--terracotta);color:#fff}
+.rseg button[aria-pressed="true"][data-st="d"]{background:#2F5A35;border-color:#2F5A35;color:#fff}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin-top:10px}
+.thumb{position:relative;aspect-ratio:1;max-width:100%;border-radius:6px;overflow:hidden;background:var(--cream-dark)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb span{position:absolute;left:4px;bottom:4px;font:600 10px/1 var(--sans);background:rgba(26,26,26,.75);color:#fff;border-radius:4px;padding:3px 5px}
+.thumb button{position:absolute;right:3px;top:3px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(26,26,26,.75);color:#fff;font:600 14px/1 var(--sans);cursor:pointer}
+.tick{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:15px;color:var(--dark);cursor:pointer}
+.tick input{width:22px;height:22px;min-height:0;margin:0;accent-color:#2F5A35}
+.flagi{border-left:3px solid var(--gold);background:var(--cream);border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:8px;font-size:14px;color:var(--dark);display:flex;gap:8px;justify-content:space-between}
+.flagi b{display:block}
+.linkbox{font:400 13px/1.4 var(--sans);background:var(--cream);border-radius:6px;padding:8px 10px;word-break:break-all;color:var(--dark);margin-top:6px;user-select:all}
+.req{margin-top:14px;background:var(--white);border:1px solid var(--line);border-left:4px solid var(--terracotta);border-radius:6px;padding:12px;font-size:14px;color:var(--dark)}
+.req .rk{font:600 12px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--terracotta-dark);margin-bottom:6px}
+.req p{margin:4px 0;color:var(--body)}
+.req .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 </style></head><body>
 <div id="app"></div>
 <script>
 (function(){
-  var state = {team:[],jobs:[],confirms:{},info:{},acks:{}}, loaded=false, loadErr='', adminSet=true;
+  var state = {team:[],jobs:[],confirms:{},info:{},acks:{},agents:[],live:{},requests:[]}, loaded=false, loadErr='', adminSet=true;
+  var ROOMS=['Kitchen','Bathrooms','Bedrooms','Living & dining','Laundry','Windows & tracks','Outdoor & garage'], DEF_ROOMS=ROOMS.slice(0,6);
+  var LOCK={doors:'Windows and doors locked',lights:'Lights and fans off',ac:'Air-con off',keys:'Keys returned or lockbox set'};
+  function roomsOf(j){ return (j.rooms&&j.rooms.length)?j.rooms:DEF_ROOMS; }
+  function tok(){ var a=new Uint8Array(18); crypto.getRandomValues(a); return Array.prototype.map.call(a,function(b){return (b<16?'0':'')+b.toString(16);}).join(''); }
+  function agentOf(id){ for(var i=0;i<(state.agents||[]).length;i++) if(state.agents[i].id===id) return state.agents[i]; return null; }
+  function liveOf(j){ var L=state.live&&state.live[j.id]; return L||{arrived:{},rooms:{},photos:[],flags:[],lock:{}}; }
+  function liveSum(j){ var L=liveOf(j), rs=roomsOf(j), d=rs.filter(function(r){return L.rooms[r]&&L.rooms[r].s==='d';}).length; var arrived=Object.keys(L.arrived||{}).length;
+    if(L.done) return {c:'ok',t:'Ready · handed over'}; if(!arrived&&!d&&!Object.keys(L.rooms||{}).length) return null; if(d===rs.length) return {c:'on',t:'Final check'}; return {c:'on',t:(arrived?'On site':'Underway')+' · '+d+'/'+rs.length+' rooms'}; }
   var SERVICES = ['Bond clean','Pre-sale clean','Deep clean','Regular clean','Commercial','Other'];
   var AV = ['#1A1A1A','#C06B3C','#7A5A12','#4A4A4A','#A55830','#6B5B4B'];
   var app = document.getElementById('app');
   var LOGO = '<svg viewBox="0 0 48 48" role="img" aria-label="Bardon Clean"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
-  var canEdit = false, saving = false;
+  var canEdit = false, saving = false, pendingReq = null, liveOpen = null;
   function key(v){ if(v===undefined) return ls('roster_admin_key')||''; try{ if(v===null) localStorage.removeItem('roster_admin_key'); else localStorage.setItem('roster_admin_key',v);}catch(e){} }
   function api(path, opts){
     opts=opts||{}; var h={'content-type':'application/json'}; var k=key(); if(k) h['x-admin-key']=k;
@@ -208,7 +244,6 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
   var today = new Date(); today.setHours(0,0,0,0);
   var startStr = ss('roster_start'); var start = startStr ? parse(startStr) : today;
   var filter = ls('roster_filter') || 'all';
-  if (filter!=='all' && filter!=='open' && !member(filter)) filter='all';
   var DAYS = 14;
 
   function jobsOn(dateIso){
@@ -249,6 +284,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
       if (waitN) h+='<div class="warn"><strong>'+waitN+' shift'+(waitN>1?'s':'')+' not confirmed</strong> in the next two weeks.<button class="ghost" data-act="confirms" style="padding:0;margin:0 0 0 6px">Review</button></div>';
       else if (nc.length) h+='<div class="warn" style="border-left-color:#2F5A35">All shifts in the next two weeks are confirmed.<button class="ghost" data-act="confirms" style="padding:0;margin:0 0 0 6px">View</button></div>';
     }
+    if (canEdit) (state.requests||[]).forEach(function(r){ h+='<div class="req"><div class="rk">Booking request · '+esc(r.agent)+(r.agency?', '+esc(r.agency):'')+'</div><strong>'+esc(r.address)+(r.suburb?', '+esc(r.suburb):'')+'</strong><p>'+esc(r.service)+' · ready by '+fmtDay(parse(r.readyDate))+' for '+esc(r.readyFor)+'</p><p>'+esc([r.beds?r.beds+' bed':'',r.baths?r.baths+' bath':'','Access: '+r.access,'Invoice: '+r.invoice].filter(Boolean).join(' · '))+'</p>'+(r.notes?'<p>'+esc(r.notes)+'</p>':'')+'<div class="row"><button class="btn primary" data-req="'+r.id+'" style="flex:none">Add to roster</button><button class="btn outline" data-reqx="'+r.id+'">Dismiss</button></div></div>'; });
     if (canEdit && open) h+='<div class="warn"><strong>'+open+' job'+(open>1?'s':'')+' unassigned</strong> in this period. Tap Unassigned to see '+(open>1?'them':'it')+'.</div>';
     if (state.jobs.some(function(j){return j.example;})) h+='<div class="warn">The jobs and people marked <strong>Example</strong> are samples. '+(canEdit?'Edit or delete them, and add your real team under Manage team.':'')+'</div>';
 
@@ -271,12 +307,15 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
           h+='<div class="time">'+fmtTime(tt.start)+'<small>'+(tt.end?'to '+fmtTime(tt.end):'')+'</small><small>'+hours(tt.start,tt.end)+'</small></div>';
           h+='<div class="what"><div class="client">'+esc(j.client||'Job')+'</div><div class="meta">'+esc([j.suburb,j.address].filter(Boolean).join(' · '))+'</div>';
           h+='<span class="svc">'+esc(j.service||'')+'</span>'+(j.example?'<span class="ex">Example</span>':'');
+          var ls_=liveSum(j); if(ls_) h+=' <span class="lv '+ls_.c+'">'+esc(ls_.t)+'</span>';
+          if(canEdit && j.agentId){ var ag=agentOf(j.agentId); if(ag) h+='<div class="ag">Agent: '+esc(ag.name)+(ag.agency?', '+esc(ag.agency):'')+(j.readyBy?' · Ready for '+esc(j.readyBy):'')+'</div>'; }
           h+='<div class="who">';
           if (un) h+='<span class="none">Unassigned</span>';
           (j.staff||[]).forEach(function(id){ var m=member(id); if(!m) return; var sh=shiftOf(j,id); h+='<span class="person"><span class="av" style="background:'+colour(id)+'">'+esc(initials(m.name))+'</span>'+esc(m.name.replace(/\s*\(example\)/,''))+(differs(j,id)?'<span class="st"> · '+range(sh.start,sh.end)+'</span>':'')+((!isBoss(id)&&!j.example)?(function(c){return '<span class="mk '+c.v+'" title="'+CLABEL[c.v]+'" aria-label="'+CLABEL[c.v]+'">'+CMARK[c.v]+'</span>';})(cstate(j,id)):'')+'</span>'; });
           h+='</div>';
           if (j.notes) h+='<div class="notes">'+esc(j.notes)+'</div>';
           if (!canEdit && filter!=='all' && filter!=='open' && !isBoss(filter) && !j.example && j.date>=iso(today) && (j.staff||[]).indexOf(filter)>=0) h+=confirmBlock(j,filter);
+          if (!canEdit && filter!=='all' && filter!=='open' && !j.example && (j.staff||[]).indexOf(filter)>=0 && j.date>=iso(addDays(today,-1)) && j.date<=iso(today)) h+='<div class="cf"><button type="button" class="btn primary" data-live="'+j.id+'" data-p="'+filter+'" style="width:100%">Job updates and photos</button></div>';
           h+='</div></'+tag+'>';
         });
         h+='</div>';
@@ -286,7 +325,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     if (filter!=='all' && !countFor(filter)) h+='<p class="sub" style="margin-top:22px">No jobs in these two weeks.</p>';
 
     if (canEdit){
-      h+='<div class="tools"><button class="ghost" data-act="team">Manage team</button><button class="ghost" data-act="copy">Copy roster to text</button><button class="ghost" data-act="info">First-day info</button></div>';
+      h+='<div class="tools"><button class="ghost" data-act="team">Manage team</button><button class="ghost" data-act="copy">Copy roster to text</button><button class="ghost" data-act="info">First-day info</button><button class="ghost" data-act="agents">Agents</button><a class="ghost" href="/agent/" target="_blank" rel="noopener">Agent portal preview</a></div>';
       h+='<button class="fab" data-act="add">+ Add job</button>';
     }
     h+='<details class="rates"><summary>Casual pay rates</summary><table><tbody><tr><td>Monday to Friday</td><td>$37.50</td></tr><tr><td>Mon–Fri, start before 6am or finish after 6pm</td><td>$37.91</td></tr><tr><td>Saturday</td><td>$47.39</td></tr><tr><td>Sunday</td><td>$60.93</td></tr><tr><td>Public holiday</td><td>$74.47</td></tr></tbody></table><p>Per hour, before tax, plus 12% super. From 1 October 2026.</p></details>';
@@ -373,7 +412,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     var f=s.querySelector('input,select,textarea'); if(f && window.innerWidth>600) f.focus();
     return s;
   }
-  function closeSheet(){ var s=document.getElementById('scrim'); if(s) s.remove(); }
+  function closeSheet(){ var s=document.getElementById('scrim'); if(s) s.remove(); liveOpen=null; }
 
   function jobSheet(job){
     var isNew=!job;
@@ -390,10 +429,15 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     if (!state.team.length) h+='<span class="sub">Add people under Manage team first.</span>';
     h+='</div></div>';
     h+='<div id="shiftWrap"><span class="l">Shift times</span><p class="sub" style="margin:2px 0 0">Change a time if someone starts late or leaves early.</p><div class="shifts" id="shiftRows"></div></div>';
+    h+='<div class="two"><label class="l" for="f_agent">Agent<select id="f_agent" name="agentId"><option value="">No agent</option>'+(state.agents||[]).map(function(a){return '<option value="'+a.id+'"'+(a.id===job.agentId?' selected':'')+'>'+esc(a.name)+(a.agency?' · '+esc(a.agency):'')+'</option>';}).join('')+'</select></label>';
+    h+='<label class="l" for="f_ready">Ready for<input id="f_ready" name="readyBy" value="'+esc(job.readyBy||'')+'" placeholder="e.g. Photos Fri 9am"></label></div>';
+    if(!(state.agents||[]).length) h+='<p class="sub" style="margin:-6px 0 0">Add agents under Agents to share this job with them.</p>';
+    h+='<div><span class="l">Rooms to track</span><div class="pick">'+ROOMS.map(function(r){return '<label><input type="checkbox" name="rooms" value="'+esc(r)+'"'+(roomsOf(job).indexOf(r)>=0?' checked':'')+'>'+esc(r)+'</label>';}).join('')+'</div></div>';
     h+='<label class="l" for="f_meet">Meeting spot <span style="color:var(--meta);font-weight:400">(optional, for new starters)</span><input id="f_meet" name="meet" value="'+esc(job.meet||'')+'" placeholder="'+esc((state.info&&state.info.meet)||'e.g. Out the front')+'"></label>';
     h+='<label class="l" for="f_notes">Notes for the team<textarea id="f_notes" name="notes" placeholder="Access, inclusions, parking. Don\'t put alarm or lockbox codes here.">'+esc(job.notes)+'</textarea></label>';
     h+='<div class="err" id="jobErr" hidden></div>';
     h+='<div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save job</button></div>';
+    if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Copy vendor link</button>':'')+'</div>';
     if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-dup>Duplicate</button><button type="button" class="btn danger" data-del>Delete job</button></div>';
     h+='</form>';
     var s=openSheet(h), form=s.querySelector('#jobForm');
@@ -407,6 +451,8 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
       var fd=new FormData(form), err=s.querySelector('#jobErr');
       if(!(fd.get('client')||'').trim() || !fd.get('date')){ err.textContent='Add a client name and a date.'; err.hidden=false; return; }
       var next={id:job.id,date:fd.get('date'),start:fd.get('start'),end:fd.get('end'),client:fd.get('client').trim(),suburb:(fd.get('suburb')||'').trim(),address:(fd.get('address')||'').trim(),service:fd.get('service'),staff:fd.getAll('staff'),notes:(fd.get('notes')||'').trim(),meet:(fd.get('meet')||'').trim()};
+      var agId=fd.get('agentId')||''; if(agId){ next.agentId=agId; next.share=job.share||tok(); } var rb=(fd.get('readyBy')||'').trim(); if(rb) next.readyBy=rb;
+      var rms=fd.getAll('rooms'); if(rms.length && rms.join('|')!==DEF_ROOMS.join('|')) next.rooms=rms;
       var sh={}, raw=readShifts(form); next.staff.forEach(function(id){ var r=raw[id]; if(r && (r.start&&r.start!==next.start || r.end&&r.end!==next.end)) sh[id]={start:r.start||next.start,end:r.end||next.end}; });
       if(Object.keys(sh).length) next.shifts=sh;
       var jobs=state.jobs.filter(function(j){return j.id!==job.id;}); jobs.push(next);
@@ -417,8 +463,10 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
       if(del.dataset.sure){ save({team:state.team,jobs:state.jobs.filter(function(j){return j.id!==job.id;})}, del, s.querySelector('#jobErr'), 'Job deleted'); }
       else { del.dataset.sure='1'; del.textContent='Tap again to delete'; }
     };
+    var lj=s.querySelector('[data-livej]'); if(lj) lj.onclick=function(){ liveSheet(job.id,''); };
+    var vl=s.querySelector('[data-vlink]'); if(vl) vl.onclick=function(){ copyText(location.origin+'/v/'+job.share); };
     var dup=s.querySelector('[data-dup]');
-    if(dup) dup.onclick=function(){ var c=JSON.parse(JSON.stringify(job)); c.id=uid('j'); c.example=false; delete c.confirm; c.date=iso(addDays(parse(job.date),7)); closeSheet(); jobSheet(null); fillForm(c); };
+    if(dup) dup.onclick=function(){ var c=JSON.parse(JSON.stringify(job)); c.id=uid('j'); c.example=false; delete c.confirm; delete c.share; c.date=iso(addDays(parse(job.date),7)); closeSheet(); jobSheet(null); fillForm(c); };
   }
   function readShifts(form){ var o={}; Array.prototype.forEach.call(form.querySelectorAll('[data-shift-start]'),function(i){ var id=i.getAttribute('data-shift-start'); o[id]={start:i.value,end:(form.querySelector('[data-shift-end="'+id+'"]')||{}).value}; }); return o; }
   function drawShifts(form, shifts, js, je){
@@ -431,6 +479,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     var f=document.getElementById('jobForm'); if(!f) return;
     ['client','suburb','address','date','start','end','notes'].forEach(function(k){ if(f.elements[k]) f.elements[k].value=c[k]||''; });
     f.elements.service.value=c.service;
+    if(f.elements.agentId) f.elements.agentId.value=c.agentId||''; if(f.elements.readyBy) f.elements.readyBy.value=c.readyBy||'';
     Array.prototype.forEach.call(f.querySelectorAll('input[name=staff]'),function(i){ i.checked=(c.staff||[]).indexOf(i.value)>=0; });
     drawShifts(f, c.shifts||{}, c.start, c.end);
   }
@@ -467,6 +516,112 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
         save({team:state.team.filter(function(t){return t.id!==id;}), jobs:state.jobs.map(function(j){ var c=Object.assign({},j); c.staff=(c.staff||[]).filter(function(x){return x!==id;}); if(c.confirm){ c.confirm=Object.assign({},c.confirm); delete c.confirm[id]; } if(c.shifts){ c.shifts=Object.assign({},c.shifts); delete c.shifts[id]; } return c; })}, b, s.querySelector('#teamErr'), 'Removed');
       };
     });
+  }
+
+  // ---------- Agents ----------
+  function agentsSheet(){
+    var h='<h3>Real estate <em>agents</em></h3><p class="sub" style="margin:-6px 0 10px">Each agent gets a private link showing only the jobs you tag with their name. Send it to them once.</p>';
+    (state.agents||[]).forEach(function(a){ var link=location.origin+'/a/'+a.token, n=state.jobs.filter(function(j){return j.agentId===a.id;}).length;
+      h+='<div class="crow"><div class="top"><span class="nm">'+esc(a.name)+'</span><span class="ds">'+n+' job'+(n===1?'':'s')+'</span></div><div class="ds">'+esc([a.agency,a.phone].filter(Boolean).join(' · '))+'</div><div class="linkbox">'+esc(link)+'</div>';
+      h+='<div class="seg"><button type="button" data-copylink="'+esc(link)+'">Copy link</button><button type="button" data-textag="'+a.id+'">Text it</button><button type="button" data-newlink="'+a.id+'">New link</button><button type="button" data-rmag="'+a.id+'">Remove</button></div></div>'; });
+    if(!(state.agents||[]).length) h+='<p class="sub">No agents yet.</p>';
+    h+='<form id="agForm" class="fgrid" style="margin-top:16px" novalidate><label class="l" for="f_agname">Agent name<input id="f_agname" name="name" required placeholder="e.g. Michelle McLeod"></label><div class="two"><label class="l" for="f_agency">Agency<input id="f_agency" name="agency" placeholder="Agency and office"></label><label class="l" for="f_agph">Mobile<input id="f_agph" name="phone" type="tel" inputmode="tel" placeholder="04xx xxx xxx"></label></div>';
+    h+='<div class="err" id="agErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Done</button><button type="submit" class="btn primary">Add agent</button></div></form>';
+    var s=openSheet(h), err=s.querySelector('#agErr');
+    s.querySelector('[data-close]').onclick=closeSheet;
+    s.querySelector('#agForm').onsubmit=function(e){ e.preventDefault(); var f=this, n=f.elements.name.value.trim(); if(!n){ err.textContent='Add a name.'; err.hidden=false; return; }
+      var a={id:uid('a'),name:n,agency:f.elements.agency.value.trim(),token:tok()}; var ph=f.elements.phone.value.trim(); if(ph) a.phone=ph;
+      save({agents:(state.agents||[]).concat([a]),team:state.team,jobs:state.jobs}, f.querySelector('.primary'), err, n+' added'); };
+    s.addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b) return;
+      if(b.dataset.copylink){ copyText(b.dataset.copylink); return; }
+      if(b.dataset.textag){ var a=agentOf(b.dataset.textag); textSheet('Send '+esc(a.name.split(' ')[0])+' their <em>link</em>', a.phone||'', a.name, 'Hi '+a.name.split(' ')[0]+', it\'s Jack from Bardon Clean. Here\'s your private link for our jobs at your listings. You can see who\'s on site, progress room by room, photos and the handover report, and book cleans: '+location.origin+'/a/'+a.token); return; }
+      if(b.dataset.newlink){ if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent='Old link stops. Tap again'; return; } var id=b.dataset.newlink; save({agents:state.agents.map(function(a){ return a.id===id?Object.assign({},a,{token:tok()}):a; }),team:state.team,jobs:state.jobs}, b, err, 'New link made'); return; }
+      if(b.dataset.rmag){ if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent='Tap again'; return; } var rid=b.dataset.rmag; save({agents:state.agents.filter(function(a){return a.id!==rid;}),team:state.team,jobs:state.jobs.map(function(j){ if(j.agentId!==rid) return j; var c=Object.assign({},j); delete c.agentId; return c; })}, b, err, 'Agent removed'); }
+    });
+  }
+
+  // ---------- Live job updates ----------
+  var liveBusy=false;
+  function liveSheet(jobId, pid){
+    var s=openSheet('<div id="liveBox"></div>'); liveOpen={jobId:jobId,pid:pid};
+    s.addEventListener('click', liveClick); s.addEventListener('change', liveChange);
+    drawLive();
+  }
+  function fmtClock(isoStr){ if(!isoStr) return ''; var d=new Date(isoStr), h=d.getHours(), m=d.getMinutes(); return (h%12||12)+':'+pad(m)+(h>=12?'pm':'am'); }
+  function drawLive(){
+    var box=document.getElementById('liveBox'); if(!box||!liveOpen) return;
+    var j=state.jobs.find(function(x){return x.id===liveOpen.jobId;}); if(!j){ closeSheet(); return; }
+    var L=liveOf(j), pid=liveOpen.pid, ag=agentOf(j.agentId), keep=box.closest('.sheet').scrollTop;
+    var h='<h3>Job <em>updates</em></h3><p class="sub" style="margin:-6px 0 0">'+esc((j.address||j.client)+(j.suburb?', '+j.suburb:''))+' · '+fmtDay(parse(j.date))+'</p>';
+    h+='<p class="sub">'+(j.agentId?'The agent'+(ag&&canEdit?' ('+esc(ag.name)+')':'')+' sees these updates live, plus the photos and notes.':'No agent on this job. Updates still save to the job.')+'</p>';
+    h+='<div class="lsec"><h4>Arrived</h4>';
+    (j.staff||[]).forEach(function(id){ var m=member(id); if(!m) return; if(!canEdit && id!==pid) { h+='<div class="lrow"><span class="nm">'+esc(m.name)+'</span><span class="ds">'+(L.arrived[id]?'Arrived '+fmtClock(L.arrived[id]):'Not yet')+'</span></div>'; return; }
+      h+='<div class="lrow"><span><span class="nm">'+esc(m.name)+'</span><br><span class="ds">'+(L.arrived[id]?'Arrived '+fmtClock(L.arrived[id]):'Not arrived')+'</span></span>'+(L.arrived[id]?'<button type="button" class="btn danger" data-arr="'+id+'" data-undo="1">Undo</button>':'<button type="button" class="btn yes" data-arr="'+id+'" style="flex:none">I\'ve arrived</button>')+'</div>'; });
+    h+='</div><div class="lsec"><h4>Rooms</h4>';
+    roomsOf(j).forEach(function(r){ var st=(L.rooms[r]&&L.rooms[r].s)||'w', by=L.rooms[r]&&member(L.rooms[r].by);
+      h+='<div class="lrow"><span><span class="nm">'+esc(r)+'</span>'+(by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span></div>'; });
+    h+='</div><div class="lsec"><h4>Photos</h4><p class="sub" style="margin:0 0 8px">Take befores when you arrive and afters as each room is done.</p><div class="two"><label class="l" for="ph_room">Room<select id="ph_room">'+roomsOf(j).map(function(r){return '<option>'+esc(r)+'</option>';}).join('')+'</select></label><label class="l" for="ph_kind">Type<select id="ph_kind"><option value="before">Before</option><option value="after">After</option></select></label></div>';
+    h+='<label class="btn primary" style="display:flex;align-items:center;justify-content:center;margin-top:10px;cursor:pointer" for="ph_file">'+(liveBusy?esc(liveBusy):'Add photos')+'</label><input id="ph_file" type="file" accept="image/*" multiple hidden>';
+    if(L.photos.length) h+='<div class="thumbs">'+L.photos.slice().reverse().map(function(p){ return '<div class="thumb"><img loading="lazy" alt="'+esc(p.room+' '+p.kind)+'" src="/api/photo?j='+encodeURIComponent(j.id)+'&p='+p.id+'"><span>'+esc(p.room)+' · '+(p.kind==='before'?'Before':'After')+'</span><button type="button" data-delph="'+p.id+'" aria-label="Delete photo">×</button></div>'; }).join('')+'</div>';
+    h+='</div><div class="lsec"><h4>Notes for the agent</h4><p class="sub" style="margin:0 0 8px">Anything they should know before photos or buyers: damage, mould, broken fittings, stains that won\'t shift.</p>';
+    L.flags.forEach(function(f){ h+='<div class="flagi"><span><b>'+esc(f.t)+'</b>'+esc(f.d)+'</span><button type="button" class="btn danger" data-unflag="'+f.id+'" style="min-height:0">Remove</button></div>'; });
+    h+='<input id="fl_t" placeholder="Short title, e.g. Oven seal cracked" style="width:100%;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px;margin-top:4px"><textarea id="fl_d" placeholder="Details (optional)" style="width:100%;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px;margin-top:8px;min-height:64px"></textarea><button type="button" class="btn outline" data-addflag style="margin-top:8px;width:100%">Add note</button>';
+    h+='</div><div class="lsec"><h4>Lock-up</h4>';
+    Object.keys(LOCK).forEach(function(k){ h+='<label class="tick"><input type="checkbox" data-lock="'+k+'"'+(L.lock[k]?' checked':'')+'>'+esc(LOCK[k])+'</label>'; });
+    h+='</div>';
+    if(canEdit) h+='<div class="lsec"><h4>Finish time the agent sees</h4><div class="two"><label class="l" for="eta">Estimated finish<input id="eta" type="time" value="'+esc(L.eta||j.end||'')+'"></label><button type="button" class="btn outline" data-eta style="align-self:end">Update</button></div></div>';
+    h+='<div class="lsec">'+(L.done?'<span class="cs ok">✓ Marked ready '+fmtClock(L.done)+'</span> <button type="button" class="btn danger" data-finish="undo">Undo</button>':'<button type="button" class="btn yes" data-finish="1" style="width:100%">Job finished: mark ready for the agent</button><p class="sub">Check every room is done, afters are taken and the house is locked up first.</p>')+'</div>';
+    h+='<div class="err" id="liveErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Close</button></div>';
+    var ft=document.getElementById('fl_t'), fdd=document.getElementById('fl_d'), kv={t:ft?ft.value:'',d:fdd?fdd.value:'',r:(document.getElementById('ph_room')||{}).value,k:(document.getElementById('ph_kind')||{}).value};
+    box.innerHTML=h; box.closest('.sheet').scrollTop=keep;
+    if(kv.t) document.getElementById('fl_t').value=kv.t; if(kv.d) document.getElementById('fl_d').value=kv.d; if(kv.r) document.getElementById('ph_room').value=kv.r; if(kv.k) document.getElementById('ph_kind').value=kv.k;
+  }
+  function livePost(body, btn){
+    if(btn) btn.disabled=true;
+    body.jobId=liveOpen.jobId; body.personId=liveOpen.pid;
+    return api('/api/live',{method:'POST',body:body}).then(function(d){ state.live[liveOpen.jobId]=d.live; drawLive(); render(); })
+      .catch(function(e){ if(btn) btn.disabled=false; var er=document.getElementById('liveErr'); if(er){ er.textContent=e.message; er.hidden=false; } toast(e.message); });
+  }
+  function liveClick(e){
+    var b=e.target.closest('button'); if(!b||!liveOpen) return;
+    if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
+    if(b.dataset.arr){ livePost({action:'arrive',who:b.dataset.arr,undo:!!b.dataset.undo},b); return; }
+    if(b.dataset.room){ livePost({action:'room',room:b.dataset.room,status:b.dataset.st},b); return; }
+    if(b.dataset.unflag){ livePost({action:'unflag',id:b.dataset.unflag},b); return; }
+    if(b.hasAttribute('data-addflag')){ var t=document.getElementById('fl_t').value.trim(); if(!t){ toast('Add a short title'); return; } livePost({action:'flag',title:t,detail:document.getElementById('fl_d').value},b).then(function(){ var x=document.getElementById('fl_t'),y=document.getElementById('fl_d'); if(x) x.value=''; if(y) y.value=''; }); return; }
+    if(b.hasAttribute('data-eta')){ livePost({action:'eta',time:document.getElementById('eta').value},b).then(function(){toast('Finish time updated');}); return; }
+    if(b.dataset.finish){ var j=state.jobs.find(function(x){return x.id===liveOpen.jobId;}), L=liveOf(j); if(b.dataset.finish!=='undo' && !b.dataset.sure){ var left=roomsOf(j).filter(function(r){return !(L.rooms[r]&&L.rooms[r].s==='d');}).length, lk=Object.keys(LOCK).filter(function(k){return !L.lock[k];}).length; if(left||lk){ b.dataset.sure='1'; b.textContent=(left?left+' room'+(left>1?'s':'')+' not done':'')+(left&&lk?', ':'')+(lk?lk+' lock-up item'+(lk>1?'s':'')+' unticked':'')+'. Tap again to finish anyway'; return; } }
+      livePost({action:'finish',undo:b.dataset.finish==='undo'},b).then(function(){ if(b.dataset.finish!=='undo') toast('Marked ready. The agent can see it now.'); }); return; }
+    if(b.dataset.delph){ if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent='?'; return; } b.disabled=true;
+      var k=key(), hd={}; if(k) hd['x-admin-key']=k;
+      fetch('/api/photo?job='+encodeURIComponent(liveOpen.jobId)+'&person='+encodeURIComponent(liveOpen.pid)+'&id='+b.dataset.delph,{method:'DELETE',headers:hd}).then(function(r){return r.json();}).then(function(d){ if(d.live){ state.live[liveOpen.jobId]=d.live; drawLive(); } else toast(d.error||'Couldn\'t delete'); }); }
+  }
+  function liveChange(e){
+    var t=e.target; if(!liveOpen) return;
+    if(t.dataset.lock){ livePost({action:'lock',item:t.dataset.lock,value:t.checked}); return; }
+    if(t.id==='ph_file' && t.files.length){ uploadPhotos(Array.prototype.slice.call(t.files), document.getElementById('ph_room').value, document.getElementById('ph_kind').value); }
+  }
+  function shrink(file){
+    return new Promise(function(res,rej){
+      var url=URL.createObjectURL(file), img=new Image();
+      img.onload=function(){ var max=1600, w=img.naturalWidth, h=img.naturalHeight, sc=Math.min(1,max/Math.max(w,h)); var c=document.createElement('canvas'); c.width=Math.round(w*sc); c.height=Math.round(h*sc); c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url); c.toBlob(function(b){ b?res(b):rej(new Error('Couldn\'t read that photo')); },'image/jpeg',0.82); };
+      img.onerror=function(){ URL.revokeObjectURL(url); rej(new Error('Couldn\'t read that photo')); };
+      img.src=url;
+    });
+  }
+  function uploadPhotos(files, room, kind){
+    var lo=liveOpen, i=0, k=key(), hd={}; if(k) hd['x-admin-key']=k;
+    function next(){
+      if(i>=files.length || !lo){ liveBusy=false; drawLive(); toast(files.length+' photo'+(files.length>1?'s':'')+' added'); return; }
+      liveBusy='Uploading '+(i+1)+' of '+files.length+'…'; drawLive();
+      shrink(files[i]).then(function(blob){
+        return fetch('/api/photo?job='+encodeURIComponent(lo.jobId)+'&person='+encodeURIComponent(lo.pid)+'&room='+encodeURIComponent(room)+'&kind='+kind,{method:'POST',headers:hd,body:blob});
+      }).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'Upload failed'); return d; }); })
+      .then(function(d){ state.live[lo.jobId]=d.live; i++; next(); })
+      .catch(function(e){ liveBusy=false; drawLive(); toast(e.message+'. Check your signal and try again.'); });
+    }
+    next();
   }
 
   function rosterText(id){
@@ -506,8 +661,8 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
   function save(next, btn, errEl, doneMsg){
     if (saving) return;
     saving=true; var label=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
-    var body={info:next.info||state.info,team:next.team,jobs:next.jobs.map(function(j){ var c=Object.assign({},j); delete c.confirm; delete c.example; return c; })};
-    api('/api/roster',{method:'PUT',body:body}).then(function(){ saving=false; closeSheet(); return refresh(); }).then(function(){ toast(doneMsg||'Saved'); })
+    var body={info:next.info||state.info,agents:next.agents||state.agents,team:next.team,jobs:next.jobs.map(function(j){ var c=Object.assign({},j); delete c.confirm; delete c.example; return c; })};
+    api('/api/roster',{method:'PUT',body:body}).then(function(){ saving=false; closeSheet(); if(pendingReq && doneMsg==='Job added'){ var rid=pendingReq; pendingReq=null; return api('/api/agent',{method:'POST',body:{action:'dismiss',id:rid}}).catch(function(){}).then(refresh); } return refresh(); }).then(function(){ toast(doneMsg||'Saved'); })
     .catch(function(e){
       saving=false; if(btn){ btn.disabled=false; btn.textContent=label; }
       if(e.status===401){ key(null); canEdit=false; closeSheet(); render(); toast('Log in again to edit'); return; }
@@ -516,11 +671,11 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
   }
   function refresh(){
     return api('/api/roster').then(function(d){
-      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{}}; adminSet=d.adminSet; loaded=true; loadErr='';
+      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},requests:d.requests||[]}; adminSet=d.adminSet; loaded=true; loadErr='';
       if(key() && !d.admin){ key(null); }
       canEdit=!!d.admin;
       if (filter!=='all' && filter!=='open' && !member(filter)) filter='all';
-      if(!document.getElementById('scrim')) render();
+      if(!document.getElementById('scrim')) render(); else if(liveOpen) drawLive();
     }).catch(function(e){ if(!loaded){ loadErr='Couldn\'t load the roster. Check your signal.'; render(); } });
   }
   function loginSheet(){
@@ -540,15 +695,19 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
   app.addEventListener('click', function(e){
     var ak=e.target.closest('[data-ack]'); if(ak){ ak.disabled=true; ak.textContent='Saving…'; api('/api/ack',{method:'POST',body:{personId:ak.dataset.ack}}).then(function(d){ state.acks[ak.dataset.ack]=d.ack; render(); toast('Thanks! See you there.'); }).catch(function(er){ ak.disabled=false; ak.textContent='Got it'; toast(er.message); }); return; }
     var r=e.target.closest('[data-reply]'); if(r){ if(r.dataset.reply==='yes') sendReply(r.dataset.j, r.dataset.p, 'yes', '', r); else replyNo(r.dataset.j, r.dataset.p); return; }
+    var lv=e.target.closest('[data-live]'); if(lv){ liveSheet(lv.dataset.live, lv.dataset.p||''); return; }
+    var rq=e.target.closest('[data-req]'); if(rq){ var r=(state.requests||[]).find(function(x){return x.id===rq.dataset.req;}); if(r){ pendingReq=r.id; jobSheet(null); fillForm({client:'',suburb:r.suburb,address:r.address,date:r.readyDate,start:'08:00',end:'16:00',service:SERVICES.indexOf(r.service)>=0?r.service:'Pre-sale clean',staff:[],agentId:r.agentId,readyBy:r.readyFor+' '+fmtDay(parse(r.readyDate)),notes:[r.beds?r.beds+' bed':'',r.baths?r.baths+' bath':'','Access: '+r.access,'Invoice: '+r.invoice,r.notes].filter(Boolean).join('. ')}); } return; }
+    var rx=e.target.closest('[data-reqx]'); if(rx){ if(!rx.dataset.sure){ rx.dataset.sure='1'; rx.textContent='Tap again'; return; } api('/api/agent',{method:'POST',body:{action:'dismiss',id:rx.dataset.reqx}}).then(refresh).then(function(){toast('Request dismissed');}).catch(function(er){toast(er.message);}); return; }
     var t=e.target.closest('[data-filter],[data-nav],[data-edit],[data-act]'); if(!t) return;
     if (t.dataset.filter){ filter=t.dataset.filter; ls('roster_filter',filter); render(); return; }
     if (t.dataset.nav){ start = t.dataset.nav==='today' ? new Date(today) : addDays(start, +t.dataset.nav); ss('roster_start', iso(start)); render(); return; }
     if (t.dataset.edit && canEdit){ var j=state.jobs.find(function(x){return x.id===t.dataset.edit;}); if(j) jobSheet(j); return; }
-    if (t.dataset.act==='add') jobSheet(null);
+    if (t.dataset.act==='add'){ pendingReq=null; jobSheet(null); }
     if (t.dataset.act==='team') teamSheet();
     if (t.dataset.act==='copy') copySheet();
     if (t.dataset.act==='confirms') confirmSheet();
     if (t.dataset.act==='info') infoSheet();
+    if (t.dataset.act==='agents') agentsSheet();
     if (t.dataset.act==='login') loginSheet();
     if (t.dataset.act==='logout'){ key(null); canEdit=false; render(); toast('Logged out'); }
     if (t.dataset.act==='reload'){ loadErr=''; render(); refresh(); }
