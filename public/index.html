@@ -231,6 +231,17 @@ body.has-nav .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 .menu svg{width:22px;height:22px;color:var(--terracotta-dark);flex:none}
 .menu .chev{margin-left:auto;color:var(--meta)}
 .hint-card{margin-top:14px;background:var(--tint);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--dark)}
+.tl2{display:grid;gap:0;background:var(--white);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:10px}
+.trow{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--cream-dark)}
+.trow:last-child{border-bottom:0}
+.trow a.go{flex:1;min-width:0;text-decoration:none;color:inherit;display:block}
+.trow .nm{font:600 15px/1.3 var(--sans);color:var(--dark);display:block}
+.trow .ds{font-size:12.5px;color:var(--meta);display:block;margin-top:2px}
+.trow .cp{flex:none;border:1px solid var(--line);background:var(--white);border-radius:6px;min-height:36px;padding:0 10px;font:500 12px var(--sans);color:var(--dark);cursor:pointer}
+.trow .ar{flex:none;color:var(--meta);font-size:18px}
+details.olds{margin-top:14px;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+details.olds summary{font:600 14px var(--sans);color:var(--dark);cursor:pointer}
+details.olds .tl2{border:0;margin:6px -14px -12px}
 </style></head><body>
 <div id="app"></div>
 <script>
@@ -703,6 +714,7 @@ body.has-nav .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
     roster:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
     plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     agents:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-5 5.5-5s4.9 2 5.5 5"/><path d="M15.5 5.2a3 3 0 0 1 0 5.6M17 14.3c1.8.6 3 2.3 3.4 4.7"/></svg>',
+    grid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg>',
     more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>',
     cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.4"/></svg>',
     rooms:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1.2 1.2L7 5M3.5 12l1.2 1.2L7 11"/><circle cx="5" cy="18" r="1.3"/></svg>',
@@ -722,7 +734,7 @@ body.has-nav .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
   function navBar(){
     var a=alertCount(), rq=(state.requests||[]).length;
     function b(v,label,icon,badge){ return '<button type="button" data-view="'+v+'"'+(view===v?' aria-current="page"':'')+'>'+icon+label+(badge?'<span class="badge">'+badge+'</span>':'')+'</button>'; }
-    return '<nav class="tabbar" aria-label="Main"><div class="in">'+b('today','Today',IC.today,a)+b('roster','Roster',IC.roster)+'<button type="button" class="add" data-act="add" aria-label="Add job"><span class="c">'+IC.plus+'</span>Add job</button>'+b('agents','Agents',IC.agents,rq)+b('more','More',IC.more)+'</div></nav>';
+    return '<nav class="tabbar" aria-label="Main"><div class="in">'+b('today','Today',IC.today,a)+b('roster','Roster',IC.roster)+'<button type="button" class="add" data-act="add" aria-label="Add job"><span class="c">'+IC.plus+'</span>Add job</button>'+b('agents','Agents',IC.agents,rq)+b('more','Tools',IC.grid)+'</div></nav>';
   }
   function topbar(title){ return '<div class="topbar"><span class="wm">Bardon Clean</span><button class="refresh" data-act="sync">Refresh</button></div><h1>'+title+'</h1>'; }
   function jobsFor(dateIso){ return state.jobs.filter(function(j){return j.date===dateIso;}).sort(function(a,b){return (a.start||'').localeCompare(b.start||'');}); }
@@ -782,15 +794,39 @@ body.has-nav .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
     if(!ag.length) h+='<div class="hint-card">Add an agent, then tag their jobs. They get a private link showing progress, photos and handover notes.</div>';
     h+='<div class="mini">'+ag.map(function(a){ var js=state.jobs.filter(function(j){return j.agentId===a.id;}), up=js.filter(function(j){return j.date>=t;}).length; return '<button type="button" data-act="agents"><span class="t">'+up+'<small>upcoming</small></span><span><span class="c">'+esc(a.name)+'</span><span class="m">'+esc(a.agency||'')+'</span><span class="m">'+js.length+' job'+(js.length===1?'':'s')+' in total</span></span></button>'; }).join('')+'</div>';
     h+='<div class="actions"><button class="btn primary" data-act="agents">Manage agents and links</button></div>';
-    h+='<div class="menu"><a href="/agent/" target="_blank" rel="noopener">'+IC.eye+'See what agents see<span class="chev">›</span></a></div>';
+    h+='<div class="menu"><a href="/agent/" target="_blank" rel="noopener">'+IC.eye+'See what agents see<span class="chev">›</span></a><a href="https://claude.ai/artifact/2y3NoiRbgz211SKDpi4UPv" target="_blank" rel="noopener">'+IC.agents+'Agent outreach tracker<span class="chev">›</span></a></div>';
     return h;
   }
+  var TOOLS=[
+    ['Send to the team',[
+      ['Team roster','Shifts and confirmations. The link your team uses.','https://bardon-roster.netlify.app',1],
+      ['New starter form','Tax, super, bank, ID and availability.','https://bardon-onboarding.netlify.app',1],
+      ['Stock room','Tap + or − as products are used. 7am email when low.','https://claude.ai/artifact/EgGkdoMHLWVzHE4cvqRRKQ',1]]],
+    ['Hiring and team admin',[
+      ['Hiring steps and message templates','8-step hiring guide, which channel for what, team texts.','https://claude.ai/artifact/5CSV5aC3GxW4vS5i8QyDxY'],
+      ['Employment contracts','Send a casual their agreement. Track who\'s signed.','https://claude.ai/artifact/GiVmk2quzkiW68iyGFHA2h'],
+      ['Pay run and payslips','Tax, super and payslips by email.','https://claude.ai/artifact/Nd5NuKThgp4VGyR38uzmkZ'],
+      ['Day One Team Manual','What a new starter needs on their first shift.','https://claude.ai/code/artifact/7c89d3b7-4c7c-4fe8-ba34-1f5ddb07ffda'],
+      ['Team platform','Training, standards, SOPs and checklists.','https://claude.ai/artifact/S8HC3VN7JXqdqe3GNs5GmH'],
+      ['Form submissions','Netlify: bardon-onboarding and bardon-contract, then Forms.','https://app.netlify.com']]],
+    ['Business',[
+      ['Jobber','Quotes, jobs, scheduling and invoicing.','https://secure.getjobber.com'],
+      ['Walkthrough form','On-site walkthrough for quoting.','https://claude.ai/artifact/8429NnQ1kJydxxZ2mv7E26'],
+      ['Agent outreach','Inner-west agents to pitch. Follow-ups and referrals.','https://claude.ai/artifact/2y3NoiRbgz211SKDpi4UPv'],
+      ['Labour forecast','True cost and profit per cleaner hour.','https://claude.ai/artifact/U5vAqpcJr83t9bpNNvyHN2'],
+      ['Morning brief','Your daily briefing page.','https://claude.ai/artifact/HwHA4bzHhYeWsU5bDfhW6Y'],
+      ['Website','bardonclean.au','https://bardonclean.au',1]]]
+  ];
+  var OLD=[['Real estate flyer options','https://claude.ai/artifact/RAMb84GfWADtmDFvvKhPm2'],['Design comparison','https://claude.ai/artifact/UQJCqjnCMgd2fUkU3Nqm1L'],['Three design options','https://claude.ai/artifact/SxMaxuA3DNvagiPsbnU6RT'],['Slides','https://claude.ai/artifact/4Re8jjtwoJjQthUxCFkyfa'],['Old team platform draft A','https://claude.ai/artifact/4YoBqu9A74SQ2zWTYsYJLe'],['Old team platform draft B','https://claude.ai/artifact/4MsDMLVUHx2zZHULtkihER'],['Old team platform draft C','https://claude.ai/artifact/TyEp7PFHUAg8NYLWZ5DqnF']];
+  function toolRow(t){ return '<div class="trow"><a class="go" href="'+esc(t[2])+'" target="_blank" rel="noopener"><span class="nm">'+esc(t[0])+'</span>'+(t[1]?'<span class="ds">'+esc(t[1])+'</span>':'')+'</a>'+(t[3]?'<button type="button" class="cp" data-copylink2="'+esc(t[2])+'">Copy link</button>':'<span class="ar">›</span>')+'</div>'; }
   function renderMore(){
-    var h=topbar('More');
+    var h=topbar('Tools');
     function it(act,icon,label){ return '<button type="button" data-act="'+act+'">'+icon+label+'<span class="chev">›</span></button>'; }
-    h+='<div class="menu">'+it('confirms',IC.tick,'Shift confirmations')+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'<a href="/agent/" target="_blank" rel="noopener">'+IC.eye+'Agent portal preview<span class="chev">›</span></a></div>';
+    h+='<div class="sect"><span>Roster</span></div><div class="menu" style="margin-top:0">'+it('confirms',IC.tick,'Shift confirmations')+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'</div>';
+    TOOLS.forEach(function(g){ h+='<div class="sect"><span>'+esc(g[0])+'</span></div><div class="tl2" style="margin-top:0">'+g[1].map(toolRow).join('')+'</div>'; });
+    h+='<details class="olds"><summary>Design files and old drafts ('+OLD.length+')</summary><div class="tl2">'+OLD.map(function(o){return toolRow([o[0],'',o[1]]);}).join('')+'</div></details>';
     h+='<details class="rates"><summary>Casual pay rates</summary><table><tbody><tr><td>Monday to Friday</td><td>$37.50</td></tr><tr><td>Mon–Fri, start before 6am or finish after 6pm</td><td>$37.91</td></tr><tr><td>Saturday</td><td>$47.39</td></tr><tr><td>Sunday</td><td>$60.93</td></tr><tr><td>Public holiday</td><td>$74.47</td></tr></tbody></table><p>Per hour, before tax, plus 12% super. From 1 October 2026.</p></details>';
-    h+='<div class="hint-card"><strong>Put this on your home screen.</strong> In Safari tap Share, then Add to Home Screen. It opens straight to Today. Log in once inside it.</div>';
+    h+='<div class="hint-card"><strong>On your home screen:</strong> in Safari tap Share, then Add to Home Screen. It opens straight to Today. Log in once inside it.</div>';
     h+='<div class="menu">'+it('logout',IC.out,'Log out of editing')+'</div>';
     return h;
   }
@@ -901,6 +937,7 @@ body.has-nav .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
       else if(q==='arrive'){ var L0=liveOf(state.jobs.find(function(x){return x.id===jid;})); if(L0.arrived[qp]) liveSheet(jid,qp); else livePost({action:'arrive',who:qp},qa,{jobId:jid,pid:qp}).then(function(){ toast('Arrival sent'); }); }
       else { liveSheet(jid,qp); if(q==='finish') setTimeout(function(){ var sh=document.querySelector('.sheet'); if(sh) sh.scrollTop=sh.scrollHeight; },60); }
       return; }
+    var cl=e.target.closest('[data-copylink2]'); if(cl){ copyText(cl.dataset.copylink2); return; }
     var vc=e.target.closest('[data-vcopy]'); if(vc){ copyText(location.origin+'/v/'+vc.dataset.vcopy); return; }
     var lv=e.target.closest('[data-live]'); if(lv){ liveSheet(lv.dataset.live, lv.dataset.p||''); return; }
     var rq=e.target.closest('[data-req]'); if(rq){ var r=(state.requests||[]).find(function(x){return x.id===rq.dataset.req;}); if(r){ pendingReq=r.id; jobSheet(null); fillForm({client:'',suburb:r.suburb,address:r.address,date:r.readyDate,start:'08:00',end:'16:00',service:SERVICES.indexOf(r.service)>=0?r.service:'Pre-sale clean',staff:[],agentId:r.agentId,readyBy:r.readyFor+' '+fmtDay(parse(r.readyDate)),notes:[r.beds?r.beds+' bed':'',r.baths?r.baths+' bath':'','Access: '+r.access,'Invoice: '+r.invoice,r.notes].filter(Boolean).join('. ')}); } return; }
