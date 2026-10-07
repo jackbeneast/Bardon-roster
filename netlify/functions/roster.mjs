@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { store, json, loadRoster, loadConfirms, loadAcks, loadAllLive, checkAdmin, adminIsSet, ROOMS } from "../../lib/core.mjs";
+import { store, json, loadRoster, loadConfirms, loadAcks, loadAllLive, checkAdmin, adminIsSet } from "../../lib/core.mjs";
 
 // Wage-estimate settings: pay cycle, rates, lunch rule, extra public holidays.
 function cleanPay(p) {
@@ -45,7 +45,11 @@ function clean(data) {
     if (j.readyBy) o.readyBy = str(j.readyBy, 120);
     if (j.sample) o.sample = true;
     if (j.share && String(j.share).length >= 16) o.share = str(j.share, 64);
-    if (Array.isArray(j.rooms)) { const r = j.rooms.filter((x) => ROOMS.includes(x)); if (r.length) o.rooms = r; }
+    if (Array.isArray(j.rooms)) {
+      const seen = new Set(), r = [];
+      for (const x of j.rooms) { const n = str(x, 40).trim(); const k = n.toLowerCase(); if (n && !seen.has(k)) { seen.add(k); r.push(n); } }
+      if (r.length) o.rooms = r.slice(0, 30);
+    }
     if (j.shifts && typeof j.shifts === "object") {
       const sh = {};
       for (const [k, v] of Object.entries(j.shifts)) if (ids.has(k) && v) sh[k] = { start: str(v.start, 5), end: str(v.end, 5) };

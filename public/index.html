@@ -260,6 +260,15 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 .wrow .ot{color:var(--terracotta-dark);font-weight:600}
 .wfoot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;font-size:12.5px;color:var(--meta);background:var(--cream);font-variant-numeric:tabular-nums}
 .rgrid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.areas{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.area{display:inline-flex;align-items:center;gap:4px;background:var(--dark);color:var(--cream);border-radius:999px;padding:4px 4px 4px 12px;font:500 14px/1 var(--sans)}
+.area button{width:28px;height:28px;border-radius:50%;border:0;background:rgba(245,240,235,.15);color:var(--cream);font:600 15px/1 var(--sans);cursor:pointer}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.sugg button{border:1px dashed #C9BBAC;background:var(--white);border-radius:999px;padding:8px 12px;font:500 13px/1 var(--sans);color:var(--dark);cursor:pointer}
+.addarea{display:flex;gap:8px;margin-top:10px}
+.addarea input{flex:1;margin:0!important}
+.addarea button{flex:none;min-height:46px;border-radius:6px;border:0;background:var(--terracotta);color:#fff;font:600 14px var(--sans);padding:0 16px;cursor:pointer}
+.lsec h4 .ed{float:right;background:none;border:0;color:var(--terracotta-dark);font:600 12px var(--sans);letter-spacing:0;text-transform:none;text-decoration:underline;cursor:pointer;padding:0}
 </style></head><body>
 <div id="app"></div>
 <script>
@@ -267,6 +276,33 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   var state = {team:[],jobs:[],confirms:{},info:{},acks:{},agents:[],live:{},requests:[]}, loaded=false, loadErr='', adminSet=true;
   var ROOMS=['Kitchen','Bathrooms','Bedrooms','Living & dining','Laundry','Windows & tracks','Outdoor & garage'], DEF_ROOMS=ROOMS.slice(0,6);
   var LOCK={doors:'Windows and doors locked',lights:'Lights and fans off',ac:'Air-con off',keys:'Keys returned or lockbox set'};
+  var SUGGEST=['Kitchen','Pantry','Bathroom','Bathroom 2','Ensuite','Powder room','Toilet','Main bedroom','Bedroom 2','Bedroom 3','Bedroom 4','Living','Dining','Family room','Rumpus','Study','Laundry','Hallway & stairs','Entry','Windows & tracks','Balcony','Deck','Patio','Garage','Outdoor','Granny flat'];
+  function areasHtml(list){
+    var have={}; list.forEach(function(a){ have[a.toLowerCase()]=1; });
+    return '<div class="areas">'+(list.length?list.map(function(a,i){ return '<span class="area">'+esc(a)+'<input type="hidden" name="rooms" value="'+esc(a)+'"><button type="button" data-arm="'+i+'" aria-label="Remove '+esc(a)+'">×</button></span>'; }).join(''):'<span class="sub">No areas yet. Add some below.</span>')+'</div>'+
+      '<div class="addarea"><input type="text" data-anew placeholder="Add an area, e.g. Bedroom 5" maxlength="40" enterkeyhint="done"><button type="button" data-aadd>Add</button></div>'+
+      '<div class="sugg">'+SUGGEST.filter(function(x){return !have[x.toLowerCase()];}).map(function(x){return '<button type="button" data-asug="'+esc(x)+'">+ '+esc(x)+'</button>';}).join('')+'</div>';
+  }
+  // Wires an areas editor inside box; getList/setList hold the working list.
+  function wireAreas(box, list){
+    function draw(){ box.innerHTML=areasHtml(list); }
+    function add(n){ n=String(n||'').trim().slice(0,40); if(!n) return; if(list.some(function(a){return a.toLowerCase()===n.toLowerCase();})){ toast(n+' is already there'); return; } if(list.length>=30){ toast('30 areas maximum'); return; } list.push(n); draw(); var i=box.querySelector('[data-anew]'); if(i) i.focus(); }
+    box.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; e.preventDefault();
+      if(b.dataset.arm!==undefined){ list.splice(+b.dataset.arm,1); draw(); }
+      else if(b.dataset.asug){ add(b.dataset.asug); }
+      else if(b.hasAttribute('data-aadd')){ add(box.querySelector('[data-anew]').value); } });
+    box.addEventListener('keydown',function(e){ if(e.target.hasAttribute('data-anew') && e.key==='Enter'){ e.preventDefault(); add(e.target.value); } });
+    draw(); return list;
+  }
+  function areasSheet(jobId){
+    var j=state.jobs.find(function(x){return x.id===jobId;}); if(!j) return; var list=roomsOf(j).slice(), back=liveOpen&&liveOpen.jobId===jobId?liveOpen:null;
+    var s=openSheet('<h3>Areas for <em>this job</em></h3><p class="sub" style="margin:-6px 0 4px">'+esc(j.address||j.client||'')+'. The team ticks these off and photos are sorted by them. The agent sees the same list.</p><div id="aBox"></div><div class="err" id="aErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="button" class="btn primary" data-asave>Save areas</button></div>');
+    wireAreas(s.querySelector('#aBox'), list);
+    s.querySelector('[data-close]').onclick=function(){ closeSheet(); if(back) liveSheet(back.jobId, back.pid); };
+    s.querySelector('[data-asave]').onclick=function(){ var b=this, er=s.querySelector('#aErr'); if(!list.length){ er.textContent='Add at least one area.'; er.hidden=false; return; }
+      var jobs=state.jobs.map(function(x){ if(x.id!==jobId) return x; var c=Object.assign({},x); c.rooms=list.slice(); return c; });
+      save({team:state.team,jobs:jobs}, b, er, 'Areas saved'); if(back) setTimeout(function(){ var w=setInterval(function(){ if(!saving){ clearInterval(w); if(!document.getElementById('aErr')) liveSheet(back.jobId, back.pid); } },150); },50); };
+  }
   function roomsOf(j){ return (j.rooms&&j.rooms.length)?j.rooms:DEF_ROOMS; }
   function tok(){ var a=new Uint8Array(18); crypto.getRandomValues(a); return Array.prototype.map.call(a,function(b){return (b<16?'0':'')+b.toString(16);}).join(''); }
   function agentOf(id){ for(var i=0;i<(state.agents||[]).length;i++) if(state.agents[i].id===id) return state.agents[i]; return null; }
@@ -528,7 +564,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<div class="two"><label class="l" for="f_agent">Agent<select id="f_agent" name="agentId"><option value="">No agent</option>'+(state.agents||[]).map(function(a){return '<option value="'+a.id+'"'+(a.id===job.agentId?' selected':'')+'>'+esc(a.name)+(a.agency?' · '+esc(a.agency):'')+'</option>';}).join('')+'</select></label>';
     h+='<label class="l" for="f_ready">Ready for<input id="f_ready" name="readyBy" value="'+esc(job.readyBy||'')+'" placeholder="e.g. Photos Fri 9am"></label></div>';
     if(!(state.agents||[]).length) h+='<p class="sub" style="margin:-6px 0 0">Add agents under Agents to share this job with them.</p>';
-    h+='<div><span class="l">Rooms to track</span><div class="pick">'+ROOMS.map(function(r){return '<label><input type="checkbox" name="rooms" value="'+esc(r)+'"'+(roomsOf(job).indexOf(r)>=0?' checked':'')+'>'+esc(r)+'</label>';}).join('')+'</div></div>';
+    h+='<div><span class="l">Areas to clean</span><p class="sub" style="margin:2px 0 0">Every home is different. Remove what isn\'t there, add what is.</p><div id="jobAreas"></div></div>';
     h+='<label class="l" for="f_meet">Meeting spot <span style="color:var(--meta);font-weight:400">(optional, for new starters)</span><input id="f_meet" name="meet" value="'+esc(job.meet||'')+'" placeholder="'+esc((state.info&&state.info.meet)||'e.g. Out the front')+'"></label>';
     h+='<label class="l" for="f_notes">Notes for the team<textarea id="f_notes" name="notes" placeholder="Access, inclusions, parking. Don\'t put alarm or lockbox codes here.">'+esc(job.notes)+'</textarea></label>';
     h+='<div class="err" id="jobErr" hidden></div>';
@@ -537,6 +573,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-dup>Duplicate</button><button type="button" class="btn danger" data-del>Delete job</button></div>';
     h+='</form>';
     var s=openSheet(h), form=s.querySelector('#jobForm');
+    var jobAreaList=wireAreas(form.querySelector('#jobAreas'), roomsOf(job).slice());
     s.querySelector('[data-close]').onclick=closeSheet;
     drawShifts(form, job.shifts||{}, job.start, job.end);
     form.addEventListener('change', function(e){ if(e.target.name==='staff') drawShifts(form, readShifts(form), form.elements.start.value, form.elements.end.value); });
@@ -548,7 +585,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       if(!(fd.get('client')||'').trim() || !fd.get('date')){ err.textContent='Add a client name and a date.'; err.hidden=false; return; }
       var next={id:job.id,date:fd.get('date'),start:fd.get('start'),end:fd.get('end'),client:fd.get('client').trim(),suburb:(fd.get('suburb')||'').trim(),address:(fd.get('address')||'').trim(),service:fd.get('service'),staff:fd.getAll('staff'),notes:(fd.get('notes')||'').trim(),meet:(fd.get('meet')||'').trim()};
       var agId=fd.get('agentId')||''; next.share=job.share||tok(); if(agId) next.agentId=agId; var rb=(fd.get('readyBy')||'').trim(); if(rb) next.readyBy=rb;
-      var rms=fd.getAll('rooms'); if(rms.length && rms.join('|')!==DEF_ROOMS.join('|')) next.rooms=rms;
+      var rms=jobAreaList.slice(); if(!rms.length){ err.textContent='Add at least one area to clean.'; err.hidden=false; return; } if(rms.join('|')!==DEF_ROOMS.join('|')) next.rooms=rms;
       var sh={}, raw=readShifts(form); next.staff.forEach(function(id){ var r=raw[id]; if(r && (r.start&&r.start!==next.start || r.end&&r.end!==next.end)) sh[id]={start:r.start||next.start,end:r.end||next.end}; });
       if(Object.keys(sh).length) next.shifts=sh;
       var jobs=state.jobs.filter(function(j){return j.id!==job.id;}); jobs.push(next);
@@ -658,7 +695,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<div class="lsec"><h4>Arrived</h4>';
     (j.staff||[]).forEach(function(id){ var m=member(id); if(!m) return; if(!canEdit && id!==pid) { h+='<div class="lrow"><span class="nm">'+esc(m.name)+'</span><span class="ds">'+(L.arrived[id]?'Arrived '+fmtClock(L.arrived[id]):'Not yet')+'</span></div>'; return; }
       h+='<div class="lrow"><span><span class="nm">'+esc(m.name)+'</span><br><span class="ds">'+(L.arrived[id]?'Arrived '+fmtClock(L.arrived[id]):'Not arrived')+'</span></span>'+(L.arrived[id]?'<button type="button" class="btn danger" data-arr="'+id+'" data-undo="1">Undo</button>':'<button type="button" class="btn yes" data-arr="'+id+'" style="flex:none">I\'ve arrived</button>')+'</div>'; });
-    h+='</div><div class="lsec"><h4>Rooms</h4>';
+    h+='</div><div class="lsec"><h4>Areas'+(canEdit?'<button type="button" class="ed" data-editareas>Add or remove areas</button>':'')+'</h4>';
     roomsOf(j).forEach(function(r){ var st=(L.rooms[r]&&L.rooms[r].s)||'w', by=L.rooms[r]&&member(L.rooms[r].by);
       h+='<div class="lrow"><span><span class="nm">'+esc(r)+'</span>'+(by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span></div>'; });
     h+='</div><div class="lsec"><h4>Photos</h4><p class="sub" style="margin:0 0 8px">Take befores when you arrive and afters as each room is done.</p><div class="two"><label class="l" for="ph_room">Room<select id="ph_room">'+roomsOf(j).map(function(r){return '<option>'+esc(r)+'</option>';}).join('')+'</select></label><label class="l" for="ph_kind">Type<select id="ph_kind"><option value="before">Before</option><option value="after">After</option></select></label></div>';
@@ -687,6 +724,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function liveClick(e){
     var b=e.target.closest('button'); if(!b||!liveOpen) return;
     if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
+    if(b.hasAttribute('data-editareas')){ var jid=liveOpen.jobId, pp=liveOpen.pid; closeSheet(); liveOpen={jobId:jid,pid:pp}; areasSheet(jid); return; }
     if(b.dataset.arr){ livePost({action:'arrive',who:b.dataset.arr,undo:!!b.dataset.undo},b); return; }
     if(b.dataset.room){ livePost({action:'room',room:b.dataset.room,status:b.dataset.st},b); return; }
     if(b.dataset.unflag){ livePost({action:'unflag',id:b.dataset.unflag},b); return; }
