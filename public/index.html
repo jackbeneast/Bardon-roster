@@ -913,11 +913,21 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       if(!document.getElementById('scrim')) render(); else if(liveOpen) drawLive();
     }).catch(function(e){ if(!loaded){ loadErr='Couldn\'t load the roster. Check your signal.'; render(); } });
   }
+  function resetSheet(){
+    var h='<h3>Reset your <em>password</em></h3><p class="sub" style="margin:-6px 0 10px">Enter the reset code Claude gave you, then choose a new password.</p><form id="rf" class="fgrid" novalidate><label class="l" for="r_code">Reset code<input id="r_code" autocapitalize="characters" autocomplete="one-time-code" placeholder="XXXX-XXXX-XXXX-XXXX" required></label><label class="l" for="r_pw">New password<input id="r_pw" type="password" autocomplete="new-password" required></label><div class="err" id="rErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Reset and log in</button></div></form>';
+    var s=openSheet(h), f=s.querySelector('#rf'), er=s.querySelector('#rErr');
+    s.querySelector('[data-close]').onclick=closeSheet;
+    f.onsubmit=function(e){ e.preventDefault(); var pw=f.querySelector('#r_pw').value, b=f.querySelector('.primary'); b.disabled=true;
+      api('/api/admin',{method:'POST',body:{action:'reset',code:f.querySelector('#r_code').value,password:pw}}).then(function(){ key(pw); closeSheet(); return refresh(); }).then(function(){ toast('Password reset. Editing on'); })
+        .catch(function(x){ b.disabled=false; er.textContent=x.message; er.hidden=false; }); };
+  }
   function loginSheet(){
     var setup=!adminSet;
     var h='<h3>'+(setup?'Set your <em>password</em>':'Jack\'s <em>login</em>')+'</h3>'+(setup?'<p class="sub" style="margin:-6px 0 10px">First time here. Choose the password you\'ll use to edit the roster. Keep it to yourself.</p>':'')+'<form id="lf" class="fgrid" novalidate><label class="l" for="f_pw">Password<input id="f_pw" type="password" autocomplete="'+(setup?'new-password':'current-password')+'" required></label><div class="err" id="lErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">'+(setup?'Set password':'Log in')+'</button></div></form>';
+    if(!setup) h+='<p class="sub" style="margin-top:14px"><button type="button" class="ghost" data-forgot style="padding:0">Forgot your password?</button></p>';
     var s=openSheet(h), f=s.querySelector('#lf'), er=s.querySelector('#lErr');
     s.querySelector('[data-close]').onclick=closeSheet;
+    var fg=s.querySelector('[data-forgot]'); if(fg) fg.onclick=resetSheet;
     f.onsubmit=function(e){
       e.preventDefault(); var pw=f.querySelector('#f_pw').value, b=f.querySelector('.primary'); b.disabled=true;
       var p = setup ? api('/api/admin',{method:'POST',body:{action:'setup',password:pw}}).then(function(){ key(pw); }) : (key(pw), api('/api/admin',{method:'POST',body:{}}).then(function(d){ if(!d.ok){ key(null); throw new Error('Wrong password'); } }));

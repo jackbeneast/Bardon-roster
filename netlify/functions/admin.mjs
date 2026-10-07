@@ -1,4 +1,8 @@
+import { createHash } from "node:crypto";
 import { store, json, checkAdmin, adminIsSet, setAdmin } from "../../lib/core.mjs";
+
+// One-time reset code given to Jack directly (only its hash lives here). Works once.
+const RESET_HASH = "48ebef29c86c57b7f9f2e77dc78246ba3c90396a76ff4f6e6f57fc88830c564f";
 
 export default async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -9,6 +13,16 @@ export default async (req) => {
     const pw = String(b.password || "");
     if (pw.length < 6) return json({ error: "Use at least 6 characters" }, 400);
     await setAdmin(s, pw);
+    return json({ ok: true });
+  }
+  if (b.action === "reset") {
+    const code = String(b.code || "").trim().toUpperCase().replace(/\s+/g, "");
+    if (await s.get(`reset-used/${RESET_HASH}`)) return json({ error: "That reset code has already been used. Ask Claude for a new one." }, 410);
+    if (createHash("sha256").update(code).digest("hex") !== RESET_HASH) return json({ error: "That code isn't right. Check the dashes and try again." }, 401);
+    const pw = String(b.password || "");
+    if (pw.length < 6) return json({ error: "Use at least 6 characters" }, 400);
+    await setAdmin(s, pw);
+    await s.set(`reset-used/${RESET_HASH}`, { at: new Date().toISOString() });
     return json({ ok: true });
   }
   if (b.action === "change") {
