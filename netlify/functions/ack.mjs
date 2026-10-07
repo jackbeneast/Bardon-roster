@@ -1,4 +1,5 @@
 import { store, json, loadRoster, checkAdmin } from "../../lib/core.mjs";
+import { notify, firstName } from "../../lib/notify.mjs";
 
 // A team member taps "Got it" on their first-day info.
 export default async (req) => {
@@ -14,7 +15,9 @@ export default async (req) => {
     return json({ ok: true });
   }
   const rec = { at: new Date().toISOString() };
+  const had = await s.get(`ack/${person.id}`);
   await s.set(`ack/${person.id}`, rec);
+  if (!had) await notify(s, { type: "ack", title: `${firstName(person.name)} read their first-day info`, body: "They've seen where to meet, what to wear and what to bring.", tags: "ok_hand", url: "/" });
   return json({ ok: true, ack: rec });
 };
 

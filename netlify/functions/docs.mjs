@@ -5,6 +5,10 @@ import {
   loadSettings, cleanSettings, cleanDoc, loadDocs, findByToken, saveDoc, newDoc,
   recordPayment, addJobFromQuote, publicView, totals, statusOf, today, addDays, depositDesc,
 } from "../../lib/docs.mjs";
+import { notify, money, fmtDay } from "../../lib/notify.mjs";
+
+// "Quote #172 for Hughes" style label.
+const label = (d) => `${d.kind === "quote" ? "Quote" : "Invoice"} #${d.num}${d.client?.name ? " for " + d.client.name : ""}`;
 
 const r2 = (v) => Math.round(v * 100) / 100;
 
@@ -19,9 +23,23 @@ export default async (req) => {
       const d = await findByToken(s, t);
       if (!d || (d.status === "draft" && !admin)) return json({ error: "This link isn't active. Call Jack at Bardon Clean on 0406 216 212." }, 404);
       if (!admin) {
+        // Only counted when the page runs in a real browser (link previews don't run it).
         const now = new Date().toISOString();
-        if (!d.viewedAt) { d.viewedAt = now; d.flag ||= "viewed"; d.flagAt ||= now; }
+        const firstView = !d.viewedAt;
+        const reopened = !firstView && d.lastViewed && Date.now() - Date.parse(d.lastViewed) > 12 * 3600e3;
+        if (firstView) { d.viewedAt = now; d.flag ||= "viewed"; d.flagAt ||= now; }
+        d.views = (d.views || 0) + 1;
         d.lastViewed = now; await saveDoc(s, d);
+        const st = statusOf(d);
+        if ((firstView || reopened) && !["accepted", "declined", "paid"].includes(st)) {
+          const tt = totals(d);
+          await notify(s, {
+            type: d.kind === "quote" ? "quote_view" : "inv_view",
+            title: `${label(d)} ${firstView ? "opened" : "opened again"}`,
+            body: `${d.site || d.suburb || ""}${d.kind === "quote" ? ` · ${money(tt.total)}` : ` · ${money(tt.due)} due`}`.replace(/^ · /, ""),
+            tags: "eyes", priority: 2, url: `/money/#/doc/${d.id}`,
+          });
+        }
       }
       const set = await loadSettings(s);
       const out = publicView(d, set);
@@ -68,6 +86,12 @@ export default async (req) => {
     }
     try { q.jobId = (await addJobFromQuote(s, q)) || q.jobId; } catch { /* job can be added by hand */ }
     await saveDoc(s, q);
+    const tq = totals(q);
+    await notify(s, {
+      type: "quote_accept", title: `${label(q)} accepted`,
+      body: `${money(tq.total)}${q.site ? " · " + q.site : ""}${q.serviceDate ? `\nClean ${fmtDay(q.serviceDate)}${q.jobId ? ", added to the roster" : ""}` : "\nNo date yet, add it to the roster"}${q.depositInvoice ? `\n${q.depositPct}% deposit invoice sent to them` : ""}`,
+      tags: "tada", priority: 5, url: `/money/#/doc/${q.id}`,
+    });
     return json({ ok: true });
   }
 

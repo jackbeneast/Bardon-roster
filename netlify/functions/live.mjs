@@ -1,4 +1,5 @@
-import { store, json, loadRoster, loadLive, checkAdmin, roomsOf, LOCK } from "../../lib/core.mjs";
+import { store, json, loadRoster, loadLive, checkAdmin, roomsOf, LOCK, shiftOf } from "../../lib/core.mjs";
+import { notify, firstName, where, fmtTime, clockNow } from "../../lib/notify.mjs";
 
 // Live progress on a job: arrivals, rooms, flags for the agent, lock-up, finish.
 // The team posts from the roster (same trust as shift confirmations); Jack can do everything.
@@ -24,7 +25,16 @@ export default async (req) => {
     case "arrive": {
       const who = b.who && (admin || b.who === pid) ? b.who : pid;
       if (!onJob(who)) return json({ error: "That person isn't on this job." }, 400);
-      if (b.undo) delete L.arrived[who]; else L.arrived[who] = now;
+      if (b.undo) delete L.arrived[who];
+      else {
+        const first = !L.arrived[who];
+        L.arrived[who] = now;
+        const p = roster.team.find((x) => x.id === who);
+        if (first && p && !p.owner) {
+          const st = shiftOf(job, who).start;
+          await notify(s, { type: "arrive", title: `${firstName(p.name)} arrived at ${where(job)}`, body: `${clockNow()}${st ? ` (shift starts ${fmtTime(st)})` : ""}`, tags: "round_pushpin", priority: 2, url: "/" });
+        }
+      }
       break;
     }
     case "room": {
@@ -39,6 +49,10 @@ export default async (req) => {
       if (!t) return json({ error: "Add a short title" }, 400);
       if (L.flags.length >= 30) return json({ error: "Too many notes on this job" }, 400);
       L.flags.push({ id: Math.random().toString(36).slice(2, 10), t, d: str(b.detail, 600), by: pid, at: now });
+      if (!admin) {
+        const p = roster.team.find((x) => x.id === pid);
+        await notify(s, { type: "flag", title: `Note at ${where(job)}: ${t}`, body: `${str(b.detail, 600)}${p ? `\nFrom ${firstName(p.name)}` : ""}${job.agentId ? "\nThe agent can see this." : ""}`, tags: "warning", priority: 4, url: "/" });
+      }
       break;
     }
     case "unflag":
@@ -56,7 +70,16 @@ export default async (req) => {
       break;
     }
     case "finish":
-      if (b.undo) delete L.done; else L.done = now;
+      if (b.undo) delete L.done;
+      else {
+        const first = !L.done;
+        L.done = now;
+        if (first && !admin) {
+          const rs = roomsOf(job), d = rs.filter((r) => L.rooms[r]?.s === "d").length, lk = Object.keys(LOCK).filter((k) => L.lock[k]).length;
+          const ph = L.photos.filter((p) => p.kind === "after").length;
+          await notify(s, { type: "finish", title: `${where(job)} is ready`, body: `Finished ${clockNow()} · ${d}/${rs.length} rooms · ${lk}/${Object.keys(LOCK).length} lock-up checks · ${ph} after photo${ph === 1 ? "" : "s"}`, tags: "sparkles", url: "/" });
+        }
+      }
       break;
     default:
       return json({ error: "Unknown action" }, 400);

@@ -85,6 +85,10 @@ export default async (req) => {
       out.pay = roster.pay || null;
       const keys = await s.list("req/");
       out.requests = (await Promise.all(keys.map((k) => s.get(k)))).filter(Boolean).sort((a, b) => a.at.localeCompare(b.at));
+      // Unread count for the activity bell.
+      const seen = (await s.get("actseen"))?.at || "";
+      out.actUnread = (await s.list("act/")).filter((k) => k.slice(4) > seen).length;
+      out.notifyOn = !!(await s.get("notify"))?.topic;
     }
     return json(out);
   }

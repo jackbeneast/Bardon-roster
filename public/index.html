@@ -186,6 +186,26 @@ body.has-nav #app{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 .topbar .wm{font:700 18px/1 var(--serif);color:var(--dark)}
 .topbar .refresh{background:none;border:0;color:var(--meta);font:500 12px var(--sans);cursor:pointer;padding:6px 0}
+.topbar .tr{display:flex;align-items:center;gap:14px}
+.bell{position:relative;background:none;border:0;color:var(--dark);cursor:pointer;padding:6px;margin:-6px 0}
+.bell svg{width:22px;height:22px;display:block}
+.bell .badge{position:absolute;top:0;right:-2px;min-width:17px;height:17px;border-radius:9px;background:var(--terracotta);color:#fff;font:600 10px/17px var(--sans);padding:0 4px;text-align:center}
+.act{background:var(--white);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.act a,.act div.ai{display:flex;gap:12px;padding:13px 14px;border-bottom:1px solid var(--cream-dark);text-decoration:none;color:var(--dark)}
+.act>:last-child{border-bottom:0}
+.act .ic{flex:none;width:30px;height:30px;border-radius:50%;background:var(--tint);display:flex;align-items:center;justify-content:center;font-size:15px}
+.act .ic.hot{background:#F8E1D6}.act .ic.ok{background:#E6EFE3}
+.act .tx{flex:1;min-width:0}
+.act .tt{font:600 14px/1.35 var(--sans)}
+.act .bd{font-size:13px;color:var(--body);margin-top:2px;white-space:pre-line;overflow-wrap:anywhere}
+.act .tm{font-size:12px;color:var(--meta);margin-top:3px}
+.act .new .tt::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--terracotta);margin:0 6px 1px 0}
+.ntog{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--cream-dark);font-size:15px;color:var(--dark);cursor:pointer}
+.ntog input{width:20px;height:20px;accent-color:var(--terracotta);flex:none;margin:0}
+.nstep{counter-increment:ns;position:relative;padding:0 0 14px 34px;font-size:14px;color:var(--dark)}
+.nstep::before{content:counter(ns);position:absolute;left:0;top:-1px;width:24px;height:24px;border-radius:50%;background:var(--terracotta);color:#fff;font:600 13px/24px var(--sans);text-align:center}
+.nsteps{counter-reset:ns;margin:14px 0 4px}
+.topic{font:500 14px/1.3 ui-monospace,Menlo,monospace;background:var(--cream);border-radius:6px;padding:10px;margin-top:6px;overflow-wrap:anywhere;user-select:all}
 .sect{font:600 13px/1 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--meta);margin:26px 0 10px;display:flex;justify-content:space-between;align-items:center}
 .sect .today{color:var(--terracotta)}
 .qc{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:12px}
@@ -316,7 +336,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   var LOGO = '<svg viewBox="0 0 48 48" role="img" aria-label="Bardon Clean"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
   var canEdit = false, saving = false, pendingReq = null, liveOpen = null;
   var qv=(location.search.match(/[?&]v=(\w+)/)||[])[1];
-  var view = (qv && ['today','roster','agents','more'].indexOf(qv)>=0) ? qv : (ls('roster_view')||'today');
+  var view = (qv && ['today','roster','agents','more','activity'].indexOf(qv)>=0) ? qv : (ls('roster_view')||'today');
   var upState=null;
   function key(v){ if(v===undefined) return ls('roster_admin_key')||''; try{ if(v===null) localStorage.removeItem('roster_admin_key'); else localStorage.setItem('roster_admin_key',v);}catch(e){} }
   function api(path, opts){
@@ -392,7 +412,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 
   function render(){
     document.body.classList.toggle('has-nav', !!(loaded && canEdit));
-    if(loaded && canEdit && view!=='roster'){ app.innerHTML=(view==='agents'?renderAgentsView():view==='more'?renderMore():view==='wages'?renderWages():renderToday())+navBar(); return; }
+    if(loaded && canEdit && view!=='roster'){ app.innerHTML=(view==='agents'?renderAgentsView():view==='more'?renderMore():view==='wages'?renderWages():view==='activity'?renderActivity():renderToday())+navBar(); if(view==='activity') loadActivity(); return; }
     var h='';
     if(!loaded){ app.innerHTML='<div class="brand"><div class="wm">Bardon Clean</div></div><h1>Team <em>roster</em></h1><p class="sub" style="margin-top:14px">'+(loadErr?esc(loadErr)+' <button class="ghost" data-act="reload">Try again</button>':'Loading…')+'</p>'; return; }
     h+='<div class="brand"><div class="wm">Bardon Clean</div></div>';
@@ -787,6 +807,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.6v.2"/></svg>',
     eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>',
     out:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"/></svg>',
+    bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>',
     tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg>'
   };
   function hubConfirm(job, d, dep){
@@ -830,7 +851,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     function b(v,label,icon,badge){ return '<button type="button" data-view="'+v+'"'+(view===v?' aria-current="page"':'')+'>'+icon+label+(badge?'<span class="badge">'+badge+'</span>':'')+'</button>'; }
     return '<nav class="tabbar" aria-label="Main"><div class="in">'+b('today','Today',IC.today,a)+b('roster','Roster',IC.roster)+'<button type="button" class="add" data-act="add" aria-label="Add job"><span class="c">'+IC.plus+'</span>Add job</button>'+b('agents','Agents',IC.agents,rq)+b('more','Tools',IC.grid)+'</div></nav>';
   }
-  function topbar(title){ return '<div class="topbar"><span class="wm">Bardon Clean</span><button class="refresh" data-act="sync">Refresh</button></div><h1>'+title+'</h1>'; }
+  function topbar(title){ var u=state.actUnread||0; return '<div class="topbar"><span class="wm">Bardon Clean</span><span class="tr"><button class="refresh" data-act="sync">Refresh</button><button type="button" class="bell" data-view="activity" aria-label="Activity'+(u?', '+u+' new':'')+'">'+IC.bell+(u?'<span class="badge">'+(u>99?'99+':u)+'</span>':'')+'</button></span></div><h1>'+title+'</h1>'; }
   function jobsFor(dateIso){ return state.jobs.filter(function(j){return j.date===dateIso && !j.sample;}).sort(function(a,b){return (a.start||'').localeCompare(b.start||'');}); }
 
   function quickCard(j, pid){
@@ -1024,11 +1045,68 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       save({team:state.team,jobs:state.jobs,pay:{cycle:+f.elements.cycle.value,anchor:f.elements.anchor.value,lunch:f.elements.lunch.checked,rates:r,ph:ph}}, f.querySelector('.primary'), err, 'Pay settings saved');
     };
   }
+
+  // ---- Activity feed and phone notifications ----
+  var act=null, actErr='', actLoading=false;
+  var ACT_ICON={shift_yes:['✓','ok'],shift_no:['✕','hot'],ack:['👌',''],arrive:['📍',''],late:['⏳','hot'],flag:['⚠️','hot'],finish:['✨','ok'],unfinished:['⏳',''],tomorrow:['📅','hot'],quote_view:['👀',''],inv_view:['👀',''],quote_accept:['🎉','ok'],quote_follow:['📞',''],quote_expiry:['⏳',''],paid:['💰','ok'],deposit:['💰','hot'],overdue:['⚠️','hot'],booking:['🏠','hot']};
+  function ago(isoStr){ var d=new Date(isoStr), m=Math.round((Date.now()-d)/60000); if(m<1) return 'Just now'; if(m<60) return m+' min ago'; var t=fmtTime(pad(d.getHours())+':'+pad(d.getMinutes())); if(iso(d)===iso(new Date())) return t; if(iso(d)===iso(addDays(new Date(),-1))) return 'Yesterday '+t; return fmtDay(d)+' '+t; }
+  function loadActivity(){
+    if(actLoading) return; actLoading=true;
+    api('/api/notify').then(function(d){ act=d; actErr=''; actLoading=false; if(view==='activity' && !document.getElementById('scrim')) app.innerHTML=renderActivity()+navBar();
+      if((state.actUnread||0)>0){ api('/api/notify',{method:'POST',body:{action:'seen'}}).then(function(){ state.actUnread=0; }).catch(function(){}); }
+    }).catch(function(e){ actErr=e.message; actLoading=false; if(view==='activity') app.innerHTML=renderActivity()+navBar(); });
+  }
+  function renderActivity(){
+    var h=topbar('Activity');
+    if(!act){ return h+'<p class="sub">'+(actErr?esc(actErr):'Loading…')+'</p>'; }
+    if(!act.topic) h+='<div class="hint-card"><strong>Get these on your phone.</strong> Shift replies, quotes opened and accepted, payments and more, the moment they happen. <button class="ghost" data-act="notify" style="padding:0;margin:0">Set it up</button></div>';
+    else h+='<div class="sect" style="margin-top:14px"><span>Also sent to your phone</span><button class="ghost" data-act="notify" style="padding:0;margin:0;text-transform:none;letter-spacing:0">Settings</button></div>';
+    if(!act.activity.length) return h+'<div class="hint-card">Nothing yet. When the team accepts shifts or a client opens a quote, it shows here.</div>';
+    h+='<div class="act" style="margin-top:12px">';
+    act.activity.forEach(function(a){ var ic=ACT_ICON[a.type]||['•',''], isNew=act.seen&&a.at>act.seen;
+      var inner='<span class="ic '+ic[1]+'" aria-hidden="true">'+ic[0]+'</span><span class="tx"><div class="tt">'+esc(a.title)+'</div>'+(a.body?'<div class="bd">'+esc(a.body)+'</div>':'')+'<div class="tm">'+ago(a.at)+'</div></span>';
+      h+=(a.url&&a.url!=='/')?'<a href="'+esc(a.url)+'"'+(isNew?' class="new"':'')+'>'+inner+'</a>':'<div class="ai'+(isNew?' new':'')+'">'+inner+'</div>'; });
+    return h+'</div><p class="sub" style="margin:12px 0 0">The last 60 days.</p>';
+  }
+  function notifySheet(){
+    var s=openSheet('<h3>Phone <em>notifications</em></h3><p class="sub">Loading…</p>');
+    api('/api/notify').then(function(d){ act=d; draw(); }).catch(function(e){ s.querySelector('.sub').textContent=e.message; });
+    function draw(){
+      var d=act, off={}; (d.off||[]).forEach(function(x){ off[x]=1; });
+      var h='<h3>Phone <em>notifications</em></h3>';
+      if(!d.topic){
+        h+='<p class="sub" style="margin:-6px 0 10px">Uses ntfy, a free notification app. No account needed. Your pings go to a private channel only you know.</p>';
+        h+='<div class="actions"><button type="button" class="btn outline" data-close>Not now</button><button type="button" class="btn primary" data-ntopic>Turn on</button></div>';
+      } else {
+        h+='<div class="nsteps">';
+        h+='<div class="nstep">Install the free <strong>ntfy</strong> app. <a href="https://apps.apple.com/app/ntfy/id1625396347" target="_blank" rel="noopener" style="color:var(--terracotta-dark)">iPhone</a> · <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener" style="color:var(--terracotta-dark)">Android</a></div>';
+        h+='<div class="nstep">Open it, tap <strong>+</strong>, paste this channel name and tap Subscribe. Allow notifications when it asks.<div class="topic">'+esc(d.topic)+'</div><button type="button" class="ghost" data-ncopy style="padding:6px 0 0">Copy channel name</button></div>';
+        h+='<div class="nstep">Send a test to check it works.<br><button type="button" class="btn outline" data-ntest style="margin-top:8px">Send test notification</button></div>';
+        h+='</div><p class="sub" style="margin:0 0 6px">Keep the channel name private. Anyone with it can see these pings. If it ever gets out, make a new one at the bottom.</p>';
+        h+='<form id="nf">';
+        d.types.forEach(function(g){ h+='<div class="sect" style="margin:18px 0 2px"><span>'+esc(g[0])+'</span></div>'; g[1].forEach(function(tp){ h+='<label class="ntog"><input type="checkbox" name="'+tp[0]+'"'+(off[tp[0]]?'':' checked')+'>'+esc(tp[1])+'</label>'; }); });
+        h+='<div class="err" id="nErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Close</button><button type="submit" class="btn primary">Save</button></div></form>';
+        h+='<p class="sub" style="margin-top:18px">Everything also shows under Activity, the bell at the top. <button type="button" class="ghost" data-nnew style="padding:0;margin:0">New channel name</button></p>';
+      }
+      s.querySelector('.sheet').innerHTML=h;
+      var q=function(sel){ return s.querySelector(sel); };
+      s.querySelectorAll('[data-close]').forEach(function(b){ b.onclick=closeSheet; });
+      function newTopic(b){ b.disabled=true; api('/api/notify',{method:'POST',body:{action:'topic'}}).then(function(r){ act.topic=r.topic; state.notifyOn=true; draw(); toast('Channel ready'); }).catch(function(e){ b.disabled=false; toast(e.message); }); }
+      if(q('[data-ntopic]')) q('[data-ntopic]').onclick=function(){ newTopic(this); };
+      if(q('[data-nnew]')) q('[data-nnew]').onclick=function(){ if(!this.dataset.sure){ this.dataset.sure='1'; this.textContent='Tap again to replace it. You\'ll then subscribe to the new one in ntfy'; return; } newTopic(this); };
+      if(q('[data-ncopy]')) q('[data-ncopy]').onclick=function(){ copyText(d.topic); };
+      if(q('[data-ntest]')) q('[data-ntest]').onclick=function(){ var b=this; b.disabled=true; b.textContent='Sending…'; api('/api/notify',{method:'POST',body:{action:'test'}}).then(function(){ b.textContent='Sent. Check your phone'; }).catch(function(e){ b.disabled=false; b.textContent='Send test notification'; toast(e.message); }); };
+      if(q('#nf')) q('#nf').onsubmit=function(e){ e.preventDefault(); var f=this, offL=[]; d.types.forEach(function(g){ g[1].forEach(function(tp){ if(!f.elements[tp[0]].checked) offL.push(tp[0]); }); });
+        var b=f.querySelector('.primary'), er=q('#nErr'); b.disabled=true;
+        api('/api/notify',{method:'POST',body:{action:'save',off:offL}}).then(function(){ act.off=offL; closeSheet(); toast('Notifications saved'); }).catch(function(x){ b.disabled=false; er.textContent=x.message; er.hidden=false; }); };
+    }
+  }
   function renderMore(){
     var h=topbar('Tools');
     function it(act,icon,label){ return '<button type="button" data-act="'+act+'">'+icon+label+'<span class="chev">›</span></button>'; }
     h+='<div class="sect"><span>Money</span></div><div class="menu" style="margin-top:0"><a href="/money/">'+IC.text+'Quotes &amp; invoices<span class="chev">›</span></a><a href="/money/#/edit/new-quote">'+IC.plus+'New quote<span class="chev">›</span></a><a href="/money/#/edit/new-invoice">'+IC.plus+'New invoice<span class="chev">›</span></a></div>';
     h+='<div class="sect"><span>Roster</span></div><div class="menu" style="margin-top:0">'+it('confirms',IC.tick,'Shift confirmations')+'<button type="button" data-view="wages">'+IC.grid+'Wage estimate<span class="chev">›</span></button>'+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'</div>';
+    h+='<div class="sect"><span>Notifications</span></div><div class="menu" style="margin-top:0"><button type="button" data-view="activity">'+IC.bell+'Activity'+(state.actUnread?' ('+state.actUnread+' new)':'')+'<span class="chev">›</span></button>'+it('notify',IC.bell,'Phone notifications'+(state.notifyOn?'':' (off)'))+'</div>';
     TOOLS.forEach(function(g){ h+='<div class="sect"><span>'+esc(g[0])+'</span></div><div class="tl2" style="margin-top:0">'+g[1].map(toolRow).join('')+'</div>'; });
     h+='<details class="olds"><summary>Design files and old drafts ('+OLD.length+')</summary><div class="tl2">'+OLD.map(function(o){return toolRow([o[0],'',o[1]]);}).join('')+'</div></details>';
     h+='<details class="rates"><summary>Casual pay rates</summary><table><tbody><tr><td>Monday to Friday</td><td>$37.50</td></tr><tr><td>Mon–Fri, start before 6am or finish after 6pm</td><td>$37.91</td></tr><tr><td>Saturday</td><td>$47.39</td></tr><tr><td>Sunday</td><td>$60.93</td></tr><tr><td>Public holiday</td><td>$74.47</td></tr></tbody></table><p>Per hour, before tax, plus 12% super. From 1 October 2026.</p></details>';
@@ -1112,7 +1190,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   function refresh(){
     return api('/api/roster').then(function(d){
-      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},requests:d.requests||[],pay:d.pay||null,money:state.money||[]}; adminSet=d.adminSet; loaded=true; loadErr='';
+      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},requests:d.requests||[],pay:d.pay||null,money:state.money||[],actUnread:d.actUnread||0,notifyOn:!!d.notifyOn}; adminSet=d.adminSet; loaded=true; loadErr='';
       if(key() && !d.admin){ key(null); }
       if(d.admin) api('/api/docs').then(function(m){ state.money=(m.docs||[]).filter(function(x){ return x.flag||x.state==='overdue'; }).slice(0,8); if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
       canEdit=!!d.admin;
@@ -1172,6 +1250,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if (t.dataset.act==='confirms') confirmSheet();
     if (t.dataset.act==='info') infoSheet();
     if (t.dataset.act==='paysettings') paySettingsSheet();
+    if (t.dataset.act==='notify') notifySheet();
     if (t.dataset.act==='agents') agentsSheet();
     if (t.dataset.act==='login') loginSheet();
     if (t.dataset.act==='logout'){ key(null); canEdit=false; render(); toast('Logged out'); }

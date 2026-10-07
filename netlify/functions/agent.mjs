@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { store, json, loadRoster, loadAllLive, checkAdmin, roomsOf, DEFAULT_ROOMS, LOCK } from "../../lib/core.mjs";
+import { notify, fmtDay } from "../../lib/notify.mjs";
 
 // ---- sample jobs, so a new agent's link isn't empty on first open ----
 // Three clearly labelled jobs: finished yesterday (report), on site today, booked later this week.
@@ -135,6 +136,7 @@ export default async (req) => {
       const n = (await s.list("req/")).length;
       if (n >= 100) return json({ error: "Couldn't send right now. Call Jack on 0406 216 212." }, 429);
       await s.set(`req/${r.id}`, r);
+      await notify(s, { type: "booking", title: `Booking request from ${r.agent}`, body: `${r.service || "Clean"} · ${r.address}${r.suburb ? ", " + r.suburb : ""}\nReady by ${fmtDay(r.readyDate)}${r.readyFor ? " for " + r.readyFor : ""}${r.beds ? `\n${r.beds} bed${r.baths ? ", " + r.baths + " bath" : ""}` : ""}`, tags: "house", priority: 5, url: "/" });
       return json({ ok: true });
     }
     return json({ error: "Unknown action" }, 400);

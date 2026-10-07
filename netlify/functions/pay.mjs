@@ -3,6 +3,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { store, json } from "../../lib/core.mjs";
 import { findByToken, totals, recordPayment, today } from "../../lib/docs.mjs";
+import { notify, money } from "../../lib/notify.mjs";
 
 async function stripe(path, params, method = "POST") {
   const r = await fetch("https://api.stripe.com/v1/" + path, {
@@ -19,7 +20,11 @@ async function settle(s, session) {
   if (session.payment_status !== "paid") return false;
   const d = await s.get(`doc/${session.metadata?.doc}`);
   if (!d || d.token !== session.metadata?.token) return false;
-  await recordPayment(s, d, { amt: session.amount_total / 100, date: today(), method: "Card", ref: session.id });
+  const pid = await recordPayment(s, d, { amt: session.amount_total / 100, date: today(), method: "Card", ref: session.id });
+  if (pid) {
+    const t = totals(d), who = d.client?.name || "A client";
+    await notify(s, { type: "paid", title: `${who} paid ${money(session.amount_total / 100)} by card`, body: `Invoice #${d.num}${d.site ? " · " + d.site : ""}${t.due > 0.005 ? `\n${money(t.due)} still owing` : "\nPaid in full"}`, tags: "moneybag", priority: 4, url: `/money/#/doc/${d.id}` });
+  }
   return true;
 }
 
