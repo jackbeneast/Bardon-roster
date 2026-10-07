@@ -1,5 +1,21 @@
 import { store, json, loadRoster, loadConfirms, loadAcks, loadAllLive, checkAdmin, adminIsSet, ROOMS } from "../../lib/core.mjs";
 
+// Wage-estimate settings: pay cycle, rates, lunch rule, extra public holidays.
+function cleanPay(p) {
+  if (!p || typeof p !== "object") return null;
+  const d = (v) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+  const n = (v) => { const x = Number(v); return isFinite(x) && x > 0 && x < 1000 ? Math.round(x * 100) / 100 : undefined; };
+  const o = { cycle: p.cycle === 2 ? 2 : 1, lunch: p.lunch !== false };
+  if (d(p.anchor)) o.anchor = p.anchor;
+  if (p.rates && typeof p.rates === "object") {
+    const r = {};
+    for (const k of ["wk", "el", "sat", "sun", "ph"]) { const v = n(p.rates[k]); if (v) r[k] = v; }
+    o.rates = r;
+  }
+  if (Array.isArray(p.ph)) o.ph = [...new Set(p.ph.map(d).filter(Boolean))].slice(0, 100);
+  return o;
+}
+
 function clean(data) {
   if (!data || !Array.isArray(data.team) || !Array.isArray(data.jobs)) return null;
   const str = (v, n = 2000) => (typeof v === "string" ? v.slice(0, n) : "");
@@ -38,7 +54,8 @@ function clean(data) {
   }).filter((j) => j.id && /^\d{4}-\d{2}-\d{2}$/.test(j.date));
   const info = {};
   if (data.info && typeof data.info === "object") for (const k of ["wear", "bring", "meet", "extra"]) info[k] = str(data.info[k], 1500);
-  return { team, jobs, info, agents };
+  const pay = cleanPay(data.pay);
+  return { team, jobs, info, agents, ...(pay ? { pay } : {}) };
 }
 
 export default async (req) => {
@@ -55,6 +72,7 @@ export default async (req) => {
     const out = { team, jobs, info: roster.info || {}, confirms, acks, live, admin, adminSet: await adminIsSet(s) };
     if (admin) {
       out.agents = roster.agents || [];
+      out.pay = roster.pay || null;
       const keys = await s.list("req/");
       out.requests = (await Promise.all(keys.map((k) => s.get(k)))).filter(Boolean).sort((a, b) => a.at.localeCompare(b.at));
     }

@@ -242,6 +242,24 @@ body.has-nav .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 details.olds{margin-top:14px;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 details.olds summary{font:600 14px var(--sans);color:var(--dark);cursor:pointer}
 details.olds .tl2{border:0;margin:6px -14px -12px}
+.wcard{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:14px;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.wcard b{display:block;font:700 22px/1.2 var(--serif);color:var(--dark);font-variant-numeric:tabular-nums;margin:2px 0}
+.wcard .k{display:block;font-size:12.5px;color:var(--meta)}
+.wcard .chev{color:var(--meta);font-size:20px}
+.wsum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.wbox{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px}
+.wbox b{display:block;font:700 20px/1.2 var(--serif);color:var(--dark);font-variant-numeric:tabular-nums}
+.wbox span{font-size:12.5px;color:var(--meta)}
+.wbox.dark{background:var(--dark);border-color:var(--dark)}.wbox.dark b{color:var(--cream)}.wbox.dark span{color:#BDB5AD}
+.wrows{background:var(--white);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.wrow{display:grid;grid-template-columns:78px 1fr auto;gap:10px;align-items:start;width:100%;padding:11px 12px;background:none;border:0;border-bottom:1px solid var(--cream-dark);text-align:left;font:inherit;color:inherit;cursor:pointer}
+.wrow .wd{font:600 13px/1.3 var(--sans);color:var(--dark)}
+.wrow small{display:block;font:400 12px/1.4 var(--sans);color:var(--meta);margin-top:2px}
+.wrow .wm2{font:500 14px/1.3 var(--sans);color:var(--dark);min-width:0;overflow-wrap:anywhere}
+.wrow .wa{font:600 14px/1.3 var(--sans);color:var(--dark);font-variant-numeric:tabular-nums;white-space:nowrap}
+.wrow .ot{color:var(--terracotta-dark);font-weight:600}
+.wfoot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;font-size:12.5px;color:var(--meta);background:var(--cream);font-variant-numeric:tabular-nums}
+.rgrid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 </style></head><body>
 <div id="app"></div>
 <script>
@@ -337,7 +355,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 
   function render(){
     document.body.classList.toggle('has-nav', !!(loaded && canEdit));
-    if(loaded && canEdit && view!=='roster'){ app.innerHTML=(view==='agents'?renderAgentsView():view==='more'?renderMore():renderToday())+navBar(); return; }
+    if(loaded && canEdit && view!=='roster'){ app.innerHTML=(view==='agents'?renderAgentsView():view==='more'?renderMore():view==='wages'?renderWages():renderToday())+navBar(); return; }
     var h='';
     if(!loaded){ app.innerHTML='<div class="brand"><div class="wm">Bardon Clean</div></div><h1>Team <em>roster</em></h1><p class="sub" style="margin-top:14px">'+(loadErr?esc(loadErr)+' <button class="ghost" data-act="reload">Try again</button>':'Loading…')+'</p>'; return; }
     h+='<div class="brand"><div class="wm">Bardon Clean</div></div>';
@@ -775,6 +793,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function renderToday(){
     var t=iso(today), tl=jobsFor(t), tm=jobsFor(iso(addDays(today,1))), h=topbar('Today<em>,</em> '+fmtDay(today).replace(/^\w+ /,''));
     h+=alertsHtml();
+    h+=wagesCard();
     var me=(state.team.find(function(x){return x.owner;})||{}).id;
     h+='<div class="sect"><span class="today">On today</span><span>'+tl.length+' job'+(tl.length===1?'':'s')+'</span></div>';
     if(tl.length) tl.forEach(function(j){ h+=quickCard(j, (j.staff||[]).indexOf(me)>=0?me:''); });
@@ -819,10 +838,119 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   ];
   var OLD=[['Real estate flyer options','https://claude.ai/artifact/RAMb84GfWADtmDFvvKhPm2'],['Design comparison','https://claude.ai/artifact/UQJCqjnCMgd2fUkU3Nqm1L'],['Three design options','https://claude.ai/artifact/SxMaxuA3DNvagiPsbnU6RT'],['Slides','https://claude.ai/artifact/4Re8jjtwoJjQthUxCFkyfa'],['Old team platform draft A','https://claude.ai/artifact/4YoBqu9A74SQ2zWTYsYJLe'],['Old team platform draft B','https://claude.ai/artifact/4MsDMLVUHx2zZHULtkihER'],['Old team platform draft C','https://claude.ai/artifact/TyEp7PFHUAg8NYLWZ5DqnF']];
   function toolRow(t){ return '<div class="trow"><a class="go" href="'+esc(t[2])+'" target="_blank" rel="noopener"><span class="nm">'+esc(t[0])+'</span>'+(t[1]?'<span class="ds">'+esc(t[1])+'</span>':'')+'</a>'+(t[3]?'<button type="button" class="cp" data-copylink2="'+esc(t[2])+'">Copy link</button>':'<span class="ar">›</span>')+'</div>'; }
+  // ---------- Wage estimate per pay period ----------
+  // Rates match the Pay Run tool. Award figures: Cleaning Services Award, casual Level 1.
+  var DEF_RATES={wk:37.50,el:37.91,sat:47.39,sun:60.93,ph:74.47};
+  var AWD=(function(){ var base=33.85/1.25, r=function(v){return Math.round(v*100)/100;}; return {ot1:r(base*1.75),ot2:r(base*2.25),otSun:r(base*2.25),otPh:r(base*2.75)}; })();
+  // Queensland statewide public holidays (qld.gov.au). Add others (e.g. Ekka) in settings.
+  var QLD_PH={'2026-01-01':'New Year\'s Day','2026-01-26':'Australia Day','2026-04-03':'Good Friday','2026-04-04':'Easter Saturday','2026-04-05':'Easter Sunday','2026-04-06':'Easter Monday','2026-04-25':'Anzac Day','2026-05-04':'Labour Day','2026-10-05':'King\'s Birthday','2026-12-25':'Christmas Day','2026-12-26':'Boxing Day','2026-12-28':'Boxing Day (extra)','2027-01-01':'New Year\'s Day','2027-01-26':'Australia Day','2027-03-26':'Good Friday','2027-03-27':'Easter Saturday','2027-03-28':'Easter Sunday','2027-03-29':'Easter Monday','2027-04-26':'Anzac Day','2027-05-03':'Labour Day','2027-10-04':'King\'s Birthday','2027-12-25':'Christmas Day','2027-12-26':'Boxing Day','2027-12-27':'Christmas (extra)','2027-12-28':'Boxing Day (extra)'};
+  var wageOff=0;
+  function paySet(){ var p=state.pay||{}; var r=Object.assign({},DEF_RATES,p.rates||{}); return {cycle:p.cycle===2?2:1, anchor:p.anchor||'2026-10-05', lunch:p.lunch!==false, rates:r, ph:p.ph||[]}; }
+  function isPH(d){ var p=paySet(); return !!QLD_PH[d] || p.ph.indexOf(d)>=0; }
+  function periodFor(off){
+    var p=paySet(), len=p.cycle*7, a=parse(p.anchor), diff=Math.round((today-a)/864e5);
+    var s=addDays(a, Math.floor(diff/len)*len + off*len);
+    return {start:s, end:addDays(s,len-1), len:len};
+  }
+  function mins(t){ return t? +t.slice(0,2)*60 + +t.slice(3,5) : NaN; }
+  function money(v){ return '$'+v.toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function hrsTxt(v){ return (Math.round(v*100)/100)+''; }
+  function wageCalc(per){
+    var p=paySet(), R=p.rates, s0=iso(per.start), e0=iso(per.end);
+    var LBL={wk:'Weekday',el:'Weekday early/late',sat:'Saturday',sun:'Sunday',ph:'Public holiday'};
+    var people=[], warn=[];
+    state.team.forEach(function(t){
+      if(t.owner) return;
+      var sh=[];
+      state.jobs.forEach(function(j){
+        if(j.sample||j.date<s0||j.date>e0||(j.staff||[]).indexOf(t.id)<0) return;
+        var s=shiftOf(j,t.id), span=(mins(s.end)-mins(s.start))/60;
+        if(!(span>0)){ warn.push(t.name.split(' ')[0]+' on '+fmtDay(parse(j.date))+' has no valid shift times.'); return; }
+        var lunch=p.lunch&&span>4.5?0.5:0, dow=parse(j.date).getDay();
+        var kind=isPH(j.date)?'ph':dow===0?'sun':dow===6?'sat':(mins(s.start)<360||mins(s.end)>1080)?'el':'wk';
+        sh.push({job:j,date:j.date,start:s.start,end:s.end,span:span,lunch:lunch,hrs:span-lunch,kind:kind,ord:0,ot:0,pay:0,c:cstate(j,t.id).v});
+      });
+      if(!sh.length) return;
+      sh.sort(function(a,b){return (a.date+a.start).localeCompare(b.date+b.start);});
+      var ordPay=0, otPay=0, otHrs=0, hrs=0, reasons=[];
+      for(var w=0; w<per.len/7; w++){
+        var ws=iso(addDays(per.start,w*7)), we=iso(addDays(per.start,w*7+6));
+        var wk=sh.filter(function(x){return x.date>=ws&&x.date<=we;}), days=[], weekOrd=0;
+        wk.forEach(function(x){ if(days.indexOf(x.date)<0) days.push(x.date); });
+        days.forEach(function(d,di){
+          var dayOrd=0, dayOT=0;
+          wk.filter(function(x){return x.date===d;}).forEach(function(x){
+            var ord=0, ot=0, rate=R[x.kind];
+            if(di>=5){ ot=x.hrs; reasons.push('6th day'); }
+            else { ord=Math.min(x.hrs, Math.max(0,7.6-dayOrd), Math.max(0,38-weekOrd)); ot=x.hrs-ord; if(ot>0.001) reasons.push(x.hrs>Math.max(0,7.6-dayOrd)?'over 7.6 hrs in a day':'over 38 hrs in a week'); }
+            dayOrd+=ord; weekOrd+=ord;
+            var op=0;
+            if(ot>0){
+              if(x.kind==='ph') op=ot*Math.max(AWD.otPh,rate);
+              else if(x.kind==='sun') op=ot*Math.max(AWD.otSun,rate);
+              else { var f=Math.min(ot,Math.max(0,2-dayOT)); op=f*Math.max(AWD.ot1,rate)+(ot-f)*Math.max(AWD.ot2,rate); }
+            }
+            dayOT+=ot; x.ord=ord; x.ot=ot; x.pay=ord*rate+op;
+            ordPay+=ord*rate; otPay+=op; otHrs+=ot; hrs+=x.hrs;
+          });
+        });
+      }
+      var gross=ordPay+otPay, sup=ordPay*0.12;
+      people.push({t:t,sh:sh,hrs:hrs,otHrs:otHrs,gross:gross,sup:sup,cost:gross+sup,reasons:reasons.filter(function(v,i,a){return a.indexOf(v)===i;}),un:sh.filter(function(x){return x.c!=='yes';}).length});
+    });
+    var tot={hrs:0,gross:0,sup:0,cost:0,otHrs:0,shifts:0,un:0};
+    people.forEach(function(x){ tot.hrs+=x.hrs; tot.gross+=x.gross; tot.sup+=x.sup; tot.cost+=x.cost; tot.otHrs+=x.otHrs; tot.shifts+=x.sh.length; tot.un+=x.un; });
+    return {people:people,tot:tot,warn:warn,LBL:LBL};
+  }
+  function wagesCard(){
+    var per=periodFor(0), c=wageCalc(per);
+    return '<button type="button" class="wcard" data-view="wages"><span><span class="k">This pay period · '+fmtDay(per.start).replace(/^\w+ /,'')+' to '+fmtDay(per.end).replace(/^\w+ /,'')+'</span><b>'+money(c.tot.cost)+'</b><span class="k">est. wages + super, '+hrsTxt(c.tot.hrs)+' hrs</span></span><span class="chev">›</span></button>';
+  }
+  function renderWages(){
+    var per=periodFor(wageOff), c=wageCalc(per), p=paySet(), t=c.tot;
+    var h=topbar('Wage <em>estimate</em>');
+    h+='<div class="nav"><button class="icon-btn" data-wnav="-1" aria-label="Previous pay period">&larr;</button><div class="range">'+fmtDay(per.start)+' to '+fmtDay(per.end)+(wageOff===0?'<br><small style="font-weight:400;color:var(--meta)">This pay period</small>':'')+'</div>'+(wageOff!==0?'<button class="icon-btn" data-wnav="0">Now</button>':'')+'<button class="icon-btn" data-wnav="1" aria-label="Next pay period">&rarr;</button></div>';
+    h+='<div class="wsum"><div class="wbox dark"><b>'+money(t.cost)+'</b><span>Total cost to you</span></div><div class="wbox"><b>'+money(t.gross)+'</b><span>Gross wages</span></div><div class="wbox"><b>'+money(t.sup)+'</b><span>Super (12%)</span></div><div class="wbox"><b>'+hrsTxt(t.hrs)+'</b><span>Paid hours, '+t.shifts+' shift'+(t.shifts===1?'':'s')+'</span></div></div>';
+    if(t.otHrs>0.001) h+='<div class="warn">'+hrsTxt(t.otHrs)+' hrs of overtime in this period, already costed at overtime rates.</div>';
+    if(t.un) h+='<div class="warn" style="border-left-color:var(--terracotta)">'+t.un+' shift'+(t.un===1?' isn\'t':'s aren\'t')+' confirmed yet. Included in the estimate.</div>';
+    c.warn.forEach(function(w){ h+='<div class="warn">'+esc(w)+'</div>'; });
+    if(!c.people.length) h+='<div class="hint-card">No team shifts rostered in this pay period yet. Your own shifts aren\'t counted.</div>';
+    c.people.forEach(function(x){
+      h+='<div class="sect"><span>'+esc(x.t.name)+'</span><span>'+money(x.cost)+'</span></div><div class="wrows">';
+      x.sh.forEach(function(s){
+        h+='<button type="button" class="wrow" data-edit="'+s.job.id+'"><span class="wd">'+fmtDay(parse(s.date))+'<small>'+range(s.start,s.end)+'</small></span><span class="wm2">'+esc(s.job.client||'Job')+(s.job.suburb?' · '+esc(s.job.suburb):'')+'<small>'+c.LBL[s.kind]+(isPH(s.date)&&QLD_PH[s.date]?' ('+esc(QLD_PH[s.date])+')':'')+' · '+hrsTxt(s.hrs)+' hrs'+(s.lunch?' after lunch':'')+(s.ot>0.001?' · <b class="ot">'+hrsTxt(s.ot)+' OT</b>':'')+(s.c==='yes'?'':' · '+(s.c==='no'?'<b class="ot">can\'t make it</b>':'not confirmed'))+'</small></span><span class="wa">'+money(s.pay)+'</span></button>';
+      });
+      h+='<div class="wfoot"><span>'+hrsTxt(x.hrs)+' hrs'+(x.otHrs>0.001?' ('+hrsTxt(x.otHrs)+' OT: '+x.reasons.join(', ')+')':'')+'</span><span>'+money(x.gross)+' + '+money(x.sup)+' super</span></div></div>';
+    });
+    h+='<p class="sub" style="margin-top:18px;font-size:12.5px">Estimate before tax. '+(p.lunch?'Takes off a 30-min unpaid lunch on shifts over 4½ hrs. ':'')+'Overtime past 7.6 hrs a day, 38 a week or on a 6th day uses Cleaning Services Award casual rates, or your rate if higher. Super is 12% of ordinary pay. Only counts rostered shifts, not hours actually worked.</p>';
+    h+='<div class="menu"><button type="button" data-act="paysettings">'+IC.grid+'Pay period, rates and holidays<span class="chev">›</span></button></div>';
+    return h;
+  }
+  function paySettingsSheet(){
+    var p=paySet(), R=p.rates;
+    function rt(k,label){ return '<label class="l">'+label+'<input type="number" step="0.01" inputmode="decimal" name="r_'+k+'" value="'+R[k].toFixed(2)+'"></label>'; }
+    var h='<h3>Pay <em>settings</em></h3><form id="payForm" class="fgrid" novalidate>';
+    h+='<label class="l">How often you pay<select name="cycle"><option value="1"'+(p.cycle===1?' selected':'')+'>Weekly</option><option value="2"'+(p.cycle===2?' selected':'')+'>Fortnightly</option></select></label>';
+    h+='<label class="l">A pay period start date<input type="date" name="anchor" value="'+esc(p.anchor)+'"><span class="sub" style="display:block;font-size:12px">Any past or future start. Periods repeat from it.</span></label>';
+    h+='<div class="rgrid2">'+rt('wk','Weekday')+rt('el','Weekday before 6am / after 6pm')+rt('sat','Saturday')+rt('sun','Sunday')+rt('ph','Public holiday')+'</div>';
+    h+='<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--dark)"><input type="checkbox" name="lunch"'+(p.lunch?' checked':'')+' style="width:20px;height:20px;min-height:0;margin:0">Take off 30-min unpaid lunch on shifts over 4½ hrs</label>';
+    h+='<label class="l">Extra public holidays <span style="color:var(--meta);font-weight:400">(e.g. Ekka, one date per line, YYYY-MM-DD)</span><textarea name="ph" placeholder="2027-08-11">'+esc(p.ph.join('\n'))+'</textarea><span class="sub" style="display:block;font-size:12px">Queensland statewide holidays for 2026 and 2027 are already included.</span></label>';
+    h+='<div class="err" id="payErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save</button></div></form>';
+    var s=openSheet(h), f=s.querySelector('#payForm');
+    s.querySelector('[data-close]').onclick=closeSheet;
+    f.onsubmit=function(e){ e.preventDefault(); var err=s.querySelector('#payErr'), r={}, bad='';
+      ['wk','el','sat','sun','ph'].forEach(function(k){ var v=parseFloat(f.elements['r_'+k].value); if(!(v>0)) bad='Fill in every rate.'; r[k]=v; });
+      var ph=f.elements.ph.value.split(/[\s,]+/).filter(Boolean); if(ph.some(function(d){return !/^\d{4}-\d{2}-\d{2}$/.test(d);})) bad='Write holiday dates like 2027-08-11.';
+      if(!f.elements.anchor.value) bad='Pick a pay period start date.';
+      if(bad){ err.textContent=bad; err.hidden=false; return; }
+      wageOff=0;
+      save({team:state.team,jobs:state.jobs,pay:{cycle:+f.elements.cycle.value,anchor:f.elements.anchor.value,lunch:f.elements.lunch.checked,rates:r,ph:ph}}, f.querySelector('.primary'), err, 'Pay settings saved');
+    };
+  }
   function renderMore(){
     var h=topbar('Tools');
     function it(act,icon,label){ return '<button type="button" data-act="'+act+'">'+icon+label+'<span class="chev">›</span></button>'; }
-    h+='<div class="sect"><span>Roster</span></div><div class="menu" style="margin-top:0">'+it('confirms',IC.tick,'Shift confirmations')+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'</div>';
+    h+='<div class="sect"><span>Roster</span></div><div class="menu" style="margin-top:0">'+it('confirms',IC.tick,'Shift confirmations')+'<button type="button" data-view="wages">'+IC.grid+'Wage estimate<span class="chev">›</span></button>'+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'</div>';
     TOOLS.forEach(function(g){ h+='<div class="sect"><span>'+esc(g[0])+'</span></div><div class="tl2" style="margin-top:0">'+g[1].map(toolRow).join('')+'</div>'; });
     h+='<details class="olds"><summary>Design files and old drafts ('+OLD.length+')</summary><div class="tl2">'+OLD.map(function(o){return toolRow([o[0],'',o[1]]);}).join('')+'</div></details>';
     h+='<details class="rates"><summary>Casual pay rates</summary><table><tbody><tr><td>Monday to Friday</td><td>$37.50</td></tr><tr><td>Mon–Fri, start before 6am or finish after 6pm</td><td>$37.91</td></tr><tr><td>Saturday</td><td>$47.39</td></tr><tr><td>Sunday</td><td>$60.93</td></tr><tr><td>Public holiday</td><td>$74.47</td></tr></tbody></table><p>Per hour, before tax, plus 12% super. From 1 October 2026.</p></details>';
@@ -896,7 +1024,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function save(next, btn, errEl, doneMsg){
     if (saving) return;
     saving=true; var label=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
-    var body={info:next.info||state.info,agents:next.agents||state.agents,team:next.team,jobs:next.jobs.map(function(j){ var c=Object.assign({},j); delete c.confirm; delete c.example; return c; })};
+    var body={info:next.info||state.info,agents:next.agents||state.agents,pay:next.pay||state.pay||undefined,team:next.team,jobs:next.jobs.map(function(j){ var c=Object.assign({},j); delete c.confirm; delete c.example; return c; })};
     api('/api/roster',{method:'PUT',body:body}).then(function(){ saving=false; closeSheet(); if(pendingReq && doneMsg==='Job added'){ var rid=pendingReq; pendingReq=null; return api('/api/agent',{method:'POST',body:{action:'dismiss',id:rid}}).catch(function(){}).then(refresh); } return refresh(); }).then(function(){ toast(doneMsg||'Saved'); })
     .catch(function(e){
       saving=false; if(btn){ btn.disabled=false; btn.textContent=label; }
@@ -906,7 +1034,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   function refresh(){
     return api('/api/roster').then(function(d){
-      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},requests:d.requests||[]}; adminSet=d.adminSet; loaded=true; loadErr='';
+      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},requests:d.requests||[],pay:d.pay||null}; adminSet=d.adminSet; loaded=true; loadErr='';
       if(key() && !d.admin){ key(null); }
       canEdit=!!d.admin;
       if (filter!=='all' && filter!=='open' && !member(filter)) filter='all';
@@ -947,6 +1075,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       else if(q==='arrive'){ var L0=liveOf(state.jobs.find(function(x){return x.id===jid;})); if(L0.arrived[qp]) liveSheet(jid,qp); else livePost({action:'arrive',who:qp},qa,{jobId:jid,pid:qp}).then(function(){ toast('Arrival sent'); }); }
       else { liveSheet(jid,qp); if(q==='finish') setTimeout(function(){ var sh=document.querySelector('.sheet'); if(sh) sh.scrollTop=sh.scrollHeight; },60); }
       return; }
+    var wn=e.target.closest('[data-wnav]'); if(wn){ wageOff = wn.dataset.wnav==='0'?0:wageOff+(+wn.dataset.wnav); render(); return; }
     var cl=e.target.closest('[data-copylink2]'); if(cl){ copyText(cl.dataset.copylink2); return; }
     var vc=e.target.closest('[data-vcopy]'); if(vc){ copyText(location.origin+'/v/'+vc.dataset.vcopy); return; }
     var lv=e.target.closest('[data-live]'); if(lv){ liveSheet(lv.dataset.live, lv.dataset.p||''); return; }
@@ -961,6 +1090,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if (t.dataset.act==='copy') copySheet();
     if (t.dataset.act==='confirms') confirmSheet();
     if (t.dataset.act==='info') infoSheet();
+    if (t.dataset.act==='paysettings') paySettingsSheet();
     if (t.dataset.act==='agents') agentsSheet();
     if (t.dataset.act==='login') loginSheet();
     if (t.dataset.act==='logout'){ key(null); canEdit=false; render(); toast('Logged out'); }
