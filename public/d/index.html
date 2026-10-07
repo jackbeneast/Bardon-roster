@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#F5F0EB">
+<title>Bardon Clean</title>
+<link rel="icon" type="image/png" href="/icons/favicon.png"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--terracotta:#C06B3C;--terracotta-dark:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cream-dark:#EDE6DE;--body:#4A4A4A;--meta:#7A7A7A;--gold:#F4B942;--white:#FFFFFF;--line:#E4DBD1;
+  --serif:"Playfair Display",Georgia,serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--body);font:400 15px/1.6 var(--sans);-webkit-text-size-adjust:100%}
+.wrap{max-width:780px;margin:0 auto;padding:20px 16px 60px}
+.paper{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:28px 24px}
+@media (max-width:560px){.paper{padding:22px 16px}}
+.head{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.brand{display:flex;gap:12px;align-items:center}
+.brand svg{width:46px;height:46px;flex:none}
+.brand b{display:block;font:700 24px/1.1 var(--serif);color:var(--dark)}
+.brand small{display:block;font-size:12px;color:var(--meta);line-height:1.5;margin-top:4px}
+.dtype{text-align:right}
+.dtype h1{font:700 28px/1.1 var(--serif);color:var(--dark);margin:0}
+.dtype h1 em{font-style:italic;font-weight:500;color:var(--terracotta)}
+.dtype .n{font:500 14px var(--sans);color:var(--meta);margin-top:4px}
+@media (max-width:560px){.dtype{text-align:left}}
+.meta{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-top:24px;background:var(--cream);border-radius:8px;padding:16px}
+@media (max-width:560px){.meta{grid-template-columns:1fr}}
+.meta .k{font:600 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--meta);margin-bottom:6px}
+.meta .v{color:var(--dark);font-size:14px;white-space:pre-line}
+.meta .v b{font-weight:600}
+.facts{display:grid;gap:4px;font-size:14px}
+.facts div{display:flex;justify-content:space-between;gap:12px}
+.facts span{color:var(--meta)}
+.facts b{color:var(--dark);font-weight:600;text-align:right}
+.banner{margin-top:16px;border-radius:8px;padding:12px 14px;font:500 14px/1.5 var(--sans)}
+.banner.ok{background:#E6EFE3;color:#2F5A35}
+.banner.warn{background:#FBEBD9;color:#8A4A1F}
+.banner.note{background:var(--cream);color:var(--dark)}
+.items{margin-top:26px}
+.ihead{display:grid;grid-template-columns:1fr 60px 100px 100px;gap:10px;font:600 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--meta);padding:0 0 10px;border-bottom:2px solid var(--dark)}
+.ihead span:not(:first-child){text-align:right}
+.item{display:grid;grid-template-columns:1fr 60px 100px 100px;gap:10px;padding:16px 0;border-bottom:1px solid var(--line);break-inside:avoid-page}
+.item .t{font:700 17px/1.3 var(--serif);color:var(--dark)}
+.item .q,.item .p,.item .a{text-align:right;font-variant-numeric:tabular-nums;color:var(--dark);font-size:14px}
+.item .a{font-weight:600}
+.item .mob{display:none}
+@media (max-width:560px){
+  .ihead{display:none}
+  .item{grid-template-columns:1fr auto}
+  .item .q,.item .p{display:none}
+  .item .mob{display:block;font-size:13px;color:var(--meta);margin-top:2px}
+}
+.desc{font-size:14px;color:var(--body);margin-top:6px}
+.desc p{margin:0 0 8px}
+.desc h4{font:600 13px/1.3 var(--sans);color:var(--dark);margin:14px 0 4px;letter-spacing:.01em}
+.desc ul{margin:0 0 6px;padding-left:18px}
+.desc li{margin:2px 0}
+.desc li::marker{color:var(--terracotta)}
+.tot{margin-left:auto;max-width:320px;margin-top:16px;font-variant-numeric:tabular-nums}
+.tot div{display:flex;justify-content:space-between;gap:14px;padding:6px 0;font-size:14px;color:var(--dark)}
+.tot .grand{border-top:2px solid var(--dark);margin-top:6px;padding-top:12px;font:700 22px/1.2 var(--serif)}
+.tot .due{font:700 18px/1.2 var(--serif);color:var(--terracotta-dark)}
+.callout{margin-top:22px;border-left:3px solid var(--terracotta);background:#FBF3EE;border-radius:0 8px 8px 0;padding:12px 14px;color:var(--dark);font-size:14px}
+.sect{margin-top:28px}
+.sect h2{font:700 21px/1.2 var(--serif);color:var(--dark);margin:0 0 12px}
+.sect h2 em{font-style:italic;font-weight:500}
+.panel{background:var(--cream);border-radius:10px;padding:16px}
+.bank{display:grid;gap:8px}
+.bank div{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}
+.bank span{color:var(--meta)}
+.bank b{color:var(--dark);font-weight:600;font-variant-numeric:tabular-nums;user-select:all}
+.copy{border:1px solid var(--line);background:var(--white);border-radius:6px;font:500 12px var(--sans);color:var(--dark);padding:6px 10px;cursor:pointer;margin-left:8px}
+label.l{display:block;font:500 13px/1.3 var(--sans);color:var(--dark)}
+input{width:100%;margin-top:6px;font:400 16px/1.3 var(--sans);color:var(--dark);background:var(--white);border:1px solid #CFC5BA;border-radius:6px;padding:12px;min-height:48px}
+input:focus,button:focus-visible{outline:2px solid var(--terracotta);outline-offset:1px}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.btn{font:600 15px/1 var(--sans);border-radius:6px;min-height:50px;padding:0 20px;cursor:pointer;border:0;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.btn.primary{background:var(--terracotta);color:var(--white);flex:1}
+.btn.primary:hover{background:var(--terracotta-dark)}
+.btn.primary:disabled{opacity:.6}
+.btn.dark{background:var(--dark);color:var(--cream)}
+.btn.outline{background:transparent;border:2px solid var(--terracotta);color:var(--terracotta)}
+.small{font-size:13px;color:var(--meta);margin-top:10px}
+.err{color:var(--terracotta-dark);font:500 14px var(--sans);margin-top:10px}
+details.terms{margin-top:28px;border-top:1px solid var(--line);padding-top:16px}
+details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:pointer}
+.foot{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--meta);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 14px}
+.toolbar .who{font:500 13px var(--sans);color:var(--meta)}
+.state{display:inline-block;font:600 11px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:5px 9px;background:var(--cream-dark);color:var(--dark)}
+.state.paid,.state.accepted{background:#E6EFE3;color:#2F5A35}
+.state.overdue,.state.expired{background:#FBEBD9;color:#8A4A1F}
+.center{text-align:center;padding:60px 20px;color:var(--dark)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:30}
+@media print{
+  @page{size:A4;margin:14mm 14mm 16mm}
+  body{background:#fff;font-size:12.5px}
+  .wrap{padding:0;max-width:none}
+  .paper{border:0;padding:0;border-radius:0}
+  .noprint,.toolbar,.btns,.copy{display:none!important}
+  details.terms{display:block}
+  details.terms>*{display:block}
+  details.terms summary{list-style:none}
+  details.terms summary::-webkit-details-marker{display:none}
+  .meta,.panel,.callout{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .item{grid-template-columns:1fr 50px 90px 90px}
+  .item .q,.item .p{display:block}
+  .item .mob{display:none}
+  .ihead{display:grid;grid-template-columns:1fr 50px 90px 90px}
+}
+</style></head><body>
+<div class="wrap" id="app"><div class="center">Loading…</div></div>
+<script>
+(function(){
+  var app=document.getElementById('app'), path=location.pathname.split('/'), kind=path[1]==='i'?'invoice':'quote', token=path[2]||'';
+  var params=new URLSearchParams(location.search), data=null, err='', isAdmin=false;
+  var LOGO='<svg viewBox="0 0 48 48" role="img" aria-label="Bardon Clean"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function money(v){ return (v<0?'−':'')+'$'+Math.abs(v).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function fdate(s,dow){ if(!s) return ''; var p=s.split('-'), d=new Date(+p[0],+p[1]-1,+p[2]); return (dow?DOW[d.getDay()]+' ':'')+d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear(); }
+  function lines(t){ return esc(t).replace(/\n/g,'<br>'); }
+  // Plain text to tidy HTML: "- " lines become bullets, the line before a bullet list becomes a subheading.
+  function rich(t){
+    var L=String(t||'').split('\n'), h='', inList=false;
+    function isB(x){ return /^\s*[-•*]\s+/.test(x||''); }
+    for(var i=0;i<L.length;i++){
+      var x=L[i];
+      if(isB(x)){ if(!inList){ h+='<ul>'; inList=true; } h+='<li>'+esc(x.replace(/^\s*[-•*]\s+/,''))+'</li>'; continue; }
+      if(inList){ h+='</ul>'; inList=false; }
+      if(!x.trim()) continue;
+      if(isB(L[i+1]) && x.length<70) h+='<h4>'+esc(x.trim())+'</h4>'; else h+='<p>'+esc(x)+'</p>';
+    }
+    if(inList) h+='</ul>';
+    return h;
+  }
+  function toast(m){ var t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2400); }
+  function copy(v,label){ try{ navigator.clipboard.writeText(v).then(function(){toast(label+' copied');},function(){toast(v);}); }catch(e){ toast(v); } }
+  function api(method, url, body){
+    var h={'content-type':'application/json'}; try{ var k=localStorage.getItem('roster_admin_key'); if(k){ h['x-admin-key']=k; isAdmin=true; } }catch(e){}
+    return fetch(url,{method:method,headers:h,body:body?JSON.stringify(body):undefined,cache:'no-store'}).then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong'); return d; }); });
+  }
+
+  var STATE={draft:'Draft',sent:'Awaiting response',viewed:'Awaiting response',accepted:'Accepted',declined:'Declined',expired:'Expired',paid:'Paid','part-paid':'Part paid',overdue:'Overdue'};
+
+  function render(){
+    if(err){ app.innerHTML='<div class="center"><div class="brand" style="justify-content:center">'+LOGO+'</div><p style="margin-top:18px">'+esc(err)+'</p><a class="btn dark" href="tel:+61406216212">Call Jack</a></div>'; return; }
+    var d=data, b=d.biz, t=d.totals, q=d.kind==='quote', st=d.state;
+    document.title=(q?'Quote':'Invoice')+' #'+d.num+' · Bardon Clean';
+    var h='<div class="toolbar"><span class="who">'+(isAdmin&&params.has('preview')?'Preview. Clients won\'t see this line.':'')+'</span><button class="btn outline noprint" style="min-height:40px;padding:0 14px;font-size:14px" data-print>Save as PDF</button></div>';
+    h+='<div class="paper">';
+    h+='<div class="head"><div class="brand">'+LOGO+'<div><b>'+esc(b.name)+'</b><small>'+esc(b.address)+'<br>'+esc(b.phone)+' · '+esc(b.email)+'<br>'+esc(b.web)+(b.abn?' · ABN '+esc(b.abn):'')+'</small></div></div>';
+    h+='<div class="dtype"><h1>'+(q?'Your <em>quote</em>':(d.gstReg&&d.gst?'Tax <em>invoice</em>':'<em>Invoice</em>'))+'</h1><div class="n">'+(q?'Quote':'Invoice')+' #'+d.num+' · <span class="state '+st+'">'+esc(STATE[st]||st)+'</span></div></div></div>';
+    h+='<div class="meta"><div><div class="k">Prepared for</div><div class="v"><b>'+esc(d.client.name)+'</b>'+(d.client.contact?'\nAttn: '+esc(d.client.contact):'')+(d.client.address?'\n'+esc(d.client.address):'')+'</div>'+(d.site?'<div class="k" style="margin-top:12px">Property</div><div class="v">'+esc(d.site)+(d.suburb&&d.site.indexOf(d.suburb)<0?', '+esc(d.suburb):'')+'</div>':'')+'</div>';
+    h+='<div class="facts"><div><span>'+(q?'Date':'Issued')+'</span><b>'+fdate(d.issued)+'</b></div>';
+    if(q&&d.validUntil) h+='<div><span>Valid until</span><b>'+fdate(d.validUntil)+'</b></div>';
+    if(!q) h+='<div><span>Due</span><b>'+(d.dueDate&&d.dueDate!==d.issued?fdate(d.dueDate):'On receipt')+'</b></div>';
+    if(d.serviceDate) h+='<div><span>Service date</span><b>'+fdate(d.serviceDate,true)+'</b></div>';
+    if(d.quoteNum) h+='<div><span>For quote</span><b>#'+d.quoteNum+'</b></div>';
+    h+='<div><span>'+(q?'Total':'Amount due')+'</span><b>'+money(q?t.total:t.due)+'</b></div></div></div>';
+
+    if(params.has('paid')&&!q) h+='<div class="banner ok">Thank you. Your card payment has gone through'+(t.due>0.005?'':', and this invoice is now paid')+'.</div>';
+    else if(st==='paid') h+='<div class="banner ok">Paid in full. Thank you.</div>';
+    else if(st==='overdue') h+='<div class="banner warn">This invoice was due '+fdate(d.dueDate)+'. Please pay '+money(t.due)+' at your earliest convenience.</div>';
+    if(q&&st==='accepted') h+='<div class="banner ok">Accepted by '+esc(d.acceptedName)+' on '+fdate((function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);})(new Date(d.acceptedAt)))+'. Thank you. Jack will be in touch to confirm the details.</div>';
+    if(q&&st==='expired') h+='<div class="banner warn">This quote expired on '+fdate(d.validUntil)+'. Call Jack on '+esc(b.phone)+' for an updated quote.</div>';
+
+    h+='<div class="items"><div class="ihead"><span>Description</span><span>Qty</span><span>Unit price</span><span>Amount</span></div>';
+    d.items.forEach(function(i){ var a=i.qty*i.price;
+      h+='<div class="item"><div><div class="t">'+esc(i.title)+'</div>'+(i.qty!==1?'<div class="mob">'+i.qty+' × '+money(i.price)+'</div>':'')+(i.desc?'<div class="desc">'+rich(i.desc)+'</div>':'')+'</div><div class="q">'+i.qty+'</div><div class="p">'+money(i.price)+'</div><div class="a">'+money(a)+'</div></div>'; });
+    h+='</div><div class="tot"><div><span>Subtotal</span><span>'+money(t.sub)+'</span></div>'+(d.gst?'<div><span>GST (10%)</span><span>'+money(t.gst)+'</span></div>':'')+'<div class="grand"><span>Total'+(d.gst?' incl. GST':'')+'</span><span>'+money(t.total)+'</span></div>';
+    (d.payments||[]).forEach(function(p){ h+='<div><span>Paid '+fdate(p.date)+(p.method?' · '+esc(p.method):'')+'</span><span>−'+money(p.amt)+'</span></div>'; });
+    if(!q&&t.paid>0) h+='<div class="due"><span>Amount due</span><span>'+money(t.due)+'</span></div>';
+    h+='</div>';
+    if(q&&t.deposit>0) h+='<div class="callout">A '+d.depositPct+'% deposit of <b>'+money(t.deposit)+'</b> is required to book your service in.</div>';
+    if(d.notes) h+='<div class="callout" style="border-left-color:var(--dark);background:var(--cream)">'+lines(d.notes)+'</div>';
+
+    // ---- Act on it ----
+    if(q&&(st==='sent'||st==='viewed')) h+='<div class="sect noprint"><h2>Happy to <em>go ahead?</em></h2><div class="panel"><form id="acc"><label class="l" for="an">Your full name<input id="an" autocomplete="name" required placeholder="As it should appear on the booking"></label><div class="btns"><button class="btn primary" type="submit">Accept quote</button><a class="btn dark" href="tel:+61'+esc(b.phone.replace(/\D/g,'').replace(/^0/,''))+'">Call Jack</a></div><div class="err" id="accErr" hidden></div><p class="small">By accepting, you agree to the service policies below.'+(t.deposit>0?' You\'ll then get a deposit invoice to pay and lock in your booking.':'')+'</p></form></div></div>';
+    if(q&&st==='accepted'&&d.depositLink&&d.depositLink.state!=='paid') h+='<div class="sect noprint"><h2>Pay your <em>deposit</em></h2><div class="panel"><p style="margin:0 0 4px;color:var(--dark)">Deposit invoice #'+d.depositLink.num+': <b>'+money(d.depositLink.due)+'</b></p><div class="btns"><a class="btn primary" href="/i/'+esc(d.depositLink.token)+'">View and pay deposit</a></div></div></div>';
+    if(!q&&t.due>0.005&&st!=='draft'){
+      h+='<div class="sect"><h2>How to <em>pay</em></h2><div class="panel">';
+      if(d.bank.bsb&&d.bank.acct) h+='<div class="bank">'+(d.bank.name?'<div><span>Account name</span><b>'+esc(d.bank.name)+'</b></div>':'')+'<div><span>BSB</span><span><b>'+esc(d.bank.bsb)+'</b><button class="copy" data-copy="'+esc(d.bank.bsb)+'" data-label="BSB">Copy</button></span></div><div><span>Account</span><span><b>'+esc(d.bank.acct)+'</b><button class="copy" data-copy="'+esc(d.bank.acct)+'" data-label="Account number">Copy</button></span></div><div><span>Reference</span><span><b>INV'+d.num+'</b><button class="copy" data-copy="INV'+d.num+'" data-label="Reference">Copy</button></span></div><div><span>Amount</span><b>'+money(t.due)+'</b></div></div>';
+      if(d.card) h+='<div class="btns noprint"><button class="btn primary" data-card>Pay '+money(t.due)+' by card</button></div><div class="err" id="payErr" hidden></div>';
+      if(!d.bank.bsb&&!d.card) h+='<p style="margin:0">Call Jack on '+esc(b.phone)+' to arrange payment.</p>';
+      h+='</div></div>';
+    }
+    if(d.terms) h+='<details class="terms"'+(params.has('terms')?' open':'')+'><summary>Service policies</summary><div class="desc" style="margin-top:10px">'+rich(d.terms)+'</div></details>';
+    h+='<div class="foot"><span>'+esc(b.legal||b.name)+(b.abn?' · ABN '+esc(b.abn):'')+'</span><span>Questions? Jack, '+esc(b.phone)+'</span></div>';
+    h+='</div>';
+    app.innerHTML=h;
+  }
+
+  app.addEventListener('click',function(e){
+    var c=e.target.closest('[data-copy]'); if(c){ copy(c.dataset.copy,c.dataset.label); return; }
+    if(e.target.closest('[data-print]')){ var dt=document.querySelector('details.terms'); if(dt) dt.open=true; window.print(); return; }
+    var pc=e.target.closest('[data-card]'); if(pc){ pc.disabled=true; pc.textContent='Opening secure payment…';
+      api('POST','/api/pay',{t:token}).then(function(r){ location.href=r.url; }).catch(function(x){ pc.disabled=false; pc.textContent='Pay by card'; var er=document.getElementById('payErr'); er.textContent=x.message; er.hidden=false; }); }
+  });
+  app.addEventListener('submit',function(e){
+    if(e.target.id!=='acc') return; e.preventDefault();
+    var n=document.getElementById('an').value.trim(), btn=e.target.querySelector('.primary'), er=document.getElementById('accErr');
+    if(n.length<2){ er.textContent='Type your name to accept.'; er.hidden=false; return; }
+    btn.disabled=true; btn.textContent='Accepting…';
+    api('POST','/api/docs',{action:'accept',t:token,name:n}).then(load).then(function(){ window.scrollTo(0,0); toast('Quote accepted. Thank you.'); })
+      .catch(function(x){ btn.disabled=false; btn.textContent='Accept quote'; er.textContent=x.message; er.hidden=false; });
+  });
+
+  function load(){
+    return api('GET','/api/docs?t='+encodeURIComponent(token)).then(function(d){ if(d.kind!==kind){ history.replaceState(null,'','/'+(d.kind==='invoice'?'i':'q')+'/'+token+location.search); } data=d; err=''; render(); })
+      .catch(function(x){ err=x.message; render(); });
+  }
+  if(!/^[a-f0-9]{16,}$/.test(token)){ err='This link isn\'t complete. Check the message Bardon Clean sent you.'; render(); }
+  else if(params.get('paid')){ api('GET','/api/pay?s='+encodeURIComponent(params.get('paid'))).catch(function(){}).then(load); }
+  else load();
+})();
+</script>
+</body></html>

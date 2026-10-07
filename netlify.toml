@@ -21,3 +21,14 @@
   from = "/v/*"
   to = "/agent/index.html"
   status = 200
+
+# Client quotes /q/<token> and invoices /i/<token>
+[[redirects]]
+  from = "/q/*"
+  to = "/d/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/i/*"
+  to = "/d/index.html"
+  status = 200
