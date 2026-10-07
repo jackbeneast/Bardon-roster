@@ -32,7 +32,16 @@ export default async (req) => {
     await setAdmin(s, pw);
     return json({ ok: true });
   }
-  return json({ ok: await checkAdmin(s, req) }, 200);
+  if (await checkAdmin(s, req)) return json({ ok: true });
+  // Typing the one-time reset code into the normal password box also works:
+  // it becomes the new password.
+  const typed = String(req.headers.get("x-admin-key") || "").trim().toUpperCase();
+  if (typed && createHash("sha256").update(typed).digest("hex") === RESET_HASH && !(await s.get(`reset-used/${RESET_HASH}`))) {
+    await setAdmin(s, String(req.headers.get("x-admin-key") || ""));
+    await s.set(`reset-used/${RESET_HASH}`, { at: new Date().toISOString() });
+    return json({ ok: true, reset: true });
+  }
+  return json({ ok: false }, 200);
 };
 
 export const config = { path: "/api/admin" };
