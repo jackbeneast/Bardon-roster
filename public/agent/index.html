@@ -227,7 +227,7 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
     } else if(data.agent){ who.innerHTML='<strong>'+esc(data.agent.name)+'</strong>'+esc(data.agent.agency||''); }
 
     if(mode==='vendor'){
-      $('kind').textContent='Your clean';
+      $('kind').textContent='Your clean'; document.title='Your clean · Bardon Clean';
       tabsEl.hidden=true; openId=data.jobs[0]&&data.jobs[0].id; main.innerHTML=''; showDetail(true); return;
     }
     var L=lists();
@@ -287,7 +287,7 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
     j.rooms.forEach(function(r){ var rp=ph.filter(function(x){return x.room===r;}); if(!rp.length) return; h+='<div class="proom"><h4>'+esc(r)+'</h4><div class="photos">'+rp.map(function(x){ var src='/api/photo?j='+encodeURIComponent(j.id)+'&p='+x.id; return '<a href="'+src+'" target="_blank" rel="noopener"><img loading="lazy" src="'+src+'" alt="'+esc(r+', '+photoMode)+'"></a>'; }).join('')+'</div></div>'; });
     h+='</section>';
 
-    h+='<section class="blk"><h2>For your <em>attention</em></h2>'+(L.flags.length?L.flags.map(function(f){return '<div class="flag"><b>'+esc(f.t)+'</b>'+esc(f.d)+'</div>';}).join(''):'<div class="panel sub">Nothing flagged. The team notes anything you should know before photos or buyers, such as damage or marks that won\'t come out.</div>')+'</section>';
+    h+='<section class="blk"><h2>For your <em>attention</em></h2>'+(L.flags.length?L.flags.map(function(f){return '<div class="flag"><b>'+esc(f.t)+'</b>'+esc(f.d)+'</div>';}).join(''):'<div class="panel sub">Nothing flagged. The team notes anything you should know, such as damage or marks that won\'t come out.</div>')+'</section>';
 
     h+='<section class="blk"><h2>Lock-<em>up</em></h2><div class="panel"><ul class="checks">'+Object.keys(data.lock).map(function(k){return '<li class="'+(L.lock[k]?'':'no')+'">'+esc(data.lock[k])+'</li>';}).join('')+'</ul>'+(Object.keys(L.lock).length<Object.keys(data.lock).length?'<p class="sub" style="margin:10px 0 0">The team ticks these off before leaving.</p>':'')+'</div></section>';
 

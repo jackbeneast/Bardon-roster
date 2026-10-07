@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { store, json, loadRoster, loadConfirms, loadAcks, loadAllLive, checkAdmin, adminIsSet, ROOMS } from "../../lib/core.mjs";
 
 // Wage-estimate settings: pay cycle, rates, lunch rule, extra public holidays.
@@ -64,6 +65,11 @@ export default async (req) => {
 
   if (req.method === "GET") {
     const roster = await loadRoster(s);
+    // Every real job gets a private client link. Backfill older jobs once.
+    if (admin && roster.jobs.some((j) => !j.sample && !j.share)) {
+      roster.jobs.forEach((j) => { if (!j.sample && !j.share) j.share = randomBytes(18).toString("hex"); });
+      await s.set("roster", { ...roster, savedAt: new Date().toISOString() });
+    }
     const confirms = await loadConfirms(s);
     const team = admin ? roster.team : roster.team.map(({ phone, ...t }) => t);
     const acks = await loadAcks(s);

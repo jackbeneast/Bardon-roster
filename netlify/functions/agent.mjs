@@ -80,7 +80,7 @@ export default async (req) => {
     const base = { lock: LOCK, phone: "0406 216 212" };
     if (v) {
       const job = v.length >= 16 && roster.jobs.find((j) => j.share === v);
-      if (!job) return json({ error: "This link has expired. Ask your agent for a new one." }, 404);
+      if (!job) return json({ error: "This link has expired. Call Jack at Bardon Clean on 0406 216 212 for a new one." }, 404);
       const a = agents.find((x) => x.id === job.agentId);
       return json({ ...base, mode: "vendor", agent: a ? { name: a.name, agency: a.agency } : null, jobs: [view(job, roster, live[job.id], false)] });
     }

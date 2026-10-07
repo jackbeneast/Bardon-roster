@@ -533,7 +533,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<label class="l" for="f_notes">Notes for the team<textarea id="f_notes" name="notes" placeholder="Access, inclusions, parking. Don\'t put alarm or lockbox codes here.">'+esc(job.notes)+'</textarea></label>';
     h+='<div class="err" id="jobErr" hidden></div>';
     h+='<div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save job</button></div>';
-    if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Copy vendor link</button>':'')+'</div>';
+    if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Copy client link</button>':'')+'</div>';
     if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-dup>Duplicate</button><button type="button" class="btn danger" data-del>Delete job</button></div>';
     h+='</form>';
     var s=openSheet(h), form=s.querySelector('#jobForm');
@@ -547,7 +547,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       var fd=new FormData(form), err=s.querySelector('#jobErr');
       if(!(fd.get('client')||'').trim() || !fd.get('date')){ err.textContent='Add a client name and a date.'; err.hidden=false; return; }
       var next={id:job.id,date:fd.get('date'),start:fd.get('start'),end:fd.get('end'),client:fd.get('client').trim(),suburb:(fd.get('suburb')||'').trim(),address:(fd.get('address')||'').trim(),service:fd.get('service'),staff:fd.getAll('staff'),notes:(fd.get('notes')||'').trim(),meet:(fd.get('meet')||'').trim()};
-      var agId=fd.get('agentId')||''; if(agId){ next.agentId=agId; next.share=job.share||tok(); } var rb=(fd.get('readyBy')||'').trim(); if(rb) next.readyBy=rb;
+      var agId=fd.get('agentId')||''; next.share=job.share||tok(); if(agId) next.agentId=agId; var rb=(fd.get('readyBy')||'').trim(); if(rb) next.readyBy=rb;
       var rms=fd.getAll('rooms'); if(rms.length && rms.join('|')!==DEF_ROOMS.join('|')) next.rooms=rms;
       var sh={}, raw=readShifts(form); next.staff.forEach(function(id){ var r=raw[id]; if(r && (r.start&&r.start!==next.start || r.end&&r.end!==next.end)) sh[id]={start:r.start||next.start,end:r.end||next.end}; });
       if(Object.keys(sh).length) next.shifts=sh;
@@ -775,7 +775,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     else h+='<button type="button" class="'+(arrN&&arrN>=staffN?'done':'')+'" data-qa="rooms"'+ctx+'>'+(arrN?IC.check:IC.pin)+'On site<small>'+arrN+' of '+staffN+' in</small></button>';
     h+='<button type="button" data-qa="note"'+ctx+'>'+IC.flag+'Note for agent<small>'+(L.flags.length?L.flags.length+' added':'Damage, marks')+'</small></button>';
     h+='<button type="button" class="'+(L.done?'done':'')+'" data-qa="finish"'+ctx+'>'+(L.done?IC.check:IC.tick)+(L.done?'Ready<small>'+fmtClock(L.done)+'</small>':'Lock-up &amp; finish')+'</button>';
-    h+='</div><div class="qlinks"><button type="button" data-live="'+j.id+'" data-p="'+esc(pid||'')+'">All updates</button>'+(canEdit?'<button type="button" data-edit="'+j.id+'">Edit job</button>':'')+(canEdit&&j.share?'<button type="button" data-vcopy="'+esc(j.share)+'">Vendor link</button>':'')+'</div></section>';
+    h+='</div><div class="qlinks"><button type="button" data-live="'+j.id+'" data-p="'+esc(pid||'')+'">All updates</button>'+(canEdit?'<button type="button" data-edit="'+j.id+'">Edit job</button>':'')+(canEdit&&j.share?'<button type="button" data-vcopy="'+esc(j.share)+'">Client link</button>':'')+'</div></section>';
     return h;
   }
   function miniList(list){
