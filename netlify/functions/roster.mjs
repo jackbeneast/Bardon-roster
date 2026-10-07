@@ -26,6 +26,7 @@ function clean(data) {
     };
     if (j.agentId && aids.has(j.agentId)) o.agentId = j.agentId;
     if (j.readyBy) o.readyBy = str(j.readyBy, 120);
+    if (j.sample) o.sample = true;
     if (j.share && String(j.share).length >= 16) o.share = str(j.share, 64);
     if (Array.isArray(j.rooms)) { const r = j.rooms.filter((x) => ROOMS.includes(x)); if (r.length) o.rooms = r; }
     if (j.shifts && typeof j.shifts === "object") {
@@ -50,7 +51,7 @@ export default async (req) => {
     const team = admin ? roster.team : roster.team.map(({ phone, ...t }) => t);
     const acks = await loadAcks(s);
     const live = await loadAllLive(s);
-    const jobs = admin ? roster.jobs : roster.jobs.map(({ share, ...j }) => j);
+    const jobs = admin ? roster.jobs : roster.jobs.filter((j) => !j.sample).map(({ share, ...j }) => j);
     const out = { team, jobs, info: roster.info || {}, confirms, acks, live, admin, adminSet: await adminIsSet(s) };
     if (admin) {
       out.agents = roster.agents || [];
