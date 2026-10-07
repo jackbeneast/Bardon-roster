@@ -2,6 +2,8 @@
 <html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#F5F0EB">
 <title>Bardon Clean Roster</title>
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"><link rel="icon" type="image/png" href="/icons/favicon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="BardonCleanHub"><meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@400;500;600&display=swap">
 <style>
@@ -169,6 +171,66 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
 .req .rk{font:600 12px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--terracotta-dark);margin-bottom:6px}
 .req p{margin:4px 0;color:var(--body)}
 .req .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+/* On-the-go: bottom bar, today screen, quick actions */
+body.has-nav #app{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--white);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+.tabbar .in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);align-items:end}
+.tabbar button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;font:500 11px/1 var(--sans);color:var(--meta);padding:6px 2px;min-height:52px;cursor:pointer;position:relative}
+.tabbar button svg{width:24px;height:24px}
+.tabbar button[aria-current="page"]{color:var(--terracotta-dark)}
+.tabbar .badge{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;height:17px;border-radius:9px;background:var(--terracotta);color:#fff;font:600 10px/17px var(--sans);padding:0 4px}
+.tabbar .add{color:var(--dark)}
+.tabbar .add span.c{width:50px;height:50px;border-radius:50%;background:var(--terracotta);color:#fff;display:grid;place-items:center;margin-top:-22px;box-shadow:0 4px 14px rgba(192,107,60,.35)}
+.tabbar .add span.c svg{width:26px;height:26px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.topbar .wm{font:700 18px/1 var(--serif);color:var(--dark)}
+.topbar .refresh{background:none;border:0;color:var(--meta);font:500 12px var(--sans);cursor:pointer;padding:6px 0}
+.sect{font:600 13px/1 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--meta);margin:26px 0 10px;display:flex;justify-content:space-between;align-items:center}
+.sect .today{color:var(--terracotta)}
+.qc{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:12px}
+.qc + .qc{margin-top:14px}
+.qc .qtop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.qc .qtop>div{min-width:0}
+.qc h2{font:700 21px/1.2 var(--serif);color:var(--dark);margin:0;overflow-wrap:anywhere}
+.qc .qmeta{font-size:13px;color:var(--meta);margin-top:3px}
+.qc .lv{margin-top:0;flex:none}
+.qprog{display:flex;align-items:center;gap:10px;margin-top:14px;font:500 13px var(--sans);color:var(--dark);font-variant-numeric:tabular-nums}
+.qprog .pb{flex:1;height:6px;background:var(--cream-dark);border-radius:3px;overflow:hidden}
+.qprog .pb i{display:block;height:100%;background:var(--terracotta)}
+.qprog .pb.ok i{background:#2F5A35}
+.qa{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.qa button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;border-radius:8px;border:1px solid var(--line);background:var(--cream);color:var(--dark);font:600 13px/1.15 var(--sans);cursor:pointer;padding:8px 4px;text-align:center}
+.qa button svg{width:26px;height:26px}
+.qa button.cam{background:var(--dark);border-color:var(--dark);color:var(--cream)}
+.qa button.done{background:#E6EFE3;border-color:#CFE0CA;color:#2F5A35}
+.qa button small{font-weight:400;font-size:11px;opacity:.8}
+.qlinks{display:flex;justify-content:space-between;gap:10px;margin-top:10px;flex-wrap:wrap}
+.qlinks button,.qlinks a{background:none;border:0;color:var(--terracotta-dark);font:500 14px var(--sans);text-decoration:underline;cursor:pointer;padding:8px 0}
+.mini{display:grid;gap:8px}
+.mini button{display:grid;grid-template-columns:62px 1fr;gap:10px;text-align:left;background:var(--white);border:1px solid var(--line);border-radius:8px;padding:12px;font:inherit;color:inherit;cursor:pointer;width:100%}
+.mini .t{font:600 14px/1.2 var(--sans);color:var(--dark);font-variant-numeric:tabular-nums}
+.mini .t small{display:block;font-weight:400;color:var(--meta);font-size:12px;margin-top:2px}
+.mini .c{font:700 16px/1.25 var(--serif);color:var(--dark)}
+.mini .m{font-size:13px;color:var(--meta);margin-top:2px}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.rgrid label{display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;text-align:center;min-height:64px;border-radius:8px;background:var(--cream);border:1px solid var(--line);font:600 15px/1.2 var(--sans);color:var(--dark);cursor:pointer;padding:8px}
+.rgrid label.has{border-color:#CFE0CA;background:#F1F6EF}
+.rgrid label small{display:block;font-weight:400;font-size:11px;color:var(--meta)}
+.kindsw{display:flex;gap:6px;margin:0 0 12px}
+.kindsw button{flex:1;min-height:44px;border-radius:6px;border:1px solid var(--line);background:var(--white);font:600 14px var(--sans);color:var(--dark);cursor:pointer}
+.kindsw button[aria-pressed="true"]{background:var(--dark);border-color:var(--dark);color:var(--cream)}
+.uppill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:31;background:var(--dark);color:var(--cream);border-radius:999px;padding:10px 16px;font:500 14px var(--sans);display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(26,26,26,.2);white-space:nowrap}
+.uppill i{width:14px;height:14px;border:2px solid rgba(245,240,235,.35);border-top-color:var(--cream);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.uppill i{animation:none}}
+body.has-nav .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
+.menu{display:grid;gap:0;background:var(--white);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:12px}
+.menu button,.menu a{display:flex;align-items:center;gap:14px;padding:15px 16px;background:none;border:0;border-bottom:1px solid var(--cream-dark);font:500 15px var(--sans);color:var(--dark);text-align:left;cursor:pointer;text-decoration:none}
+.menu button:last-child,.menu a:last-child{border-bottom:0}
+.menu svg{width:22px;height:22px;color:var(--terracotta-dark);flex:none}
+.menu .chev{margin-left:auto;color:var(--meta)}
+.hint-card{margin-top:14px;background:var(--tint);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--dark)}
 </style></head><body>
 <div id="app"></div>
 <script>
@@ -187,6 +249,9 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
   var app = document.getElementById('app');
   var LOGO = '<svg viewBox="0 0 48 48" role="img" aria-label="Bardon Clean"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
   var canEdit = false, saving = false, pendingReq = null, liveOpen = null;
+  var qv=(location.search.match(/[?&]v=(\w+)/)||[])[1];
+  var view = (qv && ['today','roster','agents','more'].indexOf(qv)>=0) ? qv : (ls('roster_view')||'today');
+  var upState=null;
   function key(v){ if(v===undefined) return ls('roster_admin_key')||''; try{ if(v===null) localStorage.removeItem('roster_admin_key'); else localStorage.setItem('roster_admin_key',v);}catch(e){} }
   function api(path, opts){
     opts=opts||{}; var h={'content-type':'application/json'}; var k=key(); if(k) h['x-admin-key']=k;
@@ -260,6 +325,8 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
   }
 
   function render(){
+    document.body.classList.toggle('has-nav', !!(loaded && canEdit));
+    if(loaded && canEdit && view!=='roster'){ app.innerHTML=(view==='agents'?renderAgentsView():view==='more'?renderMore():renderToday())+navBar(); return; }
     var h='';
     if(!loaded){ app.innerHTML='<div class="brand"><div class="wm">Bardon Clean</div></div><h1>Team <em>roster</em></h1><p class="sub" style="margin-top:14px">'+(loadErr?esc(loadErr)+' <button class="ghost" data-act="reload">Try again</button>':'Loading…')+'</p>'; return; }
     h+='<div class="brand"><div class="wm">Bardon Clean</div></div>';
@@ -278,19 +345,20 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     if (iso(start)!==iso(today)) h+='<button class="icon-btn" data-nav="today">Today</button>';
     h+='<button class="icon-btn" data-nav="7" aria-label="Next week">&rarr;</button></div>';
 
-    if (canEdit){
+    if (false){
       var nc=needsConfirm(), waitN=nc.filter(function(x){return x.c.v==='wait';}).length, noL=nc.filter(function(x){return x.c.v==='no';});
       noL.forEach(function(x){ h+='<div class="warn bad"><strong>'+esc(member(x.id).name)+' can\'t make it</strong> · '+esc(shiftLine(x.j,x.id))+'.'+(x.c.reason?' Reason: '+esc(x.c.reason)+'.':'')+' Reassign the shift.</div>'; });
       if (waitN) h+='<div class="warn"><strong>'+waitN+' shift'+(waitN>1?'s':'')+' not confirmed</strong> in the next two weeks.<button class="ghost" data-act="confirms" style="padding:0;margin:0 0 0 6px">Review</button></div>';
       else if (nc.length) h+='<div class="warn" style="border-left-color:#2F5A35">All shifts in the next two weeks are confirmed.<button class="ghost" data-act="confirms" style="padding:0;margin:0 0 0 6px">View</button></div>';
     }
-    if (canEdit) (state.requests||[]).forEach(function(r){ h+='<div class="req"><div class="rk">Booking request · '+esc(r.agent)+(r.agency?', '+esc(r.agency):'')+'</div><strong>'+esc(r.address)+(r.suburb?', '+esc(r.suburb):'')+'</strong><p>'+esc(r.service)+' · ready by '+fmtDay(parse(r.readyDate))+' for '+esc(r.readyFor)+'</p><p>'+esc([r.beds?r.beds+' bed':'',r.baths?r.baths+' bath':'','Access: '+r.access,'Invoice: '+r.invoice].filter(Boolean).join(' · '))+'</p>'+(r.notes?'<p>'+esc(r.notes)+'</p>':'')+'<div class="row"><button class="btn primary" data-req="'+r.id+'" style="flex:none">Add to roster</button><button class="btn outline" data-reqx="'+r.id+'">Dismiss</button></div></div>'; });
+    if (false) (state.requests||[]).forEach(function(r){ h+='<div class="req"><div class="rk">Booking request · '+esc(r.agent)+(r.agency?', '+esc(r.agency):'')+'</div><strong>'+esc(r.address)+(r.suburb?', '+esc(r.suburb):'')+'</strong><p>'+esc(r.service)+' · ready by '+fmtDay(parse(r.readyDate))+' for '+esc(r.readyFor)+'</p><p>'+esc([r.beds?r.beds+' bed':'',r.baths?r.baths+' bath':'','Access: '+r.access,'Invoice: '+r.invoice].filter(Boolean).join(' · '))+'</p>'+(r.notes?'<p>'+esc(r.notes)+'</p>':'')+'<div class="row"><button class="btn primary" data-req="'+r.id+'" style="flex:none">Add to roster</button><button class="btn outline" data-reqx="'+r.id+'">Dismiss</button></div></div>'; });
     if (canEdit && open) h+='<div class="warn"><strong>'+open+' job'+(open>1?'s':'')+' unassigned</strong> in this period. Tap Unassigned to see '+(open>1?'them':'it')+'.</div>';
     if (state.jobs.some(function(j){return j.example;})) h+='<div class="warn">The jobs and people marked <strong>Example</strong> are samples. '+(canEdit?'Edit or delete them, and add your real team under Manage team.':'')+'</div>';
 
     if (filter!=='all' && filter!=='open') h+=firstDayCard(filter);
     if (canEdit) state.team.forEach(function(t){ var j=firstDayDue(t.id); if(j && j.date<=iso(addDays(today,1)) && !(state.acks&&state.acks[t.id])) h+='<div class="warn"><strong>'+esc(t.name)+' hasn\'t read their first-day info</strong> ('+fmtDay(parse(j.date))+'). <button class="ghost" data-filter="'+t.id+'" style="padding:0;margin:0">Preview</button></div>'; });
     if (!canEdit && filter==='all' && state.team.length) h+='<div class="warn"><strong>Tap your name above</strong> to see your shifts and confirm them.</div>';
+    if (!canEdit && member(filter)) state.jobs.filter(function(j){ return j.date===iso(today) && !j.example && (j.staff||[]).indexOf(filter)>=0; }).forEach(function(j){ h+=quickCard(j, filter); });
     for (var i=0;i<DAYS;i++){
       var d=addDays(start,i), di=iso(d), list=jobsOn(di);
       if (!list.length && filter!=='all') continue;
@@ -315,7 +383,6 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
           h+='</div>';
           if (j.notes) h+='<div class="notes">'+esc(j.notes)+'</div>';
           if (!canEdit && filter!=='all' && filter!=='open' && !isBoss(filter) && !j.example && j.date>=iso(today) && (j.staff||[]).indexOf(filter)>=0) h+=confirmBlock(j,filter);
-          if (!canEdit && filter!=='all' && filter!=='open' && !j.example && (j.staff||[]).indexOf(filter)>=0 && j.date>=iso(addDays(today,-1)) && j.date<=iso(today)) h+='<div class="cf"><button type="button" class="btn primary" data-live="'+j.id+'" data-p="'+filter+'" style="width:100%">Job updates and photos</button></div>';
           h+='</div></'+tag+'>';
         });
         h+='</div>';
@@ -324,13 +391,13 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     }
     if (filter!=='all' && !countFor(filter)) h+='<p class="sub" style="margin-top:22px">No jobs in these two weeks.</p>';
 
-    if (canEdit){
+    if (false){
       h+='<div class="tools"><button class="ghost" data-act="team">Manage team</button><button class="ghost" data-act="copy">Copy roster to text</button><button class="ghost" data-act="info">First-day info</button><button class="ghost" data-act="agents">Agents</button><a class="ghost" href="/agent/" target="_blank" rel="noopener">Agent portal preview</a></div>';
       h+='<button class="fab" data-act="add">+ Add job</button>';
     }
     h+='<details class="rates"><summary>Casual pay rates</summary><table><tbody><tr><td>Monday to Friday</td><td>$37.50</td></tr><tr><td>Mon–Fri, start before 6am or finish after 6pm</td><td>$37.91</td></tr><tr><td>Saturday</td><td>$47.39</td></tr><tr><td>Sunday</td><td>$60.93</td></tr><tr><td>Public holiday</td><td>$74.47</td></tr></tbody></table><p>Per hour, before tax, plus 12% super. From 1 October 2026.</p></details>';
-    h+='<footer>Bardon Clean · Please don\'t share this link outside the team.<br>'+(canEdit?'<button class="ghost" data-act="logout" style="font-size:12px">Log out of editing</button>':'<button class="ghost" data-act="login" style="font-size:12px;color:var(--meta)">Jack\'s login</button>')+'</footer>';
-    app.innerHTML=h;
+    h+='<footer>Bardon Clean · Please don\'t share this link outside the team.<br>'+(canEdit?'':'<button class="ghost" data-act="login" style="font-size:12px;color:var(--meta)">Jack\'s login</button>')+'</footer>';
+    app.innerHTML=h+(canEdit?navBar():'');
   }
 
   function confirmBlock(j,id){
@@ -577,10 +644,11 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     box.innerHTML=h; box.closest('.sheet').scrollTop=keep;
     if(kv.t) document.getElementById('fl_t').value=kv.t; if(kv.d) document.getElementById('fl_d').value=kv.d; if(kv.r) document.getElementById('ph_room').value=kv.r; if(kv.k) document.getElementById('ph_kind').value=kv.k;
   }
-  function livePost(body, btn){
+  function livePost(body, btn, ctx){
+    ctx=ctx||liveOpen; if(!ctx) return Promise.resolve();
     if(btn) btn.disabled=true;
-    body.jobId=liveOpen.jobId; body.personId=liveOpen.pid;
-    return api('/api/live',{method:'POST',body:body}).then(function(d){ state.live[liveOpen.jobId]=d.live; drawLive(); render(); })
+    body.jobId=ctx.jobId; body.personId=ctx.pid;
+    return api('/api/live',{method:'POST',body:body}).then(function(d){ state.live[ctx.jobId]=d.live; if(liveOpen) drawLive(); else if(!document.getElementById('scrim')) render(); })
       .catch(function(e){ if(btn) btn.disabled=false; var er=document.getElementById('liveErr'); if(er){ er.textContent=e.message; er.hidden=false; } toast(e.message); });
   }
   function liveClick(e){
@@ -610,18 +678,145 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
       img.src=url;
     });
   }
-  function uploadPhotos(files, room, kind){
-    var lo=liveOpen, i=0, k=key(), hd={}; if(k) hd['x-admin-key']=k;
+  function showUp(){ var el=document.getElementById('uppill'); if(!upState){ if(el) el.remove(); return; } if(!el){ el=document.createElement('div'); el.id='uppill'; el.className='uppill'; el.setAttribute('role','status'); document.body.appendChild(el); } el.innerHTML='<i></i>'+esc(upState); }
+  function uploadPhotos(files, room, kind, ctx){
+    var lo=ctx||liveOpen, i=0, k=key(), hd={}; if(k) hd['x-admin-key']=k;
     function next(){
-      if(i>=files.length || !lo){ liveBusy=false; drawLive(); toast(files.length+' photo'+(files.length>1?'s':'')+' added'); return; }
-      liveBusy='Uploading '+(i+1)+' of '+files.length+'…'; drawLive();
+      if(i>=files.length || !lo){ liveBusy=false; upState=null; showUp(); drawLive(); if(!document.getElementById('scrim')) render(); toast(files.length+' '+kind+' photo'+(files.length>1?'s':'')+' added · '+room); return; }
+      liveBusy='Uploading '+(i+1)+' of '+files.length+'…'; upState='Uploading '+room+' '+kind+(files.length>1?' · '+(i+1)+' of '+files.length:'')+'…'; showUp(); drawLive();
       shrink(files[i]).then(function(blob){
         return fetch('/api/photo?job='+encodeURIComponent(lo.jobId)+'&person='+encodeURIComponent(lo.pid)+'&room='+encodeURIComponent(room)+'&kind='+kind,{method:'POST',headers:hd,body:blob});
       }).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'Upload failed'); return d; }); })
       .then(function(d){ state.live[lo.jobId]=d.live; i++; next(); })
-      .catch(function(e){ liveBusy=false; drawLive(); toast(e.message+'. Check your signal and try again.'); });
+      .catch(function(e){ liveBusy=false; upState=null; showUp(); drawLive(); toast(e.message+'. Check your signal and try again.'); });
     }
     next();
+  }
+
+  // ---------- On-the-go views (Jack) ----------
+  var IC={
+    today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>',
+    roster:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+    plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    agents:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-5 5.5-5s4.9 2 5.5 5"/><path d="M15.5 5.2a3 3 0 0 1 0 5.6M17 14.3c1.8.6 3 2.3 3.4 4.7"/></svg>',
+    more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>',
+    cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.4"/></svg>',
+    rooms:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1.2 1.2L7 5M3.5 12l1.2 1.2L7 11"/><circle cx="5" cy="18" r="1.3"/></svg>',
+    pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
+    note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v12l-4 4H5z"/><path d="M15 20v-4h4M8.5 9h7M8.5 12.5h4"/></svg>',
+    flag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>',
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.2 4.2L19 7"/></svg>',
+    team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/></svg>',
+    text:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+    info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.6v.2"/></svg>',
+    eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>',
+    out:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"/></svg>',
+    tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg>'
+  };
+  function setView(v){ view=v; ls('roster_view',v); closeSheet(); render(); window.scrollTo(0,0); }
+  function alertCount(){ var nc=needsConfirm(); return (state.requests||[]).length + nc.filter(function(x){return x.c.v==='no';}).length; }
+  function navBar(){
+    var a=alertCount(), rq=(state.requests||[]).length;
+    function b(v,label,icon,badge){ return '<button type="button" data-view="'+v+'"'+(view===v?' aria-current="page"':'')+'>'+icon+label+(badge?'<span class="badge">'+badge+'</span>':'')+'</button>'; }
+    return '<nav class="tabbar" aria-label="Main"><div class="in">'+b('today','Today',IC.today,a)+b('roster','Roster',IC.roster)+'<button type="button" class="add" data-act="add" aria-label="Add job"><span class="c">'+IC.plus+'</span>Add job</button>'+b('agents','Agents',IC.agents,rq)+b('more','More',IC.more)+'</div></nav>';
+  }
+  function topbar(title){ return '<div class="topbar"><span class="wm">Bardon Clean</span><button class="refresh" data-act="sync">Refresh</button></div><h1>'+title+'</h1>'; }
+  function jobsFor(dateIso){ return state.jobs.filter(function(j){return j.date===dateIso;}).sort(function(a,b){return (a.start||'').localeCompare(b.start||'');}); }
+
+  function quickCard(j, pid){
+    var L=liveOf(j), rs=roomsOf(j), done=rs.filter(function(r){return L.rooms[r]&&L.rooms[r].s==='d';}).length, sum=liveSum(j), ag=agentOf(j.agentId);
+    var mineArr = pid ? L.arrived[pid] : null, arrN=Object.keys(L.arrived||{}).length, staffN=(j.staff||[]).length;
+    var bN=L.photos.filter(function(p){return p.kind==='before';}).length, aN=L.photos.length-bN;
+    var tm=pid?shiftOf(j,pid):{start:j.start,end:j.end};
+    var h='<section class="qc"><div class="qtop"><div><h2>'+esc(j.address||j.client||'Job')+'</h2><div class="qmeta">'+esc([j.address&&j.suburb?j.suburb:(j.suburb||''), range(tm.start,tm.end), j.service].filter(Boolean).join(' · '))+'</div>';
+    if(canEdit) h+='<div class="qmeta">'+esc(j.client||'')+(ag?' · Agent: '+esc(ag.name):'')+(j.readyBy?' · Ready for '+esc(j.readyBy):'')+'</div>';
+    h+='</div>'+(sum?'<span class="lv '+sum.c+'">'+esc(sum.t.split(' · ')[0])+'</span>':'')+'</div>';
+    h+='<div class="qprog"><span class="pb'+(L.done?' ok':'')+'"><i style="width:'+(L.done?100:Math.round(done/rs.length*100))+'%"></i></span>'+done+' of '+rs.length+' rooms</div>';
+    var ctx=' data-j="'+j.id+'" data-p="'+esc(pid||'')+'"';
+    h+='<div class="qa">';
+    h+='<button type="button" class="cam" data-qa="before"'+ctx+'>'+IC.cam+'Before<small>'+bN+' taken</small></button>';
+    h+='<button type="button" class="cam" data-qa="after"'+ctx+'>'+IC.cam+'After<small>'+aN+' taken</small></button>';
+    h+='<button type="button" data-qa="rooms"'+ctx+'>'+IC.rooms+'Rooms<small>'+done+'/'+rs.length+' done</small></button>';
+    if(pid) h+='<button type="button" class="'+(mineArr?'done':'')+'" data-qa="arrive"'+ctx+'>'+(mineArr?IC.check:IC.pin)+(mineArr?'Arrived<small>'+fmtClock(mineArr)+'</small>':'I\'ve arrived')+'</button>';
+    else h+='<button type="button" class="'+(arrN&&arrN>=staffN?'done':'')+'" data-qa="rooms"'+ctx+'>'+(arrN?IC.check:IC.pin)+'On site<small>'+arrN+' of '+staffN+' in</small></button>';
+    h+='<button type="button" data-qa="note"'+ctx+'>'+IC.flag+'Note for agent<small>'+(L.flags.length?L.flags.length+' added':'Damage, marks')+'</small></button>';
+    h+='<button type="button" class="'+(L.done?'done':'')+'" data-qa="finish"'+ctx+'>'+(L.done?IC.check:IC.tick)+(L.done?'Ready<small>'+fmtClock(L.done)+'</small>':'Lock-up &amp; finish')+'</button>';
+    h+='</div><div class="qlinks"><button type="button" data-live="'+j.id+'" data-p="'+esc(pid||'')+'">All updates</button>'+(canEdit?'<button type="button" data-edit="'+j.id+'">Edit job</button>':'')+(canEdit&&j.share?'<button type="button" data-vcopy="'+esc(j.share)+'">Vendor link</button>':'')+'</div></section>';
+    return h;
+  }
+  function miniList(list){
+    return '<div class="mini">'+list.map(function(j){ var names=(j.staff||[]).map(function(id){var m=member(id); return m?m.name.split(' ')[0]:'';}).filter(Boolean); return '<button type="button" data-edit="'+j.id+'"><span class="t">'+fmtTime(j.start)+'<small>'+(j.end?'to '+fmtTime(j.end):'')+'</small></span><span><span class="c">'+esc(j.client||'Job')+'</span><span class="m">'+esc([j.suburb,j.service].filter(Boolean).join(' · '))+'</span><span class="m">'+(names.length?esc(names.join(', ')):'<span class="none">Unassigned</span>')+'</span></span></button>'; }).join('')+'</div>';
+  }
+  function alertsHtml(){
+    var h='', nc=needsConfirm(), waitN=nc.filter(function(x){return x.c.v==='wait';}).length;
+    nc.filter(function(x){return x.c.v==='no';}).forEach(function(x){ h+='<div class="warn bad"><strong>'+esc(member(x.id).name)+' can\'t make it</strong> · '+esc(shiftLine(x.j,x.id))+'.'+(x.c.reason?' Reason: '+esc(x.c.reason)+'.':'')+' <button class="ghost" data-edit="'+x.j.id+'" style="padding:0;margin:0">Reassign</button></div>'; });
+    (state.requests||[]).forEach(function(r){ h+=reqCard(r); });
+    if (waitN) h+='<div class="warn"><strong>'+waitN+' shift'+(waitN>1?'s':'')+' not confirmed</strong> in the next two weeks.<button class="ghost" data-act="confirms" style="padding:0;margin:0 0 0 6px">Review</button></div>';
+    state.team.forEach(function(t){ var j=firstDayDue(t.id); if(j && j.date<=iso(addDays(today,1)) && !(state.acks&&state.acks[t.id])) h+='<div class="warn"><strong>'+esc(t.name)+' hasn\'t read their first-day info</strong> ('+fmtDay(parse(j.date))+').</div>'; });
+    return h;
+  }
+  function reqCard(r){ return '<div class="req"><div class="rk">Booking request · '+esc(r.agent)+(r.agency?', '+esc(r.agency):'')+'</div><strong>'+esc(r.address)+(r.suburb?', '+esc(r.suburb):'')+'</strong><p>'+esc(r.service)+' · ready by '+fmtDay(parse(r.readyDate))+' for '+esc(r.readyFor)+'</p><p>'+esc([r.beds?r.beds+' bed':'',r.baths?r.baths+' bath':'','Access: '+r.access,'Invoice: '+r.invoice].filter(Boolean).join(' · '))+'</p>'+(r.notes?'<p>'+esc(r.notes)+'</p>':'')+'<div class="row"><button class="btn primary" data-req="'+r.id+'" style="flex:none">Add to roster</button><button class="btn outline" data-reqx="'+r.id+'">Dismiss</button></div></div>'; }
+  function renderToday(){
+    var t=iso(today), tl=jobsFor(t), tm=jobsFor(iso(addDays(today,1))), h=topbar('Today<em>,</em> '+fmtDay(today).replace(/^\w+ /,''));
+    h+=alertsHtml();
+    var me=(state.team.find(function(x){return x.owner;})||{}).id;
+    h+='<div class="sect"><span class="today">On today</span><span>'+tl.length+' job'+(tl.length===1?'':'s')+'</span></div>';
+    if(tl.length) tl.forEach(function(j){ h+=quickCard(j, (j.staff||[]).indexOf(me)>=0?me:''); });
+    else { var nx=state.jobs.filter(function(j){return j.date>t;}).sort(function(a,b){return (a.date+a.start).localeCompare(b.date+b.start);})[0]; h+='<div class="hint-card">No jobs today.'+(nx?' Next: '+esc(nx.client||'job')+', '+fmtDay(parse(nx.date))+' at '+fmtTime(nx.start)+'.':'')+'</div>'; }
+    h+='<div class="sect"><span>Tomorrow · '+fmtDay(addDays(today,1))+'</span><span>'+tm.length+'</span></div>';
+    h+=tm.length?miniList(tm):'<p class="sub">Nothing booked.</p>';
+    var past=state.jobs.filter(function(j){ var L=state.live&&state.live[j.id]; return j.date===iso(addDays(today,-1)) && j.agentId && !(L&&L.done); });
+    if(past.length){ h+='<div class="sect"><span>Yesterday, not marked ready</span></div>'; past.forEach(function(j){ h+=quickCard(j,''); }); }
+    return h;
+  }
+  function renderAgentsView(){
+    var h=topbar('Real estate <em>agents</em>');
+    var rq=state.requests||[];
+    if(rq.length){ h+='<div class="sect"><span>Booking requests</span><span>'+rq.length+'</span></div>'; rq.forEach(function(r){ h+=reqCard(r); }); }
+    var ag=state.agents||[], t=iso(today);
+    h+='<div class="sect"><span>Your agents</span><span>'+ag.length+'</span></div>';
+    if(!ag.length) h+='<div class="hint-card">Add an agent, then tag their jobs. They get a private link showing progress, photos and handover notes.</div>';
+    h+='<div class="mini">'+ag.map(function(a){ var js=state.jobs.filter(function(j){return j.agentId===a.id;}), up=js.filter(function(j){return j.date>=t;}).length; return '<button type="button" data-act="agents"><span class="t">'+up+'<small>upcoming</small></span><span><span class="c">'+esc(a.name)+'</span><span class="m">'+esc(a.agency||'')+'</span><span class="m">'+js.length+' job'+(js.length===1?'':'s')+' in total</span></span></button>'; }).join('')+'</div>';
+    h+='<div class="actions"><button class="btn primary" data-act="agents">Manage agents and links</button></div>';
+    h+='<div class="menu"><a href="/agent/" target="_blank" rel="noopener">'+IC.eye+'See what agents see<span class="chev">›</span></a></div>';
+    return h;
+  }
+  function renderMore(){
+    var h=topbar('More');
+    function it(act,icon,label){ return '<button type="button" data-act="'+act+'">'+icon+label+'<span class="chev">›</span></button>'; }
+    h+='<div class="menu">'+it('confirms',IC.tick,'Shift confirmations')+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'<a href="/agent/" target="_blank" rel="noopener">'+IC.eye+'Agent portal preview<span class="chev">›</span></a></div>';
+    h+='<details class="rates"><summary>Casual pay rates</summary><table><tbody><tr><td>Monday to Friday</td><td>$37.50</td></tr><tr><td>Mon–Fri, start before 6am or finish after 6pm</td><td>$37.91</td></tr><tr><td>Saturday</td><td>$47.39</td></tr><tr><td>Sunday</td><td>$60.93</td></tr><tr><td>Public holiday</td><td>$74.47</td></tr></tbody></table><p>Per hour, before tax, plus 12% super. From 1 October 2026.</p></details>';
+    h+='<div class="hint-card"><strong>Put this on your home screen.</strong> In Safari tap Share, then Add to Home Screen. It opens straight to Today. Log in once inside it.</div>';
+    h+='<div class="menu">'+it('logout',IC.out,'Log out of editing')+'</div>';
+    return h;
+  }
+
+  // Quick photo: pick before/after + room, camera opens straight away
+  function photoSheet(jobId, pid, kind){
+    var j=state.jobs.find(function(x){return x.id===jobId;}); if(!j) return; var L=liveOf(j);
+    function draw(){
+      var h='<h3><em>'+(kind==='before'?'Before':'After')+'</em> photo</h3><div class="kindsw"><button type="button" data-k="before" aria-pressed="'+(kind==='before')+'">Before</button><button type="button" data-k="after" aria-pressed="'+(kind==='after')+'">After</button></div><p class="sub" style="margin:0 0 10px">Tap the room. The camera opens.</p><div class="rgrid">';
+      roomsOf(j).forEach(function(r,i){ var n=L.photos.filter(function(p){return p.room===r&&p.kind===kind;}).length; h+='<label for="cam'+i+'" class="'+(n?'has':'')+'">'+esc(r)+(n?'<small>'+n+' taken</small>':'')+'</label><input id="cam'+i+'" type="file" accept="image/*" capture="environment" data-room="'+esc(r)+'" hidden>'; });
+      h+='</div><div class="lsec"><h4>Several from your photo library</h4><div class="two"><select id="libRoom" style="margin:0">'+roomsOf(j).map(function(r){return '<option>'+esc(r)+'</option>';}).join('')+'</select><label class="btn outline" for="libFile" style="display:flex;align-items:center;justify-content:center;cursor:pointer">Choose photos</label></div><input id="libFile" type="file" accept="image/*" multiple hidden></div>';
+      h+='<div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Done</button></div>';
+      s.querySelector('.sheet').innerHTML=h;
+      s.querySelector('[data-close]').onclick=closeSheet;
+    }
+    var s=openSheet('');
+    draw();
+    s.addEventListener('click',function(e){ var b=e.target.closest('[data-k]'); if(b){ kind=b.dataset.k; draw(); } });
+    s.addEventListener('change',function(e){
+      var t=e.target; if(!t.files||!t.files.length) return;
+      var room=t.id==='libFile'?s.querySelector('#libRoom').value:t.dataset.room, files=Array.prototype.slice.call(t.files);
+      closeSheet(); uploadPhotos(files, room, kind, {jobId:jobId,pid:pid});
+    });
+  }
+  function noteSheet(jobId, pid){
+    var h='<h3>Note for the <em>agent</em></h3><p class="sub" style="margin:-6px 0 10px">Anything they should know before photos or buyers.</p><form id="nf" class="fgrid" novalidate><label class="l" for="n_t">What is it<input id="n_t" placeholder="e.g. Oven seal cracked" required></label><label class="l" for="n_d">Details (optional)<textarea id="n_d"></textarea></label><div class="err" id="nErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Add note</button></div></form>';
+    var s=openSheet(h), f=s.querySelector('#nf');
+    s.querySelector('[data-close]').onclick=closeSheet;
+    f.onsubmit=function(e){ e.preventDefault(); var t=f.querySelector('#n_t').value.trim(); if(!t){ var er=s.querySelector('#nErr'); er.textContent='Add a short title.'; er.hidden=false; return; }
+      livePost({action:'flag',title:t,detail:f.querySelector('#n_d').value}, f.querySelector('.primary'), {jobId:jobId,pid:pid}).then(function(){ closeSheet(); render(); toast('Note added. The agent can see it.'); }); };
   }
 
   function rosterText(id){
@@ -695,6 +890,14 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
   app.addEventListener('click', function(e){
     var ak=e.target.closest('[data-ack]'); if(ak){ ak.disabled=true; ak.textContent='Saving…'; api('/api/ack',{method:'POST',body:{personId:ak.dataset.ack}}).then(function(d){ state.acks[ak.dataset.ack]=d.ack; render(); toast('Thanks! See you there.'); }).catch(function(er){ ak.disabled=false; ak.textContent='Got it'; toast(er.message); }); return; }
     var r=e.target.closest('[data-reply]'); if(r){ if(r.dataset.reply==='yes') sendReply(r.dataset.j, r.dataset.p, 'yes', '', r); else replyNo(r.dataset.j, r.dataset.p); return; }
+    var vw=e.target.closest('[data-view]'); if(vw){ setView(vw.dataset.view); return; }
+    var qa=e.target.closest('[data-qa]'); if(qa){ var q=qa.dataset.qa, jid=qa.dataset.j, qp=qa.dataset.p||'';
+      if(q==='before'||q==='after') photoSheet(jid,qp,q);
+      else if(q==='note') noteSheet(jid,qp);
+      else if(q==='arrive'){ var L0=liveOf(state.jobs.find(function(x){return x.id===jid;})); if(L0.arrived[qp]) liveSheet(jid,qp); else livePost({action:'arrive',who:qp},qa,{jobId:jid,pid:qp}).then(function(){ toast('Arrival sent'); }); }
+      else { liveSheet(jid,qp); if(q==='finish') setTimeout(function(){ var sh=document.querySelector('.sheet'); if(sh) sh.scrollTop=sh.scrollHeight; },60); }
+      return; }
+    var vc=e.target.closest('[data-vcopy]'); if(vc){ copyText(location.origin+'/v/'+vc.dataset.vcopy); return; }
     var lv=e.target.closest('[data-live]'); if(lv){ liveSheet(lv.dataset.live, lv.dataset.p||''); return; }
     var rq=e.target.closest('[data-req]'); if(rq){ var r=(state.requests||[]).find(function(x){return x.id===rq.dataset.req;}); if(r){ pendingReq=r.id; jobSheet(null); fillForm({client:'',suburb:r.suburb,address:r.address,date:r.readyDate,start:'08:00',end:'16:00',service:SERVICES.indexOf(r.service)>=0?r.service:'Pre-sale clean',staff:[],agentId:r.agentId,readyBy:r.readyFor+' '+fmtDay(parse(r.readyDate)),notes:[r.beds?r.beds+' bed':'',r.baths?r.baths+' bath':'','Access: '+r.access,'Invoice: '+r.invoice,r.notes].filter(Boolean).join('. ')}); } return; }
     var rx=e.target.closest('[data-reqx]'); if(rx){ if(!rx.dataset.sure){ rx.dataset.sure='1'; rx.textContent='Tap again'; return; } api('/api/agent',{method:'POST',body:{action:'dismiss',id:rx.dataset.reqx}}).then(refresh).then(function(){toast('Request dismissed');}).catch(function(er){toast(er.message);}); return; }
@@ -710,6 +913,7 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
     if (t.dataset.act==='agents') agentsSheet();
     if (t.dataset.act==='login') loginSheet();
     if (t.dataset.act==='logout'){ key(null); canEdit=false; render(); toast('Logged out'); }
+    if (t.dataset.act==='sync'){ refresh().then(function(){ toast('Up to date'); }); }
     if (t.dataset.act==='reload'){ loadErr=''; render(); refresh(); }
   });
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSheet(); });
