@@ -314,7 +314,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     else h+='<div class="row"><button type="button" class="btn yes" data-ack="'+id+'" style="flex:1">Got it</button></div>';
     return h+'</section>';
   }
-  function needsConfirm(){ var t=iso(today), e=iso(addDays(today,DAYS-1)), out=[]; state.jobs.forEach(function(j){ if(j.example||j.date<t||j.date>e) return; (j.staff||[]).forEach(function(id){ if(!member(id)||isBoss(id)) return; out.push({j:j,id:id,c:cstate(j,id)}); }); }); return out.sort(function(a,b){ return (a.j.date+shiftOf(a.j,a.id).start).localeCompare(b.j.date+shiftOf(b.j,b.id).start); }); }
+  function needsConfirm(){ var t=iso(today), e=iso(addDays(today,DAYS-1)), out=[]; state.jobs.forEach(function(j){ if(j.example||j.sample||j.date<t||j.date>e) return; (j.staff||[]).forEach(function(id){ if(!member(id)||isBoss(id)) return; out.push({j:j,id:id,c:cstate(j,id)}); }); }); return out.sort(function(a,b){ return (a.j.date+shiftOf(a.j,a.id).start).localeCompare(b.j.date+shiftOf(b.j,b.id).start); }); }
   function colour(id){ var i=state.team.findIndex(function(t){return t.id===id;}); return AV[(i<0?0:i)%AV.length]; }
 
   var today = new Date(); today.setHours(0,0,0,0);
@@ -737,7 +737,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     return '<nav class="tabbar" aria-label="Main"><div class="in">'+b('today','Today',IC.today,a)+b('roster','Roster',IC.roster)+'<button type="button" class="add" data-act="add" aria-label="Add job"><span class="c">'+IC.plus+'</span>Add job</button>'+b('agents','Agents',IC.agents,rq)+b('more','Tools',IC.grid)+'</div></nav>';
   }
   function topbar(title){ return '<div class="topbar"><span class="wm">Bardon Clean</span><button class="refresh" data-act="sync">Refresh</button></div><h1>'+title+'</h1>'; }
-  function jobsFor(dateIso){ return state.jobs.filter(function(j){return j.date===dateIso;}).sort(function(a,b){return (a.start||'').localeCompare(b.start||'');}); }
+  function jobsFor(dateIso){ return state.jobs.filter(function(j){return j.date===dateIso && !j.sample;}).sort(function(a,b){return (a.start||'').localeCompare(b.start||'');}); }
 
   function quickCard(j, pid){
     var L=liveOf(j), rs=roomsOf(j), done=rs.filter(function(r){return L.rooms[r]&&L.rooms[r].s==='d';}).length, sum=liveSum(j), ag=agentOf(j.agentId);
@@ -778,10 +778,10 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var me=(state.team.find(function(x){return x.owner;})||{}).id;
     h+='<div class="sect"><span class="today">On today</span><span>'+tl.length+' job'+(tl.length===1?'':'s')+'</span></div>';
     if(tl.length) tl.forEach(function(j){ h+=quickCard(j, (j.staff||[]).indexOf(me)>=0?me:''); });
-    else { var nx=state.jobs.filter(function(j){return j.date>t;}).sort(function(a,b){return (a.date+a.start).localeCompare(b.date+b.start);})[0]; h+='<div class="hint-card">No jobs today.'+(nx?' Next: '+esc(nx.client||'job')+', '+fmtDay(parse(nx.date))+' at '+fmtTime(nx.start)+'.':'')+'</div>'; }
+    else { var nx=state.jobs.filter(function(j){return j.date>t && !j.sample;}).sort(function(a,b){return (a.date+a.start).localeCompare(b.date+b.start);})[0]; h+='<div class="hint-card">No jobs today.'+(nx?' Next: '+esc(nx.client||'job')+', '+fmtDay(parse(nx.date))+' at '+fmtTime(nx.start)+'.':'')+'</div>'; }
     h+='<div class="sect"><span>Tomorrow · '+fmtDay(addDays(today,1))+'</span><span>'+tm.length+'</span></div>';
     h+=tm.length?miniList(tm):'<p class="sub">Nothing booked.</p>';
-    var past=state.jobs.filter(function(j){ var L=state.live&&state.live[j.id]; return j.date===iso(addDays(today,-1)) && j.agentId && !(L&&L.done); });
+    var past=state.jobs.filter(function(j){ var L=state.live&&state.live[j.id]; return j.date===iso(addDays(today,-1)) && j.agentId && !j.sample && !(L&&L.done); });
     if(past.length){ h+='<div class="sect"><span>Yesterday, not marked ready</span></div>'; past.forEach(function(j){ h+=quickCard(j,''); }); }
     return h;
   }
