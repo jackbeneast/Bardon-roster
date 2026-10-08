@@ -46,6 +46,12 @@ function clean(data) {
     if (j.sample) o.sample = true;
     if (j.group) o.group = str(j.group, 40);
     if (j.share && String(j.share).length >= 16) o.share = str(j.share, 64);
+    // Jobber link: source, visit id, Jobber's last time, recurring series, when the server added it.
+    if (j.src === "jobber") o.src = "jobber";
+    if (j.jid) o.jid = str(j.jid, 200);
+    if (j.js) o.js = str(j.js, 40);
+    if (j.rec) o.rec = str(j.rec, 80);
+    if (j.addedAt) o.addedAt = str(j.addedAt, 30);
     if (Array.isArray(j.rooms)) {
       const seen = new Set(), r = [];
       for (const x of j.rooms) { const n = str(x, 40).trim(); const k = n.toLowerCase(); if (n && !seen.has(k)) { seen.add(k); r.push(n); } }
@@ -80,7 +86,7 @@ export default async (req) => {
     const acks = await loadAcks(s);
     const live = await loadAllLive(s);
     const jobs = admin ? roster.jobs : roster.jobs.filter((j) => !j.sample).map(({ share, ...j }) => j);
-    const out = { team, jobs, info: roster.info || {}, confirms, acks, live, admin, adminSet: await adminIsSet(s) };
+    const out = { team, jobs, info: roster.info || {}, confirms, acks, live, admin, adminSet: await adminIsSet(s), savedAt: roster.savedAt || "" };
     if (admin) {
       out.agents = roster.agents || [];
       out.pay = roster.pay || null;
@@ -99,6 +105,19 @@ export default async (req) => {
     let body; try { body = await req.json(); } catch { return json({ error: "Bad data" }, 400); }
     const data = clean(body);
     if (!data) return json({ error: "Bad data" }, 400);
+    const prev = await loadRoster(s);
+    const ids = new Set(data.jobs.map((j) => j.id));
+    // Jobs the server added after this page loaded (Jobber sync, accepted quotes) aren't on
+    // Jack's screen yet, so a save from that screen mustn't wipe them.
+    const base = typeof body.base === "string" ? body.base : "";
+    if (base) for (const j of prev.jobs || []) if (!ids.has(j.id) && j.addedAt && j.addedAt > base) data.jobs.push(j);
+    // Jobber jobs Jack deleted here: don't bring them back on the next sync.
+    const gone = (prev.jobs || []).filter((j) => j.jid && !data.jobs.some((x) => x.id === j.id)).map((j) => j.jid);
+    if (gone.length) {
+      const jb = (await s.get("jobber")) || {};
+      jb.skip = [...new Set([...(jb.skip || []), ...gone])].slice(-2000);
+      await s.set("jobber", jb);
+    }
     await s.set("roster", { ...data, savedAt: new Date().toISOString() });
     return json({ ok: true });
   }

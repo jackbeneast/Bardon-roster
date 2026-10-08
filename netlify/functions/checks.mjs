@@ -2,6 +2,8 @@
 // Each alert is sent once (remembered under sent/...).
 import { store, loadRoster, loadConfirms, loadAcks, loadAllLive, sig, shiftOf } from "../../lib/core.mjs";
 import { loadDocs, isDepositInv, addDays } from "../../lib/docs.mjs";
+import { syncJobber, loadJobber } from "../../lib/jobber.mjs";
+import { weeklyMoney } from "../../lib/weekly.mjs";
 import { notify, once, fmtDay, fmtTime, firstName, where, money } from "../../lib/notify.mjs";
 
 const BNE = 10 * 3600e3;
@@ -81,6 +83,20 @@ export async function runChecks(s) {
         tags: "moneybag", priority: 4, url: "/money/",
       });
     }
+  }
+  // ---- Money ----
+  // Jobber sync every 6 hours: recurring visits go straight onto the roster.
+  const jb = await loadJobber(s);
+  if (jb.url && (await once(s, `jobsync/${today}/${Math.floor(nowMin / 360)}`))) {
+    try {
+      const r = await syncJobber(s);
+      const fresh = (r.pending || []).filter((p) => p.date >= today && !(jb.pending || []).some((q) => q.uid === p.uid));
+      if (fresh.length) await notify(s, { type: "jobber", title: `${fresh.length} new Jobber job${fresh.length === 1 ? "" : "s"} not on the roster`, body: fresh.slice(0, 6).map((p) => `${p.client}, ${fmtDay(p.date)}`).join("\n"), tags: "inbox_tray", url: "/books/#/jobber" });
+    } catch (e) { console.error("jobber sync failed", e); }
+  }
+  // Monday 7am: last week's numbers and what's missing.
+  if (n.getUTCDay() === 1 && nowMin >= 7 * 60) {
+    if (await once(s, `moneyweek/${today}`)) { try { const e = await weeklyMoney(s, today); if (e) await notify(s, e); } catch (e) { console.error("weekly money failed", e); } }
   }
   return sent;
 }
