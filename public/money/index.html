@@ -405,7 +405,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
         .catch(function(x){ b.disabled=false; b.textContent='Add to roster'; er.textContent=x.message; er.hidden=false; }); };
   }
   function confirmSheet(d){
-    var j=jobOf(d); if(!j){ toast('Add it to the roster first'); return; }
+    var j=jobOf(d); if(!j){ toast('Add it to the roster first'); return; } j=BCConfirm.withDays(j, S.jobs);
     var dep=d.depositInvoice?docById(d.depositInvoice):null;
     var m=BCConfirm.build({job:j,doc:d,deposit:dep,phone:S.settings.biz.phone});
     var mode='sms';

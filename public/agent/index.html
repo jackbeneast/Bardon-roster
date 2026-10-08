@@ -215,9 +215,9 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
     var p=prog(j), L=j.live, place=esc(j.address||j.suburb||'Property');
     var h='<button class="card" data-open="'+esc(j.id)+'"><div class="ctop"><div><h3>'+place+'</h3><div class="sub">'+esc([j.address?j.suburb:'',j.service].filter(Boolean).join(' · '))+(mode==='admin'&&j.client?' · '+esc(j.client):'')+'</div></div><span class="pill '+p.cls+'">'+esc(p.label)+'</span></div>';
     if(kind==='upcoming'){
-      h+='<div class="facts"><div class="fact"><span>Date</span><b>'+fmtDay(j.date)+'</b></div><div class="fact"><span>Start</span><b>'+fmtTime(j.start)+'</b></div><div class="fact"><span>Est. finish</span><b>'+fmtTime(L.eta||j.end)+'</b></div></div>';
+      h+='<div class="facts"><div class="fact"><span>Date</span><b>'+fmtDay(j.date)+(j.dayT?' · Day '+j.dayN+' of '+j.dayT:'')+'</b></div><div class="fact"><span>Start</span><b>'+fmtTime(j.start)+'</b></div><div class="fact"><span>Est. finish</span><b>'+fmtTime(L.eta||j.end)+'</b></div></div>';
     } else if(kind==='reports'){
-      h+='<div class="facts"><div class="fact"><span>Date</span><b>'+fmtDay(j.date)+'</b></div><div class="fact"><span>Finished</span><b>'+(L.done?clock(L.done):'—')+'</b></div><div class="fact"><span>Photos</span><b>'+L.photos.length+'</b></div></div>';
+      h+='<div class="facts"><div class="fact"><span>Date</span><b>'+fmtDay(j.date)+(j.dayT?' · Day '+j.dayN+' of '+j.dayT:'')+'</b></div><div class="fact"><span>Finished</span><b>'+(L.done?clock(L.done):'—')+'</b></div><div class="fact"><span>Photos</span><b>'+L.photos.length+'</b></div></div>';
       if(L.flags.length) h+='<div class="ready"><b>'+L.flags.length+' note'+(L.flags.length>1?'s':'')+'</b> for your attention</div>';
     } else {
       h+='<div class="bar'+(L.done?' ok':'')+'" aria-label="'+p.pct+' percent complete"><i style="width:'+p.pct+'%"></i></div>';
@@ -283,7 +283,7 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
   }
   function bookingCard(j,L){
     var started=Object.keys(L.arrived||{}).length||L.done||j.date<today();
-    var h='<div class="panel bk" style="margin-top:12px"><span class="sub">Your booking</span><div class="bk-when"><b>'+esc(longDay(j.date))+'</b><span>Team arrives '+fmtTime(j.start)+(j.end?' · finishing around '+fmtTime(j.end):'')+'</span></div>';
+    var h='<div class="panel bk" style="margin-top:12px"><span class="sub">Your booking</span><div class="bk-when">'+(j.days?j.days.map(function(x){ return '<b>'+esc(longDay(x.date))+'</b><span>Team arrives '+fmtTime(x.start)+(x.end?' · finishing around '+fmtTime(x.end):'')+'</span>'; }).join(''):'<b>'+esc(longDay(j.date))+'</b><span>Team arrives '+fmtTime(j.start)+(j.end?' · finishing around '+fmtTime(j.end):'')+'</span>')+'</div>';
     h+='<dl class="bk-rows">'+(j.address||j.suburb?'<div><dt>Where</dt><dd>'+esc([j.address,j.suburb].filter(Boolean).join(', '))+'</dd></div>':'')+(j.service?'<div><dt>Service</dt><dd>'+esc(j.service)+'</dd></div>':'')+(j.readyBy?'<div><dt>Ready for</dt><dd>'+esc(j.readyBy)+'</dd></div>':'')+'</dl>';
     h+='<div class="actions" style="margin-top:12px">'+(started?'':'<a class="btn outline" href="'+icsHref(j)+'" download="bardon-clean.ics">Add to calendar</a>')+'<a class="btn dark" href="sms:+61406216212">Text Jack</a></div></div>';
     if(!started){
@@ -298,7 +298,7 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
     var p=prog(j), L=j.live, keep=el.scrollTop, h='';
     if(standalone){ el.hidden=true; }
     h+='<div class="wrap" style="padding-bottom:60px">';
-    h+='<div class="intro"><h1>'+esc(j.address||j.suburb)+'</h1><p>'+esc([j.address?j.suburb:'',j.service,fmtDay(j.date)].filter(Boolean).join(' · '))+'</p>'+(standalone&&data.agent?'<p>Arranged by '+esc(data.agent.name)+(data.agent.agency?', '+esc(data.agent.agency):'')+'</p>':'')+'</div>';
+    h+='<div class="intro"><h1>'+esc(j.address||j.suburb)+'</h1><p>'+esc([j.address?j.suburb:'',j.service,fmtDay(j.date)+(j.dayT?' (day '+j.dayN+' of '+j.dayT+')':'')].filter(Boolean).join(' · '))+'</p>'+(standalone&&data.agent?'<p>Arranged by '+esc(data.agent.name)+(data.agent.agency?', '+esc(data.agent.agency):'')+'</p>':'')+'</div>';
     if(mode==='vendor') h+=bookingCard(j,L);
     h+='<div class="panel" style="margin-top:12px;display:grid;gap:12px"><div class="ctop"><span class="sub">Status</span><span class="pill '+p.cls+'">'+esc(p.label)+'</span></div><div class="bar'+(L.done?' ok':'')+'"><i style="width:'+p.pct+'%"></i></div>';
     h+='<div class="facts"><div class="fact"><span>Start</span><b>'+fmtTime(j.start)+'</b></div><div class="fact"><span>'+(L.done?'Finished':'Est. finish')+'</span><b>'+(L.done?clock(L.done):fmtTime(L.eta||j.end))+'</b></div><div class="fact"><span>Rooms</span><b>'+p.done+' of '+j.rooms.length+'</b></div></div>';

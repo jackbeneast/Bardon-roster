@@ -66,6 +66,10 @@ function view(job, roster, L, withShare) {
     },
   };
   if (withShare && job.share) o.share = job.share;
+  if (job.group) {
+    const g = roster.jobs.filter((x) => x.group === job.group).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+    if (g.length > 1) { o.dayN = g.indexOf(job) + 1; o.dayT = g.length; o.days = g.map((x) => ({ date: x.date, start: x.start, end: x.end })); }
+  }
   return o;
 }
 
@@ -80,7 +84,10 @@ export default async (req) => {
     const live = await loadAllLive(s);
     const base = { lock: LOCK, phone: "0406 216 212" };
     if (v) {
-      const job = v.length >= 16 && roster.jobs.find((j) => j.share === v);
+      // Multi-day bookings share one client link: show today's day, else the next one, else the last.
+      const all = v.length >= 16 ? roster.jobs.filter((j) => j.share === v).sort((a, b) => a.date.localeCompare(b.date)) : [];
+      const t = new Date(Date.now() + 10 * 3600e3).toISOString().slice(0, 10);
+      const job = all.find((j) => j.date >= t) || all[all.length - 1];
       if (!job) return json({ error: "This link has expired. Call Jack at Bardon Clean on 0406 216 212 for a new one." }, 404);
       const a = agents.find((x) => x.id === job.agentId);
       return json({ ...base, mode: "vendor", agent: a ? { name: a.name, agency: a.agency } : null, jobs: [view(job, roster, live[job.id], false)] });

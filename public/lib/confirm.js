@@ -26,17 +26,20 @@
     var balance='';
     if(d&&d.totals){ var bal=d.totals.total-(dep?dep.totals.total:0); if(bal>0.005) balance='Balance of '+money(bal)+' (incl. GST) is due on completion.'; }
 
+    var days=(j.days&&j.days.length>1)?j.days:null;
+    var whenSms=days?days.map(function(x){ return shortDay(x.date)+', '+time(x.start)+(x.end?' to '+time(x.end):''); }).join('\n'):shortDay(j.date)+', team arrives '+time(j.start);
     var locked=!dep||dep.state==='paid';
     var sms='Hi '+who+', '+(locked?'your Bardon Clean booking is confirmed.':'here are your Bardon Clean booking details.')+'\n\n'+
-      j.service+size+'\n'+shortDay(j.date)+', team arrives '+time(j.start)+'\n'+(place?place+'\n':'')+
+      j.service+size+(days?' over '+days.length+' days':'')+'\n'+whenSms+'\n'+(place?place+'\n':'')+
       (depSms?'\n'+depSms+'\n':'')+
       (live?'\nFollow your clean live, with before and after photos:\n'+live+'\n':'')+
       '\nAny questions, call or text me on '+phone+'.\nJack';
 
-    var subject=(locked?'Booking confirmed: ':'Your booking: ')+j.service+', '+shortDay(j.date)+(place?' · '+(j.address||j.suburb):'');
+    var subject=(locked?'Booking confirmed: ':'Your booking: ')+j.service+', '+shortDay(j.date)+(days?' to '+shortDay(days[days.length-1].date):'')+(place?' · '+(j.address||j.suburb):'');
     var L=[];
     L.push('Hi '+who+',','',locked?'Thanks for booking Bardon Clean. Your clean is confirmed. Here are the details.':'Thanks for booking Bardon Clean. Here are the details. Your booking is tentative until the deposit is paid.','');
-    L.push('WHEN',longDay(j.date),'Team arrives '+time(j.start)+(j.end?', finishing around '+time(j.end):''),'');
+    if(days){ L.push('WHEN ('+days.length+' DAYS)'); days.forEach(function(x){ L.push(longDay(x.date)+': team arrives '+time(x.start)+(x.end?', finishing around '+time(x.end):'')); }); L.push(''); }
+    else L.push('WHEN',longDay(j.date),'Team arrives '+time(j.start)+(j.end?', finishing around '+time(j.end):''),'');
     if(place) L.push('WHERE',place,'');
     L.push('SERVICE',j.service+size,'');
     if(j.readyBy) L.push('READY FOR',j.readyBy,'');
@@ -49,5 +52,14 @@
     L.push('Need to change anything? Call or text me on '+phone+'. Please give us at least 24 hours\' notice for any changes.','','Thanks,','Jack East','Bardon Clean · bardonclean.au');
     return {sms:sms, subject:subject, email:L.join('\n')};
   }
-  window.BCConfirm={build:build};
+  // A multi-day booking is several roster jobs sharing a group id. Give the first day a list of all days.
+  function withDays(j, all){
+    if(!j||!j.group) return j;
+    var g=(all||[]).filter(function(x){return x.group===j.group;}).sort(function(a,b){return (a.date+(a.start||'')).localeCompare(b.date+(b.start||''));});
+    if(g.length<2) return j;
+    var o={}; for(var k in g[0]) o[k]=g[0][k];
+    o.days=g.map(function(x){return {date:x.date,start:x.start,end:x.end};});
+    return o;
+  }
+  window.BCConfirm={build:build, withDays:withDays};
 })();

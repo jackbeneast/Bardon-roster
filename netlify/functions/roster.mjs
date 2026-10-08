@@ -44,6 +44,7 @@ function clean(data) {
     if (j.agentId && aids.has(j.agentId)) o.agentId = j.agentId;
     if (j.readyBy) o.readyBy = str(j.readyBy, 120);
     if (j.sample) o.sample = true;
+    if (j.group) o.group = str(j.group, 40);
     if (j.share && String(j.share).length >= 16) o.share = str(j.share, 64);
     if (Array.isArray(j.rooms)) {
       const seen = new Set(), r = [];
