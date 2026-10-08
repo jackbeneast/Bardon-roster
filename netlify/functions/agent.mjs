@@ -61,7 +61,7 @@ function view(job, roster, L, withShare) {
     rooms: roomsOf(job), team,
     live: {
       arrived: live.arrived || {}, rooms: live.rooms || {}, flags: (live.flags || []).map(({ id, t, d, at }) => ({ id, t, d, at })),
-      photos: (live.photos || []).map(({ id, room, kind, at }) => ({ id, room, kind, at })),
+      photos: (live.photos || []).filter((p) => p.room && p.kind).map(({ id, room, kind, at }) => ({ id, room, kind, at })),
       lock: live.lock || {}, eta: live.eta || "", done: live.done || "", updated: live.updated || "",
     },
   };

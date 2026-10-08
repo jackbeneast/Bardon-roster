@@ -204,7 +204,19 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
 .thumb{position:relative;aspect-ratio:1;max-width:100%;border-radius:6px;overflow:hidden;background:var(--cream-dark)}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb span{position:absolute;left:4px;bottom:4px;font:600 10px/1 var(--sans);background:rgba(26,26,26,.75);color:#fff;border-radius:4px;padding:3px 5px}
-.thumb button{position:absolute;right:3px;top:3px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(26,26,26,.75);color:#fff;font:600 14px/1 var(--sans);cursor:pointer}
+.thumbs .thumb{border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.thumb.uns span{background:rgba(192,108,62,.92)}
+.thumb i{position:absolute;right:4px;top:4px;width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:rgba(26,26,26,.35);color:transparent;font:700 13px/20px var(--sans);font-style:normal;text-align:center}
+.thumb[aria-pressed="true"] img{opacity:.6}
+.thumb[aria-pressed="true"] i{background:var(--dark);color:#fff}
+.thumb[aria-pressed="true"]{outline:3px solid var(--dark);outline-offset:-3px}
+.thumb.bad img{visibility:hidden}
+.thumb.bad::after{content:"Tap to reload";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 11px var(--sans);color:var(--meta)}
+.phtabs span{font-weight:400;opacity:.7;margin-left:2px}
+.sbar{position:sticky;bottom:0;z-index:2;margin:12px -4px 0;padding:12px;background:var(--white);border:1px solid var(--line);border-radius:10px;box-shadow:0 -6px 18px rgba(26,26,26,.12)}
+.sbtop{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;font:600 15px var(--sans)}
+.sbtop button{border:0;background:none;font:600 14px var(--sans);color:var(--dark);text-decoration:underline;padding:6px 4px;margin-left:8px;cursor:pointer}
+.sgrid button{min-height:46px;border-radius:8px;background:var(--cream);border:1px solid var(--line);font:600 14px/1.2 var(--sans);color:var(--dark);cursor:pointer;padding:6px}
 .tick{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:15px;color:var(--dark);cursor:pointer}
 .tick input{width:22px;height:22px;min-height:0;margin:0;accent-color:#2F5A35}
 .flagi{border-left:3px solid var(--gold);background:var(--cream);border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:8px;font-size:14px;color:var(--dark);display:flex;gap:8px;justify-content:space-between}
@@ -899,6 +911,60 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     s.addEventListener('click', liveClick); s.addEventListener('change', liveChange);
     drawLive();
   }
+  // Photos: add a batch, then sort into rooms and before/after
+  var phSel={}, phTab=null, phKind='before';
+  function phUnsorted(L){ return L.photos.filter(function(p){return !p.room||!p.kind;}); }
+  function phSrc(j,p,full){ return '/api/photo?j='+encodeURIComponent(j.id)+'&p='+p.id+(full?'':'&s=t'); }
+  function phList(j,L){ var u=phUnsorted(L), t=phTab||(u.length?'sort':'all'); return {tab:t, list:(t==='sort'?u:L.photos).slice().reverse(), uns:u}; }
+  function photoSec(j,L){
+    var v=phList(j,L), h='<div class="lsec" id="phsec"><h4>Photos</h4><p class="sub" style="margin:0 0 8px">Add as many as you like, then sort them into rooms.</p>';
+    h+='<label class="btn primary" id="ph_btn" style="display:flex;align-items:center;justify-content:center;cursor:pointer" for="ph_file">'+(liveBusy?esc(liveBusy):'Add photos')+'</label><input id="ph_file" type="file" accept="image/*" multiple hidden>';
+    if(L.photos.length){
+      var ids={}; L.photos.forEach(function(p){ids[p.id]=1;}); Object.keys(phSel).forEach(function(k){ if(!ids[k]) delete phSel[k]; });
+      h+='<div class="kindsw phtabs" style="margin:12px 0 0"><button type="button" data-phtab="sort" aria-pressed="'+(v.tab==='sort')+'">To sort <span>'+v.uns.length+'</span></button><button type="button" data-phtab="all" aria-pressed="'+(v.tab==='all')+'">All photos <span>'+L.photos.length+'</span></button></div>';
+      if(!v.list.length) h+='<p class="sub" style="margin:10px 0 0">All sorted ✓</p>';
+      else {
+        h+='<p class="sub" style="margin:8px 0 0">Tap photos to select them, then pick before or after and the room.</p><div class="thumbs">';
+        v.list.forEach(function(p){ var lb=p.room&&p.kind?esc(p.room)+' · '+(p.kind==='before'?'Before':'After'):'To sort';
+          h+='<button type="button" class="thumb'+(p.room&&p.kind?'':' uns')+'" data-ph="'+p.id+'" aria-pressed="'+(!!phSel[p.id])+'" aria-label="'+lb+'"><img loading="lazy" decoding="async" alt="" src="'+phSrc(j,p)+'"><span>'+lb+'</span><i aria-hidden="true">✓</i></button>'; });
+        h+='</div>';
+      }
+    }
+    h+='<div id="phbar">'+phBar(j)+'</div></div>';
+    return h;
+  }
+  function phBar(j){
+    var n=Object.keys(phSel).length; if(!n) return '';
+    var h='<div class="sbar"><div class="sbtop"><b>'+n+' selected</b><span><button type="button" data-phall>Select all</button><button type="button" data-phnone>Clear</button></span></div>';
+    h+='<div class="kindsw" style="margin:0 0 8px"><button type="button" data-phk="before" aria-pressed="'+(phKind==='before')+'">Before</button><button type="button" data-phk="after" aria-pressed="'+(phKind==='after')+'">After</button></div>';
+    h+='<div class="rgrid sgrid">'+roomsOf(j).map(function(r){return '<button type="button" data-phroom="'+esc(r)+'">'+esc(r)+'</button>';}).join('')+'</div>';
+    h+='<button type="button" class="btn danger" data-phdel style="width:100%;margin-top:8px;min-height:40px">Delete '+n+' photo'+(n>1?'s':'')+'</button></div>';
+    return h;
+  }
+  // A thumbnail that fails to load retries once, then offers a tap to reload
+  document.addEventListener('error',function(e){ var im=e.target; if(!im||im.tagName!=='IMG'||!im.closest('.thumb')) return;
+    if(!im.dataset.retry){ im.dataset.retry='1'; setTimeout(function(){ im.src=im.src.replace(/&r=\d+/,'')+'&r='+Date.now(); },700); } else im.closest('.thumb').classList.add('bad'); },true);
+  function phRedrawBar(){ var j=liveOpen&&state.jobs.find(function(x){return x.id===liveOpen.jobId;}), el=document.getElementById('phbar'); if(j&&el) el.innerHTML=phBar(j); }
+  function phReq(method, stage, body){
+    var lo=liveOpen, k=key(), hd={'content-type':'application/json'}; if(k) hd['x-admin-key']=k;
+    return fetch('/api/photo?job='+encodeURIComponent(lo.jobId)+'&person='+encodeURIComponent(lo.pid)+(stage?'&stage='+stage:''),{method:method,headers:hd,body:JSON.stringify(body)})
+      .then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong'); state.live[lo.jobId]=d.live; return d; }); });
+  }
+  function phClick(b){
+    var j=state.jobs.find(function(x){return x.id===liveOpen.jobId;}); if(!j) return true;
+    if(b.dataset.ph && b.classList.contains('bad')){ var im=b.querySelector('img'); b.classList.remove('bad'); delete im.dataset.retry; im.src=im.src.replace(/&r=\d+/,'')+'&r='+Date.now(); return true; }
+    if(b.dataset.ph){ var id=b.dataset.ph; if(phSel[id]) delete phSel[id]; else phSel[id]=1; b.setAttribute('aria-pressed', !!phSel[id]); phRedrawBar(); return true; }
+    if(b.dataset.phtab){ phTab=b.dataset.phtab; phSel={}; drawLive(); return true; }
+    if(b.hasAttribute('data-phall')){ phList(j,liveOf(j)).list.forEach(function(p){phSel[p.id]=1;}); drawLive(); return true; }
+    if(b.hasAttribute('data-phnone')){ phSel={}; drawLive(); return true; }
+    if(b.dataset.phk){ phKind=b.dataset.phk; phRedrawBar(); return true; }
+    if(b.dataset.phroom){ var ids=Object.keys(phSel), room=b.dataset.phroom, kd=phKind; b.disabled=true;
+      phReq('POST','tag',{ids:ids,room:room,kind:kd}).then(function(){ phSel={}; drawLive(); toast(ids.length+' photo'+(ids.length>1?'s':'')+' → '+room+' · '+(kd==='before'?'Before':'After')); })
+        .catch(function(e){ b.disabled=false; toast(e.message); }); return true; }
+    if(b.hasAttribute('data-phdel')){ var n=Object.keys(phSel).length; if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent='Tap again to delete '+n; return true; } b.disabled=true;
+      phReq('DELETE','',{ids:Object.keys(phSel)}).then(function(){ phSel={}; drawLive(); toast(n+' deleted'); }).catch(function(e){ b.disabled=false; toast(e.message); }); return true; }
+    return false;
+  }
   function fmtClock(isoStr){ if(!isoStr) return ''; var d=new Date(isoStr), h=d.getHours(), m=d.getMinutes(); return (h%12||12)+':'+pad(m)+(h>=12?'pm':'am'); }
   function drawLive(){
     var box=document.getElementById('liveBox'); if(!box||!liveOpen) return;
@@ -912,10 +978,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='</div><div class="lsec"><h4>Areas'+(canEdit?'<button type="button" class="ed" data-editareas>Add or remove areas</button>':'')+'</h4>';
     roomsOf(j).forEach(function(r){ var st=(L.rooms[r]&&L.rooms[r].s)||'w', by=L.rooms[r]&&member(L.rooms[r].by);
       h+='<div class="lrow"><span><span class="nm">'+esc(r)+'</span>'+(by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span></div>'; });
-    h+='</div><div class="lsec"><h4>Photos</h4><p class="sub" style="margin:0 0 8px">Take befores when you arrive and afters as each room is done.</p><div class="two"><label class="l" for="ph_room">Room<select id="ph_room">'+roomsOf(j).map(function(r){return '<option>'+esc(r)+'</option>';}).join('')+'</select></label><label class="l" for="ph_kind">Type<select id="ph_kind"><option value="before">Before</option><option value="after">After</option></select></label></div>';
-    h+='<label class="btn primary" style="display:flex;align-items:center;justify-content:center;margin-top:10px;cursor:pointer" for="ph_file">'+(liveBusy?esc(liveBusy):'Add photos')+'</label><input id="ph_file" type="file" accept="image/*" multiple hidden>';
-    if(L.photos.length) h+='<div class="thumbs">'+L.photos.slice().reverse().map(function(p){ return '<div class="thumb"><img loading="lazy" alt="'+esc(p.room+' '+p.kind)+'" src="/api/photo?j='+encodeURIComponent(j.id)+'&p='+p.id+'"><span>'+esc(p.room)+' · '+(p.kind==='before'?'Before':'After')+'</span><button type="button" data-delph="'+p.id+'" aria-label="Delete photo">×</button></div>'; }).join('')+'</div>';
-    h+='</div><div class="lsec"><h4>Notes for the agent</h4><p class="sub" style="margin:0 0 8px">Anything they should know before photos or buyers: damage, mould, broken fittings, stains that won\'t shift.</p>';
+    h+='</div>'+photoSec(j,L);
+    h+='<div class="lsec"><h4>Notes for the agent</h4><p class="sub" style="margin:0 0 8px">Anything they should know before photos or buyers: damage, mould, broken fittings, stains that won\'t shift.</p>';
     L.flags.forEach(function(f){ h+='<div class="flagi"><span><b>'+esc(f.t)+'</b>'+esc(f.d)+'</span><button type="button" class="btn danger" data-unflag="'+f.id+'" style="min-height:0">Remove</button></div>'; });
     h+='<input id="fl_t" placeholder="Short title, e.g. Oven seal cracked" style="width:100%;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px;margin-top:4px"><textarea id="fl_d" placeholder="Details (optional)" style="width:100%;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px;margin-top:8px;min-height:64px"></textarea><button type="button" class="btn outline" data-addflag style="margin-top:8px;width:100%">Add note</button>';
     h+='</div><div class="lsec"><h4>Lock-up</h4>';
@@ -924,9 +988,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(canEdit) h+='<div class="lsec"><h4>Finish time the agent sees</h4><div class="two"><label class="l" for="eta">Estimated finish<input id="eta" type="time" value="'+esc(L.eta||j.end||'')+'"></label><button type="button" class="btn outline" data-eta style="align-self:end">Update</button></div></div>';
     h+='<div class="lsec">'+(L.done?'<span class="cs ok">✓ Marked ready '+fmtClock(L.done)+'</span> <button type="button" class="btn danger" data-finish="undo">Undo</button>':'<button type="button" class="btn yes" data-finish="1" style="width:100%">Job finished: mark ready for the agent</button><p class="sub">Check every room is done, afters are taken and the house is locked up first.</p>')+'</div>';
     h+='<div class="err" id="liveErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Close</button></div>';
-    var ft=document.getElementById('fl_t'), fdd=document.getElementById('fl_d'), kv={t:ft?ft.value:'',d:fdd?fdd.value:'',r:(document.getElementById('ph_room')||{}).value,k:(document.getElementById('ph_kind')||{}).value};
+    var ft=document.getElementById('fl_t'), fdd=document.getElementById('fl_d'), kv={t:ft?ft.value:'',d:fdd?fdd.value:''};
     box.innerHTML=h; box.closest('.sheet').scrollTop=keep;
-    if(kv.t) document.getElementById('fl_t').value=kv.t; if(kv.d) document.getElementById('fl_d').value=kv.d; if(kv.r) document.getElementById('ph_room').value=kv.r; if(kv.k) document.getElementById('ph_kind').value=kv.k;
+    if(kv.t) document.getElementById('fl_t').value=kv.t; if(kv.d) document.getElementById('fl_d').value=kv.d;
   }
   function livePost(body, btn, ctx){
     ctx=ctx||liveOpen; if(!ctx) return Promise.resolve();
@@ -938,6 +1002,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function liveClick(e){
     var b=e.target.closest('button'); if(!b||!liveOpen) return;
     if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
+    if(b.closest('#phsec') && phClick(b)) return;
     if(b.hasAttribute('data-editareas')){ var jid=liveOpen.jobId, pp=liveOpen.pid; closeSheet(); liveOpen={jobId:jid,pid:pp}; areasSheet(jid); return; }
     if(b.dataset.arr){ livePost({action:'arrive',who:b.dataset.arr,undo:!!b.dataset.undo},b); return; }
     if(b.dataset.room){ livePost({action:'room',room:b.dataset.room,status:b.dataset.st},b); return; }
@@ -946,36 +1011,61 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(b.hasAttribute('data-eta')){ livePost({action:'eta',time:document.getElementById('eta').value},b).then(function(){toast('Finish time updated');}); return; }
     if(b.dataset.finish){ var j=state.jobs.find(function(x){return x.id===liveOpen.jobId;}), L=liveOf(j); if(b.dataset.finish!=='undo' && !b.dataset.sure){ var left=roomsOf(j).filter(function(r){return !(L.rooms[r]&&L.rooms[r].s==='d');}).length, lk=Object.keys(LOCK).filter(function(k){return !L.lock[k];}).length; if(left||lk){ b.dataset.sure='1'; b.textContent=(left?left+' room'+(left>1?'s':'')+' not done':'')+(left&&lk?', ':'')+(lk?lk+' lock-up item'+(lk>1?'s':'')+' unticked':'')+'. Tap again to finish anyway'; return; } }
       livePost({action:'finish',undo:b.dataset.finish==='undo'},b).then(function(){ if(b.dataset.finish!=='undo') toast('Marked ready. The agent can see it now.'); }); return; }
-    if(b.dataset.delph){ if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent='?'; return; } b.disabled=true;
-      var k=key(), hd={}; if(k) hd['x-admin-key']=k;
-      fetch('/api/photo?job='+encodeURIComponent(liveOpen.jobId)+'&person='+encodeURIComponent(liveOpen.pid)+'&id='+b.dataset.delph,{method:'DELETE',headers:hd}).then(function(r){return r.json();}).then(function(d){ if(d.live){ state.live[liveOpen.jobId]=d.live; drawLive(); } else toast(d.error||'Couldn\'t delete'); }); }
   }
   function liveChange(e){
     var t=e.target; if(!liveOpen) return;
     if(t.dataset.lock){ livePost({action:'lock',item:t.dataset.lock,value:t.checked}); return; }
-    if(t.id==='ph_file' && t.files.length){ uploadPhotos(Array.prototype.slice.call(t.files), document.getElementById('ph_room').value, document.getElementById('ph_kind').value); }
+    if(t.id==='ph_file' && t.files.length){ var fl=Array.prototype.slice.call(t.files); t.value=''; uploadPhotos(fl, '', ''); }
   }
+  function toJpeg(c,q){ return new Promise(function(res,rej){ c.toBlob(function(b){ b?res(b):rej(new Error('Couldn\'t read that photo')); },'image/jpeg',q); }); }
+  function scaled(src,w,h,max){ var sc=Math.min(1,max/Math.max(w,h)), c=document.createElement('canvas'); c.width=Math.round(w*sc); c.height=Math.round(h*sc); c.getContext('2d').drawImage(src,0,0,c.width,c.height); return c; }
+  // Full photo (1600px) plus a small thumbnail so the grid stays light on the phone
   function shrink(file){
     return new Promise(function(res,rej){
       var url=URL.createObjectURL(file), img=new Image();
-      img.onload=function(){ var max=1600, w=img.naturalWidth, h=img.naturalHeight, sc=Math.min(1,max/Math.max(w,h)); var c=document.createElement('canvas'); c.width=Math.round(w*sc); c.height=Math.round(h*sc); c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url); c.toBlob(function(b){ b?res(b):rej(new Error('Couldn\'t read that photo')); },'image/jpeg',0.82); };
+      img.onload=function(){ var w=img.naturalWidth, h=img.naturalHeight, c=scaled(img,w,h,1600), t=scaled(c,c.width,c.height,420); img.onerror=null; URL.revokeObjectURL(url);
+        Promise.all([toJpeg(c,0.82),toJpeg(t,0.72)]).then(function(r){ c.width=c.height=t.width=t.height=0; res({full:r[0],thumb:r[1]}); },rej); };
       img.onerror=function(){ URL.revokeObjectURL(url); rej(new Error('Couldn\'t read that photo')); };
       img.src=url;
     });
   }
   function showUp(){ var el=document.getElementById('uppill'); if(!upState){ if(el) el.remove(); return; } if(!el){ el=document.createElement('div'); el.id='uppill'; el.className='uppill'; el.setAttribute('role','status'); document.body.appendChild(el); } el.innerHTML='<i></i>'+esc(upState); }
+  // Uploads two at a time, then adds them to the job in small batches. room/kind '' = to sort.
   function uploadPhotos(files, room, kind, ctx){
-    var lo=ctx||liveOpen, i=0, k=key(), hd={}; if(k) hd['x-admin-key']=k;
-    function next(){
-      if(i>=files.length || !lo){ liveBusy=false; upState=null; showUp(); drawLive(); if(!document.getElementById('scrim')) render(); toast(files.length+' '+kind+' photo'+(files.length>1?'s':'')+' added · '+room); return; }
-      liveBusy='Uploading '+(i+1)+' of '+files.length+'…'; upState='Uploading '+room+' '+kind+(files.length>1?' · '+(i+1)+' of '+files.length:'')+'…'; showUp(); drawLive();
-      shrink(files[i]).then(function(blob){
-        return fetch('/api/photo?job='+encodeURIComponent(lo.jobId)+'&person='+encodeURIComponent(lo.pid)+'&room='+encodeURIComponent(room)+'&kind='+kind,{method:'POST',headers:hd,body:blob});
-      }).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'Upload failed'); return d; }); })
-      .then(function(d){ state.live[lo.jobId]=d.live; i++; next(); })
-      .catch(function(e){ liveBusy=false; upState=null; showUp(); drawLive(); toast(e.message+'. Check your signal and try again.'); });
+    var lo=ctx||liveOpen; if(!lo) return;
+    var k=key(), hd={}; if(k) hd['x-admin-key']=k;
+    var q='/api/photo?job='+encodeURIComponent(lo.jobId)+'&person='+encodeURIComponent(lo.pid);
+    var nextI=0, done=0, failed=0, pending=[], flushing=null, total=files.length, label=room?room+' '+kind:'photos';
+    function progress(){ liveBusy='Uploading '+Math.min(done+1,total)+' of '+total+'…'; upState='Uploading '+label+' · '+Math.min(done+1,total)+' of '+total+'…'; showUp(); var bt=document.getElementById('ph_btn'); if(bt) bt.textContent=liveBusy; }
+    function sendOne(f, tries){
+      return shrink(f).then(function(r){ var body=new Blob([r.thumb,r.full],{type:'application/octet-stream'});
+        return fetch(q+'&stage=bin&tl='+r.thumb.size,{method:'POST',headers:hd,body:body}); })
+        .then(function(res){ return res.json().then(function(d){ if(!res.ok) throw new Error(d.error||'Upload failed'); return d.id; }); })
+        .catch(function(e){ if(tries<1 && !/isn't a photo|too large|read that/.test(e.message)) return new Promise(function(ok){setTimeout(ok,1200);}).then(function(){ return sendOne(f,tries+1); }); throw e; });
     }
-    next();
+    function flush(force){
+      if(flushing) return flushing.then(function(){ return flush(force); });
+      if(!pending.length || (!force && pending.length<4)) return Promise.resolve();
+      var ids=pending.splice(0,pending.length), b={ids:ids}; if(room){ b.room=room; b.kind=kind; }
+      var h2={'content-type':'application/json'}; if(k) h2['x-admin-key']=k;
+      flushing=fetch(q+'&stage=add',{method:'POST',headers:h2,body:JSON.stringify(b)}).then(function(res){ return res.json().then(function(d){ if(!res.ok) throw new Error(d.error||'Upload failed'); state.live[lo.jobId]=d.live; if(!room) phTab='sort'; if(liveOpen&&liveOpen.jobId===lo.jobId) drawLive(); }); })
+        .catch(function(e){ failed+=ids.length; toast(e.message); })
+        .then(function(){ flushing=null; });
+      return flushing;
+    }
+    function worker(){
+      if(nextI>=files.length) return Promise.resolve();
+      var f=files[nextI++];
+      return sendOne(f,0).then(function(id){ pending.push(id); }, function(){ failed++; })
+        .then(function(){ done++; progress(); return flush(false); }).then(worker);
+    }
+    progress();
+    Promise.all([worker(),worker()]).then(function(){ return flush(true); }).then(function(){
+      liveBusy=false; upState=null; showUp();
+      if(liveOpen) drawLive(); else if(!document.getElementById('scrim')) render();
+      var ok=total-failed;
+      toast(failed? ok+' added, '+failed+' didn\'t upload. Try those again.' : ok+' photo'+(ok>1?'s':'')+' added'+(room?' · '+room:'. Now sort them into rooms.'));
+    });
   }
 
   // ---------- On-the-go views (Jack) ----------
@@ -1047,12 +1137,12 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function quickCard(j, pid){
     var L=liveOf(j), rs=roomsOf(j), done=rs.filter(function(r){return L.rooms[r]&&L.rooms[r].s==='d';}).length, sum=liveSum(j), ag=agentOf(j.agentId);
     var mineArr = pid ? L.arrived[pid] : null, arrN=Object.keys(L.arrived||{}).length, staffN=(j.staff||[]).length;
-    var bN=L.photos.filter(function(p){return p.kind==='before';}).length, aN=L.photos.length-bN;
+    var bN=L.photos.filter(function(p){return p.kind==='before';}).length, aN=L.photos.filter(function(p){return p.kind==='after';}).length, uN=L.photos.length-bN-aN;
     var tm=pid?shiftOf(j,pid):{start:j.start,end:j.end};
     var h='<section class="qc"><div class="qtop"><div><h2>'+esc(j.address||j.client||'Job')+'</h2><div class="qmeta">'+esc([j.address&&j.suburb?j.suburb:(j.suburb||''), range(tm.start,tm.end), j.service].filter(Boolean).join(' · '))+'</div>';
     if(canEdit) h+='<div class="qmeta">'+esc(j.client||'')+(ag?' · Agent: '+esc(ag.name):'')+(j.readyBy?' · Ready for '+esc(j.readyBy):'')+'</div>';
     h+='</div>'+(sum?'<span class="lv '+sum.c+'">'+esc(sum.t.split(' · ')[0])+'</span>':'')+'</div>';
-    h+='<div class="qprog"><span class="pb'+(L.done?' ok':'')+'"><i style="width:'+(L.done?100:Math.round(done/rs.length*100))+'%"></i></span>'+done+' of '+rs.length+' rooms</div>';
+    h+='<div class="qprog"><span class="pb'+(L.done?' ok':'')+'"><i style="width:'+(L.done?100:Math.round(done/rs.length*100))+'%"></i></span>'+done+' of '+rs.length+' rooms'+(uN?' · '+uN+' photo'+(uN>1?'s':'')+' to sort':'')+'</div>';
     var ctx=' data-j="'+j.id+'" data-p="'+esc(pid||'')+'"';
     h+='<div class="qa">';
     h+='<button type="button" class="cam" data-qa="before"'+ctx+'>'+IC.cam+'Before<small>'+bN+' taken</small></button>';
@@ -1311,7 +1401,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     function draw(){
       var h='<h3><em>'+(kind==='before'?'Before':'After')+'</em> photo</h3><div class="kindsw"><button type="button" data-k="before" aria-pressed="'+(kind==='before')+'">Before</button><button type="button" data-k="after" aria-pressed="'+(kind==='after')+'">After</button></div><p class="sub" style="margin:0 0 10px">Tap the room. The camera opens.</p><div class="rgrid">';
       roomsOf(j).forEach(function(r,i){ var n=L.photos.filter(function(p){return p.room===r&&p.kind===kind;}).length; h+='<label for="cam'+i+'" class="'+(n?'has':'')+'">'+esc(r)+(n?'<small>'+n+' taken</small>':'')+'</label><input id="cam'+i+'" type="file" accept="image/*" capture="environment" data-room="'+esc(r)+'" hidden>'; });
-      h+='</div><div class="lsec"><h4>Several from your photo library</h4><div class="two"><select id="libRoom" style="margin:0">'+roomsOf(j).map(function(r){return '<option>'+esc(r)+'</option>';}).join('')+'</select><label class="btn outline" for="libFile" style="display:flex;align-items:center;justify-content:center;cursor:pointer">Choose photos</label></div><input id="libFile" type="file" accept="image/*" multiple hidden></div>';
+      h+='</div><div class="lsec"><h4>Lots from your photo library</h4><p class="sub" style="margin:0 0 8px">Upload them all now and sort them into rooms after.</p><label class="btn outline" for="libFile" style="display:flex;align-items:center;justify-content:center;cursor:pointer">Choose photos</label><input id="libFile" type="file" accept="image/*" multiple hidden></div>';
       h+='<div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Done</button></div>';
       s.querySelector('.sheet').innerHTML=h;
       s.querySelector('[data-close]').onclick=closeSheet;
@@ -1321,8 +1411,10 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     s.addEventListener('click',function(e){ var b=e.target.closest('[data-k]'); if(b){ kind=b.dataset.k; draw(); } });
     s.addEventListener('change',function(e){
       var t=e.target; if(!t.files||!t.files.length) return;
-      var room=t.id==='libFile'?s.querySelector('#libRoom').value:t.dataset.room, files=Array.prototype.slice.call(t.files);
-      closeSheet(); uploadPhotos(files, room, kind, {jobId:jobId,pid:pid});
+      var files=Array.prototype.slice.call(t.files);
+      closeSheet();
+      if(t.id==='libFile'){ phTab='sort'; phSel={}; liveSheet(jobId,pid); uploadPhotos(files,'',''); setTimeout(function(){ var p=document.getElementById('phsec'); if(p) p.scrollIntoView({block:'start'}); },80); return; }
+      uploadPhotos(files, t.dataset.room, kind, {jobId:jobId,pid:pid});
     });
   }
   function noteSheet(jobId, pid){
