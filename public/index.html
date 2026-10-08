@@ -410,7 +410,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function uid(p){ return p + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
   function pad(n){ return (n<10?'0':'')+n; }
   function iso(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
-  function parse(s){ var p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+  function parse(s){ var p=String(s||'').split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
   function addDays(d,n){ var x=new Date(d); x.setDate(x.getDate()+n); return x; }
   var DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function fmtDay(d){ return DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()]; }
