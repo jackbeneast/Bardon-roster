@@ -61,6 +61,17 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--terracotta)}
 .field.bad input{border-color:#B23A2A}
 .row2{display:grid;grid-template-columns:1fr 110px;gap:12px}
+.ac{position:relative;margin:0 0 16px}
+.ac .field{margin:0}
+.ac ul{list-style:none;margin:6px 0 0;padding:6px;background:var(--white);border:1.5px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(26,26,26,.10)}
+.ac li{padding:11px 12px;border-radius:9px;cursor:pointer;line-height:1.35}
+.ac li b{display:block;font-weight:500;color:var(--dark)}
+.ac li span{font-size:14px;color:var(--meta)}
+.ac li[aria-selected="true"],.ac li:hover{background:var(--cream)}
+.ac li.manual{color:var(--terracotta);font-size:14.5px;font-weight:500}
+.ac .gfoot{font-size:11.5px;color:var(--meta);text-align:right;padding:4px 8px 0}
+.ok{display:flex;gap:8px;align-items:center;font-size:14px;color:#2F6B3F;margin:8px 0 0}
+.ok svg{width:16px;height:16px}
 /* steppers */
 .steppers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .stp{background:var(--white);border:1.5px solid var(--line);border-radius:var(--r);padding:12px 10px;text-align:center}
@@ -176,7 +187,7 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
 
   // ---------- state ----------
   var KEY='bc_quote_draft_v1', t0=Date.now();
-  var A={service:'',who:'',agency:'',address:'',suburb:'',postcode:'',ptype:'',beds:3,baths:2,storeys:1,furnished:'',condition:'',extras:[],freq:'',days:[],date:'',flex:'',time:'',access:'',name:'',phone:'',email:'',contact:'text',heard:'',notes:''};
+  var A={service:'',who:'',agency:'',placeId:'',address:'',suburb:'',postcode:'',ptype:'',beds:3,baths:2,storeys:1,furnished:'',condition:'',extras:[],freq:'',days:[],date:'',flex:'',time:'',access:'',name:'',phone:'',email:'',contact:'text',heard:'',notes:''};
   var photos=[]; // {data, url}
   var step=0, done=false, sending=false, err='', resumeOffer=false, editing=false;
   function lsGet(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ return null; } }
@@ -244,7 +255,7 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
     }
     if(s==='property'){
       h+='<h1>The <em>property</em></h1><p class="lead">'+esc(svc().t)+'. Where is it, and who\'s booking?</p>';
-      h+=field('address','Street address <small>(optional for now)</small>',{ac:'address-line1',ph:'e.g. 12 Fernberg Road'});
+      h+='<div class="ac"><label class="field" for="f_address"><span class="lbl" style="margin:0">Property address</span><input id="f_address" name="address" value="'+esc(A.address)+'" autocomplete="'+(LOOK.off?'address-line1':'off')+'" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="addrList" placeholder="Start typing, e.g. 12 Fernberg Rd"></label><div id="addrBox"></div>'+(A.placeId?'<p class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Address found</p>':'')+'</div>';
       h+='<div class="row2">'+field('suburb','Suburb',{ac:'address-level2',ph:'e.g. Paddington'})+field('postcode','Postcode',{im:'numeric',ac:'postal-code',ph:'4064',max:4})+'</div>';
       h+='<fieldset class="q"><legend>Who\'s booking?</legend>'+radios('who',WHO)+'</fieldset>';
       if(A.who==='agent') h+=field('agency','Agency',{ac:'organization',ph:'e.g. Harcourts, The Gap'});
@@ -334,7 +345,12 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
     if(t.name==='service'){ err=''; setTimeout(function(){ next(); },180); }
     if(t.name==='who') render();
   });
-  app.addEventListener('input',function(e){ if(e.target.name){ readForm(); lsSet(); } });
+  app.addEventListener('input',function(e){ if(e.target.name){ readForm(); if(e.target.name==='address'||e.target.name==='suburb'||e.target.name==='postcode'){ if(A.placeId){ A.placeId=''; var okp=app.querySelector('.ok'); if(okp) okp.remove(); } } lsSet(); if(e.target.name==='address') lookup(e.target.value); } });
+  app.addEventListener('keydown',function(e){ if(e.target.id!=='f_address'||!LOOK.items.length) return;
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); LOOK.sel=(LOOK.sel+(e.key==='ArrowDown'?1:-1)+LOOK.items.length)%LOOK.items.length; drawList(); }
+    else if(e.key==='Enter'&&LOOK.sel>=0){ e.preventDefault(); e.stopPropagation(); choose(LOOK.items[LOOK.sel]); }
+    else if(e.key==='Escape'){ closeList(); } },true);
+  app.addEventListener('focusout',function(e){ if(e.target.id==='f_address') setTimeout(function(){ if(!app.contains(document.activeElement)||document.activeElement.id!=='f_address') closeList(); },180); });
   app.addEventListener('submit',function(e){ e.preventDefault(); next(); });
   app.addEventListener('keydown',function(e){ if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.type!=='checkbox'&&e.target.type!=='radio'){ e.preventDefault(); next(); } });
   document.addEventListener('click',function(e){
@@ -355,6 +371,41 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
     step=editing?STEPS.length-1:step+1; if(STEPS[step].id==='review') editing=false;
     lsSet(); render(true);
   }
+
+  // ---------- address lookup (Google, through the hub) ----------
+  var LOOK={off:false, items:[], sel:-1, timer:null, seq:0, sess:''};
+  function newSess(){ var a=new Uint8Array(12); (window.crypto||{getRandomValues:function(x){ for(var i=0;i<x.length;i++) x[i]=Math.random()*256|0; return x; }}).getRandomValues(a); return [].map.call(a,function(b){return ('0'+b.toString(16)).slice(-2);}).join(''); }
+  function lookup(q){
+    if(LOOK.off) return; clearTimeout(LOOK.timer);
+    q=q.trim(); if(q.length<4){ closeList(); return; }
+    LOOK.timer=setTimeout(function(){
+      if(!LOOK.sess) LOOK.sess=newSess();
+      var my=++LOOK.seq;
+      fetch('/api/address?q='+encodeURIComponent(q)+'&s='+LOOK.sess).then(function(r){return r.json();}).then(function(d){
+        if(my!==LOOK.seq) return;
+        if(d.off){ LOOK.off=true; closeList(); var i=document.getElementById('f_address'); if(i) i.setAttribute('autocomplete','address-line1'); return; }
+        LOOK.items=d.suggestions||[]; LOOK.sel=-1; drawList(true);
+      }).catch(function(){});
+    },220);
+  }
+  function drawList(fresh){
+    var box=document.getElementById('addrBox'), inp=document.getElementById('f_address'); if(!box||!inp) return;
+    if(!LOOK.items.length&&!fresh){ box.innerHTML=''; inp.setAttribute('aria-expanded','false'); return; }
+    box.innerHTML='<ul id="addrList" role="listbox">'+LOOK.items.map(function(x,i){ return '<li role="option" id="ao'+i+'" data-ai="'+i+'" aria-selected="'+(i===LOOK.sel)+'"><b>'+esc(x.main)+'</b><span>'+esc(x.secondary)+'</span></li>'; }).join('')+
+      '<li class="manual" data-amanual>'+(LOOK.items.length?'Not listed? Type it in below':'No match. Type the suburb and postcode below')+'</li></ul><div class="gfoot">Address search by Google</div>';
+    inp.setAttribute('aria-expanded','true'); if(LOOK.sel>=0) inp.setAttribute('aria-activedescendant','ao'+LOOK.sel); else inp.removeAttribute('aria-activedescendant');
+  }
+  function closeList(){ LOOK.items=[]; LOOK.sel=-1; var box=document.getElementById('addrBox'); if(box) box.innerHTML=''; var i=document.getElementById('f_address'); if(i){ i.setAttribute('aria-expanded','false'); i.removeAttribute('aria-activedescendant'); } }
+  function choose(x){
+    closeList(); var inp=document.getElementById('f_address'); if(inp) inp.value=x.main;
+    fetch('/api/address?id='+encodeURIComponent(x.id)+'&s='+LOOK.sess).then(function(r){return r.json();}).then(function(d){
+      LOOK.sess='';
+      if(d.off||!d.suburb){ A.address=x.main; render(); var sf=document.getElementById('f_suburb'); if(sf) sf.focus(); return; }
+      if(d.state&&d.state!=='QLD') err='That address is in '+d.state+'. Bardon Clean works across Brisbane, so double-check it\'s the right one.';
+      A.address=d.address; A.suburb=d.suburb; A.postcode=d.postcode; A.placeId=d.id; lsSet(); var y=window.scrollY; render(); window.scrollTo(0,y); err='';
+    }).catch(function(){ A.address=x.main; render(); });
+  }
+  app.addEventListener('pointerdown',function(e){ var li=e.target.closest('[data-ai]'); if(li){ e.preventDefault(); choose(LOOK.items[+li.dataset.ai]); return; } if(e.target.closest('[data-amanual]')){ e.preventDefault(); closeList(); var sf=document.getElementById('f_suburb'); if(sf) sf.focus(); } });
 
   // ---------- photos: resized on the phone before upload ----------
   function addPhotos(files){
