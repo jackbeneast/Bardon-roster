@@ -6,6 +6,7 @@ import {
   recordPayment, addJobFromQuote, publicView, totals, statusOf, today, addDays, depositDesc, reportFor,
 } from "../../lib/docs.mjs";
 import { notify, money, fmtDay } from "../../lib/notify.mjs";
+import { planImport } from "../../lib/jobberImport.mjs";
 
 // "Quote #172 for Hughes" style label.
 const label = (d) => `${d.kind === "quote" ? "Quote" : "Invoice"} #${d.num}${d.client?.name ? " for " + d.client.name : ""}`;
@@ -101,6 +102,33 @@ export default async (req) => {
 
   // ---- Admin actions ----
   const set = await loadSettings(s);
+  if (b.action === "jobber-import") {
+    // Preview first (commit: false), then write (commit: true). Safe to run again.
+    const files = (Array.isArray(b.files) ? b.files : []).slice(0, 12).map((f) => ({ name: String(f?.name || ""), text: String(f?.text || "").slice(0, 3e6) }));
+    if (!files.length) return json({ error: "Pick your Jobber export files first" }, 400);
+    const [docs, books] = await Promise.all([loadDocs(s), s.get("books")]);
+    const p = planImport(files, docs, set, books || {});
+    if (!p.summary.has.includes("invoices") && !p.summary.has.includes("quotes")) return json({ error: "Those files don't look like Jobber's Invoices or Quotes reports." }, 400);
+    if (!b.commit) return json({ ok: true, summary: p.summary, report: p.report });
+    for (const d of p.live) await saveDoc(s, d);
+    const arcIds = new Set(p.archive.map((d) => d.id));
+    const old = (await s.get("jbarchive"))?.docs || [];
+    // Keep earlier-imported history that this set of files didn't include (e.g. invoices-only re-run).
+    const keep = old.filter((d) => !arcIds.has(d.id) && !p.live.some((x) => x.id === d.id) && !(p.summary.has.includes(d.kind === "quote" ? "quotes" : "invoices")));
+    await s.set("jbarchive", { at: new Date().toISOString(), docs: [...keep, ...p.archive] });
+    // Docs that were live last time and are now closed move to the archive.
+    for (const d of p.archive) if (docs.some((x) => x.id === d.id && !x.archived)) { await s.del(`doc/${d.id}`); const t = docs.find((x) => x.id === d.id)?.token; if (t) await s.del(`doctok/${t}`); }
+    const raw = (await s.get("docset")) || {};
+    await s.set("docset", { ...raw, nextInvoice: p.nextInvoice, nextQuote: p.nextQuote });
+    if (Object.keys(p.recur).length) {
+      const bk = (await s.get("books")) || {};
+      bk.recur = { ...(bk.recur || {}) };
+      for (const [k, v] of Object.entries(p.recur)) if (bk.recur[k] == null) bk.recur[k] = v.price;
+      await s.set("books", bk);
+    }
+    await s.set("jobber-import", { at: new Date().toISOString(), summary: { ...p.summary, openInvoices: undefined, openQuotes: undefined } });
+    return json({ ok: true, summary: p.summary, report: p.report });
+  }
   if (b.action === "settings") {
     const clean = cleanSettings(b.settings || {});
     await s.set("docset", clean);
@@ -116,7 +144,9 @@ export default async (req) => {
     await saveDoc(s, d);
     return json({ ok: true, id: d.id });
   }
-  const d = await s.get(`doc/${String(b.id || "")}`);
+  let d = await s.get(`doc/${String(b.id || "")}`);
+  // Jobber history can only be copied into something new.
+  if (!d && b.action === "duplicate") d = ((await s.get("jbarchive"))?.docs || []).find((x) => x.id === String(b.id || "")) || null;
   if (!d) return json({ error: "Not found" }, 404);
   if (b.action === "tojob" && d.kind === "quote") {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(b.date || "")) return json({ error: "Pick the date of the clean" }, 400);

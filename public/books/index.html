@@ -299,7 +299,7 @@ function renderProfit(){
   // GST
   if(D.gstReg) h+='<div class="card"><h2>GST <em>for BAS</em></h2><div class="pnl"><div><span>GST on your jobs</span><span>'+money(x.gstCollected)+'</span></div><div><span>GST credits on expenses</span><span>−'+money(x.gstPaid)+'</span></div><div class="tot"><span>Estimated GST to pay</span><span>'+money(x.gstNet)+'</span></div></div><p class="hint">Estimate from job prices and logged expenses. Your BAS figures come from your actual records, so check with your accountant.</p></div>';
   // Cash
-  h+='<div class="card"><h2>Cash <em>in</em></h2><div class="pnl"><div><span>Invoice payments received</span><span>'+money(x.cashIn)+'</span></div><div><span>Owed to you right now</span><span>'+money(D.owing)+'</span></div></div><p class="hint">From invoices in Quotes &amp; Invoices. Jobber payments aren\'t included.</p></div>';
+  h+='<div class="card"><h2>Cash <em>in</em></h2><div class="pnl"><div><span>Invoice payments received</span><span>'+money(x.cashIn)+'</span></div><div><span>Owed to you right now</span><span>'+money(D.owing)+'</span></div></div><p class="hint">From invoices in Quotes &amp; Invoices, including any Jobber history you\'ve imported.</p></div>';
   // Trend
   h+=trend();
   // Jobs

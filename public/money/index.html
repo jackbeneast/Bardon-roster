@@ -136,6 +136,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   var app=document.getElementById('app');
   var S={docs:[],settings:null,card:false,jobs:[]}, loaded=false, loadErr='';
   var tab=lsGet('money_tab')||'quote', filter='all', q='', draft=null, dirty=false;
+  var LIMIT=40, IMP=null;
   var SERVICES=['Pre-sale clean','Bond clean','Deep clean','Regular clean','Commercial','Other'];
   var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -196,6 +197,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(r.v==='doc') return renderDoc(r.id);
     if(r.v==='library') return renderLibrary();
     if(r.v==='settings') return renderSettings();
+    if(r.v==='import') return renderImport();
     renderList();
   }
 
@@ -222,8 +224,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     h+='<div class="chips">'+FIL.map(function(f){ var n=list.filter(function(d){return match(d,f[0]);}).length; return '<button class="chip" data-filter="'+f[0]+'" aria-pressed="'+(filter===f[0])+'">'+f[1]+' '+n+'</button>'; }).join('')+'</div>';
     if(list.length>5) h+='<input class="search" type="search" placeholder="Search client, address or number" value="'+esc(q)+'" data-search>';
     var shown=list.filter(function(d){ return match(d,filter) && (!q || (d.num+' '+d.client.name+' '+d.site+' '+d.suburb).toLowerCase().indexOf(q.toLowerCase())>=0); });
-    h+='<div class="list" id="rows">'+rows(shown)+'</div>';
-    h+='<div class="menu"><button data-go="library">Saved items, scope and prices<span class="chev">›</span></button><button data-go="settings">Business, bank and numbering<span class="chev">›</span></button></div>';
+    var more=shown.length>LIMIT; h+='<div class="list" id="rows">'+rows(shown.slice(0,LIMIT))+'</div>'+(more?'<button class="btn outline" style="width:100%;margin-top:10px" data-act="more">Show '+(shown.length-LIMIT)+' more</button>':'');
+    h+='<div class="menu"><button data-go="library">Saved items, scope and prices<span class="chev">›</span></button><button data-go="settings">Business, bank and numbering<span class="chev">›</span></button><button data-go="import">Import from Jobber<span class="chev">›</span></button></div>';
     h+='<div class="bar"><div class="in"><button class="btn primary grow" data-new="quote">+ New quote</button><button class="btn outline grow" data-new="invoice">+ New invoice</button></div></div>';
     app.innerHTML=h;
   }
@@ -350,6 +352,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   // ---------- Doc view ----------
   function renderDoc(id){
     var d=docById(id); if(!d){ go('list'); return; }
+    if(d.archived) return renderArchived(d);
     if(d.flag){ api('POST','/api/docs',{action:'seen',id:d.id}).catch(function(){}); d.flag=null; }
     var t=d.totals, isQ=d.kind==='quote';
     var h=topbar('#/list')+'<h1>'+title(d)+'</h1><p class="sub"><span class="pill '+d.state+'">'+(LABEL[d.state]||d.state)+'</span> &nbsp;'+esc(d.client.name)+(d.site?' · '+esc(d.site):'')+'</p>';
@@ -500,6 +503,63 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   }
 
   // ---------- Settings ----------
+  // ---------- Jobber history (read-only) ----------
+  function renderArchived(d){
+    var t=d.totals, isQ=d.kind==='quote';
+    var h=topbar('#/list')+'<h1>'+title(d)+'</h1><p class="sub"><span class="pill '+d.state+'">'+(LABEL[d.state]||d.state)+'</span> &nbsp;'+esc(d.client.name)+(d.site?' · '+esc(d.site):'')+'</p>';
+    h+='<div class="hint-card" style="margin-bottom:14px">From Jobber. Kept here for your records, so it can\'t be edited or sent from the hub.</div>';
+    h+='<div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi dark"><b>'+money(t.total)+'</b><span>Total'+(d.gst?' incl. GST':'')+'</span></div><div class="kpi"><b>'+(isQ?fdate(d.issued):money(t.paid))+'</b><span>'+(isQ?'Sent':'Paid')+'</span></div></div>';
+    h+='<div class="card">'+(d.jobberTitle?'<h2>'+esc(d.jobberTitle)+'</h2>':'')+(d.items||[]).map(function(i){ return '<div class="pay"><span>'+esc(i.title)+(i.qty!==1?' × '+i.qty:'')+'</span><span>'+money(i.qty*i.price)+'</span></div>'; }).join('')+'</div>';
+    if(!isQ){ h+='<div class="card"><h2>Payments</h2>'+((d.payments||[]).length?d.payments.map(function(p){ return '<div class="pay"><span>'+fdate(p.date)+' · '+esc(p.method)+'</span><span><b>'+money(p.amt)+'</b></span></div>'; }).join(''):'<p class="sub" style="margin:0">None recorded in Jobber.</p>')+'</div>'; }
+    else if(d.state==='accepted') h+='<p class="hint">Approved in Jobber '+fdate((d.acceptedAt||'').slice(0,10))+'.</p>';
+    var c=d.client; if(c.phone||c.email) h+='<div class="card"><h2>Client</h2><p style="margin:0">'+esc(c.name)+(c.phone?'<br><a href="tel:'+esc(phoneSms(c.phone))+'">'+esc(c.phone)+'</a>':'')+(c.email?'<br><a href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>':'')+(c.address?'<br>'+esc(c.address):'')+'</p></div>';
+    h+='<div class="menu"><button data-act="dup">Duplicate as new '+d.kind+'<span class="chev">›</span></button></div>';
+    app.innerHTML=h;
+  }
+
+  // ---------- Import from Jobber ----------
+  function renderImport(){
+    var h=topbar('#/list')+'<h1>Import from <em>Jobber</em></h1>';
+    if(!IMP||!IMP.res){
+      h+='<div class="card"><p style="margin-top:0">Pick the CSV files you exported from Jobber. You can select them all at once. The ones that matter are <b>Invoices</b>, <b>Quotes</b>, <b>Transaction List</b> and <b>Recurring Jobs</b>.</p><p class="hint">You\'ll see exactly what will come in before anything is saved.</p>';
+      h+='<label class="btn primary" style="width:100%;margin-top:8px;cursor:pointer">'+(IMP&&IMP.busy?'Reading files…':'Choose files')+'<input type="file" id="impFiles" accept=".csv,text/csv" multiple hidden></label>';
+      if(IMP&&IMP.err) h+='<div class="err" style="margin-top:10px">'+esc(IMP.err)+'</div>';
+      h+='</div>';
+      app.innerHTML=h; return;
+    }
+    var r=IMP.res, m=r.summary, rp=r.report;
+    if(IMP.done) h+='<div class="alert ok"><b>Imported.</b> Your Jobber history is in the hub.</div>';
+    h+='<div class="card"><h2>'+(IMP.done?'What came <em>in</em>':'What will come <em>in</em>')+'</h2>';
+    h+='<div class="pay"><span>Unpaid invoices you can chase from here</span><span><b>'+m.openInvoices.length+'</b></span></div>';
+    h+='<div class="pay"><span>Quotes still open (sent in the last 30 days)</span><span><b>'+m.openQuotes.length+'</b></span></div>';
+    h+='<div class="pay"><span>Paid invoices, kept as history</span><span><b>'+m.archived.invoices+'</b></span></div>';
+    h+='<div class="pay"><span>Closed quotes, kept as history</span><span><b>'+m.archived.quotes+'</b></span></div>';
+    h+='<div class="pay"><span>Payments received ('+m.payments+')</span><span><b>'+money(m.paidIn)+'</b></span></div>';
+    h+='<div class="pay"><span>Next invoice number</span><span><b>#'+m.numbering.invoice[1]+'</b>'+(m.numbering.invoice[0]!==m.numbering.invoice[1]?' (was #'+m.numbering.invoice[0]+')':'')+'</span></div>';
+    h+='<div class="pay"><span>Next quote number</span><span><b>#'+m.numbering.quote[1]+'</b>'+(m.numbering.quote[0]!==m.numbering.quote[1]?' (was #'+m.numbering.quote[0]+')':'')+'</span></div></div>';
+    if(m.openInvoices.length) h+='<div class="card"><h2>Owed to you <em>'+money(m.owed)+'</em></h2>'+m.openInvoices.map(function(x){ return '<div class="pay"><span>#'+x.num+' · '+esc(x.client)+'<br><small class="sub">'+esc(x.title||'')+' · due '+fdate(x.dueDate)+'</small></span><span><b>'+money(x.due)+'</b></span></div>'; }).join('')+'</div>';
+    if(m.openQuotes.length) h+='<div class="card"><h2>Open <em>quotes</em></h2>'+m.openQuotes.map(function(x){ return '<div class="pay"><span>#'+x.num+' · '+esc(x.client)+'<br><small class="sub">'+esc(x.title||'')+' · sent '+fdate(x.sent)+'</small></span><span><b>'+money(x.total)+'</b></span></div>'; }).join('')+'</div>';
+    if(m.recurring.length) h+='<div class="card"><h2>Per-visit <em>prices</em></h2><p class="hint" style="margin-top:-6px">From your active Jobber recurring jobs, incl. GST. Only fills clients that have no price in the hub yet. Change any under Prices in Books.</p>'+m.recurring.map(function(x){ return '<div class="pay"><span>'+esc(x.client)+'</span><span><b>'+money(x.price)+'</b></span></div>'; }).join('')+'</div>';
+    var notes=[].concat(rp.clashes,rp.dupes,rp.warnings);
+    if(notes.length) h+='<div class="card"><h2>Worth <em>knowing</em></h2><ul style="margin:0;padding-left:18px">'+notes.map(function(x){return '<li style="margin-bottom:6px">'+esc(x)+'</li>';}).join('')+'</ul></div>';
+    h+='<p class="hint">Left out: '+esc(rp.skipped.concat(rp.files.filter(function(f){return f.kind==='unknown';}).map(function(f){return f.name+' (not a Jobber report I know)';})).join('; ')||'nothing')+'. Jobber payments stay out of the Xero sync, so nothing is counted twice there.</p>';
+    if(!IMP.done) h+='<div class="bar"><div class="in"><button class="btn outline" data-act="imp-reset">Start again</button><button class="btn primary grow" data-act="imp-go">Import</button></div></div>';
+    else h+='<div class="acts"><button class="btn primary wide" data-go="list">See quotes &amp; invoices</button></div>';
+    app.innerHTML=h;
+  }
+  function runImport(commit,btn){
+    if(btn){ btn.disabled=true; btn.textContent='Importing…'; }
+    return api('POST','/api/docs',{action:'jobber-import',files:IMP.files,commit:commit}).then(function(r){
+      IMP.res=r; IMP.err=''; IMP.busy=false; if(commit){ IMP.done=true; return load(); } render();
+    }).catch(function(x){ IMP.busy=false; if(btn){ btn.disabled=false; btn.textContent='Import'; toast(x.message); } else { IMP.res=null; IMP.err=x.message; render(); } });
+  }
+  document.addEventListener('change',function(e){
+    if(e.target.id!=='impFiles') return;
+    var fl=[].slice.call(e.target.files||[]); if(!fl.length) return;
+    IMP={busy:true,files:[]}; render();
+    Promise.all(fl.map(function(f){ return f.text().then(function(t){ return {name:f.name,text:t}; }); })).then(function(files){ IMP.files=files; return runImport(false); }).catch(function(){ IMP={err:'Couldn\'t read those files. Try again.'}; render(); });
+  });
+
   function renderSettings(){
     var st=S.settings, b=st.biz, k=st.bank;
     function f(path,label,val,type,ph){ return '<label class="l">'+label+'<input data-s="'+path+'" '+(type?'type="'+type+'" inputmode="'+(type==='number'?'numeric':'text')+'"':'')+' value="'+esc(val)+'" placeholder="'+esc(ph||'')+'"></label>'; }
@@ -546,6 +606,9 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(!(el=e.target.closest('[data-act]'))) return;
     var a=el.dataset.act, d=docById(route().id);
     if(a==='refresh'){ load().then(function(){ toast('Up to date'); }); return; }
+    if(a==='more'){ LIMIT+=200; render(); return; }
+    if(a==='imp-go'){ runImport(true,el); return; }
+    if(a==='imp-reset'){ IMP=null; render(); return; }
     if(a==='autofill'){ autofill(); return; }
     if(a==='fromlib'){ libSheet(); return; }
     if(a==='additem'){ draft.items.push({title:'',desc:'',qty:1,price:''}); dirty=true; redrawItems(); var all=app.querySelectorAll('.item'); var last=all[all.length-1]; if(last){ last.scrollIntoView({behavior:'smooth',block:'center'}); last.querySelector('input').focus(); } return; }
