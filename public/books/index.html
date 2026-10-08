@@ -194,7 +194,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 import { pnl, bookingsOf, priceOf, perMonth, dueDates } from '/lib/profit.mjs';
 
 var app=document.getElementById('app');
-var D=null, loadErr='', loaded=false;
+var D=null, loadErr='', loaded=false, X=null, xMsg=null;
 var mode=lsGet('books_mode')||'month', off=0;
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
@@ -220,9 +220,16 @@ function api(method,body,qs){
 }
 function load(){
   if(!key()){ loadErr='login'; render(); return Promise.resolve(); }
+  loadX();
   return api('GET').then(function(d){ D=d; loaded=true; loadErr=''; render(); }).catch(function(e){ loadErr=e.status===401?'login':e.message; render(); });
 }
-function route(){ var h=location.hash.replace(/^#\/?/,'').split('/'); return h[0]||'profit'; }
+function xapi(method,body){
+  return fetch('/api/xero',{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
+    .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong. Try again.'); return d; }); });
+}
+function loadX(){ return xapi('GET').then(function(d){ X=d; if(loaded) render(); }).catch(function(e){ X={error:e.message}; if(loaded) render(); }); }
+function route(){ var h=location.hash.replace(/^#\/?/,'').split('?')[0].split('/'); return h[0]||'profit'; }
+(function(){ var m=location.hash.match(/[?&](ok|err)=([^&]*)/); if(m){ xMsg={ok:m[1]==='ok',text:decodeURIComponent(m[2])}; history.replaceState(null,'','#/xero'); } })();
 window.addEventListener('hashchange',function(){ closeSheet(); render(); window.scrollTo(0,0); });
 
 // ---------- periods ----------
@@ -245,12 +252,14 @@ function nudges(p){
   else if(days>=7) h+='<button type="button" class="nudge gold" data-act="addexp"><span><b>Nothing logged for '+days+' days.</b> Products, fuel, parking, a new mop? Add it now while you remember.</span><span class="go">Add ›</span></button>';
   var pend=(D.jobber.pending||[]).filter(function(x){ return x.date>=t; }).length;
   if(pend) h+='<a class="nudge" href="#/prices"><span><b>'+pend+' Jobber job'+(pend===1?'':'s')+' not on the roster.</b></span><span class="go">Review ›</span></a>';
+  if(X&&X.connected&&X.last&&X.last.errors&&X.last.errors.length) h+='<a class="nudge" href="#/xero"><span><b>Xero sync needs a look.</b> '+X.last.errors.length+' item'+(X.last.errors.length===1?'':'s')+' didn\'t go across.</span><span class="go">See ›</span></a>';
+  else if(X&&X.configured&&(!X.connected||!X.bank)) h+='<a class="nudge gold" href="#/xero"><span><b>'+(X.connected?'Pick your bank account in Xero settings':'Connect Xero')+'</b> so payments and expenses flow into your BAS.</span><span class="go">Set up ›</span></a>';
   if(!D.jobber.on) h+='<a class="nudge gold" href="#/prices"><span><b>Connect Jobber</b> to bring your recurring cleans onto the roster.</span><span class="go">Connect ›</span></a>';
   return h;
 }
 
 function topbar(){ return '<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
-function tabs(r){ function b(v,l){ return '<button type="button" data-go="'+v+'" aria-pressed="'+(r===v)+'">'+l+'</button>'; } return '<div class="seg">'+b('profit','Profit')+b('spend','Spending')+b('prices','Prices &amp; Jobber')+'</div>'; }
+function tabs(r){ function b(v,l){ return '<button type="button" data-go="'+v+'" aria-pressed="'+(r===v)+'">'+l+'</button>'; } return '<div class="seg">'+b('profit','Profit')+b('spend','Spending')+b('prices','Prices &amp; apps')+'</div>'; }
 function bottom(){ return '<div class="bar"><div class="in"><div class="sum">Paid for something?<b>Log it now</b></div><button type="button" class="btn primary" data-act="addexp">+ Expense</button></div></div>'; }
 function periodNav(p){ return '<div class="chips" style="margin-top:14px">'+['month','quarter','year'].map(function(m){ return '<button type="button" class="chip" data-mode="'+m+'" aria-pressed="'+(mode===m)+'">'+(m==='month'?'Month':m==='quarter'?'BAS quarter':'Financial year')+'</button>'; }).join('')+'</div><div class="navp"><button class="icon-btn" data-off="-1" aria-label="Previous">&larr;</button><div class="lbl">'+esc(p.label)+(p.sub?'<small>'+p.sub+'</small>':'')+'</div>'+(off?'<button class="icon-btn" data-off="0">Now</button>':'')+'<button class="icon-btn" data-off="1" aria-label="Next">&rarr;</button></div>'; }
 
@@ -260,13 +269,14 @@ function render(){
   if(!loaded){ app.innerHTML='<div class="center">Loading…</div>'; return; }
   var r=route();
   if(r==='add'){ history.replaceState(null,'','#/'); expenseSheet(null); r='profit'; }
-  if(r==='jobber') r='prices';
-  var h=topbar()+'<h1>'+(r==='profit'?'Profit':r==='spend'?'Spending':'Prices <em>&amp;</em> Jobber')+'</h1>'+tabs(r);
+  var jump=r==='jobber'?'jobberCard':r==='xero'?'xeroCard':'';
+  if(jump) r='prices';
+  var h=topbar()+'<h1>'+(r==='profit'?'Profit':r==='spend'?'Spending':'Prices <em>&amp;</em> apps')+'</h1>'+tabs(r);
   h+= r==='spend'?renderSpend(): r==='prices'?renderPrices(): renderProfit();
   var keep={}; Array.prototype.forEach.call(app.querySelectorAll('#pf input[data-dirty],#rf input[data-dirty]'),function(i){ keep[i.form.id+'|'+i.name]=i.value; });
   app.innerHTML=h+bottom();
   Object.keys(keep).forEach(function(k){ var x=k.split('|'), f=document.getElementById(x[0]), i=f&&f.elements[x[1]]; if(i&&i.value!==keep[k]){ i.value=keep[k]; i.dataset.dirty=1; } });
-  if(route()==='jobber'){ var jb=document.getElementById('jobberCard'); if(jb) jb.scrollIntoView(); }
+  if(jump){ var jb=document.getElementById(jump); if(jb) jb.scrollIntoView(); }
 }
 
 // ---------- Profit ----------
@@ -361,7 +371,7 @@ function renderPrices(){
     h+='<div class="card"><div class="hrow"><h2>Recurring <em>clients</em></h2><span class="sub" style="margin:0">'+(miss?miss+' to price':'all priced')+'</span></div><p class="sub" style="margin-top:-6px">Price per visit. Applies to every visit, past and future.</p><form id="rf">';
     sl.forEach(function(s){ var v=D.books.recur[s.key]; h+='<div class="prow2"><span><b>'+esc(s.client)+'</b><small>'+esc(s.title||'Regular clean')+(s.suburb?' · '+esc(s.suburb):'')+' · '+s.n+' visit'+(s.n===1?'':'s')+(s.next?' · next '+fday(s.next,true):'')+'</small></span><span class="money-in"><input name="'+esc(s.key)+'" type="number" inputmode="decimal" step="0.01" min="0" value="'+(v!=null?v:'')+'" placeholder="per visit"></span></div>'; });
     h+='<div class="actions" style="display:flex;margin-top:12px"><button type="submit" class="btn primary grow">Save visit prices</button></div></form></div>'; }
-  h+=jobberCard();
+  h=xeroCard()+h+jobberCard();
   return h;
 }
 function jobberCard(){
@@ -387,6 +397,45 @@ function jobberCard(){
   return h+'</div>';
 }
 function ago(s){ var m=Math.round((Date.now()-Date.parse(s))/60000); if(m<1) return 'just now'; if(m<60) return m+' min ago'; if(m<1440) return Math.round(m/60)+' hrs ago'; return Math.round(m/1440)+' days ago'; }
+
+// ---------- Xero ----------
+function xeroCard(){
+  var h='<div class="card" id="xeroCard"><h2>Xero <em>for BAS</em></h2>';
+  if(xMsg) h+='<div class="hint-card" style="margin-top:0;margin-bottom:12px;'+(xMsg.ok?'':'border-left:4px solid var(--terracotta)')+'">'+esc(xMsg.text)+'</div>';
+  if(!X) return h+'<p class="sub">Checking Xero…</p></div>';
+  if(X.error) return h+'<p class="err">'+esc(X.error)+'</p><button type="button" class="ghost" data-act="xreload">Try again</button></div>';
+  if(!X.configured){
+    h+='<p class="sub" style="margin-top:-6px">Sends every payment you receive and every expense you log to Xero, with GST split out, ready for BAS. One-time setup, about 10 minutes on a laptop.</p>';
+    h+='<ol style="font-size:14px;color:var(--dark);padding-left:20px;margin:12px 0;line-height:1.6"><li>Go to <b>developer.xero.com</b>, log in with your Xero login, open <b>My Apps → New app</b>.</li><li>Name it <b>Bardon Clean Hub</b>, choose <b>Web app</b>, company URL <b>https://bardonclean.au</b>.</li><li>Redirect URI: <b>'+esc(X.redirect)+'</b> <button type="button" class="ghost" data-act="xcopy" style="padding:0">Copy</button></li><li>Copy the <b>Client id</b>, then <b>Generate a secret</b> and copy it.</li><li>In Netlify, open the bardon-roster site → <b>Site configuration → Environment variables</b>. Add <b>XERO_CLIENT_ID</b> and <b>XERO_CLIENT_SECRET</b>.</li><li>In Netlify, <b>Deploys → Trigger deploy</b>. Then come back here.</li></ol>';
+    return h+'</div>';
+  }
+  if(!X.connected){
+    if(X.broken) h+='<p class="err" style="margin-top:-4px">'+esc(X.broken)+'</p>';
+    h+='<p class="sub" style="margin-top:-6px">Sends every payment you receive and every expense you log to Xero, with GST split out, ready for BAS. Nothing goes across as an invoice or bill, so Ignite\'s 20-invoice and 5-bill limits don\'t bite.</p>';
+    return h+'<div class="actions" style="display:flex;margin-top:12px"><button type="button" class="btn primary grow" data-act="xconnect">'+(X.broken||X.org?'Reconnect Xero':'Connect Xero')+'</button></div></div>';
+  }
+  var banks=X.accounts.filter(function(a){return a.type==='BANK';}), inc=X.accounts.filter(function(a){return a.code&&['REVENUE','SALES','OTHERINCOME'].indexOf(a.type)>=0;}), exps=X.accounts.filter(function(a){return a.code&&['EXPENSE','DIRECTCOSTS','OVERHEADS'].indexOf(a.type)>=0;});
+  function opts(list,v,byCode,blank){ return (blank?'<option value="">'+blank+'</option>':'')+list.map(function(a){ var k=byCode?a.code:a.id; return '<option value="'+esc(k)+'"'+(k===v?' selected':'')+'>'+esc((a.code?a.code+' · ':'')+a.name)+'</option>'; }).join(''); }
+  h+='<p class="sub" style="margin-top:-6px">Connected to <b>'+esc(X.org)+'</b>. Payments go in as Receive Money, expenses as Spend Money with the receipt attached. Match them to your bank feed in Xero\'s reconcile screen.</p>';
+  var L=X.last;
+  if(!X.bank) h+='<p class="err">Pick the bank account your clients pay into, then save. Nothing is sent until you do.</p>';
+  else {
+    h+='<div class="pnl" style="margin-top:10px"><div><span>Waiting to send</span><span>'+(X.waiting||0)+'</span></div>'+(X.counts?'<div><span>In Xero from '+fday(X.from)+'</span><span>'+X.counts.pay+' payments · '+X.counts.exp+' expenses</span></div>':'')+'<div><span>Last sync</span><span>'+(L?ago(L.at):'not yet')+'</span></div></div>';
+    if(L&&L.errors&&L.errors.length) h+='<div class="hint-card" style="border-left:4px solid var(--terracotta)"><b>Didn\'t go across</b><ul style="margin:6px 0 0;padding-left:18px">'+L.errors.map(function(e){return '<li>'+esc(e)+'</li>';}).join('')+'</ul></div>';
+    h+='<div class="actions" style="display:flex;gap:8px;margin-top:12px"><button type="button" class="btn dark grow" data-act="xsync">Sync now</button></div><p class="hint">Also syncs every 15 minutes on its own.</p>';
+  }
+  h+='<form id="xf" style="margin-top:14px"><div class="grid">';
+  h+='<label class="l full">Clients pay into<select name="bank">'+opts(banks,X.bank,false,'Choose a bank account')+'</select></label>';
+  h+='<label class="l full">Card payments land in <small>(Stripe pays out in batches, minus fees. A Stripe clearing account in Xero keeps it tidy.)</small><select name="cardBank">'+opts(banks,X.cardBank,false,'Same account as above')+'</select></label>';
+  h+='<label class="l">Income account<select name="sales">'+opts(inc,X.sales,true)+'</select></label>';
+  h+='<label class="l">Send from <small>(earlier stays out)</small><input name="from" type="date" value="'+esc(X.from)+'"></label>';
+  h+='</div><details style="margin-top:12px"><summary style="cursor:pointer;font:600 14px var(--sans);color:var(--dark)">Expense categories → Xero accounts</summary><p class="sub">Matched to Xero\'s standard accounts. Change any your accountant prefers.</p><div class="grid">';
+  X.cats.forEach(function(c){ h+='<label class="l">'+esc(c)+'<select name="code" data-cat="'+esc(c)+'">'+opts(exps,X.codes[c]||'',true)+'</select></label>'; });
+  h+='</div><button type="button" class="ghost" data-act="xaccts">Reload accounts from Xero</button></details>';
+  h+='<div class="err" id="xErr" hidden></div><div class="actions" style="display:flex;gap:8px;margin-top:12px"><button type="submit" class="btn primary grow">Save Xero settings</button><button type="button" class="btn plain" data-act="xoff">Disconnect</button></div></form>';
+  h+='<p class="hint">Set GST to the <b>cash basis</b> in Xero (Settings → Financial settings) so BAS counts money when it actually comes in. Wages and super stay in your payroll. Fixed outgoings come in through the bank feed.</p>';
+  return h+'</div>';
+}
 
 // ---------- sheets ----------
 function sheet(inner){ closeSheet(); var s=document.createElement('div'); s.className='scrim'; s.id='scrim'; s.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+inner+'</div>'; s.addEventListener('click',function(e){ if(e.target===s||e.target.closest('[data-close]')) closeSheet(); }); document.body.appendChild(s); return s; }
@@ -487,15 +536,25 @@ app.addEventListener('click',function(e){
   else if(act==='addexp') expenseSheet(null);
   else if(act==='sync'){ a.disabled=true; a.textContent='Syncing…'; api('POST',{action:'jobberSync'}).then(function(r){ toast(syncMsg(r)); return load(); }).catch(function(x){ a.disabled=false; a.textContent='Sync now'; toast(x.message); }); }
   else if(act==='unlink'){ if(!a.dataset.sure){ a.dataset.sure=1; a.textContent='Tap again'; return; } api('POST',{action:'jobberUrl',url:''}).then(load).then(function(){ toast('Jobber disconnected. Jobs already added stay.'); }); }
+  else if(act==='xreload'){ X=null; render(); loadX(); }
+  else if(act==='xcopy'){ try{ navigator.clipboard.writeText(X.redirect).then(function(){ toast('Copied'); }); }catch(x){ toast(X.redirect); } }
+  else if(act==='xconnect'){ a.disabled=true; a.textContent='Opening Xero…'; xapi('POST',{action:'connect'}).then(function(r){ location.href=r.url; }).catch(function(x){ a.disabled=false; a.textContent='Connect Xero'; toast(x.message); }); }
+  else if(act==='xsync'){ a.disabled=true; a.textContent='Syncing…'; xapi('POST',{action:'sync'}).then(function(r){ xMsg=null; toast(r.skipped||xSyncMsg(r)); return loadX(); }).catch(function(x){ a.disabled=false; a.textContent='Sync now'; toast(x.message); }); }
+  else if(act==='xaccts'){ a.textContent='Reloading…'; xapi('POST',{action:'accounts'}).then(loadX).then(function(){ toast('Accounts reloaded'); }).catch(function(x){ toast(x.message); }); }
+  else if(act==='xoff'){ if(!a.dataset.sure){ a.dataset.sure=1; a.textContent='Tap again'; return; } xapi('POST',{action:'disconnect'}).then(loadX).then(function(){ toast('Xero disconnected. What\'s already in Xero stays.'); }); }
   else if(act==='tickpast'){ a.closest('details').querySelectorAll('input[type=checkbox]').forEach(function(c){ c.checked=true; }); }
   else if(act==='ignore'){ var ids=ticked(); if(!ids.length){ toast('Tick some jobs first'); return; } a.disabled=true; api('POST',{action:'jobberSync',ignore:ids}).then(function(){ toast('Ignored '+ids.length); return load(); }).catch(function(x){ a.disabled=false; toast(x.message); }); }
 });
 function ticked(){ return Array.prototype.map.call(document.querySelectorAll('#pendf input:checked'),function(c){return c.value;}); }
+function xSyncMsg(r){ var p=[]; if(r.added) p.push(r.added+' sent'); if(r.updated) p.push(r.updated+' updated'); if(r.deleted) p.push(r.deleted+' removed'); var m=p.length?'Xero: '+p.join(', '):'Xero is up to date'; if(r.errors&&r.errors.length) m+=' · '+r.errors.length+' problem'+(r.errors.length===1?'':'s'); if(r.left) m+=' · '+r.left+' more next sync'; return m; }
 function syncMsg(r){ var p=[]; if(r.added) p.push(r.added+' added'); if(r.updated) p.push(r.updated+' moved'); if(r.removed) p.push(r.removed+' cancelled'); if(r.linked) p.push(r.linked+' matched'); return p.length?'Synced: '+p.join(', '):'Synced. Roster already up to date.'; }
 app.addEventListener('submit',function(e){
   var f=e.target, btn=f.querySelector('[type=submit]');
   if(f.id==='pf'||f.id==='rf'){ e.preventDefault(); var m={}; Array.prototype.forEach.call(f.querySelectorAll('input'),function(i){ if(f.id==='rf'||i.value!=='') m[i.name]=i.value; }); if(!Object.keys(m).length){ toast('Enter at least one price'); return; } btn.disabled=true; btn.textContent='Saving…';
     priceQ=priceQ.then(function(){ return api('POST',f.id==='pf'?{action:'prices',prices:m}:{action:'prices',recur:m}); }); priceQ.then(function(){ Array.prototype.forEach.call(f.querySelectorAll('input'),function(i){ delete i.dataset.dirty; }); }).then(load).then(function(){ toast('Prices saved'); }).catch(function(x){ btn.disabled=false; btn.textContent='Save'; toast(x.message); }); return; }
+  if(f.id==='xf'){ e.preventDefault(); var xe=f.querySelector('#xErr'), codes={}; Array.prototype.forEach.call(f.querySelectorAll('[data-cat]'),function(i){ codes[i.dataset.cat]=i.value; });
+    btn.disabled=true; btn.textContent='Saving…';
+    xapi('POST',{action:'settings',bank:f.elements.bank.value,cardBank:f.elements.cardBank.value,sales:f.elements.sales.value,from:f.elements.from.value,codes:codes}).then(loadX).then(function(){ xMsg=null; toast('Xero settings saved'); }).catch(function(x){ btn.disabled=false; btn.textContent='Save Xero settings'; xe.textContent=x.message; xe.hidden=false; }); return; }
   if(f.id==='jf'){ e.preventDefault(); var err=f.querySelector('#jErr'); btn.disabled=true; btn.textContent='Connecting…';
     api('POST',{action:'jobberUrl',url:f.elements.url.value}).then(function(r){ toast(syncMsg(r)); return load(); }).catch(function(x){ btn.disabled=false; btn.textContent='Connect and sync'; err.textContent=x.message; err.hidden=false; }); return; }
   if(f.id==='pendf'){ e.preventDefault(); var ids=ticked(); if(!ids.length){ toast('Tick the jobs to add'); return; } btn.disabled=true; btn.textContent='Adding…';
