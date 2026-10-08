@@ -134,9 +134,9 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 <script>
 (function(){
   var app=document.getElementById('app');
-  var S={docs:[],settings:null,card:false,jobs:[]}, loaded=false, loadErr='';
+  var S={docs:[],settings:null,card:false,jobs:[],reqs:[]}, loaded=false, loadErr='';
   var tab=lsGet('money_tab')||'quote', filter='all', q='', draft=null, dirty=false;
-  var LIMIT=40, IMP=null;
+  var LIMIT=40, IMP=null, PREFILL=null;
   var SERVICES=['Pre-sale clean','Bond clean','Deep clean','Regular clean','Commercial','Other'];
   var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -170,7 +170,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 
   function load(){
     if(!key()){ loadErr='login'; render(); return Promise.resolve(); }
-    return Promise.all([api('GET','/api/docs'), api('GET','/api/roster').catch(function(){return {jobs:[]};})]).then(function(r){
+    return Promise.all([api('GET','/api/docs'), api('GET','/api/roster').catch(function(){return {jobs:[]};}), api('GET','/api/request').catch(function(){return {requests:[]};})]).then(function(r){ S.reqs=r[2].requests||[];
       BCSms.check(key()); S.docs=r[0].docs; S.settings=r[0].settings; S.card=r[0].card; S.jobs=(r[1].jobs||[]).filter(function(j){return !j.sample;});
       loaded=true; loadErr=''; render();
     }).catch(function(e){ loadErr=e.status===401?'login':e.message; render(); });
@@ -198,6 +198,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(r.v==='library') return renderLibrary();
     if(r.v==='settings') return renderSettings();
     if(r.v==='import') return renderImport();
+    if(r.v==='req') return renderReq(r.id);
     renderList();
   }
 
@@ -217,7 +218,10 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     });
     inv.filter(function(d){return d.state==='overdue';}).slice(0,3).forEach(function(d){ h+='<button class="alert" data-open="'+d.id+'"><b>'+title(d)+' is overdue</b>: '+money(d.totals.due)+' from '+esc(d.client.name)+', due '+fdate(d.dueDate)+'. Tap to send a reminder.</button>'; });
 
-    h+='<div class="seg" role="group"><button data-tab="quote" aria-pressed="'+(tab==='quote')+'">Quotes ('+quo.length+')</button><button data-tab="invoice" aria-pressed="'+(tab==='invoice')+'">Invoices ('+inv.length+')</button></div>';
+    var newReqs=S.reqs.filter(function(x){return x.status==='new';});
+    if(newReqs.length&&tab!=='request') h+='<button class="alert gold" data-tab="request"><b>'+newReqs.length+' new quote request'+(newReqs.length===1?'':'s')+'</b> from your form. Tap to see '+(newReqs.length===1?'it':'them')+'.</button>';
+    h+='<div class="seg" role="group"><button data-tab="request" aria-pressed="'+(tab==='request')+'">Requests'+(newReqs.length?' ('+newReqs.length+' new)':'')+'</button><button data-tab="quote" aria-pressed="'+(tab==='quote')+'">Quotes</button><button data-tab="invoice" aria-pressed="'+(tab==='invoice')+'">Invoices</button></div>';
+    if(tab==='request'){ app.innerHTML=h+requestsHtml(); return; }
     var list=tab==='quote'?quo:inv;
     var FIL=tab==='quote'?[['all','All'],['open','Awaiting'],['accepted','Accepted'],['draft','Drafts'],['closed','Expired / declined']]:[['all','All'],['unpaid','Unpaid'],['overdue','Overdue'],['paid','Paid'],['draft','Drafts']];
     if(!FIL.some(function(f){return f[0]===filter;})) filter='all';
@@ -245,7 +249,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   }
   function renderEdit(id){
     if(!draft){
-      if(id==='new-quote'||id==='new-invoice') draft=blank(id.slice(4));
+      if(id==='new-quote'||id==='new-invoice'){ draft=blank(id.slice(4)); if(PREFILL&&id==='new-quote'){ for(var pk in PREFILL) draft[pk]=PREFILL[pk]; PREFILL=null; dirty=true; } }
       else { var d=docById(id); if(!d){ go('list'); return; } draft=JSON.parse(JSON.stringify(d)); }
     }
     var d=draft, isQ=d.kind==='quote', existing=!!d.id;
@@ -332,7 +336,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     btn.disabled=true; btn.textContent='Saving…';
     var body={kind:d.kind,client:d.client,site:d.site,suburb:d.suburb,service:d.service,beds:d.beds,baths:d.baths,issued:d.issued,validUntil:d.validUntil,dueDate:d.dueDate,serviceDate:d.serviceDate,
       items:d.items.map(function(i){return {title:i.title,desc:i.desc,qty:+i.qty||1,price:+i.price||0};}),gst:d.gst,depositPct:+d.depositPct||0,notes:d.notes,showTerms:d.showTerms,jobId:d.jobId||''};
-    api('POST','/api/docs',{action:'save',id:d.id||'',doc:body}).then(function(r){ dirty=false; draft=null; return load().then(function(){ go('doc/'+r.id); toast('Saved'); }); })
+    api('POST','/api/docs',{action:'save',id:d.id||'',doc:body}).then(function(r){ dirty=false; draft=null; return (d.reqId?api('POST','/api/request',{action:'status',id:d.reqId,status:'quoted',quoteId:r.id}).catch(function(){}):Promise.resolve()).then(load).then(function(){ go('doc/'+r.id); toast('Saved'); }); })
       .catch(function(e){ btn.disabled=false; btn.textContent='Save'; toast(e.message); });
   }
 
@@ -503,6 +507,46 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   }
 
   // ---------- Settings ----------
+  // ---------- Quote requests (from /quote) ----------
+  var RQF='new';
+  function ago(iso){ var m=Math.round((Date.now()-Date.parse(iso))/60000); if(m<60) return m<1?'just now':m+' min ago'; var h=Math.round(m/60); if(h<24) return h+' hr ago'; return fdate(iso.slice(0,10)); }
+  function reqTitle(x){ return x.serviceLabel+(x.suburb?' · '+x.suburb:''); }
+  function requestsHtml(){
+    var formUrl=location.origin+'/quote';
+    var FIL=[['new','New'],['quoted','Quoted'],['archived','Archived'],['all','All']];
+    var h='<div class="chips">'+FIL.map(function(f){ var n=S.reqs.filter(function(x){return f[0]==='all'||x.status===f[0];}).length; return '<button class="chip" data-rqf="'+f[0]+'" aria-pressed="'+(RQF===f[0])+'">'+f[1]+' '+n+'</button>'; }).join('')+'</div>';
+    var list=S.reqs.filter(function(x){return RQF==='all'||x.status===RQF;});
+    h+='<div class="list">'+(list.length?list.map(function(x){
+      var size=[x.beds!=null?x.beds+' bed':'',x.baths!=null?x.baths+' bath':''].filter(Boolean).join(' ');
+      return '<button class="row" data-req="'+x.id+'"><span class="c">'+esc(x.name)+'</span><span class="a" style="font-weight:500;font-size:13px;color:var(--meta)">'+ago(x.at)+'</span><span class="m">'+esc(reqTitle(x))+(size?' · '+size:'')+'<br>'+(x.date?'For '+fdate(x.date):'No date yet')+(x.photos&&x.photos.length?' · '+x.photos.length+' photo'+(x.photos.length>1?'s':''):'')+'</span><span style="text-align:right">'+(x.status==='new'?'<span class="pill viewed">'+(x.seen?'New':'Unread')+'</span>':x.status==='quoted'?'<span class="pill accepted">Quoted</span>':'<span class="pill expired">Archived</span>')+'</span></button>'; }).join(''):'<div class="empty">'+(RQF==='new'?'No new requests.':'Nothing here.')+'</div>')+'</div>';
+    h+='<div class="card" style="margin-top:18px"><h2>Your request <em>form</em></h2><p class="sub" style="margin:0 0 10px">Link to this from your website, Google profile, Instagram and email signature. Every request lands here and pings your phone.</p><p style="margin:0 0 12px;word-break:break-all"><a href="'+formUrl+'" target="_blank" rel="noopener">'+esc(formUrl.replace(/^https?:\/\//,''))+'</a></p><div class="acts"><button class="btn dark" data-act="copyform">Copy link</button><a class="btn plain" href="'+formUrl+'" target="_blank" rel="noopener">Open it</a></div></div>';
+    h+='<div class="menu"><button data-go="settings">Business, bank and numbering<span class="chev">›</span></button><button data-go="import">Import from Jobber<span class="chev">›</span></button></div>';
+    return h;
+  }
+  function reqById(id){ for(var i=0;i<S.reqs.length;i++) if(S.reqs[i].id===id) return S.reqs[i]; return null; }
+  function reqText(x){ return 'Hi '+first(x.name)+', it\'s Jack from Bardon Clean about your '+x.serviceLabel.toLowerCase()+' request'+(x.suburb?' in '+x.suburb:'')+'. '; }
+  function renderReq(id){
+    var x=reqById(id); if(!x){ go('list'); return; }
+    if(!x.seen){ x.seen=true; api('POST','/api/request',{action:'seen',id:x.id}).catch(function(){}); }
+    var h=topbar('#/list')+'<h1>'+esc(x.name)+'</h1><p class="sub">'+(x.status==='new'?'<span class="pill viewed">New</span>':x.status==='quoted'?'<span class="pill accepted">Quoted</span>':'<span class="pill expired">Archived</span>')+' &nbsp;'+esc(reqTitle(x))+' · '+ago(x.at)+'</p>';
+    var q=x.quoteId?docById(x.quoteId):null;
+    h+='<div class="acts">'+(q?'<button class="btn primary wide" data-open="'+q.id+'">Open quote #'+q.num+'</button>':'<button class="btn primary wide" data-act="req-quote">Create quote</button>')+
+      '<a class="btn dark" href="tel:'+esc(phoneSms(x.phone))+'">Call</a><a class="btn outline" href="#" data-act="req-text">Text</a>'+(x.email?'<a class="btn plain" href="mailto:'+esc(x.email)+'?subject='+encodeURIComponent('Your Bardon Clean quote request')+'">Email</a>':'')+'</div>';
+    h+='<div class="card"><h2>The <em>request</em></h2>'+x.lines.map(function(l){ return '<div class="pay" style="align-items:flex-start;gap:14px"><span style="color:var(--meta);flex:none;width:110px">'+esc(l[0])+'</span><span style="text-align:right;color:var(--dark);white-space:pre-wrap">'+esc(l[1])+'</span></div>'; }).join('')+'</div>';
+    if(x.photos&&x.photos.length) h+='<div class="card"><h2>Photos</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'+x.photos.map(function(p){ var u='/api/request?photo='+p; return '<a href="'+u+'" target="_blank" rel="noopener" style="display:block;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--cream-dark)"><img src="'+u+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block"></a>'; }).join('')+'</div></div>';
+    h+='<div class="card"><h2>Contact</h2><p style="margin:0">'+esc(x.name)+'<br><a href="tel:'+esc(phoneSms(x.phone))+'">'+esc(x.phone)+'</a>'+(x.email?'<br><a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a>':'')+'</p><p class="hint" style="margin:8px 0 0">Prefers '+esc(x.contact==='call'?'a call':x.contact==='email'?'email':'a text')+'.'+(x.texted?' They got an automatic text confirming the request.':'')+(x.src?' Came from '+esc(x.src)+'.':'')+'</p></div>';
+    h+='<div class="menu">'+(x.status!=='archived'?'<button data-act="req-archive">Archive<span class="chev">›</span></button>':'<button data-act="req-new">Move back to new<span class="chev">›</span></button>')+(x.status==='quoted'?'<button data-act="req-new">Mark not quoted<span class="chev">›</span></button>':'')+'<button data-act="req-delete">Delete request<span class="chev">›</span></button></div>';
+    app.innerHTML=h;
+  }
+  function reqStatus(x,st,extra){ var b={action:'status',id:x.id,status:st}; for(var k in extra||{}) b[k]=extra[k]; return api('POST','/api/request',b).then(load); }
+  function quoteFromReq(x){
+    var agent=x.who==='agent'&&x.agency;
+    PREFILL={reqId:x.id, client:{name:agent?x.agency:x.name, contact:agent?x.name:'', email:x.email||'', phone:x.phone||'', address:''},
+      site:x.address||'', suburb:x.suburb||'', service:x.hubService||'Other', beds:x.beds!=null?String(x.beds):'', baths:x.baths!=null?String(x.baths):'',
+      serviceDate:x.date&&x.date>=today()?x.date:''};
+    go('edit/new-quote');
+  }
+
   // ---------- Jobber history (read-only) ----------
   function renderArchived(d){
     var t=d.totals, isQ=d.kind==='quote';
@@ -592,6 +636,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if((el=e.target.closest('[data-open]'))){ go('doc/'+el.dataset.open); return; }
     if((el=e.target.closest('[data-go]'))){ go(el.dataset.go); return; }
     if((el=e.target.closest('[data-new]'))){ draft=null; go('edit/new-'+el.dataset.new); return; }
+    if((el=e.target.closest('[data-req]'))){ go('req/'+el.dataset.req); return; }
+    if((el=e.target.closest('[data-rqf]'))){ RQF=el.dataset.rqf; renderList(); return; }
     if((el=e.target.closest('[data-tab]'))){ tab=el.dataset.tab; lsSet('money_tab',tab); filter='all'; q=''; renderList(); return; }
     if((el=e.target.closest('[data-filter]'))){ filter=el.dataset.filter; renderList(); return; }
     if((el=e.target.closest('[data-libedit]'))){ libEdit(el.dataset.libedit); return; }
@@ -607,6 +653,13 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var a=el.dataset.act, d=docById(route().id);
     if(a==='refresh'){ load().then(function(){ toast('Up to date'); }); return; }
     if(a==='more'){ LIMIT+=200; render(); return; }
+    if(a==='copyform'){ var fu=location.origin+'/quote'; (navigator.clipboard?navigator.clipboard.writeText(fu):Promise.reject()).then(function(){ toast('Link copied'); },function(){ prompt('Copy this link',fu); }); return; }
+    var rq=route().v==='req'?reqById(route().id):null;
+    if(rq&&a==='req-quote'){ quoteFromReq(rq); return; }
+    if(rq&&a==='req-text'){ e.preventDefault(); var msg=reqText(rq); if(BCSms.ready){ msg=prompt('Text to '+rq.phone+' from '+BCSms.from,msg); if(!msg) return; } if(!BCSms.go(el,rq.phone,msg,key(),{ref:'req:'+rq.id,toast:toast})) location.href=el.href; return; }
+    if(rq&&a==='req-archive'){ reqStatus(rq,'archived').then(function(){ toast('Archived'); go('list'); }); return; }
+    if(rq&&a==='req-new'){ reqStatus(rq,'new').then(function(){ toast('Moved to new'); render(); }); return; }
+    if(rq&&a==='req-delete'){ if(!el.dataset.sure){ el.dataset.sure=1; el.firstChild.nodeValue='Tap again to delete'; return; } api('POST','/api/request',{action:'delete',id:rq.id}).then(load).then(function(){ toast('Deleted'); go('list'); }); return; }
     if(a==='imp-go'){ runImport(true,el); return; }
     if(a==='imp-reset'){ IMP=null; render(); return; }
     if(a==='autofill'){ autofill(); return; }

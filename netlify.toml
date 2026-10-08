@@ -37,3 +37,9 @@
   from = "/i/*"
   to = "/d/index.html"
   status = 200
+
+# Public quote request form
+[[redirects]]
+  from = "/quote"
+  to = "/request/index.html"
+  status = 200

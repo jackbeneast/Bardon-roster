@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Request a quote · Bardon Clean</title>
+<meta name="description" content="Request a quote for a pre-sale, bond, deep or regular clean in Brisbane. Quoted personally by Jack, the owner of Bardon Clean.">
+<meta name="theme-color" content="#F5F0EB">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="/icons/favicon.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--terracotta:#C06B3C;--terracotta-dark:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cream-dark:#EDE6DE;--body:#4A4A4A;--meta:#7A7A7A;--gold:#F4B942;--white:#fff;--line:#E2D9CE;
+  --serif:'Playfair Display',Georgia,serif;--sans:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;--r:14px}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--cream);color:var(--body);font:400 16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--terracotta)}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:640px;margin:0 auto;padding:0 18px calc(120px + env(safe-area-inset-bottom))}
+header.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--dark)}
+.brand svg{width:34px;height:34px;flex:none}
+.brand b{font:700 19px/1 var(--serif);letter-spacing:.2px}
+.top .call{font:500 14px var(--sans);color:var(--dark);text-decoration:none;border-bottom:1px solid var(--line)}
+.prog{height:3px;background:var(--cream-dark);border-radius:3px;margin:14px 0 0;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--terracotta);width:0;transition:width .35s ease}
+.stepno{font:500 13px var(--sans);color:var(--meta);margin:10px 0 0;display:flex;justify-content:space-between;align-items:center}
+.stepno button{background:none;border:0;padding:6px 0;color:var(--dark);font-weight:500;cursor:pointer}
+h1{font:700 32px/1.15 var(--serif);color:var(--dark);margin:22px 0 8px;letter-spacing:-.2px}
+h1 em,h2 em{font-style:italic;font-weight:500;color:var(--terracotta)}
+h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
+.lead{margin:0 0 22px;color:var(--body)}
+.q{margin:0 0 26px;border:0;padding:0;min-width:0}
+.q>legend,.lbl{font:500 15px/1.4 var(--sans);color:var(--dark);margin:0 0 10px;padding:0;display:block}
+.lbl small,legend small{font-weight:400;color:var(--meta)}
+.hint{font-size:14px;color:var(--meta);margin:-4px 0 12px}
+/* service cards */
+.cards{display:grid;gap:10px}
+.card{position:relative;display:block;background:var(--white);border:1.5px solid var(--line);border-radius:var(--r);padding:16px 48px 16px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.card input{position:absolute;opacity:0;pointer-events:none}
+.card b{display:block;font:700 18px/1.3 var(--serif);color:var(--dark)}
+.card span{display:block;font-size:14.5px;color:var(--body);margin-top:3px;line-height:1.45}
+.card::after{content:"";position:absolute;right:16px;top:50%;width:20px;height:20px;margin-top:-10px;border-radius:50%;border:1.5px solid var(--line);background:var(--white)}
+.card:has(input:checked){border-color:var(--terracotta);box-shadow:0 0 0 3px rgba(192,107,60,.12)}
+.card:has(input:checked)::after{border:6px solid var(--terracotta)}
+.card:has(input:focus-visible){outline:2px solid var(--dark);outline-offset:2px}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;display:inline-flex;align-items:center;min-height:44px;padding:9px 16px;background:var(--white);border:1.5px solid var(--line);border-radius:999px;cursor:pointer;font:500 15px var(--sans);color:var(--dark);transition:all .15s;user-select:none}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip:has(input:checked){background:var(--dark);border-color:var(--dark);color:var(--cream)}
+.chip:has(input:focus-visible){outline:2px solid var(--terracotta);outline-offset:2px}
+.chips.wide .chip{flex:1 1 calc(50% - 8px);justify-content:center;text-align:center}
+/* inputs */
+.field{display:block;margin:0 0 16px}
+.field input,.field select,.field textarea{display:block;width:100%;margin-top:6px;padding:13px 14px;background:var(--white);border:1.5px solid var(--line);border-radius:12px;font-size:16px;color:var(--dark);outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+.field textarea{min-height:110px;resize:vertical;line-height:1.5}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--terracotta)}
+.field.bad input{border-color:#B23A2A}
+.row2{display:grid;grid-template-columns:1fr 110px;gap:12px}
+/* steppers */
+.steppers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stp{background:var(--white);border:1.5px solid var(--line);border-radius:var(--r);padding:12px 10px;text-align:center}
+.stp .k{font:500 13px var(--sans);color:var(--meta)}
+.stp .v{font:700 26px/1.2 var(--serif);color:var(--dark);margin:2px 0 6px}
+.stp .b{display:flex;justify-content:center;gap:8px}
+.stp button{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--line);background:var(--cream);font:500 20px/1 var(--sans);color:var(--dark);cursor:pointer}
+.stp button:active{background:var(--cream-dark)}
+.stp button:disabled{opacity:.35}
+/* photos */
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px;border:1.5px dashed #CDBFAF;border-radius:var(--r);background:var(--white);cursor:pointer;text-align:center;padding:18px;color:var(--dark);font-weight:500}
+.drop small{font-weight:400;color:var(--meta);font-size:14px}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.thumbs div{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--cream-dark)}
+.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.thumbs button{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(26,26,26,.75);color:#fff;font-size:16px;line-height:1;cursor:pointer}
+.tips{margin:14px 0 0;padding:0;list-style:none;font-size:14.5px}
+.tips li{padding-left:18px;position:relative;margin-bottom:4px}
+.tips li::before{content:"";position:absolute;left:2px;top:.65em;width:6px;height:6px;border-radius:50%;background:var(--terracotta)}
+/* trust */
+.trust{margin:30px 0 0;padding:18px;border-top:1px solid var(--line);display:grid;gap:12px}
+.trust div{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:14.5px;line-height:1.45}
+.trust svg{width:22px;height:22px;color:var(--terracotta);margin-top:1px}
+.trust b{color:var(--dark);font-weight:600}
+.jack{display:flex;gap:12px;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:0 0 22px}
+.jack .av{flex:none;width:44px;height:44px;border-radius:50%;background:var(--dark);color:var(--cream);display:grid;place-items:center;font:700 18px var(--serif)}
+.jack p{margin:0;font-size:14.5px;line-height:1.45}
+.jack b{color:var(--dark)}
+/* review */
+.rev{background:var(--white);border:1px solid var(--line);border-radius:var(--r);margin:0 0 14px;overflow:hidden}
+.rev h3{display:flex;justify-content:space-between;align-items:center;margin:0;padding:12px 16px;font:600 14px var(--sans);color:var(--dark);background:var(--cream-dark)}
+.rev h3 button{background:none;border:0;color:var(--terracotta);font:500 14px var(--sans);text-decoration:underline;cursor:pointer;padding:4px 0}
+.rev dl{margin:0;padding:6px 16px 10px}
+.rev dl div{display:grid;grid-template-columns:120px 1fr;gap:10px;padding:7px 0;border-bottom:1px solid var(--cream-dark);font-size:15px}
+.rev dl div:last-child{border-bottom:0}
+.rev dt{color:var(--meta)}
+.rev dd{margin:0;color:var(--dark);word-break:break-word}
+/* bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(245,240,235,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 18px calc(12px + env(safe-area-inset-bottom));z-index:5}
+.bar .in{max-width:640px;margin:0 auto;display:flex;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:12px;border:0;font:600 16px var(--sans);cursor:pointer;text-decoration:none;transition:background .15s}
+.btn.primary{background:var(--terracotta);color:#fff;flex:1}
+.btn.primary:hover{background:var(--terracotta-dark)}
+.btn.primary:disabled{opacity:.6;cursor:default}
+.btn.outline{background:transparent;color:var(--terracotta);border:2px solid var(--terracotta)}
+.btn.dark{background:var(--dark);color:var(--cream)}
+.err{background:#FBEBE6;color:#8A2E1F;border-radius:12px;padding:12px 14px;font-size:15px;margin:0 0 16px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.foot{margin-top:34px;font-size:13px;color:var(--meta);line-height:1.6}
+/* done */
+.done{text-align:left;padding-top:10px}
+.tick{width:56px;height:56px;border-radius:50%;background:var(--dark);display:grid;place-items:center;margin:26px 0 0}
+.tick svg{width:26px;height:26px;color:var(--cream)}
+.next{list-style:none;margin:22px 0 26px;padding:0;counter-reset:n}
+.next li{counter-increment:n;position:relative;padding:0 0 18px 46px}
+.next li::before{content:counter(n);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--white);border:1.5px solid var(--terracotta);color:var(--terracotta);display:grid;place-items:center;font:600 14px var(--sans)}
+.next b{display:block;color:var(--dark);font-weight:600}
+.resume{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 18px;font-size:14.5px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.resume button{background:none;border:0;color:var(--terracotta);text-decoration:underline;font:500 14px var(--sans);cursor:pointer;white-space:nowrap}
+.fade{animation:fade .28s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.fade{animation:none}.prog i{transition:none}}
+@media (min-width:700px){h1{font-size:38px}.cards{grid-template-columns:1fr 1fr}.wrap{padding-top:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="https://bardonclean.au" aria-label="Bardon Clean home">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>
+      <b>Bardon Clean</b>
+    </a>
+    <a class="call" href="sms:0468193772">Text Jack</a>
+  </header>
+  <div class="prog" aria-hidden="true"><i id="prog"></i></div>
+  <main id="app" aria-live="polite"></main>
+  <p class="foot">Jack East T/A Bardon Clean · ABN 46 426 437 394 · Bardon, Brisbane<br>Your details are only used to quote and book your clean. They're never shared or sold.</p>
+</div>
+<div class="bar" id="bar" hidden><div class="in" id="barIn"></div></div>
+
+<script>
+(function(){
+  // ---------- content ----------
+  var SERVICES=[
+    {k:'presale',t:'Pre-sale clean',d:'Photo-ready and open-home ready, top to bottom.',date:'When are photos or the first open home?'},
+    {k:'bond',t:'Bond / end-of-lease clean',d:'A thorough exit clean to your agent\'s checklist.',date:'When does the lease end or the final inspection happen?'},
+    {k:'deep',t:'Deep clean',d:'A full reset for a home that needs more than a tidy.',date:'When would you like it done?'},
+    {k:'movein',t:'Move-in clean',d:'A clean slate before your things go in.',date:'When are you moving in?'},
+    {k:'regular',t:'Regular cleaning',d:'Weekly, fortnightly or every four weeks.',date:'When would you like to start?'},
+    {k:'other',t:'Something else',d:'Tell us what you need and Jack will take a look.',date:'When would you like it done?'}
+  ];
+  var WHO=[['owner','Owner or vendor'],['tenant','Tenant'],['agent','Real estate agent or property manager'],['other','Other']];
+  var PTYPE=[['house','House'],['townhouse','Townhouse'],['unit','Apartment or unit']];
+  var FURN=[['empty','Empty'],['furnished','Furnished'],['partly','Partly furnished']];
+  var COND=[['good','Well kept'],['average','Average, lived-in'],['heavy','Needs extra attention']];
+  var EXTRAS=[['carpet','Carpet steam cleaning'],['windows','Windows and tracks'],['oven','Oven deep clean'],['fridge','Fridge inside'],['blinds','Blinds or shutters'],['walls','Walls washed'],['pressure','Pressure cleaning outdoors'],['garage','Garage'],['balcony','Balcony or patio'],['pest','Pest control'],['upholstery','Upholstery or mattress']];
+  var EXTRAS_REG=['windows','oven','fridge','blinds'];
+  var FREQ=[['weekly','Weekly'],['fortnightly','Fortnightly'],['monthly','Every 4 weeks'],['once','Just once for now']];
+  var DAYS=['Mon','Tue','Wed','Thu','Fri','Sat'];
+  var FLEX=[['exact','Must be that date'],['week','Flexible within the week'],['any','I\'m flexible']];
+  var TIME=[['morning','Morning'],['afternoon','Afternoon'],['any','Any time']];
+  var ACCESS=[['home','Someone will be home'],['keys','Keys or lockbox'],['agent','Collect keys from the agent'],['tbc','Not sure yet']];
+  var CONTACT=[['text','Text'],['call','Call'],['email','Email']];
+  var HEARD=[['google','Google'],['referral','Friend or family'],['agent','My real estate agent'],['instagram','Instagram'],['repeat','I\'ve used Bardon Clean before'],['other','Other']];
+  var PHOTO_TIPS={
+    presale:['Kitchen, including the oven','Each bathroom','Main living area','Anything that needs extra attention'],
+    bond:['Kitchen and oven','Each bathroom','Carpets, if you\'d like them cleaned','Any marks on walls'],
+    deep:['Kitchen','Each bathroom','The areas that bother you most'],
+    movein:['Kitchen','Each bathroom','Floors'],
+    regular:['Kitchen','Bathrooms','Main living area'],
+    other:['Whatever you\'d like cleaned']
+  };
+
+  // ---------- state ----------
+  var KEY='bc_quote_draft_v1', t0=Date.now();
+  var A={service:'',who:'',agency:'',address:'',suburb:'',postcode:'',ptype:'',beds:3,baths:2,storeys:1,furnished:'',condition:'',extras:[],freq:'',days:[],date:'',flex:'',time:'',access:'',name:'',phone:'',email:'',contact:'text',heard:'',notes:''};
+  var photos=[]; // {data, url}
+  var step=0, done=false, sending=false, err='', resumeOffer=false, editing=false;
+  function lsGet(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ return null; } }
+  function lsSet(){ try{ localStorage.setItem(KEY,JSON.stringify({a:A,step:step,at:Date.now()})); }catch(e){} }
+  function lsDel(){ try{ localStorage.removeItem(KEY); }catch(e){} }
+  var saved=lsGet(); if(saved&&saved.a&&saved.a.service&&Date.now()-saved.at<14*864e5) resumeOffer=true;
+  var params=new URLSearchParams(location.search);
+  var src=params.get('src')||params.get('utm_source')||(document.referrer&&document.referrer.indexOf(location.host)<0?document.referrer.replace(/^https?:\/\//,'').split('/')[0]:'');
+  if(params.get('service')&&SERVICES.some(function(s){return s.k===params.get('service');})&&!resumeOffer) A.service=params.get('service');
+
+  function svc(){ return SERVICES.filter(function(s){return s.k===A.service;})[0]||SERVICES[5]; }
+  var isReg=function(){ return A.service==='regular'; };
+  var needsState=function(){ return ['presale','bond','movein','deep'].indexOf(A.service)>=0; };
+
+  // Steps adapt to the service.
+  var STEPS=[
+    {id:'service', ok:function(){ return !!A.service || 'Choose the kind of clean you need.'; }},
+    {id:'property', ok:function(){ if(!A.suburb.trim()) return 'Add the suburb.'; if(A.who==='agent'&&!A.agency.trim()) return 'Add your agency name.'; return true; }},
+    {id:'details', ok:function(){ if(isReg()&&!A.freq) return 'Choose how often.'; return true; }},
+    {id:'timing', ok:function(){ return true; }},
+    {id:'photos', ok:function(){ return true; }},
+    {id:'contact', ok:function(){ if(A.name.trim().length<2) return 'Add your name.'; if(A.phone.replace(/\D/g,'').length<8) return 'Add a phone number so Jack can reach you.'; if(A.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(A.email.trim())) return 'That email doesn\'t look right.'; return true; }},
+    {id:'review', ok:function(){ return true; }}
+  ];
+
+  // ---------- helpers ----------
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function label(list,k){ for(var i=0;i<list.length;i++) if(list[i][0]===k) return list[i][1]; return ''; }
+  function radios(name,list,cls){ return '<div class="chips'+(cls?' '+cls:'')+'" role="radiogroup">'+list.map(function(o){ return '<label class="chip"><input type="radio" name="'+name+'" value="'+o[0]+'"'+(A[name]===o[0]?' checked':'')+'>'+esc(o[1])+'</label>'; }).join('')+'</div>'; }
+  function checks(name,list){ return '<div class="chips">'+list.map(function(o){ return '<label class="chip"><input type="checkbox" name="'+name+'" value="'+o[0]+'"'+(A[name].indexOf(o[0])>=0?' checked':'')+'>'+esc(o[1])+'</label>'; }).join('')+'</div>'; }
+  function field(name,lab,opts){ opts=opts||{}; var tag=opts.area?'textarea':'input';
+    return '<label class="field" for="f_'+name+'"><span class="lbl" style="margin:0">'+lab+'</span>'+(opts.area?'<textarea id="f_'+name+'" name="'+name+'" placeholder="'+esc(opts.ph||'')+'">'+esc(A[name])+'</textarea>':'<input id="f_'+name+'" name="'+name+'" value="'+esc(A[name])+'"'+(opts.type?' type="'+opts.type+'"':'')+(opts.im?' inputmode="'+opts.im+'"':'')+(opts.ac?' autocomplete="'+opts.ac+'"':'')+(opts.ph?' placeholder="'+esc(opts.ph)+'"':'')+(opts.max?' maxlength="'+opts.max+'"':'')+(opts.min?' min="'+opts.min+'"':'')+'>')+'</label>'; }
+  function stepper(name,lab,min,max,inc){ var v=A[name];
+    return '<div class="stp"><div class="k" id="k_'+name+'">'+lab+'</div><div class="v" aria-live="polite" aria-labelledby="k_'+name+'">'+(v>=max&&name!=='storeys'?v+'+':v)+'</div><div class="b"><button type="button" data-step="'+name+'" data-d="'+(-inc)+'" aria-label="Fewer '+lab.toLowerCase()+'"'+(v<=min?' disabled':'')+'>−</button><button type="button" data-step="'+name+'" data-d="'+inc+'" aria-label="More '+lab.toLowerCase()+'"'+(v>=max?' disabled':'')+'>+</button></div></div>'; }
+  var LIM={beds:[0,6,1],baths:[1,5,.5],storeys:[1,3,1]};
+  function today(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+  function fdate(s){ if(!s) return ''; var p=s.split('-'), d=new Date(+p[0],+p[1]-1,+p[2]); return d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short',year:'numeric'}); }
+  function ico(n){ var P={
+      user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+      doc:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+      shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+      home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',
+      lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'};
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P[n]+'</svg>'; }
+  function trust(){ return '<div class="trust">'+
+    '<div>'+ico('user')+'<span><b>Quoted personally by Jack,</b> the owner. Not a call centre.</span></div>'+
+    '<div>'+ico('doc')+'<span><b>A written quote with the full scope</b> before you commit. No obligation.</span></div>'+
+    '<div>'+ico('shield')+'<span><b>We come back and fix it</b> if your agent raises a concern within 5 days of the clean.</span></div>'+
+    '<div>'+ico('home')+'<span><b>Local to Brisbane\'s inner west.</b> Products and equipment supplied.</span></div></div>'; }
+
+  // ---------- render ----------
+  var app=document.getElementById('app'), bar=document.getElementById('bar'), barIn=document.getElementById('barIn'), prog=document.getElementById('prog');
+  function render(focusTop){
+    if(done) return renderDone();
+    var s=STEPS[step].id, h='';
+    prog.style.width=Math.round((step+(s==='review'?1:0))/(STEPS.length)*100)+'%';
+    if(step>0) h+='<div class="stepno"><button type="button" data-back>← Back</button><span>Step '+(step+1)+' of '+STEPS.length+'</span></div>';
+    h+='<form id="f" novalidate class="fade"><div class="hp" aria-hidden="true"><label>Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label></div>';
+    if(s==='service'){
+      h+='<h1>Request a <em>quote</em></h1><p class="lead">A few questions about the property so Jack can quote accurately the first time. It takes a couple of minutes.</p>';
+      if(resumeOffer) h+='<div class="resume"><span>You started a request earlier.</span><button type="button" data-resume>Pick up where you left off</button></div>';
+      h+='<fieldset class="q"><legend>What do you need?</legend><div class="cards">'+SERVICES.map(function(o){ return '<label class="card"><input type="radio" name="service" value="'+o.k+'"'+(A.service===o.k?' checked':'')+'><b>'+esc(o.t)+'</b><span>'+esc(o.d)+'</span></label>'; }).join('')+'</div></fieldset>';
+      h+='<p class="hint" style="margin-top:-10px">Business or clinic? <a href="mailto:hello@bardonclean.au?subject=Commercial%20cleaning%20enquiry">Email us about commercial cleaning</a>.</p>';
+      h+=trust();
+    }
+    if(s==='property'){
+      h+='<h1>The <em>property</em></h1><p class="lead">'+esc(svc().t)+'. Where is it, and who\'s booking?</p>';
+      h+=field('address','Street address <small>(optional for now)</small>',{ac:'address-line1',ph:'e.g. 12 Fernberg Road'});
+      h+='<div class="row2">'+field('suburb','Suburb',{ac:'address-level2',ph:'e.g. Paddington'})+field('postcode','Postcode',{im:'numeric',ac:'postal-code',ph:'4064',max:4})+'</div>';
+      h+='<fieldset class="q"><legend>Who\'s booking?</legend>'+radios('who',WHO)+'</fieldset>';
+      if(A.who==='agent') h+=field('agency','Agency',{ac:'organization',ph:'e.g. Harcourts, The Gap'});
+    }
+    if(s==='details'){
+      h+='<h1>About the <em>home</em></h1><p class="lead">Size and condition are what change a quote most.</p>';
+      h+='<fieldset class="q"><legend>Type of home</legend>'+radios('ptype',PTYPE)+'</fieldset>';
+      h+='<fieldset class="q"><legend>Size</legend><div class="steppers">'+stepper('beds','Bedrooms',LIM.beds[0],LIM.beds[1],1)+stepper('baths','Bathrooms',LIM.baths[0],LIM.baths[1],.5)+stepper('storeys','Storeys',LIM.storeys[0],LIM.storeys[1],1)+'</div><p class="hint" style="margin:8px 0 0">Count a powder room or separate toilet as half a bathroom.</p></fieldset>';
+      if(isReg()){
+        h+='<fieldset class="q"><legend>How often?</legend>'+radios('freq',FREQ,'wide')+'</fieldset>';
+        h+='<fieldset class="q"><legend>Days that suit <small>(choose any)</small></legend>'+checks('days',DAYS.map(function(d){return [d,d];}))+'</fieldset>';
+      }
+      if(needsState()){
+        h+='<fieldset class="q"><legend>Will it be furnished on the day?</legend>'+radios('furnished',FURN)+'</fieldset>';
+        h+='<fieldset class="q"><legend>Current condition</legend><p class="hint">An honest answer means an accurate quote and no surprises on the day.</p>'+radios('condition',COND)+'</fieldset>';
+      }
+      h+='<fieldset class="q"><legend>Anything extra? <small>(optional)</small></legend>'+checks('extras',isReg()?EXTRAS.filter(function(e){return EXTRAS_REG.indexOf(e[0])>=0;}):EXTRAS)+'</fieldset>';
+    }
+    if(s==='timing'){
+      h+='<h1>Timing and <em>access</em></h1><p class="lead">Jack will confirm a date and time with you when he sends the quote.</p>';
+      h+='<label class="field" for="f_date"><span class="lbl" style="margin:0">'+esc(svc().date)+' <small>(optional)</small></span><input id="f_date" name="date" type="date" min="'+today()+'" value="'+esc(A.date)+'"></label>';
+      h+='<fieldset class="q"><legend>How fixed is that date?</legend>'+radios('flex',FLEX)+'</fieldset>';
+      h+='<fieldset class="q"><legend>Time of day</legend>'+radios('time',TIME)+'</fieldset>';
+      h+='<fieldset class="q"><legend>Access on the day</legend>'+radios('access',ACCESS)+'</fieldset>';
+    }
+    if(s==='photos'){
+      h+='<h1>A few <em>photos</em></h1><p class="lead">Optional, but they help Jack quote accurately without needing a visit. Phone photos are fine.</p>';
+      h+='<label class="drop" for="ph">'+(photos.length?'Add more photos':'Add photos')+'<small>Up to 8. They\'re only used for your quote.</small><input id="ph" type="file" accept="image/*" multiple hidden></label>';
+      if(photos.length) h+='<div class="thumbs">'+photos.map(function(p,i){ return '<div><img src="'+p.url+'" alt="Photo '+(i+1)+'"><button type="button" data-rmph="'+i+'" aria-label="Remove photo '+(i+1)+'">×</button></div>'; }).join('')+'</div>';
+      h+='<p class="lbl" style="margin:18px 0 6px">Most useful</p><ul class="tips">'+(PHOTO_TIPS[A.service]||PHOTO_TIPS.other).map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul>';
+    }
+    if(s==='contact'){
+      h+='<h1>Your <em>details</em></h1><p class="lead">So Jack can send your quote and ask anything he needs.</p>';
+      h+=field('name','Your name',{ac:'name',ph:'First and last name'});
+      h+=field('phone','Mobile',{type:'tel',im:'tel',ac:'tel',ph:'04xx xxx xxx'});
+      h+=field('email','Email <small>(optional)</small>',{type:'email',im:'email',ac:'email',ph:'name@email.com'});
+      h+='<fieldset class="q"><legend>Best way to reach you</legend>'+radios('contact',CONTACT)+'</fieldset>';
+      h+=field('notes','Anything else Jack should know? <small>(optional)</small>',{area:true,ph:'Pets, parking, problem areas, special requests…'});
+      h+='<label class="field" for="f_heard"><span class="lbl" style="margin:0">How did you find us? <small>(optional)</small></span><select id="f_heard" name="heard"><option value="">Choose…</option>'+HEARD.map(function(o){return '<option value="'+o[0]+'"'+(A.heard===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>';
+    }
+    if(s==='review'){
+      h+='<h1>Check and <em>send</em></h1><p class="lead">Make sure this looks right. You can change anything.</p>';
+      h+=reviewHtml();
+      h+='<div class="jack"><div class="av">J</div><p><b>Jack reads every request himself.</b> If he needs anything else to quote accurately, he\'ll text you first.</p></div>';
+    }
+    if(err) h+='<div class="err" role="alert">'+esc(err)+'</div>';
+    h+='</form>';
+    app.innerHTML=h;
+    // bottom bar
+    var nextLabel=s==='review'?(sending?'Sending…':'Send request'):s==='photos'&&!photos.length?'Skip for now':editing&&s!=='review'?'Back to review':'Continue';
+    bar.hidden=false;
+    barIn.innerHTML='<button class="btn primary" type="button" data-next'+(sending?' disabled':'')+'>'+nextLabel+'</button>';
+    if(focusTop){ window.scrollTo(0,0); var hh=app.querySelector('h1'); if(hh){ hh.setAttribute('tabindex','-1'); hh.focus({preventScroll:true}); } }
+  }
+  function reviewHtml(){
+    function sec(title,go,rows){ rows=rows.filter(function(r){return r[1];}); return '<div class="rev"><h3><span>'+title+'</span><button type="button" data-goto="'+go+'">Edit</button></h3><dl>'+rows.map(function(r){ return '<div><dt>'+esc(r[0])+'</dt><dd>'+esc(r[1])+'</dd></div>'; }).join('')+'</dl></div>'; }
+    var h='';
+    h+=sec('The clean',0,[['Service',svc().t]]);
+    h+=sec('Property',1,[['Address',[A.address,A.suburb,A.postcode].filter(Boolean).join(', ')],['Booking as',label(WHO,A.who)+(A.who==='agent'&&A.agency?', '+A.agency:'')]]);
+    h+=sec('Home',2,[['Type',label(PTYPE,A.ptype)],['Size',A.beds+(A.beds>=6?'+':'')+' bed, '+A.baths+(A.baths>=5?'+':'')+' bath, '+A.storeys+' storey'+(A.storeys>1?'s':'')],['How often',isReg()?label(FREQ,A.freq):''],['Days',isReg()?A.days.join(', '):''],['Furnished',needsState()?label(FURN,A.furnished):''],['Condition',needsState()?label(COND,A.condition):''],['Extras',A.extras.map(function(x){return label(EXTRAS,x);}).join(', ')||'None']]);
+    h+=sec('Timing',3,[['Date',A.date?fdate(A.date)+(A.flex?' · '+label(FLEX,A.flex).toLowerCase():''):'Not set'],['Time',label(TIME,A.time)],['Access',label(ACCESS,A.access)]]);
+    h+=sec('Photos',4,[['Photos',photos.length?photos.length+' added':'None']]);
+    h+=sec('Your details',5,[['Name',A.name],['Mobile',A.phone],['Email',A.email],['Contact by',label(CONTACT,A.contact)],['Notes',A.notes]]);
+    return h;
+  }
+  function renderDone(){
+    prog.style.width='100%'; bar.hidden=true;
+    var first=(A.name.trim().split(/\s+/)[0]||'');
+    app.innerHTML='<div class="done fade"><div class="tick">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>'+
+      '<h1>Thanks'+(first?', '+esc(first):'')+'. <em>Request received.</em></h1><p class="lead">Jack has your details for a '+esc(svc().t.toLowerCase())+(A.suburb?' in '+esc(A.suburb):'')+'.</p>'+
+      '<ol class="next"><li><b>Jack reviews your request</b>He\'ll text you if he needs anything else to quote accurately.</li><li><b>You get a written quote</b>With the full scope and price, by '+(A.contact==='email'&&A.email?'email':'text')+'.</li><li><b>Accept online to book</b>A 50% deposit locks in your date. The balance is due on the day.</li></ol>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn dark" href="sms:0468193772">Text Jack</a><a class="btn outline" href="https://bardonclean.au">Back to the website</a></div></div>';
+    window.scrollTo(0,0);
+  }
+
+  // ---------- input ----------
+  function readForm(){
+    var f=document.getElementById('f'); if(!f) return;
+    [].forEach.call(f.querySelectorAll('input[type=radio]:checked'),function(i){ A[i.name]=i.value; });
+    ['extras','days'].forEach(function(n){ var els=f.querySelectorAll('input[name='+n+']'); if(els.length) A[n]=[].map.call(f.querySelectorAll('input[name='+n+']:checked'),function(i){return i.value;}); });
+    [].forEach.call(f.querySelectorAll('input[type=text],input:not([type]),input[type=tel],input[type=email],input[type=date],textarea,select'),function(i){ if(i.name&&i.name!=='website'&&A.hasOwnProperty(i.name)) A[i.name]=i.value; });
+  }
+  app.addEventListener('change',function(e){
+    var t=e.target;
+    if(t.id==='ph'){ addPhotos(t.files); return; }
+    readForm(); lsSet();
+    if(t.name==='service'){ err=''; setTimeout(function(){ next(); },180); }
+    if(t.name==='who') render();
+  });
+  app.addEventListener('input',function(e){ if(e.target.name){ readForm(); lsSet(); } });
+  app.addEventListener('submit',function(e){ e.preventDefault(); next(); });
+  app.addEventListener('keydown',function(e){ if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.type!=='checkbox'&&e.target.type!=='radio'){ e.preventDefault(); next(); } });
+  document.addEventListener('click',function(e){
+    var el;
+    if((el=e.target.closest('[data-next]'))){ next(); return; }
+    if((el=e.target.closest('[data-back]'))){ readForm(); err=''; step=Math.max(0,step-1); lsSet(); render(true); return; }
+    if((el=e.target.closest('[data-goto]'))){ readForm(); err=''; editing=true; step=+el.dataset.goto; render(true); return; }
+    if((el=e.target.closest('[data-resume]'))){ var sv=lsGet(); if(sv){ for(var k in sv.a) if(A.hasOwnProperty(k)) A[k]=sv.a[k]; step=Math.min(sv.step||0,STEPS.length-1); } resumeOffer=false; render(true); return; }
+    if((el=e.target.closest('[data-step]'))){ readForm(); var n=el.dataset.step, d=+el.dataset.d, L=LIM[n]; A[n]=Math.min(L[1],Math.max(L[0],Math.round((A[n]+d)*2)/2)); lsSet(); var y=window.scrollY; render(); window.scrollTo(0,y); return; }
+    if((el=e.target.closest('[data-rmph]'))){ photos.splice(+el.dataset.rmph,1); render(); return; }
+  });
+  function next(){
+    readForm(); resumeOffer=false;
+    var ok=STEPS[step].ok();
+    if(ok!==true){ err=ok; render(); var bad=document.querySelector('.err'); if(bad) bad.scrollIntoView({block:'center',behavior:'smooth'}); return; }
+    err='';
+    if(STEPS[step].id==='review') return send();
+    step=editing?STEPS.length-1:step+1; if(STEPS[step].id==='review') editing=false;
+    lsSet(); render(true);
+  }
+
+  // ---------- photos: resized on the phone before upload ----------
+  function addPhotos(files){
+    var list=[].slice.call(files||[]).slice(0,Math.max(0,8-photos.length));
+    if(!list.length) return;
+    var btn=document.querySelector('.drop'); if(btn) btn.firstChild.nodeValue='Preparing photos…';
+    Promise.all(list.map(shrink)).then(function(out){ out.forEach(function(p){ if(p) photos.push(p); }); render(); });
+  }
+  function shrink(file){
+    return new Promise(function(res){
+      var url=URL.createObjectURL(file), img=new Image();
+      img.onload=function(){
+        var max=1600, w=img.naturalWidth, h=img.naturalHeight, k=Math.min(1,max/Math.max(w,h));
+        var c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        var data=c.toDataURL('image/jpeg',.72); URL.revokeObjectURL(url);
+        res({data:data,url:data});
+      };
+      img.onerror=function(){ URL.revokeObjectURL(url); res(null); };
+      img.src=url;
+    });
+  }
+
+  // ---------- send ----------
+  function send(){
+    if(sending) return; sending=true; render();
+    var body={}; for(var k in A) body[k]=A[k];
+    body.photos=photos.map(function(p){return p.data;}); body.t=Date.now()-t0; body.src=src;
+    var hp=document.querySelector('input[name=website]'); body.hp=hp?hp.value:'';
+    fetch('/api/request',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok) throw new Error(d.error||'That didn\'t send. Please try again.'); return d; }); })
+      .then(function(){ done=true; sending=false; lsDel(); render(); })
+      .catch(function(x){ sending=false; err=(x&&x.message)||'That didn\'t send. Check your connection and try again.'; render(); });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
