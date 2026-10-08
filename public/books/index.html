@@ -165,6 +165,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .prow2 b{font:600 15px var(--sans);color:var(--dark);display:block;overflow-wrap:anywhere}
 .prow2 small{font-size:13px;color:var(--meta)}
 .prow2 input{margin:0;text-align:right}
+.prow2.saved input{border-color:#2F5A35}
+.prow2.saved small::after{content:' · Saved ✓';color:#2F5A35;font-weight:600}
 .money-in{position:relative}.money-in::before{content:"$";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--meta);font-size:16px;pointer-events:none}
 .money-in input{padding-left:24px}
 .cats{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
@@ -261,7 +263,9 @@ function render(){
   if(r==='jobber') r='prices';
   var h=topbar()+'<h1>'+(r==='profit'?'Profit':r==='spend'?'Spending':'Prices <em>&amp;</em> Jobber')+'</h1>'+tabs(r);
   h+= r==='spend'?renderSpend(): r==='prices'?renderPrices(): renderProfit();
+  var keep={}; Array.prototype.forEach.call(app.querySelectorAll('#pf input[data-dirty],#rf input[data-dirty]'),function(i){ keep[i.form.id+'|'+i.name]=i.value; });
   app.innerHTML=h+bottom();
+  Object.keys(keep).forEach(function(k){ var x=k.split('|'), f=document.getElementById(x[0]), i=f&&f.elements[x[1]]; if(i&&i.value!==keep[k]){ i.value=keep[k]; i.dataset.dirty=1; } });
   if(route()==='jobber'){ var jb=document.getElementById('jobberCard'); if(jb) jb.scrollIntoView(); }
 }
 
@@ -491,13 +495,24 @@ function syncMsg(r){ var p=[]; if(r.added) p.push(r.added+' added'); if(r.update
 app.addEventListener('submit',function(e){
   var f=e.target, btn=f.querySelector('[type=submit]');
   if(f.id==='pf'||f.id==='rf'){ e.preventDefault(); var m={}; Array.prototype.forEach.call(f.querySelectorAll('input'),function(i){ if(f.id==='rf'||i.value!=='') m[i.name]=i.value; }); if(!Object.keys(m).length){ toast('Enter at least one price'); return; } btn.disabled=true; btn.textContent='Saving…';
-    api('POST',f.id==='pf'?{action:'prices',prices:m}:{action:'prices',recur:m}).then(load).then(function(){ toast('Prices saved'); }).catch(function(x){ btn.disabled=false; btn.textContent='Save'; toast(x.message); }); return; }
+    priceQ=priceQ.then(function(){ return api('POST',f.id==='pf'?{action:'prices',prices:m}:{action:'prices',recur:m}); }); priceQ.then(function(){ Array.prototype.forEach.call(f.querySelectorAll('input'),function(i){ delete i.dataset.dirty; }); }).then(load).then(function(){ toast('Prices saved'); }).catch(function(x){ btn.disabled=false; btn.textContent='Save'; toast(x.message); }); return; }
   if(f.id==='jf'){ e.preventDefault(); var err=f.querySelector('#jErr'); btn.disabled=true; btn.textContent='Connecting…';
     api('POST',{action:'jobberUrl',url:f.elements.url.value}).then(function(r){ toast(syncMsg(r)); return load(); }).catch(function(x){ btn.disabled=false; btn.textContent='Connect and sync'; err.textContent=x.message; err.hidden=false; }); return; }
   if(f.id==='pendf'){ e.preventDefault(); var ids=ticked(); if(!ids.length){ toast('Tick the jobs to add'); return; } btn.disabled=true; btn.textContent='Adding…';
     api('POST',{action:'jobberSync',add:ids}).then(function(r){ toast(syncMsg(r)); return load(); }).catch(function(x){ btn.disabled=false; btn.textContent='Add ticked to roster'; toast(x.message); }); return; }
 });
+// Each price saves on its own as soon as you leave the box, one at a time so none overwrite each other.
+var priceQ=Promise.resolve();
+app.addEventListener('input',function(e){ var i=e.target; if(i.form&&(i.form.id==='pf'||i.form.id==='rf')){ i.dataset.dirty=1; var c=i.closest('.prow2'); if(c) c.classList.remove('saved'); } });
+app.addEventListener('change',function(e){
+  var i=e.target; if(!i.form||i.form.id!=='pf'||i.value==='') return;
+  var k=i.name, v=i.value, row=i.closest('.prow2');
+  priceQ=priceQ.then(function(){ return api('POST',{action:'price',key:k,price:+v}); }).then(function(){
+    D.books.prices[k]=+v; if(i.value===v){ delete i.dataset.dirty; if(row) row.classList.add('saved'); }
+  }).catch(function(x){ toast('Price not saved: '+x.message); });
+});
+function unsaved(){ return !!app.querySelector('#pf input[data-dirty],#rf input[data-dirty]'); }
 render(); load();
-document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&!document.getElementById('scrim')) load(); });
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&!document.getElementById('scrim')&&!unsaved()) priceQ.then(load); });
 </script>
 </body></html>
