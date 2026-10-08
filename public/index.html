@@ -383,7 +383,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function roomsOf(j){ return (j.rooms&&j.rooms.length)?j.rooms:DEF_ROOMS; }
   function tok(){ var a=new Uint8Array(18); crypto.getRandomValues(a); return Array.prototype.map.call(a,function(b){return (b<16?'0':'')+b.toString(16);}).join(''); }
   function agentOf(id){ for(var i=0;i<(state.agents||[]).length;i++) if(state.agents[i].id===id) return state.agents[i]; return null; }
-  function liveOf(j){ var L=state.live&&state.live[j.id]; return L||{arrived:{},rooms:{},photos:[],flags:[],lock:{}}; }
+  function liveOf(j){ var L=(state.live&&state.live[j.id])||{}; return Object.assign({},L,{arrived:L.arrived||{},rooms:L.rooms||{},photos:L.photos||[],flags:L.flags||[],lock:L.lock||{}}); }
   function liveSum(j){ var L=liveOf(j), rs=roomsOf(j), d=rs.filter(function(r){return L.rooms[r]&&L.rooms[r].s==='d';}).length; var arrived=Object.keys(L.arrived||{}).length;
     if(L.done) return {c:'ok',t:'Ready · handed over'}; if(!arrived&&!d&&!Object.keys(L.rooms||{}).length) return null; if(d===rs.length) return {c:'on',t:'Final check'}; return {c:'on',t:(arrived?'On site':'Underway')+' · '+d+'/'+rs.length+' rooms'}; }
   var SERVICES = ['Bond clean','Pre-sale clean','Deep clean','Regular clean','Commercial','Other'];
@@ -1524,7 +1524,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       var hj=/^#job=([\w-]+)/.exec(location.hash); if(hj && canEdit){ history.replaceState(null,'',location.pathname); var jj=(d.jobs||[]).filter(function(x){return x.id===hj[1];})[0]; if(jj) setTimeout(function(){ view='roster'; render(); jobSheet(state.jobs.filter(function(x){return x.id===hj[1];})[0]); },0); }
       if (filter!=='all' && filter!=='open' && !member(filter)) filter='all';
       if(!document.getElementById('scrim')) render(); else if(liveOpen && !liveBusy) drawLive();
-    }).catch(function(e){ if(!loaded){ loadErr='Couldn\'t load the roster. Check your signal.'; render(); } });
+    }).catch(function(e){ if(!loaded){ loadErr='Couldn\'t load the roster. Check your signal.'; render(); } else if(window.console) console.error(e); });
   }
   function resetSheet(){
     var h='<h3>Reset your <em>password</em></h3><p class="sub" style="margin:-6px 0 10px">Enter the reset code Claude gave you, then choose a new password.</p><form id="rf" class="fgrid" novalidate><label class="l" for="r_code">Reset code<input id="r_code" autocapitalize="characters" autocomplete="one-time-code" placeholder="XXXX-XXXX-XXXX-XXXX" required></label><label class="l" for="r_pw">New password<input id="r_pw" type="password" autocomplete="new-password" required></label><div class="err" id="rErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Reset and log in</button></div></form>';
