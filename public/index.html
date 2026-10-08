@@ -559,7 +559,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+= list.length ? '<div class="jobs">'+list.map(jobCard).join('')+'</div>' : '<div class="empty">No jobs'+(canEdit?' · <button class="ghost" data-addon="'+sel+'" style="padding:0;margin:0">Add one</button>':'')+'</div>';
     return h+'</section>';
   }
-  function render(){
+  function render(){ try{ renderMain(); }catch(e){ if(window.console) console.error(e); var st=String(e&&e.stack||'').split('\n').slice(0,3).join(' | ');
+    app.innerHTML='<div class="brand"><div class="wm">Bardon Clean</div></div><h1>Team <em>roster</em></h1><p class="sub" style="margin-top:14px">The hub hit an error showing this screen. Send Claude a screenshot of this.</p><p class="sub" style="font-size:12px;word-break:break-word">'+esc((e&&e.message)||String(e))+'<br>'+esc(st)+'</p><button class="ghost" data-act="reload">Try again</button>'; } }
+  function renderMain(){
     document.body.classList.toggle('has-nav', !!(loaded && canEdit));
     if(loaded && canEdit && view!=='roster'){ app.innerHTML=(view==='agents'?renderAgentsView():view==='more'?renderMore():view==='wages'?renderWages():view==='activity'?renderActivity():renderToday())+navBar(); if(view==='activity') loadActivity(); return; }
     var h='';
