@@ -171,6 +171,7 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
     else if(st==='paid') h+='<div class="banner ok">'+(d.isDeposit?'Deposit received. Your booking is confirmed. Thank you.':'Paid in full. Thank you.')+'</div>';
     else if(d.isDeposit) h+='<div class="banner warn"><b>Deposit due '+((d.dueDate||d.issued)<=tdy?'today':fdate(d.dueDate))+'.</b> Your booking is tentative until this deposit is paid. Pay '+money(t.due)+' to lock in '+(d.serviceDate?fdate(d.serviceDate,true):'your clean')+'.</div>';
     else if(st==='overdue') h+='<div class="banner warn">This invoice was due '+fdate(d.dueDate)+'. Please pay '+money(t.due)+' at your earliest convenience.</div>';
+    else if(!q&&t.due>0.005){ var dd=d.dueDate||d.issued; h+='<div class="banner warn"><b>Payment due '+(dd<=tdy?'today':fdate(dd))+'.</b> Please pay '+money(t.due)+' by bank transfer'+(d.card&&st!=='draft'?' or card':'')+'. Details below.</div>'; }
     if(q&&st==='accepted') h+='<div class="banner ok">Accepted by '+esc(d.acceptedName)+' on '+fdate((function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);})(new Date(d.acceptedAt)))+'. Thank you. Jack will be in touch to confirm the details.</div>';
     if(q&&st==='expired') h+='<div class="banner warn">This quote expired on '+fdate(d.validUntil)+'. Call Jack on '+esc(b.phone)+' for an updated quote.</div>';
 
@@ -182,20 +183,23 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
     if(!q&&t.paid>0) h+='<div class="due"><span>Amount due</span><span>'+money(t.due)+'</span></div>';
     h+='</div>';
     if(q&&t.deposit>0) h+='<div class="callout">A '+d.depositPct+'% deposit of <b>'+money(t.deposit)+'</b> is required to book your service in.</div>';
-    if(!q&&d.report) h+='<div class="sect noprint"><h2>Your job <em>report</em></h2><div class="panel"><p style="margin:0 0 4px;color:var(--dark)">'+(d.report.done?'Your clean was signed off '+fdate((function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);})(new Date(d.report.done)),true)+'.':'Follow your clean room by room.')+(d.report.photos?' '+d.report.photos+' before and after photos.':'')+'</p><div class="btns"><a class="btn dark" href="/v/'+esc(d.report.share)+'">View job report</a></div></div></div>';
-    if(!q&&d.report) h+='<div class="printonly" style="margin-top:12px;font-size:13px">Job report: '+esc(location.origin)+'/v/'+esc(d.report.share)+'</div>';
+    var rep='';
+    if(!q&&d.report) rep+='<div class="sect noprint"><h2>Your job <em>report</em></h2><div class="panel"><p style="margin:0 0 4px;color:var(--dark)">'+(d.report.done?'Your clean was signed off '+fdate((function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);})(new Date(d.report.done)),true)+'.':'Follow your clean room by room.')+(d.report.photos?' '+d.report.photos+' before and after photos.':'')+'</p><div class="btns"><a class="btn dark" href="/v/'+esc(d.report.share)+'">View job report</a></div></div></div>';
+    if(!q&&d.report) rep+='<div class="printonly" style="margin-top:12px;font-size:13px">Job report: '+esc(location.origin)+'/v/'+esc(d.report.share)+'</div>';
     if(d.notes) h+='<div class="callout" style="border-left-color:var(--dark);background:var(--cream)">'+lines(d.notes)+'</div>';
 
     // ---- Act on it ----
     if(q&&(st==='sent'||st==='viewed')) h+='<div class="sect noprint"><h2>Happy to <em>go ahead?</em></h2><div class="panel"><form id="acc"><label class="l" for="an">Your full name<input id="an" autocomplete="name" required placeholder="As it should appear on the booking"></label><div class="btns"><button class="btn primary" type="submit">Accept quote</button><a class="btn dark" href="tel:+61'+esc(b.phone.replace(/\D/g,'').replace(/^0/,''))+'">Call Jack</a></div><div class="err" id="accErr" hidden></div><p class="small">By accepting, you agree to the service policies below.'+(t.deposit>0?' You\'ll then get a deposit invoice to pay and lock in your booking.':'')+'</p></form></div></div>';
     if(q&&st==='accepted'&&d.depositLink&&d.depositLink.state!=='paid') h+='<div class="sect noprint"><h2>Pay your <em>deposit</em></h2><div class="panel"><p style="margin:0 0 4px;color:var(--dark)">Deposit invoice #'+d.depositLink.num+': <b>'+money(d.depositLink.due)+'</b></p><div class="btns"><a class="btn primary" href="/i/'+esc(d.depositLink.token)+'">View and pay deposit</a></div></div></div>';
-    if(!q&&t.due>0.005&&st!=='draft'){
-      h+='<div class="sect"><h2>How to <em>pay</em></h2><div class="panel">';
+    if(!q&&t.due>0.005){
+      var pd=d.dueDate||d.issued;
+      h+='<div class="sect"><h2>How to <em>pay</em></h2><div class="panel"><p style="margin:0 0 12px;color:var(--dark)"><b>'+money(t.due)+' due '+(pd<=tdy?'today':fdate(pd))+'.</b>'+(d.bank.bsb?' Pay by bank transfer using INV'+d.num+' as the reference.':'')+'</p>';
       if(d.bank.bsb&&d.bank.acct) h+='<div class="bank">'+(d.bank.name?'<div><span>Account name</span><b>'+esc(d.bank.name)+'</b></div>':'')+'<div><span>BSB</span><span><b>'+esc(d.bank.bsb)+'</b><button class="copy" data-copy="'+esc(d.bank.bsb)+'" data-label="BSB">Copy</button></span></div><div><span>Account</span><span><b>'+esc(d.bank.acct)+'</b><button class="copy" data-copy="'+esc(d.bank.acct)+'" data-label="Account number">Copy</button></span></div><div><span>Reference</span><span><b>INV'+d.num+'</b><button class="copy" data-copy="INV'+d.num+'" data-label="Reference">Copy</button></span></div><div><span>Amount</span><b>'+money(t.due)+'</b></div></div>';
-      if(d.card) h+='<div class="btns noprint"><button class="btn primary" data-card>Pay '+money(t.due)+' by card</button></div><div class="err" id="payErr" hidden></div>';
+      if(d.card&&st!=='draft') h+='<div class="btns noprint"><button class="btn primary" data-card>Pay '+money(t.due)+' by card</button></div><div class="err" id="payErr" hidden></div>';
       if(!d.bank.bsb&&!d.card) h+='<p style="margin:0">Call Jack on '+esc(b.phone)+' to arrange payment.</p>';
       h+='</div></div>';
     }
+    h+=rep;
     if(!q&&(d.payments||[]).length) h+='<div class="btns noprint">'+d.payments.map(function(p,i){ return '<a class="btn outline" href="/r/'+esc(token)+'?p='+esc(p.id)+'">'+(d.payments.length>1?'Receipt '+(i+1)+' · '+money(p.amt):'View receipt')+'</a>'; }).join('')+'</div>';
     if(d.terms) h+='<details class="terms"'+(params.has('terms')?' open':'')+'><summary>Service policies</summary><div class="desc" style="margin-top:10px">'+rich(d.terms)+'</div></details>';
     h+='<div class="foot"><span>'+esc(b.legal||b.name)+(b.abn?' · ABN '+esc(b.abn):'')+'</span><span>Questions? Text Jack on '+esc(b.sms||b.phone)+'</span></div>';
