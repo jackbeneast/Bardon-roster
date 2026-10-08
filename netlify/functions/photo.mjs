@@ -74,12 +74,15 @@ export default async (req) => {
     const room = body.room || "", kind = body.kind || "";
     if ((room || kind) && !tagOk(room, kind)) return json({ error: "Pick a room and before or after" }, 400);
     const have = new Set(L.photos.map((p) => p.id));
-    const stored = new Set(await s.list(`photo/${job.id}/`));
-    const add = ids.filter((id) => !have.has(id) && stored.has(`photo/${job.id}/${id}`));
+    const fresh = ids.filter((id) => !have.has(id));
+    // Check each image really saved (reads the small thumbnail, or the full photo for old-style uploads)
+    const ok = await Promise.all(fresh.map(async (id) => !!((await s.getBin(`photo/${job.id}/${id}.t`)) || (await s.getBin(`photo/${job.id}/${id}`)))));
+    const add = fresh.filter((_, i) => ok[i]);
     if (L.photos.length + add.length > LIMIT) return json({ error: `This job is at the ${LIMIT} photo limit. Delete some first.` }, 400);
     const at = new Date().toISOString(), by = admin && !pid ? "admin" : pid;
     add.forEach((id) => L.photos.push({ id, room, kind, by, at }));
-    return save();
+    L.updated = at; await s.set(`live/${job.id}`, L);
+    return json({ ok: true, live: L, added: add.length, missing: fresh.length - add.length });
   }
 
   // Sort photos into a room and before/after.

@@ -1030,7 +1030,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function liveChange(e){
     var t=e.target; if(!liveOpen) return;
     if(t.dataset.lock){ livePost({action:'lock',item:t.dataset.lock,value:t.checked}); return; }
-    if(t.id==='ph_file' && t.files.length){ var fl=Array.prototype.slice.call(t.files); t.value=''; uploadPhotos(fl, '', ''); }
+    if(t.id==='ph_file' && t.files.length){ var fl=Array.prototype.slice.call(t.files); uploadPhotos(fl, '', ''); }
   }
   function toJpeg(c,q){ return new Promise(function(res,rej){ c.toBlob(function(b){ b?res(b):rej(new Error('Couldn\'t read that photo')); },'image/jpeg',q); }); }
   function scaled(src,w,h,max){ var sc=Math.min(1,max/Math.max(w,h)), c=document.createElement('canvas'); c.width=Math.round(w*sc); c.height=Math.round(h*sc); c.getContext('2d').drawImage(src,0,0,c.width,c.height); return c; }
@@ -1045,41 +1045,46 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     });
   }
   function showUp(){ var el=document.getElementById('uppill'); if(!upState){ if(el) el.remove(); return; } if(!el){ el=document.createElement('div'); el.id='uppill'; el.className='uppill'; el.setAttribute('role','status'); document.body.appendChild(el); } el.innerHTML='<i></i>'+esc(upState); }
-  // Uploads two at a time, then adds them to the job in small batches. room/kind '' = to sort.
+  // Photos are shrunk one at a time (keeps iPhone memory low), uploaded up to three at once,
+  // then added to the job in small batches. room/kind '' = to sort.
   function uploadPhotos(files, room, kind, ctx){
-    var lo=ctx||liveOpen; if(!lo) return;
+    var lo=ctx||liveOpen; if(!lo){ toast('Open the job and try again'); return; }
     var k=key(), hd={}; if(k) hd['x-admin-key']=k;
     var q='/api/photo?job='+encodeURIComponent(lo.jobId)+'&person='+encodeURIComponent(lo.pid);
-    var nextI=0, done=0, failed=0, pending=[], flushing=null, total=files.length, label=room?room+' '+kind:'photos';
-    function progress(){ liveBusy='Uploading '+Math.min(done+1,total)+' of '+total+'…'; upState='Uploading '+label+' · '+Math.min(done+1,total)+' of '+total+'…'; showUp(); var bt=document.getElementById('ph_btn'); if(bt) bt.textContent=liveBusy; }
-    function sendOne(f, tries){
-      return shrink(f).then(function(r){ var body=new Blob([r.thumb,r.full],{type:'application/octet-stream'});
-        return fetch(q+'&stage=bin&tl='+r.thumb.size,{method:'POST',headers:hd,body:body}); })
-        .then(function(res){ return res.json().then(function(d){ if(!res.ok) throw new Error(d.error||'Upload failed'); return d.id; }); })
-        .catch(function(e){ if(tries<1 && !/isn't a photo|too large|read that/.test(e.message)) return new Promise(function(ok){setTimeout(ok,1200);}).then(function(){ return sendOne(f,tries+1); }); throw e; });
+    var total=files.length, nextI=0, sent=0, added=0, failed=0, lastErr='', pending=[], flushing=null, label=room?room+' '+kind:'photos';
+    var decoding=Promise.resolve(), inflight=0;
+    function progress(){ liveBusy='Uploading '+Math.min(sent+1,total)+' of '+total+'…'; upState='Uploading '+label+' · '+Math.min(sent+1,total)+' of '+total+'…'; showUp(); var bt=document.getElementById('ph_btn'); if(bt) bt.textContent=liveBusy; }
+    function shrinkQueued(f){ var p=decoding.then(function(){ return shrink(f); }); decoding=p.catch(function(){}); return p; }
+    function post(r){ var body=new Blob([r.thumb,r.full],{type:'application/octet-stream'});
+      return fetch(q+'&stage=bin&tl='+r.thumb.size,{method:'POST',headers:hd,body:body})
+        .then(function(res){ return res.json().catch(function(){ return {error:'Upload failed ('+res.status+')'}; }).then(function(d){ if(!res.ok||!d.id) throw new Error(d.error||'Upload failed'); return d.id; }); }); }
+    function sendOne(f){
+      return shrinkQueued(f).then(function(r){ return post(r).catch(function(){ return new Promise(function(ok){setTimeout(ok,1500);}).then(function(){ return post(r); }); }); });
     }
     function flush(force){
       if(flushing) return flushing.then(function(){ return flush(force); });
-      if(!pending.length || (!force && pending.length<4)) return Promise.resolve();
+      if(!pending.length || (!force && pending.length<5)) return Promise.resolve();
       var ids=pending.splice(0,pending.length), b={ids:ids}; if(room){ b.room=room; b.kind=kind; }
       var h2={'content-type':'application/json'}; if(k) h2['x-admin-key']=k;
-      flushing=fetch(q+'&stage=add',{method:'POST',headers:h2,body:JSON.stringify(b)}).then(function(res){ return res.json().then(function(d){ if(!res.ok) throw new Error(d.error||'Upload failed'); state.live[lo.jobId]=d.live; if(!room) phTab='sort'; if(liveOpen&&liveOpen.jobId===lo.jobId) drawLive(); }); })
-        .catch(function(e){ failed+=ids.length; toast(e.message); })
+      function go(){ return fetch(q+'&stage=add',{method:'POST',headers:h2,body:JSON.stringify(b)}).then(function(res){ return res.json().catch(function(){ return {error:'Saving failed ('+res.status+')'}; }).then(function(d){ if(!res.ok||!d.live) throw new Error(d.error||'Saving failed'); return d; }); }); }
+      flushing=go().catch(function(){ return new Promise(function(ok){setTimeout(ok,1500);}).then(go); })
+        .then(function(d){ state.live[lo.jobId]=d.live; added+=d.added; failed+=d.missing||0; if(!room) phTab='sort'; if(liveOpen&&liveOpen.jobId===lo.jobId) drawLive(); })
+        .catch(function(e){ failed+=ids.length; lastErr=e.message; })
         .then(function(){ flushing=null; });
       return flushing;
     }
     function worker(){
       if(nextI>=files.length) return Promise.resolve();
       var f=files[nextI++];
-      return sendOne(f,0).then(function(id){ pending.push(id); }, function(){ failed++; })
-        .then(function(){ done++; progress(); return flush(false); }).then(worker);
+      return sendOne(f).then(function(id){ pending.push(id); }, function(e){ failed++; lastErr=e.message; })
+        .then(function(){ sent++; progress(); return flush(false); }).then(worker);
     }
-    progress();
-    Promise.all([worker(),worker()]).then(function(){ return flush(true); }).then(function(){
+    liveBusy='Preparing '+total+' photo'+(total>1?'s':'')+'…'; upState=liveBusy; showUp(); var bt=document.getElementById('ph_btn'); if(bt) bt.textContent=liveBusy;
+    Promise.all([worker(),worker(),worker()]).then(function(){ return flush(true); }).then(function(){
       liveBusy=false; upState=null; showUp();
       if(liveOpen) drawLive(); else if(!document.getElementById('scrim')) render();
-      var ok=total-failed;
-      toast(failed? ok+' added, '+failed+' didn\'t upload. Try those again.' : ok+' photo'+(ok>1?'s':'')+' added'+(room?' · '+room:'. Now sort them into rooms.'));
+      if(!added) toast('Photos didn\'t upload'+(lastErr?': '+lastErr:'')+'. Check your signal and try again.');
+      else toast(failed? added+' added, '+failed+' didn\'t upload. Add those again.' : added+' photo'+(added>1?'s':'')+' added'+(room?' · '+room:'. Now sort them into rooms.'));
     });
   }
 
