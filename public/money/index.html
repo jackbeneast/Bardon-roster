@@ -130,6 +130,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 </style></head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <script src="/lib/confirm.js"></script>
+<script src="/lib/sms.js"></script>
 <script>
 (function(){
   var app=document.getElementById('app');
@@ -160,6 +161,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   }
   function totals(d){ var sub=r2((d.items||[]).reduce(function(a,i){return a+(+i.qty||1)*(+i.price||0);},0)), gst=d.gst?r2(sub*.1):0, total=r2(sub+gst), paid=r2((d.payments||[]).reduce(function(a,p){return a+p.amt;},0)); return {sub:sub,gst:gst,total:total,paid:paid,due:r2(Math.max(0,total-paid)),deposit:d.kind==='quote'&&d.depositPct?r2(total*d.depositPct/100):0}; }
   function docById(id){ for(var i=0;i<S.docs.length;i++) if(S.docs[i].id===id) return S.docs[i]; return null; }
+  function jobFor(d){ var jid=d.jobId; if(!jid&&d.quoteId){ var q=docById(d.quoteId); jid=q&&q.jobId; } return jid?S.jobs.filter(function(j){return j.id===jid;})[0]||null:null; }
+  function reportLink(d){ var j=d.kind==='invoice'&&!d.isDeposit?jobFor(d):null; return j&&j.share?location.origin+'/v/'+j.share:''; }
   function link(d){ return location.origin+'/'+(d.kind==='invoice'?'i':'q')+'/'+d.token; }
   function title(d){ return (d.kind==='quote'?'Quote':'Invoice')+' #'+d.num; }
   function phoneSms(p){ return String(p||'').replace(/[^0-9+]/g,''); }
@@ -167,7 +170,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   function load(){
     if(!key()){ loadErr='login'; render(); return Promise.resolve(); }
     return Promise.all([api('GET','/api/docs'), api('GET','/api/roster').catch(function(){return {jobs:[]};})]).then(function(r){
-      S.docs=r[0].docs; S.settings=r[0].settings; S.card=r[0].card; S.jobs=(r[1].jobs||[]).filter(function(j){return !j.sample;});
+      BCSms.check(key()); S.docs=r[0].docs; S.settings=r[0].settings; S.card=r[0].card; S.jobs=(r[1].jobs||[]).filter(function(j){return !j.sample;});
       loaded=true; loadErr=''; render();
     }).catch(function(e){ loadErr=e.status===401?'login':e.message; render(); });
   }
@@ -317,7 +320,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   function pick(kind,val){
     var d=draft; if(!val) return;
     if(kind==='client'){ var src=S.docs.filter(function(x){return x.client.name===val;})[0]; if(src){ d.client=JSON.parse(JSON.stringify(src.client)); } }
-    if(kind==='job'){ var j=S.jobs.filter(function(x){return x.id===val;})[0]; if(j){ d.client.name=d.client.name||j.client; d.site=j.address||''; d.suburb=j.suburb||''; d.serviceDate=j.date; if(SERVICES.indexOf(j.service)>=0) d.service=j.service; var m=/(\d+)\s*bed/i.exec(j.notes||''), n=/(\d+)\s*bath/i.exec(j.notes||''); if(m) d.beds=m[1]; if(n) d.baths=n[1]; } }
+    if(kind==='job'){ var j=S.jobs.filter(function(x){return x.id===val;})[0]; if(j){ d.jobId=j.id; d.client.name=d.client.name||j.client; d.site=j.address||''; d.suburb=j.suburb||''; d.serviceDate=j.date; if(SERVICES.indexOf(j.service)>=0) d.service=j.service; var m=/(\d+)\s*bed/i.exec(j.notes||''), n=/(\d+)\s*bath/i.exec(j.notes||''); if(m) d.beds=m[1]; if(n) d.baths=n[1]; } }
     dirty=true; renderEdit(); toast('Filled in');
   }
   function saveDraft(btn){
@@ -326,7 +329,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(!d.items.length){ toast('Add at least one item'); return; }
     btn.disabled=true; btn.textContent='Saving…';
     var body={kind:d.kind,client:d.client,site:d.site,suburb:d.suburb,service:d.service,beds:d.beds,baths:d.baths,issued:d.issued,validUntil:d.validUntil,dueDate:d.dueDate,serviceDate:d.serviceDate,
-      items:d.items.map(function(i){return {title:i.title,desc:i.desc,qty:+i.qty||1,price:+i.price||0};}),gst:d.gst,depositPct:+d.depositPct||0,notes:d.notes,showTerms:d.showTerms};
+      items:d.items.map(function(i){return {title:i.title,desc:i.desc,qty:+i.qty||1,price:+i.price||0};}),gst:d.gst,depositPct:+d.depositPct||0,notes:d.notes,showTerms:d.showTerms,jobId:d.jobId||''};
     api('POST','/api/docs',{action:'save',id:d.id||'',doc:body}).then(function(r){ dirty=false; draft=null; return load().then(function(){ go('doc/'+r.id); toast('Saved'); }); })
       .catch(function(e){ btn.disabled=false; btn.textContent='Save'; toast(e.message); });
   }
@@ -380,6 +383,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
       if(!(d.payments||[]).length) h+='<p class="sub" style="margin:0">None yet.'+(S.card?' Card payments are recorded automatically.':'')+'</p>';
       (d.payments||[]).forEach(function(p){ h+='<div class="pay"><span>'+fdate(p.date)+' · '+esc(p.method)+'</span><span><b>'+money(p.amt)+'</b> <button class="ghost" data-receipt="'+p.id+'" style="margin-left:10px;padding:0">Receipt</button><button class="ghost" data-unpay="'+p.id+'" style="margin-left:8px;padding:0;color:var(--meta)">Remove</button></span></div>'; });
       if(d.quoteId){ var qd=docById(d.quoteId); if(qd) h+='<button class="alert" data-open="'+qd.id+'" style="margin-top:12px">From quote #'+qd.num+'</button>'; }
+      if(reportLink(d)) h+='<a class="alert ok" href="'+esc(reportLink(d))+'" target="_blank" rel="noopener" style="margin-top:12px;display:block;text-decoration:none">Job report linked · '+fdate(jobFor(d).date,true)+'. It\'s in the message when you send this.</a>';
+      else if(!d.isDeposit) h+='<p class="hint" style="margin-top:12px">No job report linked. Edit the invoice and pick the roster job to include it.</p>';
       h+='</div>';
     }
     h+='<div class="menu"><button data-act="dup">Duplicate as new '+d.kind+'<span class="chev">›</span></button>'+(isQ?'':'<button data-act="dup-quote">Copy into a new quote<span class="chev">›</span></button>')+'<button data-act="copylink">Copy client link<span class="chev">›</span></button><button data-act="del" style="color:var(--terracotta-dark)">Delete '+d.kind+'<span class="chev">›</span></button></div>';
@@ -407,22 +412,22 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   function confirmSheet(d){
     var j=jobOf(d); if(!j){ toast('Add it to the roster first'); return; } j=BCConfirm.withDays(j, S.jobs);
     var dep=d.depositInvoice?docById(d.depositInvoice):null;
-    var m=BCConfirm.build({job:j,doc:d,deposit:dep,phone:S.settings.biz.phone});
+    var m=BCConfirm.build({job:j,doc:d,deposit:dep,phone:S.settings.biz.phone,sms:S.settings.biz.sms});
     var mode='sms';
     var h='<h3>Booking <em>confirmation</em></h3><div class="seg" role="group" style="margin:0 0 12px"><button data-cm="sms" aria-pressed="true">Text</button><button data-cm="email" aria-pressed="false">Email</button></div>'+
       '<div data-pane="sms"><label class="l">Text message<textarea id="cSms" style="min-height:220px">'+esc(m.sms)+'</textarea></label></div>'+
       '<div data-pane="email" hidden><label class="l">Subject<input id="cSub" value="'+esc(m.subject)+'"></label><label class="l" style="margin-top:10px">Email<textarea id="cEmail" style="min-height:360px">'+esc(m.email)+'</textarea></label></div>'+
-      '<div class="sendopt" style="margin-top:12px"><a href="#" data-cgo="open"><span class="ic">✉</span><span data-golabel>Open Messages<small>'+(d.client.phone?esc(d.client.phone):'Add the number in Messages')+'</small></span></a><button data-cgo="copy"><span class="ic">⧉</span><span>Copy<small>Paste anywhere</small></span></button></div>'+
+      '<div class="sendopt" style="margin-top:12px"><a href="#" data-cgo="open"><span class="ic">✉</span><span data-golabel>'+(BCSms.ready?'Send text':'Open Messages')+'<small>'+(d.client.phone?esc(d.client.phone):'Add the number in Messages')+'</small></span></a><button data-cgo="copy"><span class="ic">⧉</span><span>Copy<small>Paste anywhere</small></span></button></div>'+
       '<div class="actions"><button class="btn plain grow" data-close>Close</button></div>';
     var s=sheet(h);
     s.addEventListener('click',function(e){
       var b=e.target.closest('[data-cm]');
       if(b){ mode=b.dataset.cm; Array.prototype.forEach.call(s.querySelectorAll('[data-cm]'),function(x){x.setAttribute('aria-pressed',String(x===b));}); s.querySelector('[data-pane="sms"]').hidden=mode!=='sms'; s.querySelector('[data-pane="email"]').hidden=mode!=='email';
-        s.querySelector('[data-golabel]').innerHTML=mode==='sms'?'Open Messages<small>'+(d.client.phone?esc(d.client.phone):'Add the number in Messages')+'</small>':'Open Mail<small>'+(d.client.email?esc(d.client.email):'Add the address in Mail')+'</small>'; return; }
+        s.querySelector('[data-golabel]').innerHTML=mode==='sms'?(BCSms.ready?'Send text':'Open Messages')+'<small>'+(d.client.phone?esc(d.client.phone):'Add the number in Messages')+'</small>':'Open Mail<small>'+(d.client.email?esc(d.client.email):'Add the address in Mail')+'</small>'; return; }
       var g=e.target.closest('[data-cgo]'); if(!g) return;
       if(g.dataset.cgo==='open'){
-        g.href=mode==='sms'?'sms:'+phoneSms(d.client.phone)+'?&body='+encodeURIComponent(s.querySelector('#cSms').value)
-          :'mailto:'+encodeURIComponent(d.client.email||'')+'?subject='+encodeURIComponent(s.querySelector('#cSub').value)+'&body='+encodeURIComponent(s.querySelector('#cEmail').value);
+        if(mode==='sms'&&BCSms.go(g,d.client.phone,s.querySelector('#cSms').value,key(),{ref:'conf'+d.num,toast:toast})){ e.preventDefault(); }
+        else if(mode!=='sms') g.href='mailto:'+encodeURIComponent(d.client.email||'')+'?subject='+encodeURIComponent(s.querySelector('#cSub').value)+'&body='+encodeURIComponent(s.querySelector('#cEmail').value);
       } else { e.preventDefault(); var t=mode==='sms'?s.querySelector('#cSms').value:s.querySelector('#cSub').value+'\n\n'+s.querySelector('#cEmail').value; try{ navigator.clipboard.writeText(t).then(function(){toast('Copied');}); }catch(x){ toast('Select the text and copy it'); } }
       api('POST','/api/docs',{action:'confirmed',id:d.id}).then(function(){ d.confirmedAt=new Date().toISOString(); }).catch(function(){});
     });
@@ -430,16 +435,16 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   function sendSheet(d, reminder){
     var t=d.totals, l=link(d), fn=first(d.client.contact||d.client.name), what=d.site?d.site:(d.service||'your clean').toLowerCase();
     var msg=reminder?'Hi '+fn+', a friendly reminder that invoice #'+d.num+' for '+money(t.due)+' was due '+fdate(d.dueDate)+'. You can view and pay it here: '+l+' Thanks, Jack, Bardon Clean'
-      :d.kind==='quote'?'Hi '+fn+', here\'s your quote from Bardon Clean for '+what+': '+l+' You can accept it online. Any questions, call or text me on '+S.settings.biz.phone+'. Jack'
-      :(d.isDeposit?'Hi '+fn+', here\'s your deposit invoice #'+d.num+' from Bardon Clean for '+money(t.due)+', due today: '+l+' Your booking is tentative until the deposit is paid. Thanks, Jack':'Hi '+fn+', here\'s invoice #'+d.num+' from Bardon Clean for '+money(t.due)+': '+l+' Thanks, Jack');
+      :d.kind==='quote'?'Hi '+fn+', here\'s your quote from Bardon Clean for '+what+': '+l+' You can accept it online. Any questions, text me on '+S.settings.biz.sms+'. Jack'
+      :(d.isDeposit?'Hi '+fn+', here\'s your deposit invoice #'+d.num+' from Bardon Clean for '+money(t.due)+', due today: '+l+' Your booking is tentative until the deposit is paid. Thanks, Jack':(reportLink(d)?'Hi '+fn+', your clean'+(d.site?' at '+d.site:'')+' is complete. Your job report, with before and after photos and the room-by-room sign-off, is here: '+reportLink(d)+'\n\nHere\'s the balance invoice #'+d.num+' for '+money(t.due)+': '+l+'\n\nThanks for choosing Bardon Clean. Jack':'Hi '+fn+', here\'s invoice #'+d.num+' from Bardon Clean for '+money(t.due)+': '+l+' Thanks, Jack'));
     var subj=reminder?'Reminder: invoice #'+d.num+' from Bardon Clean':(d.kind==='quote'?'Your quote from Bardon Clean':'Invoice #'+d.num+' from Bardon Clean')+(d.site?' · '+d.site:'');
     var h='<h3>'+(reminder?'Send a <em>reminder</em>':'Send '+(d.kind==='quote'?'the <em>quote</em>':'the <em>invoice</em>'))+'</h3><label class="l">Message<textarea id="smsg" style="min-height:120px">'+esc(msg)+'</textarea></label><div class="sendopt" style="margin-top:12px">';
-    h+='<a data-sendvia="sms" href="#"><span class="ic">✉</span><span>Text message<small>'+(d.client.phone?esc(d.client.phone):'Opens Messages, add the number')+'</small></span></a>';
+    h+='<a data-sendvia="sms" href="#"><span class="ic">✉</span><span>Text message<small>'+(d.client.phone?esc(d.client.phone):'Opens Messages, add the number')+(BCSms.ready?' · from '+esc(BCSms.from):'')+'</small></span></a>';
     h+='<a data-sendvia="email" href="#"><span class="ic">@</span><span>Email<small>'+(d.client.email?esc(d.client.email):'Opens Mail, add the address')+'</small></span></a>';
     h+='<button data-sendvia="copy"><span class="ic">⧉</span><span>Copy message<small>Paste into WhatsApp or anywhere else</small></span></button></div><div class="actions"><button class="btn plain grow" data-close>Close</button></div>';
     var s=sheet(h);
     s.addEventListener('click',function(e){ var a=e.target.closest('[data-sendvia]'); if(!a) return; var m=s.querySelector('#smsg').value, v=a.dataset.sendvia;
-      if(v==='sms') a.href='sms:'+phoneSms(d.client.phone)+'?&body='+encodeURIComponent(m);
+      if(v==='sms'&&BCSms.go(a,d.client.phone,m,key(),{ref:'inv'+d.num,toast:toast,done:function(){ api('POST','/api/docs',{action:'sent',id:d.id}).then(function(){ closeSheet(); load(); }).catch(function(){}); }})){ e.preventDefault(); return; }
       if(v==='email') a.href='mailto:'+encodeURIComponent(d.client.email||'')+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(m);
       if(v==='copy'){ e.preventDefault(); try{ navigator.clipboard.writeText(m).then(function(){toast('Message copied');}); }catch(x){ toast('Copy didn\'t work. Select the text instead.'); } }
       api('POST','/api/docs',{action:'sent',id:d.id}).then(function(){ if(d.state==='draft'){ d.state=d.kind==='quote'?'sent':'sent'; d.sentAt=new Date().toISOString(); } }).catch(function(){});
@@ -459,7 +464,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
       '<a href="'+l+'" target="_blank" rel="noopener"><span class="ic">↗</span><span>View receipt<small>Save it as a PDF from there</small></span></a></div><div class="actions"><button class="btn plain grow" data-close>Done</button></div>';
     var s=sheet(h);
     s.addEventListener('click',function(e){ var a=e.target.closest('[data-rv]'); if(!a) return; var m=s.querySelector('#rmsg').value;
-      if(a.dataset.rv==='sms') a.href='sms:'+phoneSms(d.client.phone)+'?&body='+encodeURIComponent(m);
+      if(a.dataset.rv==='sms'&&BCSms.go(a,d.client.phone,m,key(),{ref:'rcpt'+d.num,toast:toast})){ e.preventDefault(); return; }
       if(a.dataset.rv==='email') a.href='mailto:'+encodeURIComponent(d.client.email||'')+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(m);
       if(a.dataset.rv==='copy'){ e.preventDefault(); try{ navigator.clipboard.writeText(m).then(function(){toast('Message copied');}); }catch(x){ toast('Select the text and copy it'); } } });
   }
@@ -499,7 +504,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var st=S.settings, b=st.biz, k=st.bank;
     function f(path,label,val,type,ph){ return '<label class="l">'+label+'<input data-s="'+path+'" '+(type?'type="'+type+'" inputmode="'+(type==='number'?'numeric':'text')+'"':'')+' value="'+esc(val)+'" placeholder="'+esc(ph||'')+'"></label>'; }
     var h=topbar('#/list')+'<h1>Business <em>details</em></h1>';
-    h+='<div class="card"><h2>On every <em>document</em></h2><div class="grid">'+f('biz.name','Trading name',b.name)+f('biz.legal','Legal name',b.legal)+f('biz.abn','ABN',b.abn)+f('biz.phone','Phone',b.phone)+'<div class="full">'+f('biz.address','Address',b.address)+'</div>'+f('biz.email','Email',b.email)+f('biz.web','Website',b.web)+'</div><label class="check"><input type="checkbox" data-s="gst"'+(st.gst?' checked':'')+'>Registered for GST (invoices say "Tax invoice" and add GST by default)</label></div>';
+    h+='<div class="card"><h2>On every <em>document</em></h2><div class="grid">'+f('biz.name','Trading name',b.name)+f('biz.legal','Legal name',b.legal)+f('biz.abn','ABN',b.abn)+f('biz.phone','Phone (calls)',b.phone)+f('biz.sms','Text number (Mobile Message)',b.sms,'','0468 193 772')+'<div class="full">'+f('biz.address','Address',b.address)+'</div>'+f('biz.email','Email',b.email)+f('biz.web','Website',b.web)+'</div><label class="check"><input type="checkbox" data-s="gst"'+(st.gst?' checked':'')+'>Registered for GST (invoices say "Tax invoice" and add GST by default)</label></div>';
     h+='<div class="card"><h2>Bank <em>details</em></h2><p class="hint" style="margin-top:-6px">Shown on invoices so clients can pay by transfer, with the invoice number as the reference.</p><div class="grid"><div class="full">'+f('bank.name','Account name',k.name,'','Jack East')+'</div>'+f('bank.bsb','BSB',k.bsb,'','000-000')+f('bank.acct','Account number',k.acct)+'</div></div>';
     h+='<div class="card"><h2>Card <em>payments</em></h2>'+(S.card?'<div class="hint-card">On. Invoices show a Pay by card button through Stripe, and card payments are recorded here automatically.</div>':'<div class="hint-card"><b>Off.</b> To switch on: in Stripe, copy your secret key (Developers, API keys). In Netlify, open this site, then Site configuration, Environment variables, and add <b>STRIPE_SECRET_KEY</b> with that key. Redeploy, and the Pay by card button appears.</div>')+'</div>';
     h+='<div class="card"><h2>Numbers and <em>defaults</em></h2><div class="grid">'+f('nextQuote','Next quote number',st.nextQuote,'number')+f('nextInvoice','Next invoice number',st.nextInvoice,'number')+f('depositPct','Deposit to book (%)',st.depositPct,'number')+f('quoteValidDays','Quotes valid for (days)',st.quoteValidDays,'number')+'<div class="full">'+f('invoiceDueDays','Invoices due after (days, 0 = on receipt)',st.invoiceDueDays,'number')+'</div></div></div>';

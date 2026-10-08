@@ -156,7 +156,7 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
   else if(/^\/v\/[\w-]+/.test(path)){ mode='vendor'; cred=path.split('/')[2]; }
   else mode='admin';
   var data=null, tab='today', openId=null, photoMode='after', as='', err='';
-  var JACK='0406 216 212';
+  var JACK='0406 216 212', JACK_TXT='0468 193 772';
   var $=function(id){return document.getElementById(id);};
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function ls(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
@@ -285,7 +285,7 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
     var started=Object.keys(L.arrived||{}).length||L.done||j.date<today();
     var h='<div class="panel bk" style="margin-top:12px"><span class="sub">Your booking</span><div class="bk-when">'+(j.days?j.days.map(function(x){ return '<b>'+esc(longDay(x.date))+'</b><span>Team arrives '+fmtTime(x.start)+(x.end?' · finishing around '+fmtTime(x.end):'')+'</span>'; }).join(''):'<b>'+esc(longDay(j.date))+'</b><span>Team arrives '+fmtTime(j.start)+(j.end?' · finishing around '+fmtTime(j.end):'')+'</span>')+'</div>';
     h+='<dl class="bk-rows">'+(j.address||j.suburb?'<div><dt>Where</dt><dd>'+esc([j.address,j.suburb].filter(Boolean).join(', '))+'</dd></div>':'')+(j.service?'<div><dt>Service</dt><dd>'+esc(j.service)+'</dd></div>':'')+(j.readyBy?'<div><dt>Ready for</dt><dd>'+esc(j.readyBy)+'</dd></div>':'')+'</dl>';
-    h+='<div class="actions" style="margin-top:12px">'+(started?'':'<a class="btn outline" href="'+icsHref(j)+'" download="bardon-clean.ics">Add to calendar</a>')+'<a class="btn dark" href="sms:+61406216212">Text Jack</a></div></div>';
+    h+='<div class="actions" style="margin-top:12px">'+(started?'':'<a class="btn outline" href="'+icsHref(j)+'" download="bardon-clean.ics">Add to calendar</a>')+'<a class="btn dark" href="sms:+61468193772">Text Jack</a></div></div>';
     if(!started){
       h+='<section class="blk"><h2>Before we <em>arrive</em></h2><div class="panel"><ul class="prep"><li><b>Access</b>Let Jack know how the team will get in (keys, lockbox or someone home), if it isn\'t sorted yet.</li><li><b>Power and water</b>Please leave both on. The team needs them to clean.</li><li><b>Pets and hazards</b>Let us know about pets, alarms or anything the team should watch for.</li></ul></div></section>';
       h+='<section class="blk"><h2>On the <em>day</em></h2><div class="panel sub" style="font-size:14px">Keep this link. As the team works it updates with their arrival, each room as it\'s finished, and before and after photos.</div></section>';

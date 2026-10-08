@@ -3,7 +3,7 @@
 import { store, json, checkAdmin } from "../../lib/core.mjs";
 import {
   loadSettings, cleanSettings, cleanDoc, loadDocs, findByToken, saveDoc, newDoc,
-  recordPayment, addJobFromQuote, publicView, totals, statusOf, today, addDays, depositDesc,
+  recordPayment, addJobFromQuote, publicView, totals, statusOf, today, addDays, depositDesc, reportFor,
 } from "../../lib/docs.mjs";
 import { notify, money, fmtDay } from "../../lib/notify.mjs";
 
@@ -21,7 +21,7 @@ export default async (req) => {
     const t = u.searchParams.get("t");
     if (t) {
       const d = await findByToken(s, t);
-      if (!d || (d.status === "draft" && !admin)) return json({ error: "This link isn't active. Call Jack at Bardon Clean on 0406 216 212." }, 404);
+      if (!d || (d.status === "draft" && !admin)) return json({ error: "This link isn't active. Text Jack at Bardon Clean on 0468 193 772." }, 404);
       if (!admin) {
         // Only counted when the page runs in a real browser (link previews don't run it).
         const now = new Date().toISOString();
@@ -44,6 +44,8 @@ export default async (req) => {
       const set = await loadSettings(s);
       const out = publicView(d, set);
       out.card = !!process.env.STRIPE_SECRET_KEY;
+      // Invoices link to the job report (live page with photos) once the job is on the roster.
+      if (d.kind === "invoice" && !d.isDeposit) { const r = await reportFor(s, d); if (r) out.report = r; }
       // After accepting, point the client at their deposit invoice.
       if (d.kind === "quote" && d.depositInvoice) {
         const inv = await s.get(`doc/${d.depositInvoice}`);
@@ -65,7 +67,7 @@ export default async (req) => {
     if (!q || q.kind !== "quote" || q.status === "draft") return json({ error: "This link isn't active." }, 404);
     if (q.status === "accepted") return json({ ok: true });
     const st = statusOf(q);
-    if (st === "expired") return json({ error: "This quote has expired. Call Jack on 0406 216 212 for an updated one." }, 410);
+    if (st === "expired") return json({ error: "This quote has expired. Text Jack on 0468 193 772 for an updated one." }, 410);
     const name = String(b.name || "").trim().slice(0, 120);
     if (name.length < 2) return json({ error: "Type your name to accept." }, 400);
     q.status = "accepted"; q.acceptedAt = new Date().toISOString(); q.acceptedName = name;
@@ -155,7 +157,7 @@ export default async (req) => {
       if (paid > 0) items = [...d.items, { title: `Less deposit paid (invoice #${dep.num})`, desc: "", qty: 1, price: -r2(d.gst ? paid / 1.1 : paid) }];
     }
     const inv = await newDoc(s, set, {
-      kind: "invoice", status: "draft", quoteId: d.id, quoteNum: d.num, client: d.client, site: d.site, suburb: d.suburb,
+      kind: "invoice", status: "draft", quoteId: d.id, quoteNum: d.num, jobId: d.jobId || "", client: d.client, site: d.site, suburb: d.suburb,
       service: d.service, beds: d.beds, baths: d.baths, serviceDate: d.serviceDate, issued: today(),
       dueDate: addDays(today(), set.invoiceDueDays || 0), gst: d.gst, items, notes: "", showTerms: false,
     });

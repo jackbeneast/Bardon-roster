@@ -11,7 +11,7 @@
   function first(n){ return String(n||'').trim().split(/\s+/)[0]||'there'; }
 
   function build(o){
-    var j=o.job, d=o.doc||null, dep=o.deposit||null, origin=o.origin||location.origin, phone=o.phone||'0406 216 212';
+    var j=o.job, d=o.doc||null, dep=o.deposit||null, origin=o.origin||location.origin, phone=o.phone||'0406 216 212', text=o.sms||'0468 193 772';
     var who=first(d&&(d.client.contact||d.client.name)||j.client);
     var place=[j.address,j.suburb].filter(Boolean).join(', ');
     var size=d&&(d.beds||d.baths)?' ('+[d.beds?d.beds+' bed':'',d.baths?d.baths+' bath':''].filter(Boolean).join(', ')+')':'';
@@ -33,7 +33,7 @@
       j.service+size+(days?' over '+days.length+' days':'')+'\n'+whenSms+'\n'+(place?place+'\n':'')+
       (depSms?'\n'+depSms+'\n':'')+
       (live?'\nFollow your clean live, with before and after photos:\n'+live+'\n':'')+
-      '\nAny questions, call or text me on '+phone+'.\nJack';
+      '\nAny questions, text me on '+text+'.\nJack';
 
     var subject=(locked?'Booking confirmed: ':'Your booking: ')+j.service+', '+shortDay(j.date)+(days?' to '+shortDay(days[days.length-1].date):'')+(place?' · '+(j.address||j.suburb):'');
     var L=[];
@@ -49,7 +49,7 @@
       '- Let us know how we\'ll get in (keys, lockbox or someone home), if we haven\'t sorted it already.',
       '- Please have the power and water on.',
       '- Tell us about any pets, alarms or hazards at the property.','');
-    L.push('Need to change anything? Call or text me on '+phone+'. Please give us at least 24 hours\' notice for any changes.','','Thanks,','Jack East','Bardon Clean · bardonclean.au');
+    L.push('Need to change anything? Text me on '+text+' or call '+phone+'. Please give us at least 24 hours\' notice for any changes.','','Thanks,','Jack East','Bardon Clean · bardonclean.au');
     return {sms:sms, subject:subject, email:L.join('\n')};
   }
   // A multi-day booking is several roster jobs sharing a group id. Give the first day a list of all days.

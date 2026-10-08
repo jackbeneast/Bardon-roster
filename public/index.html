@@ -347,6 +347,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 </style></head><body>
 <div id="app"></div>
 <script src="/lib/confirm.js"></script>
+<script src="/lib/sms.js"></script>
 <script>
 (function(){
   var state = {team:[],jobs:[],confirms:{},info:{},acks:{},agents:[],live:{},requests:[]}, loaded=false, loadErr='', adminSet=true;
@@ -1120,6 +1121,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg>'
   };
   function hubConfirm(job, d, dep){
+    BCSms.check(key()).then(function(){ var c=document.querySelector('[data-copen]'); if(c&&BCSms.ready&&c.textContent==='Open Messages') c.textContent='Send text'; });
     var m=BCConfirm.build({job:job,doc:d,deposit:dep}), mode='sms', ph=d&&d.client.phone||'', em=d&&d.client.email||'';
     var h='<h3>Booking <em>confirmation</em></h3><div class="kindsw"><button type="button" data-cm="sms" aria-pressed="true">Text</button><button type="button" data-cm="email" aria-pressed="false">Email</button></div>'+
       '<div data-pane="sms"><label class="l">To<input type="tel" id="cTo" value="'+esc(ph)+'" placeholder="Client mobile"></label><label class="l" style="margin-top:10px">Message<textarea id="cSms" style="min-height:220px">'+esc(m.sms)+'</textarea></label></div>'+
@@ -1130,9 +1132,10 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     function mark(){ if(d) api('/api/docs',{method:'POST',body:{action:'confirmed',id:d.id}}).catch(function(){}); }
     s.addEventListener('click',function(e){
       var b=e.target.closest('[data-cm]');
-      if(b){ mode=b.dataset.cm; Array.prototype.forEach.call(s.querySelectorAll('[data-cm]'),function(x){x.setAttribute('aria-pressed',String(x===b));}); s.querySelector('[data-pane="sms"]').hidden=mode!=='sms'; s.querySelector('[data-pane="email"]').hidden=mode!=='email'; s.querySelector('[data-copen]').textContent=mode==='sms'?'Open Messages':'Open Mail'; return; }
+      if(b){ mode=b.dataset.cm; Array.prototype.forEach.call(s.querySelectorAll('[data-cm]'),function(x){x.setAttribute('aria-pressed',String(x===b));}); s.querySelector('[data-pane="sms"]').hidden=mode!=='sms'; s.querySelector('[data-pane="email"]').hidden=mode!=='email'; s.querySelector('[data-copen]').textContent=mode==='sms'?(BCSms.ready?'Send text':'Open Messages'):'Open Mail'; return; }
       var o=e.target.closest('[data-copen]');
-      if(o){ o.href=mode==='sms'?smsHref(s.querySelector('#cTo').value, s.querySelector('#cSms').value):'mailto:'+encodeURIComponent(s.querySelector('#cEm').value)+'?subject='+encodeURIComponent(s.querySelector('#cSub').value)+'&body='+encodeURIComponent(s.querySelector('#cEmail').value); mark(); return; }
+      if(o&&mode==='sms'){ if(BCSms.go(o,s.querySelector('#cTo').value,s.querySelector('#cSms').value,key(),{ref:'conf',toast:toast,done:mark})){ e.preventDefault(); return; } mark(); return; }
+      if(o){ o.href='mailto:'+encodeURIComponent(s.querySelector('#cEm').value)+'?subject='+encodeURIComponent(s.querySelector('#cSub').value)+'&body='+encodeURIComponent(s.querySelector('#cEmail').value); mark(); return; }
       if(e.target.closest('[data-ccopy]')){ copyText(mode==='sms'?s.querySelector('#cSms').value:s.querySelector('#cSub').value+'\n\n'+s.querySelector('#cEmail').value, mode==='sms'?s.querySelector('#cSms'):s.querySelector('#cEmail')); mark(); }
     });
   }
