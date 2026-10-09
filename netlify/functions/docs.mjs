@@ -3,7 +3,7 @@
 import { store, json, checkAdmin } from "../../lib/core.mjs";
 import {
   loadSettings, cleanSettings, cleanDoc, loadDocs, findByToken, saveDoc, newDoc,
-  recordPayment, addJobFromQuote, publicView, fillJobberQuote, totals, statusOf, today, addDays, depositDesc, reportFor,
+  recordPayment, addJobFromQuote, publicView, fillJobberQuote, totals, statusOf, today, addDays, depositDesc, reportFor, freeDates,
 } from "../../lib/docs.mjs";
 import { notify, money, fmtDay } from "../../lib/notify.mjs";
 import { planImport } from "../../lib/jobberImport.mjs";
@@ -45,6 +45,8 @@ export default async (req) => {
         }
       }
       const out = publicView(d, set);
+      // Quotes without a date: offer the days that still have room.
+      if (d.kind === "quote" && !d.serviceDate && ["sent", "viewed"].includes(statusOf(d))) out.pickDates = await freeDates(s, set);
       out.card = !!process.env.STRIPE_SECRET_KEY;
       // Invoices link to the job report (live page with photos) once the job is on the roster.
       if (d.kind === "invoice" && !d.isDeposit) { const r = await reportFor(s, d); if (r) out.report = r; }
@@ -79,6 +81,11 @@ export default async (req) => {
     if (st === "expired") return json({ error: "This quote has expired. Text Jack on 0468 193 772 for an updated one." }, 410);
     const name = String(b.name || "").trim().slice(0, 120);
     if (name.length < 2) return json({ error: "Type your name to accept." }, 400);
+    if (!q.serviceDate && b.date) {
+      const free = await freeDates(s, await loadSettings(s));
+      if (!free.includes(b.date)) return json({ error: "That day has just been booked. Please pick another." }, 409);
+      q.serviceDate = b.date; q.datePicked = true;
+    }
     q.status = "accepted"; q.acceptedAt = new Date().toISOString(); q.acceptedName = name;
     q.flag = "accepted"; q.flagAt = q.acceptedAt;
     const set = await loadSettings(s);
@@ -100,7 +107,7 @@ export default async (req) => {
     const tq = totals(q);
     await notify(s, {
       type: "quote_accept", title: `${label(q)} accepted`,
-      body: `${money(tq.total)}${q.site ? " · " + q.site : ""}${q.serviceDate ? `\nClean ${fmtDay(q.serviceDate)}${q.jobId ? ", added to the roster" : ""}` : "\nNo date yet, add it to the roster"}${q.depositInvoice ? `\n${q.depositPct}% deposit invoice sent to them` : ""}`,
+      body: `${money(tq.total)}${q.site ? " · " + q.site : ""}${q.serviceDate ? `\nClean ${fmtDay(q.serviceDate)}${q.datePicked ? " (they picked it)" : ""}${q.jobId ? ", added to the roster" : ""}` : "\nNo date yet, add it to the roster"}${q.depositInvoice ? `\n${q.depositPct}% deposit invoice sent to them` : ""}`,
       tags: "tada", priority: 5, url: `/money/#/doc/${q.id}`,
     });
     return json({ ok: true });
