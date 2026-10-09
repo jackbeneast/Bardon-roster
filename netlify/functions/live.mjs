@@ -84,6 +84,20 @@ export default async (req) => {
       }
       break;
     }
+    case "supply": { // running low on something: for Jack only, never shown to agents
+      const t = str(b.title, 80);
+      if (!t) return json({ error: "Say what's running low" }, 400);
+      if (L.supplies.length >= 30) return json({ error: "Too many items on this job" }, 400);
+      L.supplies.push({ id: Math.random().toString(36).slice(2, 10), t, by: pid, at: now });
+      if (!admin) {
+        const p = roster.team.find((x) => x.id === pid);
+        await notify(s, { type: "supply", title: `Running low: ${t}`, body: `${where(job)}${p ? ` · from ${firstName(p.name)}` : ""}`, tags: "shopping_cart", priority: 3, url: "/" });
+      }
+      break;
+    }
+    case "unsupply":
+      L.supplies = L.supplies.filter((x) => x.id !== b.id);
+      break;
     case "unflag":
       L.flags = L.flags.filter((f) => f.id !== b.id);
       break;
