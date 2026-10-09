@@ -33,6 +33,13 @@ export async function runChecks(s) {
       if (st == null || L.arrived?.[pid] || confirms[j.id]?.[pid]?.s === "no" || nowMin < st + 15 || nowMin > st + 180) continue;
       await fire(`late/${j.id}/${pid}/${today}`, { type: "late", title: `${firstName(p.name)} hasn't checked in at ${where(j)}`, body: `Shift started ${fmtTime(shiftOf(j, pid).start)}. They may have forgotten to tap "I've arrived".${p.phone ? "\nCall " + p.phone : ""}`, tags: "hourglass", priority: 4, url: "/" });
     }
+    // Arrived but still not clocked off 90 minutes after their shift end (so their hours can't be logged).
+    for (const pid of j.staff || []) {
+      const p = team[pid]; if (!p || p.owner || !L.arrived?.[pid] || L.left?.[pid]) continue;
+      const en = mins(shiftOf(j, pid).end);
+      if (en == null || nowMin < en + 90 || nowMin > en + 360) continue;
+      await fire(`noclock/${j.id}/${pid}/${today}`, { type: "noclock", title: `${firstName(p.name)} hasn't clocked off at ${where(j)}`, body: `Shift was due to end ${fmtTime(shiftOf(j, pid).end)}. Their hours won't log themselves until they tap "Clock off", or you can enter them in the wrap-up.${p.phone ? "\nCall " + p.phone : ""}`, tags: "stopwatch", url: "/" });
+    }
     // Team on site but not marked ready an hour after the finish time.
     const end = mins(j.end);
     if (end != null && Object.keys(L.arrived || {}).length && !L.done && nowMin >= end + 60 && nowMin <= end + 300)

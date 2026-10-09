@@ -1,4 +1,6 @@
-import { store, json, loadRoster, loadLive, checkAdmin, roomsOf, LOCK, shiftOf } from "../../lib/core.mjs";
+import { store, json, loadRoster, loadLive, loadConfirms, checkAdmin, roomsOf, LOCK, shiftOf } from "../../lib/core.mjs";
+import { autoWrap, clockedHours } from "../../lib/clock.mjs";
+import { paySet } from "../../public/lib/wages.mjs";
 import { notify, firstName, where, fmtTime, clockNow } from "../../lib/notify.mjs";
 
 // Live progress on a job: arrivals, rooms, flags for the agent, lock-up, finish.
@@ -18,6 +20,7 @@ export default async (req) => {
   if (admin && !pid) pid = owner ? owner.id : "admin";
 
   const L = await loadLive(s, job.id);
+  let wrapCheck = false;
   const now = new Date().toISOString();
   const str = (v, n) => (typeof v === "string" ? v.trim().slice(0, n) : "");
 
@@ -25,7 +28,7 @@ export default async (req) => {
     case "arrive": {
       const who = b.who && (admin || b.who === pid) ? b.who : pid;
       if (!onJob(who)) return json({ error: "That person isn't on this job." }, 400);
-      if (b.undo) delete L.arrived[who];
+      if (b.undo) { delete L.arrived[who]; delete L.left[who]; }
       else {
         const first = !L.arrived[who];
         L.arrived[who] = now;
@@ -35,6 +38,21 @@ export default async (req) => {
           await notify(s, { type: "arrive", title: `${firstName(p.name)} arrived at ${where(job)}`, body: `${clockNow()}${st ? ` (shift starts ${fmtTime(st)})` : ""}`, tags: "round_pushpin", priority: 2, url: "/" });
         }
       }
+      break;
+    }
+    case "leave": {
+      const who = b.who && (admin || b.who === pid) ? b.who : pid;
+      if (!onJob(who)) return json({ error: "That person isn't on this job." }, 400);
+      if (b.undo) { delete L.left[who]; break; }
+      if (!L.arrived[who]) return json({ error: "Tap \"I've arrived\" first, then clock off when you leave." }, 400);
+      const first = !L.left[who];
+      L.left[who] = now;
+      const p = roster.team.find((x) => x.id === who);
+      if (first && p && !p.owner) {
+        const h = clockedHours(L.arrived[who], now, paySet(roster.pay).lunch);
+        await notify(s, { type: "leave", title: `${firstName(p.name)} clocked off at ${where(job)}`, body: `${clockNow()}${h != null ? ` · ${h} h paid` : ""}`, tags: "wave", priority: 2, url: "/" });
+      }
+      wrapCheck = true;
       break;
     }
     case "room": {
@@ -74,6 +92,7 @@ export default async (req) => {
       else {
         const first = !L.done;
         L.done = now;
+        wrapCheck = true;
         if (first && !admin) {
           const rs = roomsOf(job), d = rs.filter((r) => L.rooms[r]?.s === "d").length, lk = Object.keys(LOCK).filter((k) => L.lock[k]).length;
           const ph = L.photos.filter((p) => p.kind === "after").length;
@@ -86,6 +105,10 @@ export default async (req) => {
   }
   L.updated = now;
   await s.set(`live/${job.id}`, L);
+  if (wrapCheck) {
+    try { await autoWrap(s, roster, job, new Date(Date.now() + 10 * 3600e3).toISOString().slice(0, 10), await loadConfirms(s)); }
+    catch (e) { console.error("auto wrap failed", e); }
+  }
   return json({ ok: true, live: L });
 };
 

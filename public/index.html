@@ -384,7 +384,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function roomsOf(j){ return (j.rooms&&j.rooms.length)?j.rooms:DEF_ROOMS; }
   function tok(){ var a=new Uint8Array(18); crypto.getRandomValues(a); return Array.prototype.map.call(a,function(b){return (b<16?'0':'')+b.toString(16);}).join(''); }
   function agentOf(id){ for(var i=0;i<(state.agents||[]).length;i++) if(state.agents[i].id===id) return state.agents[i]; return null; }
-  function liveOf(j){ var L=(state.live&&state.live[j.id])||{}; return Object.assign({},L,{arrived:L.arrived||{},rooms:L.rooms||{},photos:L.photos||[],flags:L.flags||[],lock:L.lock||{}}); }
+  function liveOf(j){ var L=(state.live&&state.live[j.id])||{}; return Object.assign({},L,{arrived:L.arrived||{},left:L.left||{},rooms:L.rooms||{},photos:L.photos||[],flags:L.flags||[],lock:L.lock||{}}); }
   function liveSum(j){ var L=liveOf(j), rs=roomsOf(j), d=rs.filter(function(r){return L.rooms[r]&&L.rooms[r].s==='d';}).length; var arrived=Object.keys(L.arrived||{}).length;
     if(L.done) return {c:'ok',t:'Ready · handed over'}; if(!arrived&&!d&&!Object.keys(L.rooms||{}).length) return null; if(d===rs.length) return {c:'on',t:'Final check'}; return {c:'on',t:(arrived?'On site':'Underway')+' · '+d+'/'+rs.length+' rooms'}; }
   var SERVICES = ['Bond clean','Pre-sale clean','Deep clean','Regular clean','Commercial','Other'];
@@ -994,6 +994,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       phReq('DELETE','',{ids:Object.keys(phSel)}).then(function(){ phSel={}; drawLive(); toast(n+' deleted'); }).catch(function(e){ b.disabled=false; toast(e.message); }); return true; }
     return false;
   }
+  function onSite(a,l){ var m=Math.round((Date.parse(l)-Date.parse(a))/60000); if(!(m>0)) return ''; return Math.floor(m/60)+'h'+(m%60?' '+pad(m%60)+'m':''); }
   function fmtClock(isoStr){ if(!isoStr) return ''; var d=new Date(isoStr), h=d.getHours(), m=d.getMinutes(); return (h%12||12)+':'+pad(m)+(h>=12?'pm':'am'); }
   function drawLive(){
     var box=document.getElementById('liveBox'); if(!box||!liveOpen) return;
@@ -1001,9 +1002,13 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var L=liveOf(j), pid=liveOpen.pid, ag=agentOf(j.agentId), keep=box.closest('.sheet').scrollTop;
     var h='<h3>Job <em>updates</em></h3><p class="sub" style="margin:-6px 0 0">'+esc((j.address||j.client)+(j.suburb?', '+j.suburb:''))+' · '+fmtDay(parse(j.date))+'</p>';
     h+='<p class="sub">'+(j.agentId?'The agent'+(ag&&canEdit?' ('+esc(ag.name)+')':'')+' sees these updates live, plus the photos and notes.':'No agent on this job. Updates still save to the job.')+'</p>';
-    h+='<div class="lsec"><h4>Arrived</h4>';
-    (j.staff||[]).forEach(function(id){ var m=member(id); if(!m) return; if(!canEdit && id!==pid) { h+='<div class="lrow"><span class="nm">'+esc(m.name)+'</span><span class="ds">'+(L.arrived[id]?'Arrived '+fmtClock(L.arrived[id]):'Not yet')+'</span></div>'; return; }
-      h+='<div class="lrow"><span><span class="nm">'+esc(m.name)+'</span><br><span class="ds">'+(L.arrived[id]?'Arrived '+fmtClock(L.arrived[id]):'Not arrived')+'</span></span>'+(L.arrived[id]?'<button type="button" class="btn danger" data-arr="'+id+'" data-undo="1">Undo</button>':'<button type="button" class="btn yes" data-arr="'+id+'" style="flex:none">I\'ve arrived</button>')+'</div>'; });
+    h+='<div class="lsec"><h4>Clock in and off</h4><p class="sub" style="margin:0 0 8px">Your hours come from these taps, so clock off when you leave the house.</p>';
+    (j.staff||[]).forEach(function(id){ var m=member(id); if(!m) return; if(!canEdit && id!==pid) { h+='<div class="lrow"><span class="nm">'+esc(m.name)+'</span><span class="ds">'+(L.left[id]?'Off '+fmtClock(L.left[id]):L.arrived[id]?'In '+fmtClock(L.arrived[id]):'Not yet')+'</span></div>'; return; }
+      var ar=L.arrived[id], lf=L.left[id], ds=!ar?'Not arrived':'In '+fmtClock(ar)+(lf?' · Off '+fmtClock(lf)+' · '+onSite(ar,lf):''), bt;
+      if(!ar) bt='<button type="button" class="btn yes" data-arr="'+id+'" style="flex:none">I\'ve arrived</button>';
+      else if(!lf) bt='<span style="display:flex;gap:6px"><button type="button" class="btn danger" data-arr="'+id+'" data-undo="1">Undo</button><button type="button" class="btn yes" data-leave="'+id+'" style="flex:none">Clock off</button></span>';
+      else bt='<button type="button" class="btn danger" data-leave="'+id+'" data-undo="1">Undo clock off</button>';
+      h+='<div class="lrow"><span><span class="nm">'+esc(m.name)+'</span><br><span class="ds">'+ds+'</span></span>'+bt+'</div>'; });
     h+='</div><div class="lsec"><h4>Areas'+(canEdit?'<button type="button" class="ed" data-editareas>Add or remove areas</button>':'')+'</h4>';
     roomsOf(j).forEach(function(r){ var st=(L.rooms[r]&&L.rooms[r].s)||'w', by=L.rooms[r]&&member(L.rooms[r].by);
       h+='<div class="lrow"><span><span class="nm">'+esc(r)+'</span>'+(by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span></div>'; });
@@ -1015,6 +1020,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     Object.keys(LOCK).forEach(function(k){ h+='<label class="tick"><input type="checkbox" data-lock="'+k+'"'+(L.lock[k]?' checked':'')+'>'+esc(LOCK[k])+'</label>'; });
     h+='</div>';
     if(canEdit) h+='<div class="lsec"><h4>Finish time the agent sees</h4><div class="two"><label class="l" for="eta">Estimated finish<input id="eta" type="time" value="'+esc(L.eta||j.end||'')+'"></label><button type="button" class="btn outline" data-eta style="align-self:end">Update</button></div></div>';
+    if(pid && L.arrived[pid] && !L.left[pid] && L.done) h+='<div class="lsec"><button type="button" class="btn yes" data-leave="'+pid+'" style="width:100%">Clock off now</button><p class="sub">The job is marked ready. Clock off as you leave so your hours are logged.</p></div>';
     h+='<div class="lsec">'+(L.done?'<span class="cs ok">✓ Marked ready '+fmtClock(L.done)+'</span> <button type="button" class="btn danger" data-finish="undo">Undo</button>':'<button type="button" class="btn yes" data-finish="1" style="width:100%">Job finished: mark ready for the agent</button><p class="sub">Check every room is done, afters are taken and the house is locked up first.</p>')+'</div>';
     h+='<div class="err" id="liveErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Close</button></div>';
     var ft=document.getElementById('fl_t'), fdd=document.getElementById('fl_d'), kv={t:ft?ft.value:'',d:fdd?fdd.value:''};
@@ -1034,12 +1040,13 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(b.closest('#phsec') && phClick(b)) return;
     if(b.hasAttribute('data-editareas')){ var jid=liveOpen.jobId, pp=liveOpen.pid; closeSheet(); liveOpen={jobId:jid,pid:pp}; areasSheet(jid); return; }
     if(b.dataset.arr){ livePost({action:'arrive',who:b.dataset.arr,undo:!!b.dataset.undo},b); return; }
+    if(b.dataset.leave){ livePost({action:'leave',who:b.dataset.leave,undo:!!b.dataset.undo},b).then(function(){ if(!b.dataset.undo) toast('Clocked off. Thanks!'); }); return; }
     if(b.dataset.room){ livePost({action:'room',room:b.dataset.room,status:b.dataset.st},b); return; }
     if(b.dataset.unflag){ livePost({action:'unflag',id:b.dataset.unflag},b); return; }
     if(b.hasAttribute('data-addflag')){ var t=document.getElementById('fl_t').value.trim(); if(!t){ toast('Add a short title'); return; } livePost({action:'flag',title:t,detail:document.getElementById('fl_d').value},b).then(function(){ var x=document.getElementById('fl_t'),y=document.getElementById('fl_d'); if(x) x.value=''; if(y) y.value=''; }); return; }
     if(b.hasAttribute('data-eta')){ livePost({action:'eta',time:document.getElementById('eta').value},b).then(function(){toast('Finish time updated');}); return; }
     if(b.dataset.finish){ var j=state.jobs.find(function(x){return x.id===liveOpen.jobId;}), L=liveOf(j); if(b.dataset.finish!=='undo' && !b.dataset.sure){ var left=roomsOf(j).filter(function(r){return !(L.rooms[r]&&L.rooms[r].s==='d');}).length, lk=Object.keys(LOCK).filter(function(k){return !L.lock[k];}).length; if(left||lk){ b.dataset.sure='1'; b.textContent=(left?left+' room'+(left>1?'s':'')+' not done':'')+(left&&lk?', ':'')+(lk?lk+' lock-up item'+(lk>1?'s':'')+' unticked':'')+'. Tap again to finish anyway'; return; } }
-      livePost({action:'finish',undo:b.dataset.finish==='undo'},b).then(function(){ if(b.dataset.finish!=='undo') toast('Marked ready. The agent can see it now.'); }); return; }
+      livePost({action:'finish',undo:b.dataset.finish==='undo'},b).then(function(){ if(b.dataset.finish!=='undo') toast(liveOpen&&liveOpen.pid&&!liveOf(state.jobs.find(function(x){return x.id===liveOpen.jobId;})).left[liveOpen.pid]?'Marked ready. Now clock off when you leave.':'Marked ready. The agent can see it now.'); }); return; }
   }
   function liveChange(e){
     var t=e.target; if(!liveOpen) return;
@@ -1190,8 +1197,11 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<button type="button" class="cam" data-qa="before"'+ctx+'>'+IC.cam+'Before<small>'+bN+' taken</small></button>';
     h+='<button type="button" class="cam" data-qa="after"'+ctx+'>'+IC.cam+'After<small>'+aN+' taken</small></button>';
     h+='<button type="button" data-qa="rooms"'+ctx+'>'+IC.rooms+'Rooms<small>'+done+'/'+rs.length+' done</small></button>';
-    if(pid) h+='<button type="button" class="'+(mineArr?'done':'')+'" data-qa="arrive"'+ctx+'>'+(mineArr?IC.check:IC.pin)+(mineArr?'Arrived<small>'+fmtClock(mineArr)+'</small>':'I\'ve arrived')+'</button>';
-    else h+='<button type="button" class="'+(arrN&&arrN>=staffN?'done':'')+'" data-qa="rooms"'+ctx+'>'+(arrN?IC.check:IC.pin)+'On site<small>'+arrN+' of '+staffN+' in</small></button>';
+    var mineLeft = pid ? L.left[pid] : null;
+    if(pid && !mineArr) h+='<button type="button" data-qa="arrive"'+ctx+'>'+IC.pin+'I\'ve arrived</button>';
+    else if(pid && !mineLeft) h+='<button type="button" data-qa="leave"'+ctx+'>'+IC.pin+'Clock off<small>In since '+fmtClock(mineArr)+'</small></button>';
+    else if(pid) h+='<button type="button" class="done" data-qa="arrive"'+ctx+'>'+IC.check+'Clocked off<small>'+fmtClock(mineLeft)+' · '+onSite(mineArr,mineLeft)+'</small></button>';
+    else h+='<button type="button" class="'+(arrN&&arrN>=staffN?'done':'')+'" data-qa="rooms"'+ctx+'>'+(arrN?IC.check:IC.pin)+'On site<small>'+arrN+' of '+staffN+' in'+(Object.keys(L.left||{}).length?' · '+Object.keys(L.left).length+' off':'')+'</small></button>';
     h+='<button type="button" data-qa="note"'+ctx+'>'+IC.flag+'Note for agent<small>'+(L.flags.length?L.flags.length+' added':'Damage, marks')+'</small></button>';
     h+='<button type="button" class="'+(L.done?'done':'')+'" data-qa="finish"'+ctx+'>'+(L.done?IC.check:IC.tick)+(L.done?'Ready<small>'+fmtClock(L.done)+'</small>':'Lock-up &amp; finish')+'</button>';
     h+='</div><div class="qlinks"><button type="button" data-live="'+j.id+'" data-p="'+esc(pid||'')+'">All updates</button>'+(canEdit?'<button type="button" data-edit="'+j.id+'">Edit job</button>':'')+(canEdit&&j.share?'<button type="button" data-vcopy="'+esc(j.share)+'">Client link</button>':'')+(canEdit&&clientMob(j)?'<a href="'+textClientHref(j)+'">Text client</a>':'')+'</div></section>';
@@ -1391,7 +1401,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 
   // ---- Activity feed and phone notifications ----
   var act=null, actErr='', actLoading=false;
-  var ACT_ICON={shift_yes:['✓','ok'],shift_no:['✕','hot'],ack:['👌',''],arrive:['📍',''],late:['⏳','hot'],flag:['⚠️','hot'],finish:['✨','ok'],unfinished:['⏳',''],tomorrow:['📅','hot'],quote_view:['👀',''],inv_view:['👀',''],quote_accept:['🎉','ok'],quote_follow:['📞',''],quote_expiry:['⏳',''],paid:['💰','ok'],deposit:['💰','hot'],overdue:['⚠️','hot'],booking:['🏠','hot']};
+  var ACT_ICON={shift_yes:['✓','ok'],shift_no:['✕','hot'],ack:['👌',''],arrive:['📍',''],leave:['👋',''],noclock:['⏳','hot'],hours:['⏱','ok'],late:['⏳','hot'],flag:['⚠️','hot'],finish:['✨','ok'],unfinished:['⏳',''],tomorrow:['📅','hot'],quote_view:['👀',''],inv_view:['👀',''],quote_accept:['🎉','ok'],quote_follow:['📞',''],quote_expiry:['⏳',''],paid:['💰','ok'],deposit:['💰','hot'],overdue:['⚠️','hot'],booking:['🏠','hot']};
   function ago(isoStr){ var d=new Date(isoStr), m=Math.round((Date.now()-d)/60000); if(m<1) return 'Just now'; if(m<60) return m+' min ago'; var t=fmtTime(pad(d.getHours())+':'+pad(d.getMinutes())); if(iso(d)===iso(new Date())) return t; if(iso(d)===iso(addDays(new Date(),-1))) return 'Yesterday '+t; return fmtDay(d)+' '+t; }
   function loadActivity(){
     if(actLoading) return; actLoading=true;
@@ -1578,6 +1588,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var qa=e.target.closest('[data-qa]'); if(qa){ var q=qa.dataset.qa, jid=qa.dataset.j, qp=qa.dataset.p||'';
       if(q==='before'||q==='after') photoSheet(jid,qp,q);
       else if(q==='note') noteSheet(jid,qp);
+      else if(q==='leave'){ livePost({action:'leave',who:qp},qa,{jobId:jid,pid:qp}).then(function(){ toast('Clocked off. Thanks!'); }); }
       else if(q==='arrive'){ var L0=liveOf(state.jobs.find(function(x){return x.id===jid;})); if(L0.arrived[qp]) liveSheet(jid,qp); else livePost({action:'arrive',who:qp},qa,{jobId:jid,pid:qp}).then(function(){ toast('Arrival sent'); }); }
       else { liveSheet(jid,qp); if(q==='finish') setTimeout(function(){ var sh=document.querySelector('.sheet'); if(sh) sh.scrollTop=sh.scrollHeight; },60); }
       return; }
