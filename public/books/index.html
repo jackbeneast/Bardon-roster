@@ -446,6 +446,7 @@ function xeroCard(){
   }
   h+='<form id="xf" style="margin-top:14px"><div class="grid">';
   h+='<label class="l full">Clients pay into<select name="bank">'+opts(banks,X.bank,false,'Choose a bank account')+'</select></label>';
+  if(!banks.length) h+='<p class="sub full" style="margin:-4px 0 0">No bank accounts found in Xero yet. Add one in Xero, then <button type="button" class="ghost" data-act="xaccts" style="display:inline;padding:0;min-height:0;text-decoration:underline">reload accounts from Xero</button>.</p>';
   h+='<label class="l full">Card payments land in <small>(Stripe pays out in batches, minus fees. A Stripe clearing account in Xero keeps it tidy.)</small><select name="cardBank">'+opts(banks,X.cardBank,false,'Same account as above')+'</select></label>';
   h+='<label class="l">Income account<select name="sales">'+opts(inc,X.sales,true)+'</select></label>';
   h+='<label class="l">Send from <small>(earlier stays out)</small><input name="from" type="date" value="'+esc(X.from)+'"></label>';
