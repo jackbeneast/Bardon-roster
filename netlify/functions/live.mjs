@@ -62,6 +62,17 @@ export default async (req) => {
       else return json({ error: "Bad status" }, 400);
       break;
     }
+    case "item": { // one checklist tick inside a room
+      if (!roomsOf(job).includes(b.room)) return json({ error: "Unknown room" }, 400);
+      const id = str(b.item, 24);
+      if (!/^[a-z]_[a-z]{2,16}$/.test(id)) return json({ error: "Unknown checklist item" }, 400);
+      const r = (L.items[b.room] ||= {});
+      if (b.value) r[id] = { by: pid, at: now }; else delete r[id];
+      if (!Object.keys(r).length) delete L.items[b.room];
+      // First tick in a room moves it to "Doing" so the agent sees progress.
+      if (b.value && !L.rooms[b.room]) L.rooms[b.room] = { s: "p", by: pid, at: now };
+      break;
+    }
     case "flag": {
       const t = str(b.title, 120);
       if (!t) return json({ error: "Add a short title" }, 400);

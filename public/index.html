@@ -217,6 +217,13 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
 .sbtop{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;font:600 15px var(--sans)}
 .sbtop button{border:0;background:none;font:600 14px var(--sans);color:var(--dark);text-decoration:underline;padding:6px 4px;margin-left:8px;cursor:pointer}
 .sgrid button{min-height:46px;border-radius:8px;background:var(--cream);border:1px solid var(--line);font:600 14px/1.2 var(--sans);color:var(--dark);cursor:pointer;padding:6px}
+.clk{display:inline-block;margin-top:4px;border:0;background:none;padding:0;font:600 12px var(--sans);color:var(--terracotta);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.clk.ok{color:#2F5A35}
+.citem{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--cream-dark);font-size:15px;line-height:1.35;color:var(--dark);cursor:pointer}
+.citem input{width:22px;height:22px;flex:none;margin:0;accent-color:#2F5A35}
+.citem.on span{color:var(--meta);text-decoration:line-through}
+.cbar{height:6px;border-radius:3px;background:var(--cream-dark);overflow:hidden;margin:10px 0 4px}
+.cbar i{display:block;height:100%;background:#2F5A35}
 .tick{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:15px;color:var(--dark);cursor:pointer}
 .tick input{width:22px;height:22px;min-height:0;margin:0;accent-color:#2F5A35}
 .flagi{border-left:3px solid var(--gold);background:var(--cream);border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:8px;font-size:14px;color:var(--dark);display:flex;gap:8px;justify-content:space-between}
@@ -349,6 +356,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 <script src="/lib/confirm.js"></script>
 <script src="/lib/sms.js"></script>
 <script src="/lib/templates.js"></script>
+<script src="/lib/checklists.js"></script>
 <script>
 (function(){
   var state = {team:[],jobs:[],confirms:{},info:{},acks:{},agents:[],live:{},requests:[]}, loaded=false, loadErr='', adminSet=true;
@@ -384,7 +392,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function roomsOf(j){ return (j.rooms&&j.rooms.length)?j.rooms:DEF_ROOMS; }
   function tok(){ var a=new Uint8Array(18); crypto.getRandomValues(a); return Array.prototype.map.call(a,function(b){return (b<16?'0':'')+b.toString(16);}).join(''); }
   function agentOf(id){ for(var i=0;i<(state.agents||[]).length;i++) if(state.agents[i].id===id) return state.agents[i]; return null; }
-  function liveOf(j){ var L=(state.live&&state.live[j.id])||{}; return Object.assign({},L,{arrived:L.arrived||{},left:L.left||{},rooms:L.rooms||{},photos:L.photos||[],flags:L.flags||[],lock:L.lock||{}}); }
+  function liveOf(j){ var L=(state.live&&state.live[j.id])||{}; return Object.assign({},L,{arrived:L.arrived||{},left:L.left||{},items:L.items||{},rooms:L.rooms||{},photos:L.photos||[],flags:L.flags||[],lock:L.lock||{}}); }
   function liveSum(j){ var L=liveOf(j), rs=roomsOf(j), d=rs.filter(function(r){return L.rooms[r]&&L.rooms[r].s==='d';}).length; var arrived=Object.keys(L.arrived||{}).length;
     if(L.done) return {c:'ok',t:'Ready · handed over'}; if(!arrived&&!d&&!Object.keys(L.rooms||{}).length) return null; if(d===rs.length) return {c:'on',t:'Final check'}; return {c:'on',t:(arrived?'On site':'Underway')+' · '+d+'/'+rs.length+' rooms'}; }
   var SERVICES = ['Bond clean','Pre-sale clean','Deep clean','Regular clean','Commercial','Other'];
@@ -996,22 +1004,39 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   function onSite(a,l){ var m=Math.round((Date.parse(l)-Date.parse(a))/60000); if(!(m>0)) return ''; return Math.floor(m/60)+'h'+(m%60?' '+pad(m%60)+'m':''); }
   function fmtClock(isoStr){ if(!isoStr) return ''; var d=new Date(isoStr), h=d.getHours(), m=d.getMinutes(); return (h%12||12)+':'+pad(m)+(h>=12?'pm':'am'); }
+  function checklistView(j,L,room){
+    var items=CHECKLISTS.itemsFor(room,j.service), got=L.items[room]||{}, n=items.filter(function(i){return got[i.id];}).length, st=(L.rooms[room]&&L.rooms[room].s)||'w';
+    var rs=roomsOf(j), nx=rs[rs.indexOf(room)+1];
+    var h='<button type="button" class="clk" data-clback style="margin:0 0 8px">‹ All updates</button><h3>'+esc(room)+' <em>checklist</em></h3>';
+    h+='<p class="sub" style="margin:-6px 0 0">'+esc(CHECKLISTS.name(j.service))+' · '+esc(j.address||j.client||'')+'</p>';
+    h+='<div class="cbar"><i style="width:'+(items.length?Math.round(n/items.length*100):0)+'%"></i></div><p class="sub" style="margin:0 0 4px">'+n+' of '+items.length+' done. Work top to bottom.</p>';
+    items.forEach(function(i){ var on=!!got[i.id], by=on&&member(got[i.id].by);
+      h+='<label class="citem'+(on?' on':'')+'"><input type="checkbox" data-ci="'+i.id+'"'+(on?' checked':'')+'><span>'+esc(i.t)+(by&&canEdit?' <small style="color:var(--meta);text-decoration:none">· '+esc(by.name.split(' ')[0])+'</small>':'')+'</span></label>'; });
+    h+='<div class="lsec">';
+    if(st==='d') h+='<span class="cs ok">✓ '+esc(room)+' marked done</span>';
+    else if(n===items.length) h+='<button type="button" class="btn yes" data-room="'+esc(room)+'" data-st="d" style="width:100%">Mark '+esc(room)+' done</button><p class="sub">Take the after photos for this room too.</p>';
+    else h+='<button type="button" class="btn outline" data-room="'+esc(room)+'" data-st="d" style="width:100%">Mark done anyway ('+(items.length-n)+' left)</button>';
+    h+='</div><div class="err" id="liveErr" hidden></div><div class="actions">'+(nx?'<button type="button" class="btn primary" data-clnext="'+esc(nx)+'" style="flex:1">Next: '+esc(nx)+' ›</button>':'')+'<button type="button" class="btn outline" data-clback style="flex:1">All updates</button></div>';
+    return h;
+  }
   function drawLive(){
     var box=document.getElementById('liveBox'); if(!box||!liveOpen) return;
     var j=state.jobs.find(function(x){return x.id===liveOpen.jobId;}); if(!j){ closeSheet(); return; }
     var L=liveOf(j), pid=liveOpen.pid, ag=agentOf(j.agentId), keep=box.closest('.sheet').scrollTop;
+    if(liveOpen.room){ box.innerHTML=checklistView(j,L,liveOpen.room); if(liveOpen.keepTop) box.closest('.sheet').scrollTop=keep; else { box.closest('.sheet').scrollTop=0; liveOpen.keepTop=1; } return; }
     var h='<h3>Job <em>updates</em></h3><p class="sub" style="margin:-6px 0 0">'+esc((j.address||j.client)+(j.suburb?', '+j.suburb:''))+' · '+fmtDay(parse(j.date))+'</p>';
     h+='<p class="sub">'+(j.agentId?'The agent'+(ag&&canEdit?' ('+esc(ag.name)+')':'')+' sees these updates live, plus the photos and notes.':'No agent on this job. Updates still save to the job.')+'</p>';
     h+='<div class="lsec"><h4>Clock in and off</h4><p class="sub" style="margin:0 0 8px">Your hours come from these taps, so clock off when you leave the house.</p>';
     (j.staff||[]).forEach(function(id){ var m=member(id); if(!m) return; if(!canEdit && id!==pid) { h+='<div class="lrow"><span class="nm">'+esc(m.name)+'</span><span class="ds">'+(L.left[id]?'Off '+fmtClock(L.left[id]):L.arrived[id]?'In '+fmtClock(L.arrived[id]):'Not yet')+'</span></div>'; return; }
-      var ar=L.arrived[id], lf=L.left[id], ds=!ar?'Not arrived':'In '+fmtClock(ar)+(lf?' · Off '+fmtClock(lf)+' · '+onSite(ar,lf):''), bt;
+      var ar=L.arrived[id], lf=L.left[id], ds=!ar?'Not arrived':'In '+fmtClock(ar)+(lf?' · Off '+fmtClock(lf)+(onSite(ar,lf)?' · '+onSite(ar,lf):''):''), bt;
       if(!ar) bt='<button type="button" class="btn yes" data-arr="'+id+'" style="flex:none">I\'ve arrived</button>';
       else if(!lf) bt='<span style="display:flex;gap:6px"><button type="button" class="btn danger" data-arr="'+id+'" data-undo="1">Undo</button><button type="button" class="btn yes" data-leave="'+id+'" style="flex:none">Clock off</button></span>';
       else bt='<button type="button" class="btn danger" data-leave="'+id+'" data-undo="1">Undo clock off</button>';
       h+='<div class="lrow"><span><span class="nm">'+esc(m.name)+'</span><br><span class="ds">'+ds+'</span></span>'+bt+'</div>'; });
     h+='</div><div class="lsec"><h4>Areas'+(canEdit?'<button type="button" class="ed" data-editareas>Add or remove areas</button>':'')+'</h4>';
     roomsOf(j).forEach(function(r){ var st=(L.rooms[r]&&L.rooms[r].s)||'w', by=L.rooms[r]&&member(L.rooms[r].by);
-      h+='<div class="lrow"><span><span class="nm">'+esc(r)+'</span>'+(by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span></div>'; });
+      var ci=CHECKLISTS.itemsFor(r,j.service), cd=ci.filter(function(i){return L.items[r]&&L.items[r][i.id];}).length;
+      h+='<div class="lrow"><span><span class="nm">'+esc(r)+'</span>'+(by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+(ci.length?'<br><button type="button" class="clk'+(cd===ci.length?' ok':'')+'" data-cl="'+esc(r)+'">Checklist '+cd+'/'+ci.length+' ›</button>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span></div>'; });
     h+='</div>'+photoSec(j,L);
     h+='<div class="lsec"><h4>Notes for the agent</h4><p class="sub" style="margin:0 0 8px">Anything they should know before photos or buyers: damage, mould, broken fittings, stains that won\'t shift.</p>';
     L.flags.forEach(function(f){ h+='<div class="flagi"><span><b>'+esc(f.t)+'</b>'+esc(f.d)+'</span><button type="button" class="btn danger" data-unflag="'+f.id+'" style="min-height:0">Remove</button></div>'; });
@@ -1041,6 +1066,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(b.hasAttribute('data-editareas')){ var jid=liveOpen.jobId, pp=liveOpen.pid; closeSheet(); liveOpen={jobId:jid,pid:pp}; areasSheet(jid); return; }
     if(b.dataset.arr){ livePost({action:'arrive',who:b.dataset.arr,undo:!!b.dataset.undo},b); return; }
     if(b.dataset.leave){ livePost({action:'leave',who:b.dataset.leave,undo:!!b.dataset.undo},b).then(function(){ if(!b.dataset.undo) toast('Clocked off. Thanks!'); }); return; }
+    if(b.dataset.cl!=null){ liveOpen.room=b.dataset.cl; liveOpen.keepTop=0; drawLive(); return; }
+    if(b.hasAttribute('data-clback')){ liveOpen.room=null; drawLive(); return; }
+    if(b.dataset.clnext){ liveOpen.room=b.dataset.clnext; liveOpen.keepTop=0; drawLive(); return; }
     if(b.dataset.room){ livePost({action:'room',room:b.dataset.room,status:b.dataset.st},b); return; }
     if(b.dataset.unflag){ livePost({action:'unflag',id:b.dataset.unflag},b); return; }
     if(b.hasAttribute('data-addflag')){ var t=document.getElementById('fl_t').value.trim(); if(!t){ toast('Add a short title'); return; } livePost({action:'flag',title:t,detail:document.getElementById('fl_d').value},b).then(function(){ var x=document.getElementById('fl_t'),y=document.getElementById('fl_d'); if(x) x.value=''; if(y) y.value=''; }); return; }
@@ -1051,6 +1079,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function liveChange(e){
     var t=e.target; if(!liveOpen) return;
     if(t.dataset.lock){ livePost({action:'lock',item:t.dataset.lock,value:t.checked}); return; }
+    if(t.dataset.ci){ var row=t.closest('.citem'); if(row) row.classList.toggle('on',t.checked); livePost({action:'item',room:liveOpen.room,item:t.dataset.ci,value:t.checked}); return; }
     
   }
   function toJpeg(c,q){ return new Promise(function(res,rej){ c.toBlob(function(b){ b?res(b):rej(new Error('Couldn\'t read that photo')); },'image/jpeg',q); }); }
@@ -1200,7 +1229,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var mineLeft = pid ? L.left[pid] : null;
     if(pid && !mineArr) h+='<button type="button" data-qa="arrive"'+ctx+'>'+IC.pin+'I\'ve arrived</button>';
     else if(pid && !mineLeft) h+='<button type="button" data-qa="leave"'+ctx+'>'+IC.pin+'Clock off<small>In since '+fmtClock(mineArr)+'</small></button>';
-    else if(pid) h+='<button type="button" class="done" data-qa="arrive"'+ctx+'>'+IC.check+'Clocked off<small>'+fmtClock(mineLeft)+' · '+onSite(mineArr,mineLeft)+'</small></button>';
+    else if(pid) h+='<button type="button" class="done" data-qa="arrive"'+ctx+'>'+IC.check+'Clocked off<small>'+fmtClock(mineLeft)+(onSite(mineArr,mineLeft)?' · '+onSite(mineArr,mineLeft):'')+'</small></button>';
     else h+='<button type="button" class="'+(arrN&&arrN>=staffN?'done':'')+'" data-qa="rooms"'+ctx+'>'+(arrN?IC.check:IC.pin)+'On site<small>'+arrN+' of '+staffN+' in'+(Object.keys(L.left||{}).length?' · '+Object.keys(L.left).length+' off':'')+'</small></button>';
     h+='<button type="button" data-qa="note"'+ctx+'>'+IC.flag+'Note for agent<small>'+(L.flags.length?L.flags.length+' added':'Damage, marks')+'</small></button>';
     h+='<button type="button" class="'+(L.done?'done':'')+'" data-qa="finish"'+ctx+'>'+(L.done?IC.check:IC.tick)+(L.done?'Ready<small>'+fmtClock(L.done)+'</small>':'Lock-up &amp; finish')+'</button>';
