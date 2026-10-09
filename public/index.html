@@ -143,6 +143,8 @@ label.l{font:500 13px/1.3 var(--sans);color:var(--dark);display:block}
 .pcard .pact{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .pcard .pact a,.pcard .pact button{flex:1 1 auto;display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 12px;border-radius:6px;border:1.5px solid var(--line);background:none;font:600 14px var(--sans);color:var(--dark);text-decoration:none;cursor:pointer;white-space:nowrap}
 .pcard .pact .go{background:var(--terracotta);border-color:var(--terracotta);color:#fff}
+.acard.hot{border-left:4px solid var(--terracotta)}
+.pcard .pact .later{flex:0 0 auto;border:0;color:var(--meta);font-weight:500;padding:0 6px}
 .pempty{padding:28px 8px;text-align:center;color:var(--meta);font-size:14.5px}
 .btn{font:600 15px/1 var(--sans);border-radius:6px;min-height:48px;padding:0 18px;cursor:pointer;border:0}
 .btn.primary{background:var(--terracotta);color:var(--white);flex:1}
@@ -1348,27 +1350,69 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(w.length>4) h+='<a class="wr" href="/books/#/wrap" style="grid-template-columns:1fr"><span class="m">+ '+(w.length-4)+' more finished job'+(w.length-4===1?'':'s')+'</span></a>';
     return h+'</div><p class="sub" style="margin:6px 0 0;font-size:12.5px">Shows what each job really made per hour, after wages and costs.</p>';
   }
+  // ---------- Today: only what needs Jack, each card ending in the button that does it ----------
+  function snoozed(k){ return ls('snz_'+k)===iso(today); }
+  function aCard(o){ // {key, tone:'hot'|'', title, sub, btns:[html], later:true}
+    if(o.key && snoozed(o.key)) return '';
+    return '<div class="pcard acard'+(o.tone==='hot'?' hot':'')+'"><div class="pt"><h3>'+o.title+'</h3>'+(o.amt?'<span class="amt">'+o.amt+'</span>':'')+'</div>'+(o.sub?'<div class="pm">'+o.sub+'</div>':'')+'<div class="pact">'+(o.btns||[]).join('')+(o.key&&o.later!==false?'<button type="button" class="later" data-snz="'+esc(o.key)+'">Later</button>':'')+'</div></div>';
+  }
+  function mobOf(raw){ var x=String(raw||'').replace(/[^\d+]/g,'').replace(/^\+61/,'0').replace(/^61(?=4\d{8}$)/,'0'); return /^04\d{8}$/.test(x)?x:''; }
+  function tx(mob,name,tpl,label,cls,job){ return mob?'<a class="'+(cls||'')+'" href="/messages/#/t/'+mob+'?name='+encodeURIComponent(name||'')+(tpl?'&tpl='+tpl:'')+(job?'&job='+encodeURIComponent(job):'')+'">'+label+'</a>':''; }
+  function urgentCards(){
+    var h='';
+    needsConfirm().filter(function(x){return x.c.v==='no';}).forEach(function(x){ var m=member(x.id), ph=mobOf(m.phone);
+      h+=aCard({key:'no_'+x.j.id+'_'+x.id,tone:'hot',title:esc(m.name.split(' ')[0])+' can\'t make it',sub:esc(shiftLine(x.j,x.id))+(x.c.reason?'<br>Reason: '+esc(x.c.reason):''),btns:['<button type="button" class="go" data-edit="'+x.j.id+'">Reassign</button>',ph?'<a href="tel:'+ph+'">Call</a>':''],later:false}); });
+    (state.money||[]).filter(function(d){return d.state==='overdue';}).forEach(function(d){ var ph=mobOf(d.client.phone), days=d.dueDate?Math.round((Date.parse(iso(today))-Date.parse(d.dueDate))/864e5):0;
+      h+=aCard({key:'od_'+d.id,tone:'hot',title:esc(d.client.name||'Client')+' owes you',amt:'$'+d.totals.due.toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}),sub:'Invoice #'+esc(d.num)+(days>0?' · '+days+' day'+(days===1?'':'s')+' overdue':' · overdue')+(d.viewedAt?'':' · not opened'),btns:[tx(ph,d.client.name,'invoice_overdue','Send reminder','go'),'<a href="/money/#/doc/'+d.id+'">Open</a>',ph?'<a href="tel:'+ph+'">Call</a>':'']}); });
+    if(pipe) pipe.stages.booked.filter(function(c){ return c.deposit==='unpaid' && c.date && c.date<=iso(addDays(today,7)); }).forEach(function(c){
+      h+=aCard({key:'dep_'+c.key,tone:'hot',title:'Deposit unpaid: '+esc(c.name),amt:'$'+Math.round(c.total).toLocaleString('en-AU'),sub:'Clean '+fmtDay(parse(c.date))+' · booking is tentative until it\'s paid',btns:[tx(c.phone,c.name,'deposit_reminder','Deposit reminder','go'),'<a href="/money/#/doc/'+c.doc+'">Open</a>']}); });
+    return h;
+  }
+  function leadCards(){
+    var h='';
+    (state.requests||[]).forEach(function(r){ h+=reqCard(r); });
+    if(pipe){
+      pipe.stages.new.forEach(function(c){ h+=aCard({key:'new_'+c.key,tone:c.age>=1?'hot':'',title:esc(c.name)+' wants a quote',sub:esc([c.service,c.where].filter(Boolean).join(' · '))+'<br>Came in '+dayAgo(c.age)+(c.wanted?' · wants '+fmtDay(parse(c.wanted)):''),btns:['<a class="go" href="/money/#/req/'+encodeURIComponent(c.req)+'">Quote it</a>',c.phone?'<a href="tel:'+c.phone+'">Call</a>':'',tx(c.phone,c.name,'lead_first','Text')]}); });
+      pipe.stages.quoted.filter(function(c){ return !c.draft && ((c.opened!=null && c.opened>=2) || (c.opened==null && c.sent>=3)); }).forEach(function(c){
+        h+=aCard({key:'nudge_'+c.key,title:'Nudge '+esc(c.name),amt:'$'+Math.round(c.total).toLocaleString('en-AU'),sub:'Quote #'+esc(c.num)+' · '+(c.opened==null?'not opened, sent '+dayAgo(c.sent):'opened '+(c.views>1?c.views+' times, last ':'')+dayAgo(c.opened)+', not accepted'),btns:[tx(c.phone,c.name,'quote_follow','Send nudge','go'),'<a href="/money/#/doc/'+c.doc+'">Open</a>']}); });
+    }
+    if(cands) (cands.candidates||[]).filter(function(c){return c.stage==='applied'&&!c.seen;}).forEach(function(c){
+      h+=aCard({key:'cand_'+c.id,title:esc(c.name)+' applied to work with you',sub:esc(candLine(c)),btns:['<button type="button" class="go" data-cand2="'+c.id+'">Review</button>']}); });
+    return h;
+  }
+  function otherCards(){
+    var h='', nc=needsConfirm(), waitN=nc.filter(function(x){return x.c.v==='wait';}).length;
+    if(waitN) h+=aCard({key:'unconf',title:waitN+' shift'+(waitN>1?'s':'')+' not confirmed',sub:'In the next two weeks',btns:['<button type="button" class="go" data-act="confirms">Review</button>']});
+    state.team.forEach(function(m){ var j=firstDayDue(m.id); if(j && j.date<=iso(addDays(today,1)) && !(state.acks&&state.acks[m.id])) h+=aCard({key:'ack_'+m.id,title:esc(m.name.split(' ')[0])+' hasn\'t read their first-day info',sub:'Starts '+fmtDay(parse(j.date)),btns:[tx(mobOf(m.phone),m.name,'','Text them','go')]}); });
+    var w=state.books&&state.books.wrap;
+    if(w&&w.length) h+=aCard({key:'wrap_'+w.length,title:w.length+' finished job'+(w.length===1?'':'s')+' missing hours',sub:'Usually means someone forgot to clock off. '+esc(w.slice(0,3).map(function(b){return b.client||b.suburb||'Job';}).join(', '))+(w.length>3?' and '+(w.length-3)+' more':''),btns:['<a class="go" href="/books/#/wrap/'+encodeURIComponent(w[0].key)+'">Log hours</a>']});
+    if(pipe){ var f=pipe.stages.done.filter(function(c){return !c.dismissed;}); if(f.length) h+=aCard({key:'follow_'+f.length,title:f.length+' finished client'+(f.length===1?'':'s')+' to follow up',sub:'Reviews, move-in cleans and regular-clean offers',btns:['<button type="button" class="go" data-pgo="done">Follow up</button>']}); }
+    var b=state.books; if(b){ var out=[]; if(b.unpriced) out.push(b.unpriced+' job'+(b.unpriced===1?'':'s')+' with no price'); if(b.jobber&&b.jobber.pending) out.push(b.jobber.pending+' Jobber job'+(b.jobber.pending===1?'':'s')+' to add');
+      if(out.length) h+=aCard({key:'books_'+out.join(),title:'Profit is missing numbers',sub:esc(out.join(' · ')),btns:['<a class="go" href="/books/">Fix it</a>']}); }
+    return h;
+  }
   function renderToday(){
     var t=iso(today), tl=jobsFor(t), tm=jobsFor(iso(addDays(today,1))), h=topbar('Today<em>,</em> '+fmtDay(today).replace(/^\w+ /,''));
-    h+=alertsHtml();
-    h+=moneyAlerts();
-    h+=booksNudge();
-    h+=wrapCard();
-    h+=wagesCard();
+    var u=urgentCards(), l=leadCards(), o=otherCards();
+    if(u) h+='<div class="sect"><span class="today">Needs you now</span></div>'+u;
     var me=(state.team.find(function(x){return x.owner;})||{}).id;
-    h+='<div class="sect"><span class="today">On today</span><span>'+tl.length+' job'+(tl.length===1?'':'s')+'</span></div>';
+    h+='<div class="sect"><span>On today</span><span>'+tl.length+' job'+(tl.length===1?'':'s')+'</span></div>';
     if(tl.length) tl.forEach(function(j){ h+=quickCard(j, (j.staff||[]).indexOf(me)>=0?me:''); });
     else { var nx=state.jobs.filter(function(j){return j.date>t && !j.sample;}).sort(function(a,b){return (a.date+a.start).localeCompare(b.date+b.start);})[0]; h+='<div class="hint-card">No jobs today.'+(nx?' Next: '+esc(nx.client||'job')+', '+fmtDay(parse(nx.date))+' at '+fmtTime(nx.start)+'.':'')+'</div>'; }
-    h+='<div class="sect"><span>Tomorrow · '+fmtDay(addDays(today,1))+'</span><span>'+tm.length+'</span></div>';
-    h+=tm.length?miniList(tm):'<p class="sub">Nothing booked.</p>';
     var past=state.jobs.filter(function(j){ var L=state.live&&state.live[j.id]; return j.date===iso(addDays(today,-1)) && j.agentId && !j.sample && !(L&&L.done); });
     if(past.length){ h+='<div class="sect"><span>Yesterday, not marked ready</span></div>'; past.forEach(function(j){ h+=quickCard(j,''); }); }
+    if(l) h+='<div class="sect"><span>Leads and people waiting</span></div>'+l;
+    if(o) h+='<div class="sect"><span>When you get a minute</span></div>'+o;
+    if(!u&&!l&&!o) h+='<p class="sub" style="margin:14px 0 0">Nothing else needs you. Quote and invoice opens are in the activity log (the bell).</p>';
+    h+='<div class="sect"><span>Tomorrow · '+fmtDay(addDays(today,1))+'</span><span>'+tm.length+'</span></div>';
+    h+=tm.length?miniList(tm):'<p class="sub">Nothing booked.</p>';
+    h+=wagesCard();
     return h;
   }
   // ---------- Pipeline: enquiry → quote → booked → done ----------
   var pipe=null, pipeTab=ls('pipe_tab')||'new', pipeErr='';
   var board=(location.hash==='#hiring')?'hiring':(ls('pipe_board')||'leads'), cands=null, hireTab=ls('hire_tab')||'applied', candErr='';
-  function loadCands(){ return api('/api/careers').then(function(d){ cands=d; candErr=''; if(view==='pipeline'&&!document.getElementById('scrim')) render(); }).catch(function(e){ candErr=e.message; if(view==='pipeline') render(); }); }
+  function loadCands(){ return api('/api/careers').then(function(d){ cands=d; candErr=''; if((view==='pipeline'||view==='today')&&!document.getElementById('scrim')) render(); }).catch(function(e){ candErr=e.message; if(view==='pipeline') render(); }); }
   var HSTAGE=[['applied','Applied'],['screened','Screened'],['trial','Trial'],['onboarding','Onboarding'],['active','On the team']];
   var SCORE=[['reliable','Reliable, turns up'],['attitude','Attitude and pride in work'],['availability','Availability fits'],['work','Quality of work (trial)']];
   function candLine(c){ var L=(cands&&cands.labels)||{}; return [c.suburb,(c.days||[]).join(' '),c.hours&&L.HOURS?L.HOURS[c.hours]:''].filter(Boolean).join(' · '); }
@@ -1811,6 +1855,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   app.addEventListener('click', function(e){
     var ak=e.target.closest('[data-ack]'); if(ak){ ak.disabled=true; ak.textContent='Saving…'; api('/api/ack',{method:'POST',body:{personId:ak.dataset.ack}}).then(function(d){ state.acks[ak.dataset.ack]=d.ack; render(); toast('Thanks! See you there.'); }).catch(function(er){ ak.disabled=false; ak.textContent='Got it'; toast(er.message); }); return; }
     var r=e.target.closest('[data-reply]'); if(r){ if(r.dataset.reply==='yes') sendReply(r.dataset.j, r.dataset.p, 'yes', '', r); else replyNo(r.dataset.j, r.dataset.p); return; }
+    var sz=e.target.closest('[data-snz]'); if(sz){ ls('snz_'+sz.dataset.snz, iso(today)); render(); toast('Hidden until tomorrow'); return; }
+    var pg=e.target.closest('[data-pgo]'); if(pg){ board='leads'; ls('pipe_board','leads'); pipeTab=pg.dataset.pgo; ls('pipe_tab',pipeTab); setView('pipeline'); return; }
+    var c2=e.target.closest('[data-cand2]'); if(c2){ candSheet(c2.dataset.cand2); return; }
     var bd=e.target.closest('[data-board]'); if(bd){ board=bd.dataset.board; ls('pipe_board',board); render(); return; }
     var ht=e.target.closest('[data-htab]'); if(ht){ hireTab=ht.dataset.htab; ls('hire_tab',hireTab); render(); return; }
     var cd=e.target.closest('[data-cand]'); if(cd){ candSheet(cd.dataset.cand); return; }
