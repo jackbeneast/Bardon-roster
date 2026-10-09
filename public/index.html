@@ -219,6 +219,8 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
 .sgrid button{min-height:46px;border-radius:8px;background:var(--cream);border:1px solid var(--line);font:600 14px/1.2 var(--sans);color:var(--dark);cursor:pointer;padding:6px}
 .clk{display:inline-block;margin-top:4px;border:0;background:none;padding:0;font:600 12px var(--sans);color:var(--terracotta);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .clk.ok{color:#2F5A35}
+.csec{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 2px;padding-bottom:6px;border-bottom:1.5px solid var(--dark);font:600 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--dark)}
+.csec .ok{color:#2F5A35}
 .citem{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--cream-dark);font-size:15px;line-height:1.35;color:var(--dark);cursor:pointer}
 .citem input{width:22px;height:22px;flex:none;margin:0;accent-color:#2F5A35}
 .citem.on span{color:var(--meta);text-decoration:line-through}
@@ -1010,8 +1012,10 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var h='<button type="button" class="clk" data-clback style="margin:0 0 8px">‹ All updates</button><h3>'+esc(room)+' <em>checklist</em></h3>';
     h+='<p class="sub" style="margin:-6px 0 0">'+esc(CHECKLISTS.name(j.service))+' · '+esc(j.address||j.client||'')+'</p>';
     h+='<div class="cbar"><i style="width:'+(items.length?Math.round(n/items.length*100):0)+'%"></i></div><p class="sub" style="margin:0 0 4px">'+n+' of '+items.length+' done. Work top to bottom.</p>';
-    items.forEach(function(i){ var on=!!got[i.id], by=on&&member(got[i.id].by);
-      h+='<label class="citem'+(on?' on':'')+'"><input type="checkbox" data-ci="'+i.id+'"'+(on?' checked':'')+'><span>'+esc(i.t)+(by&&canEdit?' <small style="color:var(--meta);text-decoration:none">· '+esc(by.name.split(' ')[0])+'</small>':'')+'</span></label>'; });
+    CHECKLISTS.sectionsFor(room,j.service).forEach(function(sec){ var sd=sec.items.filter(function(i){return got[i.id];}).length;
+      h+='<div class="csec"><span>'+esc(sec.title)+'</span><span'+(sd===sec.items.length?' class="ok"':'')+'>'+sd+'/'+sec.items.length+'</span></div>';
+      sec.items.forEach(function(i){ var on=!!got[i.id], by=on&&member(got[i.id].by);
+      h+='<label class="citem'+(on?' on':'')+'"><input type="checkbox" data-ci="'+i.id+'"'+(on?' checked':'')+'><span>'+esc(i.t)+(by&&canEdit?' <small style="color:var(--meta);text-decoration:none">· '+esc(by.name.split(' ')[0])+'</small>':'')+'</span></label>'; }); });
     h+='<div class="lsec">';
     if(st==='d') h+='<span class="cs ok">✓ '+esc(room)+' marked done</span>';
     else if(n===items.length) h+='<button type="button" class="btn yes" data-room="'+esc(room)+'" data-st="d" style="width:100%">Mark '+esc(room)+' done</button><p class="sub">Take the after photos for this room too.</p>';
