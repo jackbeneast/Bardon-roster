@@ -348,6 +348,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 <div id="app"></div>
 <script src="/lib/confirm.js"></script>
 <script src="/lib/sms.js"></script>
+<script src="/lib/templates.js"></script>
 <script>
 (function(){
   var state = {team:[],jobs:[],confirms:{},info:{},acks:{},agents:[],live:{},requests:[]}, loaded=false, loadErr='', adminSet=true;
@@ -742,6 +743,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<div class="err" id="jobErr" hidden></div>';
     h+='<div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save job</button></div>';
     if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Copy client link</button>':'')+'</div>'+(job.share?'<div class="actions" style="margin-top:8px"><button type="button" class="btn primary" data-confirmj style="flex:1">Send booking confirmation</button></div>':'');
+    if(!isNew&&clientMob(job)) h+='<div class="actions"><a class="btn outline" href="'+textClientHref(job)+'" style="flex:1;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">Text client</a></div>';
     if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-dup>Duplicate</button><button type="button" class="btn danger" data-del>'+(sib.length>1?'Delete all '+sib.length+' days':'Delete job')+'</button></div>';
     h+='</form>';
     var s=openSheet(h), form=s.querySelector('#jobForm'), list=form.querySelector('#dayList');
@@ -1167,6 +1169,11 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     return '<nav class="tabbar" aria-label="Main"><div class="in">'+b('today','Today',IC.today,a)+b('roster','Roster',IC.roster)+'<button type="button" class="add" data-act="add" aria-label="Add job"><span class="c">'+IC.plus+'</span>Add job</button>'+'<a href="/messages/" class="tablink">'+IC.chat+'Messages'+(state.msgUnread?'<span class="badge">'+(state.msgUnread>99?'99+':state.msgUnread)+'</span>':'')+'</a>'+b('agents','Agents',IC.agents,rq)+b('more','Tools',IC.grid)+'</div></nav>';
   }
   function topbar(title){ var u=state.actUnread||0; return '<div class="topbar"><span class="wm">Bardon Clean</span><span class="tr"><button class="refresh" data-act="sync">Refresh</button><button type="button" class="bell" data-view="activity" aria-label="Activity'+(u?', '+u+' new':'')+'">'+IC.bell+(u?'<span class="badge">'+(u>99?'99+':u)+'</span>':'')+'</button></span></div><h1>'+title+'</h1>'; }
+  // The client's mobile for a job: from its notes ("Client: 04…") as quotes write it.
+  function clientMob(j){ var m=/Client:\s*([+\d][\d\s]{7,15}\d)/.exec(j.notes||''); if(!m) return ''; var x=m[1].replace(/[^\d+]/g,'').replace(/^\+61/,'0').replace(/^61(?=4\d{8}$)/,'0'); return /^04\d{8}$/.test(x)?x:''; }
+  function textClientHref(j){ var tm=new Date(); tm.setDate(tm.getDate()+1); var tmr=tm.getFullYear()+'-'+('0'+(tm.getMonth()+1)).slice(-2)+'-'+('0'+tm.getDate()).slice(-2);
+    var tpl=j.date===tmr?(/regular/i.test(j.service||'')?'day_before_regular':'day_before'):'';
+    return '/messages/#/t/'+clientMob(j)+'?name='+encodeURIComponent(j.client||'')+'&job='+encodeURIComponent(j.id)+(tpl?'&tpl='+tpl:''); }
   function jobsFor(dateIso){ return state.jobs.filter(function(j){return j.date===dateIso && !j.sample;}).sort(function(a,b){return (a.start||'').localeCompare(b.start||'');}); }
 
   function quickCard(j, pid){
@@ -1187,7 +1194,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     else h+='<button type="button" class="'+(arrN&&arrN>=staffN?'done':'')+'" data-qa="rooms"'+ctx+'>'+(arrN?IC.check:IC.pin)+'On site<small>'+arrN+' of '+staffN+' in</small></button>';
     h+='<button type="button" data-qa="note"'+ctx+'>'+IC.flag+'Note for agent<small>'+(L.flags.length?L.flags.length+' added':'Damage, marks')+'</small></button>';
     h+='<button type="button" class="'+(L.done?'done':'')+'" data-qa="finish"'+ctx+'>'+(L.done?IC.check:IC.tick)+(L.done?'Ready<small>'+fmtClock(L.done)+'</small>':'Lock-up &amp; finish')+'</button>';
-    h+='</div><div class="qlinks"><button type="button" data-live="'+j.id+'" data-p="'+esc(pid||'')+'">All updates</button>'+(canEdit?'<button type="button" data-edit="'+j.id+'">Edit job</button>':'')+(canEdit&&j.share?'<button type="button" data-vcopy="'+esc(j.share)+'">Client link</button>':'')+'</div></section>';
+    h+='</div><div class="qlinks"><button type="button" data-live="'+j.id+'" data-p="'+esc(pid||'')+'">All updates</button>'+(canEdit?'<button type="button" data-edit="'+j.id+'">Edit job</button>':'')+(canEdit&&j.share?'<button type="button" data-vcopy="'+esc(j.share)+'">Client link</button>':'')+(canEdit&&clientMob(j)?'<a href="'+textClientHref(j)+'">Text client</a>':'')+'</div></section>';
     return h;
   }
   function miniList(list){
@@ -1431,7 +1438,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function renderMore(){
     var h=topbar('Tools');
     function it(act,icon,label){ return '<button type="button" data-act="'+act+'">'+icon+label+'<span class="chev">›</span></button>'; }
-    h+='<div class="sect"><span>Clients</span></div><div class="menu" style="margin-top:0"><a href="/messages/">'+IC.chat+'Messages'+(state.msgUnread?' ('+state.msgUnread+' new)':'')+'<span class="chev">›</span></a></div>';
+    h+='<div class="sect"><span>Clients</span></div><div class="menu" style="margin-top:0"><a href="/messages/">'+IC.chat+'Messages'+(state.msgUnread?' ('+state.msgUnread+' new)':'')+'<span class="chev">›</span></a><a href="/messages/#/templates">'+IC.text+'Text templates<span class="chev">›</span></a></div>';
     h+='<div class="sect"><span>Money</span></div><div class="menu" style="margin-top:0"><a href="/money/">'+IC.text+'Quotes &amp; invoices<span class="chev">›</span></a><a href="/money/#/edit/new-quote">'+IC.plus+'New quote<span class="chev">›</span></a><a href="/money/#/edit/new-invoice">'+IC.plus+'New invoice<span class="chev">›</span></a><a href="/books/">'+IC.grid+'Profit &amp; expenses<span class="chev">›</span></a><a href="/books/#/add">'+IC.plus+'Log an expense<span class="chev">›</span></a><a href="/books/#/jobber">'+IC.roster+'Jobber sync<span class="chev">›</span></a></div>';
     h+='<div class="sect"><span>Roster</span></div><div class="menu" style="margin-top:0">'+it('confirms',IC.tick,'Shift confirmations')+'<button type="button" data-view="wages">'+IC.grid+'Wage estimate<span class="chev">›</span></button>'+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'</div>';
     h+='<div class="sect"><span>Notifications</span></div><div class="menu" style="margin-top:0"><button type="button" data-view="activity">'+IC.bell+'Activity'+(state.actUnread?' ('+state.actUnread+' new)':'')+'<span class="chev">›</span></button>'+it('notify',IC.bell,'Phone notifications'+(state.notifyOn?'':' (off)'))+'</div>';
@@ -1522,6 +1529,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     return api('/api/roster').then(function(d){
       state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},requests:d.requests||[],pay:d.pay||null,money:state.money||[],books:state.books||null,savedAt:d.savedAt||'',actUnread:d.actUnread||0,msgUnread:d.msgUnread||0,notifyOn:!!d.notifyOn}; adminSet=d.adminSet; loaded=true; loadErr='';
       if(key() && !d.admin){ key(null); }
+      if(d.admin&&window.BCTpl) BCTpl.load(key()).catch(function(){});
       if(d.admin) api('/api/books?sum=1').then(function(b){ state.books=b; if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
       if(d.admin) api('/api/docs').then(function(m){ state.money=(m.docs||[]).filter(function(x){ return x.flag||x.state==='overdue'; }).slice(0,8); if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
       canEdit=!!d.admin;

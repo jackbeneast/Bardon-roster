@@ -7,6 +7,7 @@ import { store, json, checkAdmin } from "../../lib/core.mjs";
 import { cleanRequest, loadRequests, lines, rid, pid, ipKey, SERVICES, EXTRAS } from "../../lib/requests.mjs";
 import { notify, firstName } from "../../lib/notify.mjs";
 import { sendSms, mmReady } from "../../lib/mm.mjs";
+import { loadTemplates, fill, DEFAULTS } from "../../lib/templates.mjs";
 
 const PHOTO = /^[a-f0-9]{24}$/;
 const MAXPHOTO = 1.5 * 1024 * 1024, MAXN = 8;
@@ -82,7 +83,11 @@ export default async (req) => {
   // A short confirmation from the business number. No promised turnaround.
   if (mmReady()) {
     const first = firstName(r.name);
-    const sent = await sendSms(r.phone, `Hi ${first}, thanks for your quote request for a ${S.label.toLowerCase()}${r.suburb ? ` in ${r.suburb}` : ""}. Jack will look over the details and be in touch. If anything else would help with the quote, just reply here. - Jack, Bardon Clean`, `req:${r.id}`, { name: r.name });
+    const tpl = (await loadTemplates(s)).list.find((x) => x.id === "lead_auto");
+    let { text, missing } = fill(tpl.text, { first, name: r.name, service: S.label.toLowerCase(), suburb: r.suburb, address: [r.address, r.suburb].filter(Boolean).join(", "), quote_form_link: `${(process.env.URL || "https://bardon-roster.netlify.app").replace(/\/$/, "")}/quote` });
+    // Never send a half-filled text to a new lead.
+    if (missing.length) text = fill(DEFAULTS.find((x) => x.id === "lead_auto").text, { first, service: S.label.toLowerCase(), suburb: r.suburb || "your area" }).text;
+    const sent = await sendSms(r.phone, text, `req:${r.id}`, { name: r.name });
     if (sent.ok) { r.texted = true; await s.set(`req/${r.id}`, r); }
   }
   return json({ ok: true, first: firstName(r.name) });

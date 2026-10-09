@@ -105,8 +105,30 @@ h1 em{font-style:italic;font-weight:500}
 .menu button:last-child,.menu a:last-child{border-bottom:0}
 .err{color:var(--terracotta-dark);font:500 13px/1.4 var(--sans);margin-top:8px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:40;max-width:90vw;text-align:center}
+.tsec{font:600 11px/1 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--meta);margin:16px 0 6px}
+.tpick{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--cream-dark);padding:10px 2px;cursor:pointer;color:inherit}
+.tpick b{display:flex;justify-content:space-between;gap:8px;font:600 15px/1.3 var(--sans);color:var(--dark)}
+.tpick span{display:block;font-size:13px;color:var(--meta);margin-top:2px}
+.tpick .need{display:inline;font:600 11px/1 var(--sans);color:#7A5A12;background:#FCEFD0;border-radius:999px;padding:4px 7px;margin:0;white-space:nowrap}
+.lsec{font:700 20px/1.2 var(--serif);color:var(--dark);margin:26px 0 10px;scroll-margin-top:12px}
+.tcard{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.tt{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tt b{font:600 15.5px/1.3 var(--sans);color:var(--dark);margin-right:auto}
+.pill{font:600 10.5px/1 var(--sans);letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:5px 8px;background:var(--cream-dark);color:var(--dark)}
+.pill.ed{background:#FCEFD0;color:#7A5A12}
+.use{font-size:13px;color:var(--meta);margin:4px 0 10px}
+.bub{background:var(--terracotta);color:#fff;border-radius:18px;border-bottom-right-radius:6px;padding:10px 13px;font-size:15px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere;margin-left:12%}
+.bub .lnk{text-decoration:underline;color:#fff}
+.bub mark{background:rgba(255,255,255,.88);color:var(--dark);border-radius:4px;padding:0 3px}
+mark{background:var(--cream-dark);color:var(--dark);border-radius:4px;padding:0 3px}
+.warn{font-size:13px;color:#7A5A12;background:#FCEFD0;border-radius:8px;padding:8px 10px;margin:10px 0 0}
+.ghost{background:none;border:0;color:var(--terracotta-dark);font:600 14px var(--sans);text-decoration:underline;cursor:pointer;padding:10px 0 0}
+.vchips{display:flex;flex-wrap:wrap;gap:6px}
+.vchip{border:1px solid var(--line);background:var(--cream);border-radius:999px;padding:6px 9px;font:500 12px var(--sans);color:var(--dark);cursor:pointer}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.sheet .actions .btn{flex:1 1 auto}
 </style></head><body>
 <div id="app"><div class="center">Loading…</div></div>
+<script src="/lib/templates.js"></script>
 <script>
 (function(){
 var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
@@ -118,7 +140,7 @@ var IC={
 };
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 var app=document.getElementById('app');
-var D=null, T=null, loadErr='', filter='all', q='', busy=false, timer=null, pending=[];
+var D=null, T=null, jobFor={}, loadErr='', filter='all', q='', busy=false, timer=null, pending=[];
 
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -141,7 +163,7 @@ function dayLabel(iso){ var d=new Date(iso), n=new Date(); if(dayKey(iso)===dayK
 // SMS length: 160 chars per text (153 when split); emoji and some symbols drop that to 70 (67).
 var GSM=/^[A-Za-z0-9 \r\n@£$¥èéùìòÇØøÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ!"#¤%&'()*+,\-.\/:;<=>?¡ÄÖÑÜ§¿äöñüà^{}\\\[~\]|€]*$/;
 function parts(t){ var g=GSM.test(t), n=t.length; if(!n) return {n:0,p:0}; var one=g?160:70, many=g?153:67; return {n:n,p:n<=one?1:Math.ceil(n/many),u:!g}; }
-function route(){ var h=location.hash.replace(/^#\/?/,''), qi=h.indexOf('?'), qs=qi>=0?h.slice(qi+1):''; h=qi>=0?h.slice(0,qi):h; var p=h.split('/'); var draft=(qs.match(/(?:^|&)draft=([^&]*)/)||[])[1]; var nm=(qs.match(/(?:^|&)name=([^&]*)/)||[])[1]; return {v:p[0]||'inbox', id:p[1]||'', draft:draft?decodeURIComponent(draft):'', name:nm?decodeURIComponent(nm):''}; }
+function route(){ var h=location.hash.replace(/^#\/?/,''), qi=h.indexOf('?'), qs=qi>=0?h.slice(qi+1):''; h=qi>=0?h.slice(0,qi):h; var p=h.split('/'); var draft=(qs.match(/(?:^|&)draft=([^&]*)/)||[])[1]; var nm=(qs.match(/(?:^|&)name=([^&]*)/)||[])[1]; var tp=(qs.match(/(?:^|&)tpl=([\w-]+)/)||[])[1]||'', jb=(qs.match(/(?:^|&)job=([\w-]+)/)||[])[1]||''; return {v:p[0]||'inbox', id:p[1]||'', draft:draft?decodeURIComponent(draft):'', name:nm?decodeURIComponent(nm):'', tpl:tp, job:jb}; }
 function topbar(){ return '<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
 
 // ---------- inbox ----------
@@ -156,7 +178,7 @@ function setupCard(){
   return '';
 }
 function renderInbox(){
-  var h=topbar()+'<h1>Messages</h1><p class="sub">'+(D&&D.from?'Texts to and from '+esc(D.from)+'. Clients never see your own number.':'')+'</p>'+setupCard();
+  var h=topbar()+'<h1 style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">Messages<a href="#/templates" style="font:500 14px var(--sans);color:var(--terracotta-dark)">Templates</a></h1><p class="sub">'+(D&&D.from?'Texts to and from '+esc(D.from)+'. Clients never see your own number.':'')+'</p>'+setupCard();
   h+='<input class="search" type="search" placeholder="Search name, number or message" value="'+esc(q)+'" data-q autocomplete="off">';
   var all=D.threads||[], un=all.filter(function(t){return t.unread&&!t.archived;}).length, ar=all.filter(function(t){return t.archived;}).length;
   function c(v,l){ return '<button class="chip" data-f="'+v+'" aria-pressed="'+(filter===v)+'">'+l+'</button>'; }
@@ -182,9 +204,11 @@ function listHtml(){
 
 // ---------- conversation ----------
 function loadThread(phone, quiet){
-  return api('GET',null,'?t='+phone).then(function(d){
+  var jb=route().job||jobFor[phone]||'';
+  return api('GET',null,'?t='+phone+(jb?'&job='+encodeURIComponent(jb):'')).then(function(d){
     if(route().v!=='t'||route().id!==phone) return;
-    var first=!T||T.thread.phone!==phone; T=d; drawThread(first||!quiet);
+    var first=!T||T.thread.phone!==phone; T=d; if(route().job) jobFor[phone]=route().job; drawThread(first||!quiet);
+    var tp=route().tpl; if(tp&&first){ BCTpl.load(key()).then(function(){ var x=BCTpl.get(tp); if(x) insertTpl(x,true); }).catch(function(){}); history.replaceState(null,'','#/t/'+phone); }
   }).catch(function(e){ if(!quiet){ if(e.status===401){ loadErr='login'; render(); } else toast(e.message); } });
 }
 function renderConv(phone){
@@ -193,7 +217,7 @@ function renderConv(phone){
     '<button class="who" data-act="info"><b data-who>'+esc(nm||fmtPhone(phone))+'</b><span>'+esc(nm?fmtPhone(phone):'Tap to add a name')+'</span></button>'+
     '<a class="ib" href="tel:'+phone+'" aria-label="Call">'+IC.call+'</a><button class="ib" data-act="info" aria-label="More">'+IC.more+'</button></div><div class="ctx" data-ctx></div></div>'+
     '<div class="msgs" data-msgs><div class="in" data-in>'+(T&&T.thread.phone===phone?'':'<div class="sys">Loading…</div>')+'</div></div>'+
-    '<div class="cfoot" data-foot><div class="in"><textarea rows="1" placeholder="Text '+esc(nm?nm.split(' ')[0]:'message')+'" data-box aria-label="Message">'+esc(draftFor(phone,r.draft))+'</textarea><button class="send" data-act="send" aria-label="Send" disabled>'+IC.send+'</button></div><div class="cnt"><span data-cnt></span><button class="qr" data-act="quick">Quick replies</button></div></div></div>';
+    '<div class="cfoot" data-foot><div class="in"><textarea rows="1" placeholder="Text '+esc(nm?nm.split(' ')[0]:'message')+'" data-box aria-label="Message">'+esc(draftFor(phone,r.draft))+'</textarea><button class="send" data-act="send" aria-label="Send" disabled>'+IC.send+'</button></div><div class="cnt"><span data-cnt></span><button class="qr" data-act="quick">Templates</button></div></div></div>';
 }
 function draftFor(phone,given){ if(given){ lsSet('mdraft_'+phone,given); return given; } return lsGet('mdraft_'+phone)||''; }
 function msgsHtml(){
@@ -231,6 +255,7 @@ function sizeBox(){ var tb=app.querySelector('[data-box]'); if(!tb) return; tb.s
   var c=app.querySelector('[data-cnt]'); if(c) c.textContent=p.n?(p.n+' characters · '+p.p+' text'+(p.p===1?'':'s')+(p.u&&p.p>1?' (emoji make texts shorter)':'')):''; }
 function send(){
   var tb=app.querySelector('[data-box]'), text=tb.value.trim(), phone=route().id; if(!text||busy) return;
+  var gap=text.match(/\{(\w+)\??\}/); if(gap){ var at=tb.value.indexOf(gap[0]); tb.focus(); tb.setSelectionRange(at,at+gap[0].length); toast('Fill in '+gap[0]+' first'); return; }
   busy=true; var tmp={id:'p'+Date.now(),dir:'out',text:text,at:new Date().toISOString(),pending:true,phone:phone};
   pending.push(tmp); tb.value=''; lsSet('mdraft_'+phone,''); sizeBox(); drawThread(true); tb.focus();
   api('POST',{action:'send',to:phone,text:text,name:route().name||''}).then(function(d){
@@ -267,20 +292,77 @@ function infoSheet(){
     api('POST',{action:'name',phone:t.phone,name:v}).then(function(){ T.thread.name=v; closeSheet(); drawThread(false); toast('Saved'); }).catch(function(e){ b.disabled=false; var er=s.querySelector('[data-er]'); er.textContent=e.message; er.hidden=false; }); };
   s.querySelector('[data-arch]').onclick=function(){ var on=!t.archived; api('POST',{action:on?'archive':'unarchive',phone:t.phone}).then(function(){ closeSheet(); toast(on?'Archived':'Back in the inbox'); if(on) location.hash='#/'; else T.thread.archived=false; }).catch(function(e){ toast(e.message); }); };
 }
-// Saved on this phone. Edit them to suit; nothing here promises a timeframe.
-var QR_DEFAULT=['Thanks, got it. I\'ll be in touch shortly.','Could you send a few photos of the kitchen, bathrooms and any problem areas? It helps me quote accurately.','How many bedrooms and bathrooms is the property, and is it furnished or empty?','What date do you need it done by? Is there any flexibility?','Thanks for booking with Bardon Clean. Your booking confirmation and job link are on their way.'];
-function quickList(){ try{ var v=JSON.parse(lsGet('mquick')||'null'); return Array.isArray(v)&&v.length?v:QR_DEFAULT.slice(); }catch(e){ return QR_DEFAULT.slice(); } }
-function quickSheet(edit){
-  var L=quickList(), first=(T&&T.thread.name||'').replace(/\(.*?\)/g,'').trim().split(/\s+/)[0]||'';
-  var h='<h3>Quick <em>replies</em></h3>';
-  if(edit) h+='<p class="sub" style="margin:-6px 0 10px">One reply per paragraph. Leave a blank line between them. Use {name} for their first name.</p><textarea data-qe style="min-height:300px">'+esc(L.join('\n\n'))+'</textarea><div class="actions"><button class="btn outline" data-reset>Reset</button><button class="btn primary" data-qsave>Save</button></div>';
-  else h+='<div class="menu">'+L.map(function(x,i){ return '<button data-qi="'+i+'" style="font-weight:400;font-size:14.5px;line-height:1.4">'+esc(x)+'</button>'; }).join('')+'</div><div class="actions"><button class="btn outline" data-qedit>Edit replies</button><button class="btn outline" data-close>Close</button></div>';
-  var s=openSheet(h);
-  if(edit){ s.querySelector('[data-qsave]').onclick=function(){ var v=s.querySelector('[data-qe]').value.split(/\n\s*\n/).map(function(x){return x.trim();}).filter(Boolean).slice(0,30); lsSet('mquick',JSON.stringify(v)); quickSheet(false); toast('Quick replies saved'); };
-    s.querySelector('[data-reset]').onclick=function(){ lsSet('mquick',''); quickSheet(true); }; return; }
-  s.querySelector('[data-close]').onclick=closeSheet; s.querySelector('[data-qedit]').onclick=function(){ quickSheet(true); };
-  s.querySelector('.menu').addEventListener('click',function(e){ var b=e.target.closest('[data-qi]'); if(!b) return; var txt=L[+b.dataset.qi].replace(/\{name\}/g,first||'there');
-    closeSheet(); var tb=app.querySelector('[data-box]'); if(tb){ tb.value=tb.value?tb.value.replace(/\s*$/,' ')+txt:txt; lsSet('mdraft_'+route().id,tb.value); sizeBox(); tb.focus(); } });
+// ---------- templates ----------
+function threadVars(){
+  var r=(T&&T.rec)||{}, q=r.req||{};
+  return BCTpl.varsFor({quote:r.quote, invoice:r.invoice, job:r.job, jobs:r.jobs, name:(T&&T.thread.name)||q.name||'', service:q.service||'', suburb:q.suburb||''});
+}
+function insertTpl(x, replace){
+  var tb=app.querySelector('[data-box]'); if(!tb) return;
+  var f=BCTpl.fill(x.text, threadVars());
+  tb.value=(!replace&&tb.value.trim())?tb.value.replace(/\s*$/,'\n\n')+f.text:f.text;
+  lsSet('mdraft_'+route().id,tb.value); sizeBox(); tb.focus();
+  var m=tb.value.match(/\{(\w+)\}/); if(m){ var at=tb.value.indexOf(m[0]); tb.setSelectionRange(at,at+m[0].length); toast('Fill in '+f.missing.map(function(k){return '{'+k+'}';}).join(', ')); }
+}
+function tplSheet(){
+  var s=openSheet('<h3>Templates</h3><div data-tl><p class="sub">Loading…</p></div><div class="actions"><a class="btn outline" href="#/templates">Edit templates</a><button class="btn outline" data-close>Close</button></div>');
+  s.querySelector('[data-close]').onclick=closeSheet;
+  BCTpl.load(key()).then(function(D2){
+    var v=threadVars(), h='<input type="search" data-ts placeholder="Search templates" autocomplete="off" style="margin-bottom:6px">';
+    D2.sections.forEach(function(sec){
+      var L=D2.templates.filter(function(x){ return x.section===sec[0]&&!x.auto; }); if(!L.length) return;
+      h+='<div class="tsec" data-sec>'+esc(sec[1])+'</div>';
+      L.forEach(function(x){ var f=BCTpl.fill(x.text,v); h+='<button class="tpick" data-tid="'+esc(x.id)+'" data-q="'+esc((x.title+' '+x.text).toLowerCase())+'"><b>'+esc(x.title)+(f.missing.length?'<span class="need">'+f.missing.length+' to fill</span>':'')+'</b><span>'+esc(f.text.replace(/\s+/g,' ').slice(0,110))+'</span></button>'; });
+    });
+    var box=s.querySelector('[data-tl]'); box.innerHTML=h;
+    box.querySelector('[data-ts]').addEventListener('input',function(){ var qq=this.value.trim().toLowerCase(); Array.prototype.forEach.call(box.querySelectorAll('.tpick'),function(b){ b.hidden=!!qq&&b.dataset.q.indexOf(qq)<0; }); Array.prototype.forEach.call(box.querySelectorAll('[data-sec]'),function(h){ var n=h.nextElementSibling, any=false; while(n&&n.classList.contains('tpick')){ if(!n.hidden) any=true; n=n.nextElementSibling; } h.hidden=!any; }); });
+    box.addEventListener('click',function(e){ var b=e.target.closest('[data-tid]'); if(!b) return; closeSheet(); insertTpl(BCTpl.get(b.dataset.tid),false); });
+  }).catch(function(e){ s.querySelector('[data-tl]').innerHTML='<p class="err">'+esc(e.message)+'</p>'; });
+}
+
+// ---------- template library (review and edit) ----------
+var TL=null;
+function sampleVars(){ var v={}; (TL.vars||[]).forEach(function(x){ v[x[0]]=/_link$/.test(x[0])&&x[2].charAt(0)==='/'?location.origin+x[2].replace('…','8c1d2e'):x[2]; }); if(TL.reviewLink) v.review_link=TL.reviewLink; return v; }
+function linkify(s){ return esc(s).replace(/(https?:\/\/[^\s<]+)/g,'<span class="lnk">$1</span>').replace(/\{(\w+)\}/g,'<mark>{$1}</mark>'); }
+function loadLib(){ return BCTpl.load(key(),true).then(function(d){ TL=d; if(route().v==='templates') render(); }).catch(function(e){ if(e.message==='Log in first'){ loadErr='login'; } else toast(e.message); render(); }); }
+function renderLib(){
+  var h=topbar()+'<h1>Text <em>templates</em></h1><p class="sub">Every client text in the hub. Previews use sample details. Grey <mark>{boxes}</mark> are typed in each time.</p>';
+  if(!TL){ return h+'<div class="empty">Loading…</div>'; }
+  h+='<div class="setup" style="border-left-color:var(--terracotta)"><b>Google review link</b>'+(TL.reviewLink?'<span style="overflow-wrap:anywhere">'+esc(TL.reviewLink)+'</span>':'Not set yet. In your Google Business Profile, tap Ask for reviews and copy the link.')+'<br><button class="btn outline" data-act="revlink" style="margin-top:10px;min-height:40px">'+(TL.reviewLink?'Change':'Add link')+'</button></div>';
+  h+='<div class="chips" style="flex-wrap:wrap">'+TL.sections.map(function(s){ return '<a class="chip" href="#sec-'+s[0]+'" data-jump="'+s[0]+'" style="text-decoration:none">'+esc(s[1])+'</a>'; }).join('')+'</div>';
+  var v=sampleVars();
+  TL.sections.forEach(function(sec){
+    h+='<h2 class="lsec" id="sec-'+sec[0]+'">'+esc(sec[1])+'</h2>';
+    TL.templates.filter(function(x){return x.section===sec[0];}).forEach(function(x){
+      var f=BCTpl.fill(x.text,v), w=BCTpl.lint(x.text);
+      h+='<div class="tcard"><div class="tt"><b>'+esc(x.title)+'</b>'+(x.auto?'<span class="pill">Automatic</span>':'')+(x.edited?'<span class="pill ed">Edited</span>':'')+(x.custom?'<span class="pill ed">Yours</span>':'')+'</div><p class="use">'+esc(x.use||'')+'</p><div class="bub">'+linkify(f.text)+'</div>'+(w.length?'<p class="warn">'+w.map(esc).join('<br>')+'</p>':'')+'<button class="ghost" data-edit="'+esc(x.id)+'">Edit</button></div>';
+    });
+  });
+  h+='<div class="actions" style="margin-top:20px"><button class="btn primary" data-act="addtpl" style="flex:1">+ Add your own template</button></div>';
+  return h;
+}
+function editSheet(x, isNew){
+  x=x||{id:'',title:'',text:'',section:'leads'};
+  var vars=(TL.vars||[]).map(function(v){ return '<button type="button" class="vchip" data-ins="{'+v[0]+'}" title="'+esc(v[1])+'">{'+v[0]+'}</button>'; }).join('')+'<button type="button" class="vchip" data-ins="{alt_date}">{alt_date}</button><button type="button" class="vchip" data-ins="{minutes}">{minutes}</button>';
+  var h='<h3>'+(isNew?'New <em>template</em>':esc(x.title))+'</h3>'+(isNew?'<label>Name<input data-tn placeholder="e.g. Parking tips" style="margin-top:6px"></label><label style="margin-top:10px">Section<select data-tsec style="width:100%;margin-top:6px;font:400 16px var(--sans);padding:11px;border:1px solid #CFC5BA;border-radius:8px;background:#fff">'+TL.sections.map(function(s){return '<option value="'+s[0]+'">'+esc(s[1])+'</option>';}).join('')+'</select></label>':(x.custom?'<label>Name<input data-tn value="'+esc(x.title)+'" style="margin-top:6px"></label>':'<p class="sub" style="margin:-6px 0 10px">'+esc(x.use||'')+'</p>'))+
+    '<label style="margin-top:10px">Message<textarea data-tx style="min-height:220px;margin-top:6px">'+esc(x.text)+'</textarea></label><div class="cnt" data-tc style="padding:0"></div>'+
+    '<p class="sub" style="margin:10px 0 4px">Tap to insert. Links go on their own line. Add ? inside a link, like {job_link?}, to drop that paragraph when there\'s no link.</p><div class="vchips">'+vars+'</div>'+
+    '<div class="sub" style="margin-top:12px">Preview</div><div class="bub" data-pv></div><p class="warn" data-lw hidden></p><div class="err" data-er hidden></div>'+
+    '<div class="actions">'+(!isNew&&x.edited?'<button class="btn outline" data-reset>Reset</button>':'')+(x.custom?'<button class="btn outline" data-del>Delete</button>':'')+'<button class="btn outline" data-close>Cancel</button><button class="btn primary" data-save>Save</button></div>';
+  var s=openSheet(h), tx=s.querySelector('[data-tx]');
+  function pv(){ var f=BCTpl.fill(tx.value,sampleVars()), w=BCTpl.lint(tx.value), p=parts(f.text); s.querySelector('[data-pv]').innerHTML=linkify(f.text); var lw=s.querySelector('[data-lw]'); lw.hidden=!w.length; lw.innerHTML=w.map(esc).join('<br>'); s.querySelector('[data-tc]').textContent=p.n?'About '+p.p+' text'+(p.p===1?'':'s')+' with sample details':''; }
+  pv(); tx.addEventListener('input',pv);
+  s.querySelector('.vchips').addEventListener('click',function(e){ var b=e.target.closest('[data-ins]'); if(!b) return; var a=tx.selectionStart||tx.value.length, z=tx.selectionEnd||a, ins=b.dataset.ins; if(/_link\}$/.test(ins)) ins=(a&&tx.value[a-1]!=='\n'?'\n':'')+ins+'\n'; tx.value=tx.value.slice(0,a)+ins+tx.value.slice(z); tx.focus(); tx.setSelectionRange(a+ins.length,a+ins.length); pv(); });
+  s.querySelector('[data-close]').onclick=closeSheet;
+  function post(body,msg){ var er=s.querySelector('[data-er]'); er.hidden=true; return fetch('/api/templates',{method:'POST',headers:{'content-type':'application/json','x-admin-key':key()},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'That didn\'t save'); TL.templates=d.templates; TL.reviewLink=d.reviewLink; BCTpl.set(TL); closeSheet(); render(); toast(msg); }); }).catch(function(e){ er.textContent=e.message; er.hidden=false; }); }
+  s.querySelector('[data-save]').onclick=function(){ var tn=s.querySelector('[data-tn]'); if(isNew) post({action:'add',title:tn.value,section:s.querySelector('[data-tsec]').value,text:tx.value},'Template added'); else post({action:'save',id:x.id,text:tx.value,title:tn?tn.value:undefined},'Saved'); };
+  var rb=s.querySelector('[data-reset]'); if(rb) rb.onclick=function(){ if(confirm('Go back to the original wording?')) post({action:'reset',id:x.id},'Back to the original'); };
+  var db=s.querySelector('[data-del]'); if(db) db.onclick=function(){ if(confirm('Delete this template?')) post({action:'delete',id:x.id},'Deleted'); };
+}
+function reviewSheet(){
+  var s=openSheet('<h3>Google <em>review link</em></h3><p class="sub" style="margin:-6px 0 10px">In the Google Business Profile app or Search, open your profile, tap <b>Ask for reviews</b> and copy the link.</p><input data-rl type="url" placeholder="https://g.page/r/…" value="'+esc(TL.reviewLink||'')+'"><div class="err" data-er hidden></div><div class="actions"><button class="btn outline" data-close>Cancel</button><button class="btn primary" data-save>Save</button></div>');
+  s.querySelector('[data-close]').onclick=closeSheet;
+  s.querySelector('[data-save]').onclick=function(){ var er=s.querySelector('[data-er]'); fetch('/api/templates',{method:'POST',headers:{'content-type':'application/json','x-admin-key':key()},body:JSON.stringify({action:'review',reviewLink:s.querySelector('[data-rl]').value})}).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error); TL.reviewLink=d.reviewLink; BCTpl.set(TL); closeSheet(); render(); toast('Saved'); }); }).catch(function(e){ er.textContent=e.message; er.hidden=false; }); };
 }
 
 // ---------- render & events ----------
@@ -297,13 +379,14 @@ function render(){
     return;
   }
   app.dataset.t='';
+  if(r.v==='templates'){ document.title='Text templates'; app.innerHTML=renderLib(); if(!TL) loadLib(); return; }
   if(!D){ app.innerHTML='<div class="center">Loading…</div>'; loadInbox(); return; }
   var focusQ=document.activeElement&&document.activeElement.hasAttribute('data-q');
   app.innerHTML=renderInbox();
   if(focusQ){ var i=app.querySelector('[data-q]'); i.focus(); i.setSelectionRange(i.value.length,i.value.length); }
   timer=setInterval(function(){ if(document.visibilityState==='visible'&&!document.getElementById('scrim')) loadInbox(); },20000);
 }
-window.addEventListener('hashchange',function(){ closeSheet(); if(route().v!=='t'){ T=null; loadInbox(); } render(); window.scrollTo(0,0); });
+window.addEventListener('hashchange',function(){ closeSheet(); var v=route().v; if(v!=='t'){ T=null; if(v==='inbox') loadInbox(); } render(); window.scrollTo(0,0); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState!=='visible') return; if(route().v==='t') loadThread(route().id,true); else loadInbox(); });
 app.addEventListener('input',function(e){
   if(e.target.hasAttribute('data-q')){ q=e.target.value; app.querySelector('[data-list]').innerHTML=listHtml(); return; }
@@ -312,13 +395,17 @@ app.addEventListener('input',function(e){
 app.addEventListener('keydown',function(e){ if(e.target.hasAttribute('data-box')&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); send(); } });
 app.addEventListener('click',function(e){
   var f=e.target.closest('[data-f]'); if(f){ filter=f.dataset.f; render(); return; }
+  var ed=e.target.closest('[data-edit]'); if(ed){ var x=TL.templates.filter(function(y){return y.id===ed.dataset.edit;})[0]; if(x) editSheet(x,false); return; }
+  var jp=e.target.closest('[data-jump]'); if(jp){ e.preventDefault(); var el=document.getElementById('sec-'+jp.dataset.jump); if(el) el.scrollIntoView({behavior:'smooth'}); return; }
   var b=e.target.closest('[data-act]'); if(!b) return;
   var a=b.dataset.act;
   if(a==='refresh'){ D=null; loadErr=''; render(); return; }
   if(a==='new'){ newSheet(); return; }
   if(a==='send'){ send(); return; }
   if(a==='info'){ infoSheet(); return; }
-  if(a==='quick'){ quickSheet(false); return; }
+  if(a==='quick'){ tplSheet(); return; }
+  if(a==='addtpl'){ editSheet(null,true); return; }
+  if(a==='revlink'){ reviewSheet(); return; }
   if(a==='connect'){ b.disabled=true; b.textContent='Connecting…';
     api('POST',{action:'connect'}).then(function(){ toast('Replies are on'); return loadInbox(); }).catch(function(x){ b.disabled=false; b.textContent='Turn on replies'; toast(x.message); }); return; }
 });

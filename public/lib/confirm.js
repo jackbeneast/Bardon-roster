@@ -35,6 +35,15 @@
       (live?'\nFollow your clean live, with before and after photos:\n'+live+'\n':'')+
       '\nAny questions, text me on '+text+'.\nJack';
 
+    // Use the editable template from Text templates when it's loaded.
+    if(window.BCTpl&&BCTpl.data){
+      var tp=BCTpl.get(locked?'booking_confirmed':'booking_pending');
+      if(tp){
+        var v=BCTpl.varsFor({quote:d&&d.kind==='quote'?d:null, invoice:dep&&dep.state!=='paid'?dep:null, job:j, origin:origin, name:d&&(d.client.contact||d.client.name)||j.client});
+        v.when=whenSms; v.address=place; if(j.service) v.service_size=j.service+size+(days?' over '+days.length+' days':'');
+        sms=BCTpl.fill(tp.text,v).text;
+      }
+    }
     var subject=(locked?'Booking confirmed: ':'Your booking: ')+j.service+', '+shortDay(j.date)+(days?' to '+shortDay(days[days.length-1].date):'')+(place?' · '+(j.address||j.suburb):'');
     var L=[];
     L.push('Hi '+who+',','',locked?'Thanks for booking Bardon Clean. Your clean is confirmed. Here are the details.':'Thanks for booking Bardon Clean. Here are the details. Your booking is tentative until the deposit is paid.','');

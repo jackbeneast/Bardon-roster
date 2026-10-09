@@ -10,10 +10,32 @@ import { loadRequests, SERVICES } from "../../lib/requests.mjs";
 import { mmReady, sendSms, auMobile } from "../../lib/mm.mjs";
 import { loadIndex, loadThread, markRead, setMeta, unreadCount, connectHooks, pullInbound, directory } from "../../lib/messages.mjs";
 
-async function people(s) {
+async function sources(s) {
   const [requests, docs, roster] = await Promise.all([loadRequests(s).catch(() => []), loadDocs(s).catch(() => []), loadRoster(s).catch(() => ({}))]);
   const reqs = requests.map((r) => ({ ...r, serviceLabel: (SERVICES[r.service] || SERVICES.other).label }));
+  return { reqs, docs, roster };
+}
+async function people(s, src) {
+  const { reqs, docs, roster } = src || (await sources(s));
   return directory({ requests: reqs, docs: docs.filter((d) => !d.archived || d.client?.phone), agents: roster.agents || [], team: roster.team || [] });
+}
+// The records behind a conversation, so templates fill in links, amounts and dates.
+function recordsFor(phone, { reqs, docs, roster }, jobId) {
+  const mine = docs.filter((d) => !d.archived && auMobile(d.client?.phone) === phone);
+  const quote = mine.find((d) => d.kind === "quote" && d.state !== "declined") || null;
+  const invs = mine.filter((d) => d.kind === "invoice");
+  const invoice = invs.find((d) => d.totals?.due > 0.005 && d.state !== "draft") || invs[0] || null;
+  const jobs = (roster.jobs || []).filter((j) => !j.sample);
+  let job = jobId ? jobs.find((j) => j.id === jobId) : null;
+  if (!job) {
+    const ids = new Set(mine.map((d) => d.jobId).filter(Boolean));
+    const today = new Date(Date.now() + 10 * 3600e3).toISOString().slice(0, 10);
+    const cands = jobs.filter((j) => ids.has(j.id)).sort((a, b) => a.date.localeCompare(b.date));
+    job = cands.find((j) => j.date >= today) || cands[cands.length - 1] || null;
+  }
+  const group = job && job.group ? jobs.filter((j) => j.group === job.group) : [];
+  const req = reqs.find((r) => auMobile(r.phone) === phone) || null;
+  return { quote, invoice, job, jobs: group, req: req && { name: req.name, suburb: req.suburb, address: req.address, service: req.serviceLabel } };
 }
 
 export default async (req) => {
@@ -31,10 +53,11 @@ export default async (req) => {
       const phone = auMobile(t);
       if (!phone) return json({ error: "That isn't an Australian mobile number" }, 400);
       await pullInbound(s);
-      const [thread, dir] = await Promise.all([loadThread(s, phone), people(s)]);
+      const src = await sources(s);
+      const [thread, dir] = await Promise.all([loadThread(s, phone), people(s, src)]);
       if (thread.unread) await markRead(s, phone);
       const who = dir[phone] || { name: "", ctx: [] };
-      return json({ ready: mmReady(), thread: { ...thread, unread: 0, name: thread.name || who.name }, ctx: who.ctx.slice(0, 6) });
+      return json({ ready: mmReady(), thread: { ...thread, unread: 0, name: thread.name || who.name }, ctx: who.ctx.slice(0, 6), rec: recordsFor(phone, src, url.searchParams.get("job") || "") });
     }
     await pullInbound(s);
     const [idx, dir, set, hook] = await Promise.all([loadIndex(s), people(s), loadSettings(s), s.get("mmhook")]);

@@ -131,6 +131,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 <div id="app"><div class="center">Loading…</div></div>
 <script src="/lib/confirm.js"></script>
 <script src="/lib/sms.js"></script>
+<script src="/lib/templates.js"></script>
 <script>
 (function(){
   var app=document.getElementById('app');
@@ -171,7 +172,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   function load(){
     if(!key()){ loadErr='login'; render(); return Promise.resolve(); }
     return Promise.all([api('GET','/api/docs'), api('GET','/api/roster').catch(function(){return {jobs:[]};}), api('GET','/api/request').catch(function(){return {requests:[]};})]).then(function(r){ S.reqs=r[2].requests||[];
-      BCSms.check(key()); S.docs=r[0].docs; S.settings=r[0].settings; S.card=r[0].card; S.jobs=(r[1].jobs||[]).filter(function(j){return !j.sample;});
+      BCSms.check(key()); BCTpl.load(key()).catch(function(){}); S.docs=r[0].docs; S.settings=r[0].settings; S.card=r[0].card; S.jobs=(r[1].jobs||[]).filter(function(j){return !j.sample;});
       loaded=true; loadErr=''; render();
     }).catch(function(e){ loadErr=e.status===401?'login':e.message; render(); });
   }
@@ -439,17 +440,33 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
       api('POST','/api/docs',{action:'confirmed',id:d.id}).then(function(){ d.confirmedAt=new Date().toISOString(); }).catch(function(){});
     });
   }
+  // Fill a text template for this doc. Returns '' if templates aren't loaded, so the built-in wording is used.
+  function tplText(id, d, extra){
+    if(!window.BCTpl||!BCTpl.data||!BCTpl.get(id)) return '';
+    var q=d.kind==='quote'?d:(d.quoteId?docById(d.quoteId):null);
+    var o={quote:q, invoice:d.kind==='invoice'?d:null, job:jobFor(d), jobs:S.jobs}; for(var k in (extra||{})) o[k]=extra[k];
+    return BCTpl.fill(BCTpl.get(id).text, BCTpl.varsFor(o)).text;
+  }
+  function tplPicker(sel, d, extra, box){
+    if(!window.BCTpl||!BCTpl.data) return '';
+    var h='<label class="l" style="margin-bottom:10px">Template<select data-tplpick>';
+    BCTpl.data.sections.forEach(function(s){ var L=BCTpl.data.templates.filter(function(x){return x.section===s[0]&&!x.auto;}); if(!L.length) return; h+='<optgroup label="'+esc(s[1])+'">'+L.map(function(x){ return '<option value="'+esc(x.id)+'"'+(x.id===sel?' selected':'')+'>'+esc(x.title)+'</option>'; }).join('')+'</optgroup>'; });
+    return h+'</select></label>';
+  }
+  function wirePicker(s, d, extra, boxSel){ var p=s.querySelector('[data-tplpick]'); if(!p) return; p.addEventListener('change',function(){ var v=tplText(p.value,d,extra); if(v) s.querySelector(boxSel).value=v; }); }
   function sendSheet(d, reminder){
     var t=d.totals, l=link(d), fn=first(d.client.contact||d.client.name), what=d.site?d.site:(d.service||'your clean').toLowerCase();
     var msg=reminder?'Hi '+fn+', a friendly reminder that invoice #'+d.num+' for '+money(t.due)+' was due '+fdate(d.dueDate)+'. You can view and pay it here: '+l+' Thanks, Jack, Bardon Clean'
       :d.kind==='quote'?'Hi '+fn+', here\'s your quote from Bardon Clean for '+what+': '+l+' You can accept it online. Any questions, text me on '+S.settings.biz.sms+'. Jack'
       :(d.isDeposit?'Hi '+fn+', here\'s your deposit invoice #'+d.num+' from Bardon Clean for '+money(t.due)+', due today: '+l+' Your booking is tentative until the deposit is paid. Thanks, Jack':(reportLink(d)?'Hi '+fn+', your clean'+(d.site?' at '+d.site:'')+' is complete. Your job report, with before and after photos and the room-by-room sign-off, is here: '+reportLink(d)+'\n\nHere\'s the balance invoice #'+d.num+' for '+money(t.due)+': '+l+'\n\nThanks for choosing Bardon Clean. Jack':'Hi '+fn+', here\'s invoice #'+d.num+' from Bardon Clean for '+money(t.due)+': '+l+' Thanks, Jack'));
+    var tid=reminder?(d.isDeposit?'deposit_reminder':'invoice_overdue'):d.kind==='quote'?'quote_send':d.isDeposit?'deposit_invoice':reportLink(d)?'clean_done_balance':'invoice_send';
+    msg=tplText(tid,d)||msg;
     var subj=reminder?'Reminder: invoice #'+d.num+' from Bardon Clean':(d.kind==='quote'?'Your quote from Bardon Clean':'Invoice #'+d.num+' from Bardon Clean')+(d.site?' · '+d.site:'');
-    var h='<h3>'+(reminder?'Send a <em>reminder</em>':'Send '+(d.kind==='quote'?'the <em>quote</em>':'the <em>invoice</em>'))+'</h3><label class="l">Message<textarea id="smsg" style="min-height:120px">'+esc(msg)+'</textarea></label><div class="sendopt" style="margin-top:12px">';
+    var h='<h3>'+(reminder?'Send a <em>reminder</em>':'Send '+(d.kind==='quote'?'the <em>quote</em>':'the <em>invoice</em>'))+'</h3>'+tplPicker(tid,d)+'<label class="l">Message<textarea id="smsg" style="min-height:180px">'+esc(msg)+'</textarea></label><div class="sendopt" style="margin-top:12px">';
     h+='<a data-sendvia="sms" href="#"><span class="ic">✉</span><span>Text message<small>'+(d.client.phone?esc(d.client.phone):'Opens Messages, add the number')+(BCSms.ready?' · from '+esc(BCSms.from):'')+'</small></span></a>';
     h+='<a data-sendvia="email" href="#"><span class="ic">@</span><span>Email<small>'+(d.client.email?esc(d.client.email):'Opens Mail, add the address')+'</small></span></a>';
     h+='<button data-sendvia="copy"><span class="ic">⧉</span><span>Copy message<small>Paste into WhatsApp or anywhere else</small></span></button></div><div class="actions"><button class="btn plain grow" data-close>Close</button></div>';
-    var s=sheet(h);
+    var s=sheet(h); wirePicker(s,d,null,'#smsg');
     s.addEventListener('click',function(e){ var a=e.target.closest('[data-sendvia]'); if(!a) return; var m=s.querySelector('#smsg').value, v=a.dataset.sendvia;
       if(v==='sms'&&BCSms.go(a,d.client.phone,m,key(),{ref:'inv'+d.num,toast:toast,done:function(){ api('POST','/api/docs',{action:'sent',id:d.id}).then(function(){ closeSheet(); load(); }).catch(function(){}); }})){ e.preventDefault(); return; }
       if(v==='email') a.href='mailto:'+encodeURIComponent(d.client.email||'')+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(m);
@@ -463,13 +480,15 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var p=P[i], upTo=P.slice(0,i+1).reduce(function(a,x){return a+x.amt;},0), bal=Math.max(0,r2(d.totals.total-upTo));
     var l=location.origin+'/r/'+d.token+'?p='+p.id, fn=first(d.client.contact||d.client.name);
     var msg='Hi '+fn+', thanks for your payment of '+money(p.amt)+' for invoice #'+d.num+'. '+(bal>0.005?money(bal)+' remains on the invoice. ':'It\'s now paid in full. ')+(d.isDeposit&&bal<=0.005?'Your booking is locked in. ':'')+'Here\'s your receipt: '+l+' Thanks, Jack, Bardon Clean';
+    var rid=bal>0.005?'receipt_part':d.isDeposit?'deposit_received':'receipt_full';
+    msg=tplText(rid,d,{payment:p})||msg;
     var subj='Receipt R'+d.num+'-'+(i+1)+' from Bardon Clean · '+money(p.amt);
-    var h='<h3>Send a <em>receipt</em></h3><p class="sub" style="margin:-6px 0 12px">'+money(p.amt)+' paid '+fdate(p.date)+' · '+esc(p.method)+'</p><label class="l">Message<textarea id="rmsg" style="min-height:130px">'+esc(msg)+'</textarea></label><div class="sendopt" style="margin-top:12px">'+
+    var h='<h3>Send a <em>receipt</em></h3><p class="sub" style="margin:-6px 0 12px">'+money(p.amt)+' paid '+fdate(p.date)+' · '+esc(p.method)+'</p>'+tplPicker(rid,d)+'<label class="l">Message<textarea id="rmsg" style="min-height:160px">'+esc(msg)+'</textarea></label><div class="sendopt" style="margin-top:12px">'+
       '<a data-rv="sms" href="#"><span class="ic">✉</span><span>Text message<small>'+(d.client.phone?esc(d.client.phone):'Add the number in Messages')+'</small></span></a>'+
       '<a data-rv="email" href="#"><span class="ic">@</span><span>Email<small>'+(d.client.email?esc(d.client.email):'Add the address in Mail')+'</small></span></a>'+
       '<button data-rv="copy"><span class="ic">⧉</span><span>Copy message<small>Paste anywhere</small></span></button>'+
       '<a href="'+l+'" target="_blank" rel="noopener"><span class="ic">↗</span><span>View receipt<small>Save it as a PDF from there</small></span></a></div><div class="actions"><button class="btn plain grow" data-close>Done</button></div>';
-    var s=sheet(h);
+    var s=sheet(h); wirePicker(s,d,{payment:p},'#rmsg');
     s.addEventListener('click',function(e){ var a=e.target.closest('[data-rv]'); if(!a) return; var m=s.querySelector('#rmsg').value;
       if(a.dataset.rv==='sms'&&BCSms.go(a,d.client.phone,m,key(),{ref:'rcpt'+d.num,toast:toast})){ e.preventDefault(); return; }
       if(a.dataset.rv==='email') a.href='mailto:'+encodeURIComponent(d.client.email||'')+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(m);
@@ -658,7 +677,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(a==='copyform'){ var fu=location.origin+'/quote'; (navigator.clipboard?navigator.clipboard.writeText(fu):Promise.reject()).then(function(){ toast('Link copied'); },function(){ prompt('Copy this link',fu); }); return; }
     var rq=route().v==='req'?reqById(route().id):null;
     if(rq&&a==='req-quote'){ quoteFromReq(rq); return; }
-    if(rq&&a==='req-text'){ e.preventDefault(); var msg=reqText(rq), mob=String(rq.phone||'').replace(/[^\d+]/g,'').replace(/^\+61/,'0').replace(/^61(?=4\d{8}$)/,'0');
+    if(rq&&a==='req-text'){ e.preventDefault(); var msg=(window.BCTpl&&BCTpl.get('lead_first')?BCTpl.fill(BCTpl.get('lead_first').text,BCTpl.varsFor({name:rq.name,service:rq.serviceLabel,suburb:rq.suburb})).text:reqText(rq)), mob=String(rq.phone||'').replace(/[^\d+]/g,'').replace(/^\+61/,'0').replace(/^61(?=4\d{8}$)/,'0');
       // With Mobile Message on, the conversation lives in Messages: open it with this text ready to send.
       if(BCSms.ready&&/^04\d{8}$/.test(mob)){ location.href='/messages/#/t/'+mob+'?name='+encodeURIComponent(rq.name||'')+'&draft='+encodeURIComponent(msg); return; }
       if(!BCSms.go(el,rq.phone,msg,key(),{ref:'req:'+rq.id,toast:toast})) location.href=el.href; return; }
