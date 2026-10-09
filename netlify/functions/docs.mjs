@@ -3,7 +3,7 @@
 import { store, json, checkAdmin } from "../../lib/core.mjs";
 import {
   loadSettings, cleanSettings, cleanDoc, loadDocs, findByToken, saveDoc, newDoc,
-  recordPayment, addJobFromQuote, publicView, totals, statusOf, today, addDays, depositDesc, reportFor,
+  recordPayment, addJobFromQuote, publicView, fillJobberQuote, totals, statusOf, today, addDays, depositDesc, reportFor,
 } from "../../lib/docs.mjs";
 import { notify, money, fmtDay } from "../../lib/notify.mjs";
 import { planImport } from "../../lib/jobberImport.mjs";
@@ -23,6 +23,8 @@ export default async (req) => {
     if (t) {
       const d = await findByToken(s, t);
       if (!d || (d.status === "draft" && !admin)) return json({ error: "This link isn't active. Text Jack at Bardon Clean on 0468 193 772." }, 404);
+      const set = await loadSettings(s);
+      if (fillJobberQuote(d, set)) await saveDoc(s, d);
       if (!admin) {
         // Only counted when the page runs in a real browser (link previews don't run it).
         const now = new Date().toISOString();
@@ -42,7 +44,6 @@ export default async (req) => {
           });
         }
       }
-      const set = await loadSettings(s);
       const out = publicView(d, set);
       out.card = !!process.env.STRIPE_SECRET_KEY;
       // Invoices link to the job report (live page with photos) once the job is on the roster.
@@ -55,7 +56,14 @@ export default async (req) => {
       return json(out);
     }
     if (!admin) return json({ error: "Log in first" }, 401);
-    const [docs, settings] = await Promise.all([loadDocs(s), loadSettings(s)]);
+    let [docs, settings] = await Promise.all([loadDocs(s), loadSettings(s)]);
+    // Top up open Jobber quotes (scope + policies) the first time the hub lists them.
+    const thin = [];
+    for (const d of docs) if (!d.archived && d.src === "jobber" && d.kind === "quote" && !d.filled) {
+      const raw = await s.get(`doc/${d.id}`);
+      if (raw && fillJobberQuote(raw, settings)) { await saveDoc(s, raw); thin.push(d.id); }
+    }
+    if (thin.length) docs = await loadDocs(s);
     return json({ docs, settings, card: !!process.env.STRIPE_SECRET_KEY });
   }
 
