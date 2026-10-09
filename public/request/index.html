@@ -96,6 +96,11 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
 .trust div{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:14.5px;line-height:1.45}
 .trust svg{width:22px;height:22px;color:var(--terracotta);margin-top:1px}
 .trust b{color:var(--dark);font-weight:600}
+/* review quote */
+.quote{margin:24px 0 0;padding:20px 0 0;border-top:1px solid var(--line)}
+.quote .st{color:var(--terracotta);letter-spacing:2px;font-size:14px;margin:0 0 8px}
+.quote blockquote{margin:0 0 10px;font:italic 500 17px/1.45 var(--serif);color:var(--dark)}
+.quote cite{display:block;font:400 13px var(--sans);font-style:normal;color:var(--meta)}
 .jack{display:flex;gap:12px;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:0 0 22px}
 .jack .av{flex:none;width:44px;height:44px;border-radius:50%;background:var(--dark);color:var(--cream);display:grid;place-items:center;font:700 18px var(--serif)}
 .jack p{margin:0;font-size:14.5px;line-height:1.45}
@@ -231,6 +236,12 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
       home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',
       lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'};
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P[n]+'</svg>'; }
+  var REVIEWS={
+    presale:['I\'ve dealt with many cleaners over the past 29 years and I can truly recommend Jack and Bardon Clean as one of the most diligent, thorough and kind natured cleaners I\'ve ever met.','Michelle McLeod · Real estate agent · Google review'],
+    bond:['Very professional, reliable and went above and beyond, delivering a bond clean that even impressed a very picky agent.','Marina Jeffery · Bond clean · Google review'],
+    deep:['They went beyond a surface clean and paid attention to all the little details — it really shows.','Rhianna Brandis · Deep clean · Google review']
+  };
+  function review(){ var r=REVIEWS[A.service]||REVIEWS.presale; return '<figure class="quote"><p class="st" aria-label="5 stars">★★★★★</p><blockquote>“'+esc(r[0])+'”</blockquote><cite>'+esc(r[1])+'</cite></figure>'; }
   function trust(){ return '<div class="trust">'+
     '<div>'+ico('user')+'<span><b>Quoted personally by Jack,</b> the owner. Not a call centre.</span></div>'+
     '<div>'+ico('doc')+'<span><b>A written quote with the full scope</b> before you commit. No obligation.</span></div>'+
@@ -246,10 +257,11 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
     if(step>0) h+='<div class="stepno"><button type="button" data-back>← Back</button><span>Step '+(step+1)+' of '+STEPS.length+'</span></div>';
     h+='<form id="f" novalidate class="fade"><div class="hp" aria-hidden="true"><label>Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label></div>';
     if(s==='service'){
-      h+='<h1>Request a <em>quote</em></h1><p class="lead">A few questions about the property so Jack can quote accurately the first time. It takes a couple of minutes.</p>';
+      h+='<h1>Request a <em>quote</em></h1><p class="lead">Tell us about the property and Jack, owner of Bardon Clean, will prepare your quote.</p>';
       if(resumeOffer) h+='<div class="resume"><span>You started a request earlier.</span><button type="button" data-resume>Pick up where you left off</button></div>';
       h+='<fieldset class="q"><legend>What do you need?</legend><div class="cards">'+SERVICES.map(function(o){ return '<label class="card"><input type="radio" name="service" value="'+o.k+'"'+(A.service===o.k?' checked':'')+'><b>'+esc(o.t)+'</b><span>'+esc(o.d)+'</span></label>'; }).join('')+'</div></fieldset>';
       h+='<p class="hint" style="margin-top:-10px">Business or clinic? <a href="mailto:hello@bardonclean.au?subject=Commercial%20cleaning%20enquiry">Email us about commercial cleaning</a>.</p>';
+      h+=review();
       h+=trust();
     }
     if(s==='property'){
@@ -258,6 +270,7 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
       h+='<div class="row2">'+field('suburb','Suburb',{ac:'address-level2',ph:'e.g. Paddington'})+field('postcode','Postcode',{im:'numeric',ac:'postal-code',ph:'4064',max:4})+'</div>';
       h+='<fieldset class="q"><legend>Who\'s booking?</legend>'+radios('who',WHO)+'</fieldset>';
       if(A.who==='agent') h+=field('agency','Agency',{ac:'organization',ph:'e.g. Harcourts, The Gap'});
+      h+=review();
     }
     if(s==='details'){
       h+='<h1>About the <em>home</em></h1><p class="lead">Size and condition are what change a quote most.</p>';
