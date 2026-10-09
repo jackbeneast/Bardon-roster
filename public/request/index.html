@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Request a quote · Bardon Clean</title>
-<meta name="description" content="Request a quote for a pre-sale, bond, deep or regular clean in Brisbane. Quoted personally by Jack, the owner of Bardon Clean.">
+<meta name="description" content="Request a quote for a pre-sale, bond or deep clean in Brisbane. Quoted personally by Jack, the owner of Bardon Clean.">
 <meta name="theme-color" content="#F5F0EB">
 <meta name="color-scheme" content="light">
 <link rel="icon" href="/icons/favicon.png">
@@ -160,7 +160,6 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
     {k:'bond',t:'Bond / end-of-lease clean',d:'A thorough exit clean to your agent\'s checklist.',date:'When does the lease end or the final inspection happen?'},
     {k:'deep',t:'Deep clean',d:'A full reset for a home that needs more than a tidy.',date:'When would you like it done?'},
     {k:'movein',t:'Move-in clean',d:'A clean slate before your things go in.',date:'When are you moving in?'},
-    {k:'regular',t:'Regular cleaning',d:'Weekly, fortnightly or every four weeks.',date:'When would you like to start?'},
     {k:'other',t:'Something else',d:'Tell us what you need and Jack will take a look.',date:'When would you like it done?'}
   ];
   var WHO=[['owner','Owner or vendor'],['tenant','Tenant'],['agent','Real estate agent or property manager'],['other','Other']];
@@ -193,12 +192,12 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
   function lsGet(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ return null; } }
   function lsSet(){ try{ localStorage.setItem(KEY,JSON.stringify({a:A,step:step,at:Date.now()})); }catch(e){} }
   function lsDel(){ try{ localStorage.removeItem(KEY); }catch(e){} }
-  var saved=lsGet(); if(saved&&saved.a&&saved.a.service&&Date.now()-saved.at<14*864e5) resumeOffer=true;
+  var saved=lsGet(); if(saved&&saved.a&&saved.a.service&&saved.a.service!=='regular'&&Date.now()-saved.at<14*864e5) resumeOffer=true;
   var params=new URLSearchParams(location.search);
   var src=params.get('src')||params.get('utm_source')||(document.referrer&&document.referrer.indexOf(location.host)<0?document.referrer.replace(/^https?:\/\//,'').split('/')[0]:'');
   if(params.get('service')&&SERVICES.some(function(s){return s.k===params.get('service');})&&!resumeOffer) A.service=params.get('service');
 
-  function svc(){ return SERVICES.filter(function(s){return s.k===A.service;})[0]||SERVICES[5]; }
+  function svc(){ return SERVICES.filter(function(s){return s.k===A.service;})[0]||SERVICES.filter(function(s){return s.k==='other';})[0]; }
   var isReg=function(){ return A.service==='regular'; };
   var needsState=function(){ return ['presale','bond','movein','deep'].indexOf(A.service)>=0; };
 
