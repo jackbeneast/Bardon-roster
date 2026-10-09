@@ -86,7 +86,10 @@ export default async (req) => {
     const acks = await loadAcks(s);
     const live = await loadAllLive(s);
     const jobs = admin ? roster.jobs : roster.jobs.filter((j) => !j.sample).map(({ share, ...j }) => j);
-    const out = { team, jobs, info: roster.info || {}, confirms, acks, live, admin, adminSet: await adminIsSet(s), savedAt: roster.savedAt || "" };
+    // Access details clients add on their own link, keyed by booking (the team needs them on the day).
+    const access = {};
+    await Promise.all((await s.list("access/")).map(async (k) => { const v = await s.get(k); if (v) access[k.slice(7)] = v; }));
+    const out = { team, jobs, info: roster.info || {}, confirms, acks, live, access, admin, adminSet: await adminIsSet(s), savedAt: roster.savedAt || "" };
     if (admin) {
       out.agents = roster.agents || [];
       out.pay = roster.pay || null;

@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { store, json, loadRoster, loadAllLive, checkAdmin, roomsOf, DEFAULT_ROOMS, LOCK } from "../../lib/core.mjs";
-import { notify, fmtDay } from "../../lib/notify.mjs";
+import { notify, fmtDay, where } from "../../lib/notify.mjs";
+import { loadTemplates } from "../../lib/templates.mjs";
 
 // ---- sample jobs, so a new agent's link isn't empty on first open ----
 // Three clearly labelled jobs: finished yesterday (report), on site today, booked later this week.
@@ -63,6 +64,7 @@ function view(job, roster, L, withShare) {
       arrived: live.arrived || {}, rooms: live.rooms || {}, flags: (live.flags || []).map(({ id, t, d, at }) => ({ id, t, d, at })),
       photos: (live.photos || []).filter((p) => p.room && p.kind).map(({ id, room, kind, at }) => ({ id, room, kind, at })),
       lock: live.lock || {}, eta: live.eta || "", done: live.done || "", updated: live.updated || "",
+      checks: Object.fromEntries(Object.entries(live.items || {}).map(([r, v]) => [r, Object.keys(v || {}).length])),
     },
   };
   if (withShare && job.share) o.share = job.share;
@@ -90,7 +92,11 @@ export default async (req) => {
       const job = all.find((j) => j.date >= t) || all[all.length - 1];
       if (!job) return json({ error: "This link has expired. Call Jack at Bardon Clean on 0406 216 212 for a new one." }, 404);
       const a = agents.find((x) => x.id === job.agentId);
-      return json({ ...base, mode: "vendor", agent: a ? { name: a.name, agency: a.agency } : null, jobs: [view(job, roster, live[job.id], false)] });
+      const bk = job.group || job.id;
+      const [acc, fb, tp] = await Promise.all([s.get(`access/${bk}`), s.get(`fb/${bk}`), loadTemplates(s)]);
+      const kind = /bond|lease/i.test(job.service || "") ? "bond" : /pre.?sale/i.test(job.service || "") ? "presale" : /deep/i.test(job.service || "") ? "deep" : /regular/i.test(job.service || "") ? "regular" : "other";
+      return json({ ...base, mode: "vendor", agent: a ? { name: a.name, agency: a.agency } : null, jobs: [view(job, roster, live[job.id], false)],
+        client: { access: acc || null, feedback: fb ? { mood: fb.mood, at: fb.at } : null, reviewLink: tp.reviewLink || "", kind } });
     }
     if (k) {
       const a = k.length >= 16 && agents.find((x) => x.token === k);
@@ -128,6 +134,30 @@ export default async (req) => {
       }
       await s.set("roster", { ...roster, savedAt: new Date().toISOString() });
       return json({ ok: true });
+    }
+    if (b.action === "access" || b.action === "feedback") { // from the client's own link
+      const v = typeof b.v === "string" && b.v.length >= 16 ? b.v : "";
+      const job = v && roster.jobs.find((j) => j.share === v);
+      if (!job) return json({ error: "This link has expired. Call Jack on 0406 216 212." }, 404);
+      const bk = job.group || job.id, str = (x, n) => (typeof x === "string" ? x.trim().slice(0, n) : "");
+      if (b.action === "access") {
+        const rec = { entry: str(b.entry, 40), entryNote: str(b.entryNote, 300), parking: str(b.parking, 300), pets: str(b.pets, 300), notes: str(b.notes, 800), at: new Date().toISOString() };
+        if (!rec.entry && !rec.entryNote && !rec.parking && !rec.pets && !rec.notes) return json({ error: "Add at least one detail." }, 400);
+        const first = !(await s.get(`access/${bk}`));
+        await s.set(`access/${bk}`, rec);
+        await notify(s, { type: "access", title: `Access details ${first ? "added" : "updated"}: ${where(job)}`, body: [rec.entry && `Entry: ${rec.entry}${rec.entryNote ? ", " + rec.entryNote : ""}`, rec.parking && `Parking: ${rec.parking}`, rec.pets && `Pets: ${rec.pets}`, rec.notes].filter(Boolean).join("\n"), tags: "key", url: "/" });
+        return json({ ok: true, access: rec });
+      }
+      const mood = b.mood === "happy" ? "happy" : b.mood === "issue" ? "issue" : "";
+      if (!mood) return json({ error: "Pick one" }, 400);
+      const text = str(b.text, 1500);
+      if (mood === "issue" && !text) return json({ error: "Tell Jack what wasn't right." }, 400);
+      const rec = { mood, text, at: new Date().toISOString() };
+      await s.set(`fb/${bk}`, rec);
+      await notify(s, mood === "happy"
+        ? { type: "feedback", title: `Happy client: ${where(job)}`, body: text || "They tapped \"Really happy\" on their link.", tags: "star", url: "/" }
+        : { type: "feedback", title: `Client says something's not right: ${where(job)}`, body: text, tags: "warning", priority: 5, url: "/" });
+      return json({ ok: true, feedback: { mood, at: rec.at } });
     }
     if (b.action === "book") {
       const a = typeof b.k === "string" && b.k.length >= 16 && agents.find((x) => x.token === b.k);

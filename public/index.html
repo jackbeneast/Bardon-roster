@@ -1097,6 +1097,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var L=liveOf(j), pid=liveOpen.pid, ag=agentOf(j.agentId), keep=box.closest('.sheet').scrollTop;
     if(liveOpen.room){ box.innerHTML=checklistView(j,L,liveOpen.room); if(liveOpen.keepTop) box.closest('.sheet').scrollTop=keep; else { box.closest('.sheet').scrollTop=0; liveOpen.keepTop=1; } return; }
     var h='<h3>Job <em>updates</em></h3><p class="sub" style="margin:-6px 0 0">'+esc((j.address||j.client)+(j.suburb?', '+j.suburb:''))+' · '+fmtDay(parse(j.date))+'</p>';
+    var acc=(state.access||{})[j.group||j.id];
+    if(acc) h+='<div class="lsec" style="background:#FCEFD0;border-radius:8px;padding:12px;border:0"><h4 style="margin-top:0">From the client: access</h4>'+[['Getting in',[acc.entry,acc.entryNote].filter(Boolean).join(', ')],['Parking',acc.parking],['Pets',acc.pets],['Notes',acc.notes]].filter(function(r){return r[1];}).map(function(r){ return '<p class="sub" style="margin:4px 0;color:var(--dark)"><b>'+r[0]+':</b> '+esc(r[1])+'</p>'; }).join('')+'</div>';
     h+='<p class="sub">'+(j.agentId?'The agent'+(ag&&canEdit?' ('+esc(ag.name)+')':'')+' sees these updates live, plus the photos and notes.':'No agent on this job. Updates still save to the job.')+'</p>';
     h+='<div class="lsec"><h4>Clock in and off</h4><p class="sub" style="margin:0 0 8px">Your hours come from these taps, so clock off when you leave the house.</p>';
     (j.staff||[]).forEach(function(id){ var m=member(id); if(!m) return; if(!canEdit && id!==pid) { h+='<div class="lrow"><span class="nm">'+esc(m.name)+'</span><span class="ds">'+(L.left[id]?'Off '+fmtClock(L.left[id]):L.arrived[id]?'In '+fmtClock(L.arrived[id]):'Not yet')+'</span></div>'; return; }
@@ -1552,7 +1554,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 
   // ---- Activity feed and phone notifications ----
   var act=null, actErr='', actLoading=false;
-  var ACT_ICON={shift_yes:['✓','ok'],shift_no:['✕','hot'],ack:['👌',''],arrive:['📍',''],supply:['🛒',''],leave:['👋',''],noclock:['⏳','hot'],hours:['⏱','ok'],late:['⏳','hot'],flag:['⚠️','hot'],finish:['✨','ok'],unfinished:['⏳',''],tomorrow:['📅','hot'],quote_view:['👀',''],inv_view:['👀',''],quote_accept:['🎉','ok'],quote_follow:['📞',''],quote_expiry:['⏳',''],paid:['💰','ok'],deposit:['💰','hot'],overdue:['⚠️','hot'],booking:['🏠','hot']};
+  var ACT_ICON={shift_yes:['✓','ok'],shift_no:['✕','hot'],ack:['👌',''],arrive:['📍',''],access:['🔑',''],feedback:['⭐',''],supply:['🛒',''],leave:['👋',''],noclock:['⏳','hot'],hours:['⏱','ok'],late:['⏳','hot'],flag:['⚠️','hot'],finish:['✨','ok'],unfinished:['⏳',''],tomorrow:['📅','hot'],quote_view:['👀',''],inv_view:['👀',''],quote_accept:['🎉','ok'],quote_follow:['📞',''],quote_expiry:['⏳',''],paid:['💰','ok'],deposit:['💰','hot'],overdue:['⚠️','hot'],booking:['🏠','hot']};
   function ago(isoStr){ var d=new Date(isoStr), m=Math.round((Date.now()-d)/60000); if(m<1) return 'Just now'; if(m<60) return m+' min ago'; var t=fmtTime(pad(d.getHours())+':'+pad(d.getMinutes())); if(iso(d)===iso(new Date())) return t; if(iso(d)===iso(addDays(new Date(),-1))) return 'Yesterday '+t; return fmtDay(d)+' '+t; }
   function loadActivity(){
     if(actLoading) return; actLoading=true;
@@ -1708,7 +1710,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   function refresh(){
     return api('/api/roster').then(function(d){
-      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},requests:d.requests||[],pay:d.pay||null,money:state.money||[],books:state.books||null,savedAt:d.savedAt||'',actUnread:d.actUnread||0,msgUnread:d.msgUnread||0,notifyOn:!!d.notifyOn}; adminSet=d.adminSet; loaded=true; loadErr='';
+      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},access:d.access||{},requests:d.requests||[],pay:d.pay||null,money:state.money||[],books:state.books||null,savedAt:d.savedAt||'',actUnread:d.actUnread||0,msgUnread:d.msgUnread||0,notifyOn:!!d.notifyOn}; adminSet=d.adminSet; loaded=true; loadErr='';
       if(key() && !d.admin){ key(null); }
       if(d.admin&&window.BCTpl) BCTpl.load(key()).catch(function(){});
       if(d.admin) api('/api/books?sum=1').then(function(b){ state.books=b; if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
