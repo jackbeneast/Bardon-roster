@@ -143,6 +143,9 @@ label.l{font:500 13px/1.3 var(--sans);color:var(--dark);display:block}
 .pcard .pact{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .pcard .pact a,.pcard .pact button{flex:1 1 auto;display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 12px;border-radius:6px;border:1.5px solid var(--line);background:none;font:600 14px var(--sans);color:var(--dark);text-decoration:none;cursor:pointer;white-space:nowrap}
 .pcard .pact .go{background:var(--terracotta);border-color:var(--terracotta);color:#fff}
+.kudos{background:#E6EFE3;border-radius:10px;padding:14px 16px;margin:12px 0;color:#1F3D24}
+.kudos .kk{font:600 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:#2F5A35}
+.kudos p{margin:6px 0 0;font-size:15px;line-height:1.45}
 .acard.hot{border-left:4px solid var(--terracotta)}
 .pcard .pact .later{flex:0 0 auto;border:0;color:var(--meta);font-weight:500;padding:0 6px}
 .pempty{padding:28px 8px;text-align:center;color:var(--meta);font-size:14.5px}
@@ -635,6 +638,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if (filter!=='all' && filter!=='open') h+=firstDayCard(filter);
     if (canEdit) state.team.forEach(function(t){ var j=firstDayDue(t.id); if(j && j.date<=iso(addDays(today,1)) && !(state.acks&&state.acks[t.id])) h+='<div class="warn"><strong>'+esc(t.name)+' hasn\'t read their first-day info</strong> ('+fmtDay(parse(j.date))+'). <button class="ghost" data-filter="'+t.id+'" style="padding:0;margin:0">Preview</button></div>'; });
     if (!canEdit && filter==='all' && state.team.length) h+='<div class="warn"><strong>Tap your name above</strong> to see your shifts and confirm them.</div>';
+    if (!canEdit && member(filter)) (state.kudos||[]).filter(function(k){ return (k.staff||[]).indexOf(filter)>=0 && Date.now()-Date.parse(k.at)<14*864e5; }).slice(0,3).forEach(function(k){
+      h+='<div class="kudos"><span class="kk">A happy client'+(k.where?' in '+esc(k.where):'')+'</span>'+(k.text?'<p>“'+esc(k.text)+'”</p>':'<p>They tapped “Really happy” after your '+esc((k.service||'clean').toLowerCase())+'. Great work.</p>')+'</div>'; });
     if (!canEdit && member(filter)) state.jobs.filter(function(j){ return j.date===iso(today) && !j.example && (j.staff||[]).indexOf(filter)>=0; }).forEach(function(j){ h+=quickCard(j, filter); });
     var rv=curView();
     if (rv==='list'){
@@ -943,14 +948,30 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     s.querySelector('[data-close]').onclick=closeSheet;
     f.onsubmit=function(e){ e.preventDefault(); var n={}; ['meet','wear','bring','extra'].forEach(function(k){ n[k]=f.elements[k].value.trim(); }); save({info:n,team:state.team,jobs:state.jobs}, f.querySelector('.primary'), s.querySelector('#infoErr'), 'First-day info saved'); };
   }
+  var teamPhotos=null;
   function teamSheet(){
-    var h='<h3>Manage <em>team</em></h3><div id="teamList">';
+    if(teamPhotos===null){ teamPhotos={}; api('/api/teamphoto?list=1').then(function(d){ teamPhotos=d.photos||{}; if(document.getElementById('teamList')){ closeSheet(); teamSheet(); } }).catch(function(){}); }
+    var h='<h3>Manage <em>team</em></h3><div id="teamList">', TP=teamPhotos||{};
     state.team.forEach(function(t){ h+='<div class="team-row" style="flex-wrap:wrap"><span class="person"><span class="av" style="background:'+colour(t.id)+'">'+esc(initials(t.name))+'</span>'+esc(t.name)+(t.owner?' <span class="st">· you</span>':'')+'</span>'+(t.owner?'':'<button type="button" class="btn danger" data-rm="'+t.id+'">Remove</button>')+(t.owner?'':'<label class="l" style="width:100%">Mobile<input type="tel" inputmode="tel" data-phone="'+t.id+'" value="'+esc(t.phone||'')+'" placeholder="04xx xxx xxx"></label><label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--dark);margin-top:8px;width:100%"><input type="checkbox" data-new="'+t.id+'"'+(t.newStarter?' checked':'')+' style="width:20px;height:20px;min-height:0;margin:0">New starter: show first-day info before their first shift</label>')+'</div>'; });
     if(state.team.some(function(t){return !t.owner;})) h+='<div class="actions"><button type="button" class="btn outline" data-savephones style="flex:1">Save changes</button></div>';
+    var others=state.team.filter(function(t){return !t.owner;});
+    if(others.length){ h+='<div class="lsec"><h4>Photos for clients</h4><p class="sub" style="margin:0 0 8px">Shown on the client\'s link under "The team", only once you tick that they\'re OK with it.</p>';
+      others.forEach(function(t){ var m=TP[t.id];
+        h+='<div class="lrow" style="flex-wrap:wrap"><span style="display:flex;align-items:center;gap:10px">'+(m?'<img data-tpsrc="/api/teamphoto?p='+t.id+'&v='+m.v+'" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover">':'<span class="av" style="background:'+colour(t.id)+'">'+esc(initials(t.name))+'</span>')+'<span class="nm">'+esc(t.name.split(' ')[0])+'</span></span><span style="display:flex;gap:6px"><button type="button" class="btn outline" data-tph="'+t.id+'" style="min-height:38px;padding:0 12px">'+(m?'Change':'Add photo')+'</button>'+(m?'<button type="button" class="btn danger" data-tphx="'+t.id+'" style="min-height:0">Remove</button>':'')+'</span>'+(m?'<label class="tick" style="width:100%;padding:6px 0 0;font-size:14px"><input type="checkbox" data-tphok="'+t.id+'"'+(m.ok?' checked':'')+'>'+esc(t.name.split(' ')[0])+' is OK with clients seeing this</label>':'')+'</div>'; });
+      h+='</div>'; }
     h+='</div><form id="teamForm" class="fgrid" style="margin-top:16px" novalidate><label class="l" for="f_newname">Add a team member<input id="f_newname" name="name" placeholder="First name and last initial" required></label>';
     h+='<div class="err" id="teamErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Done</button><button type="submit" class="btn primary">Add</button></div></form>';
     var s=openSheet(h);
     s.querySelector('[data-close]').onclick=closeSheet;
+    Array.prototype.forEach.call(s.querySelectorAll('[data-tpsrc]'),function(im){ fetch(im.dataset.tpsrc,{headers:{'x-admin-key':key()}}).then(function(r){ return r.ok?r.blob():null; }).then(function(bl){ if(bl) im.src=URL.createObjectURL(bl); }).catch(function(){}); });
+    function tpPost(body,qs){ var hd={'x-admin-key':key()}; if(!qs) hd['content-type']='application/json'; return fetch('/api/teamphoto'+(qs||''),{method:'POST',headers:hd,body:qs?body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong'); teamPhotos=d.photos; return d; }); }); }
+    s.addEventListener('click',function(e){ var b=e.target.closest('[data-tph],[data-tphx]'); if(!b) return;
+      if(b.dataset.tphx){ tpPost({action:'delete',id:b.dataset.tphx}).then(function(){ closeSheet(); teamSheet(); }).catch(function(x){ toast(x.message); }); return; }
+      var id=b.dataset.tph, inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.hidden=true; document.body.appendChild(inp);
+      inp.onchange=function(){ var f=inp.files&&inp.files[0]; inp.remove(); if(!f) return; b.disabled=true; b.textContent='Uploading…';
+        shrink(f).then(function(r){ return tpPost(r.thumb,'?id='+encodeURIComponent(id)); }).then(function(){ closeSheet(); teamSheet(); toast('Photo added. Tick the box once they\'re OK with it.'); }).catch(function(x){ b.disabled=false; b.textContent='Add photo'; toast(x.message); }); };
+      inp.click(); });
+    s.addEventListener('change',function(e){ var c=e.target; if(c.dataset.tphok) tpPost({action:'ok',id:c.dataset.tphok,ok:c.checked}).then(function(){ toast(c.checked?'Clients will see this photo':'Photo hidden from clients'); }).catch(function(x){ c.checked=!c.checked; toast(x.message); }); });
     s.querySelector('#teamForm').onsubmit=function(e){
       e.preventDefault(); var n=(this.elements.name.value||'').trim(), err=s.querySelector('#teamErr');
       if(!n){ err.textContent='Type a name first.'; err.hidden=false; return; }
@@ -1825,7 +1846,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   function refresh(){
     return api('/api/roster').then(function(d){
-      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},access:d.access||{},requests:d.requests||[],pay:d.pay||null,money:state.money||[],books:state.books||null,savedAt:d.savedAt||'',actUnread:d.actUnread||0,msgUnread:d.msgUnread||0,notifyOn:!!d.notifyOn}; adminSet=d.adminSet; loaded=true; loadErr='';
+      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},access:d.access||{},kudos:d.kudos||[],requests:d.requests||[],pay:d.pay||null,money:state.money||[],books:state.books||null,savedAt:d.savedAt||'',actUnread:d.actUnread||0,msgUnread:d.msgUnread||0,notifyOn:!!d.notifyOn}; adminSet=d.adminSet; loaded=true; loadErr='';
       if(key() && !d.admin){ key(null); }
       if(d.admin&&window.BCTpl) BCTpl.load(key()).catch(function(){});
       if(d.admin) api('/api/books?sum=1').then(function(b){ state.books=b; if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});

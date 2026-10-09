@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { store, json, loadRoster, loadAllLive, checkAdmin, roomsOf, DEFAULT_ROOMS, LOCK } from "../../lib/core.mjs";
 import { notify, fmtDay, where } from "../../lib/notify.mjs";
 import { loadTemplates } from "../../lib/templates.mjs";
+import { loadTeamPhotos } from "./teamphoto.mjs";
 
 // ---- sample jobs, so a new agent's link isn't empty on first open ----
 // Three clearly labelled jobs: finished yesterday (report), on site today, booked later this week.
@@ -52,9 +53,9 @@ function makeSamples(agentId, roster) {
 const first = (n) => String(n || "").replace(/\(.*?\)/g, "").trim().split(/\s+/)[0] || "Team";
 
 // What an agent (or vendor) is allowed to see about a job. No client name, team notes or phone numbers.
-function view(job, roster, L, withShare) {
+function view(job, roster, L, withShare, photos = {}) {
   const team = (job.staff || []).map((id) => roster.team.find((t) => t.id === id)).filter(Boolean)
-    .map((t) => ({ id: t.id, name: first(t.name), owner: !!t.owner }));
+    .map((t) => ({ id: t.id, name: first(t.name), owner: !!t.owner, ...(photos[t.id]?.ok ? { photo: `/api/teamphoto?p=${t.id}&v=${photos[t.id].v}` } : {}) }));
   const live = L || {};
   const o = {
     id: job.id, date: job.date, start: job.start, end: job.end,
@@ -84,6 +85,7 @@ export default async (req) => {
   if (req.method === "GET") {
     const k = u.searchParams.get("k") || "", v = u.searchParams.get("v") || "";
     const live = await loadAllLive(s);
+    const photos = await loadTeamPhotos(s);
     const base = { lock: LOCK, phone: "0406 216 212" };
     if (v) {
       // Multi-day bookings share one client link: show today's day, else the next one, else the last.
@@ -95,19 +97,19 @@ export default async (req) => {
       const bk = job.group || job.id;
       const [acc, fb, tp] = await Promise.all([s.get(`access/${bk}`), s.get(`fb/${bk}`), loadTemplates(s)]);
       const kind = /bond|lease/i.test(job.service || "") ? "bond" : /pre.?sale/i.test(job.service || "") ? "presale" : /deep/i.test(job.service || "") ? "deep" : /regular/i.test(job.service || "") ? "regular" : "other";
-      return json({ ...base, mode: "vendor", agent: a ? { name: a.name, agency: a.agency } : null, jobs: [view(job, roster, live[job.id], false)],
+      return json({ ...base, mode: "vendor", agent: a ? { name: a.name, agency: a.agency } : null, jobs: [view(job, roster, live[job.id], false, photos)],
         client: { access: acc || null, feedback: fb ? { mood: fb.mood, at: fb.at } : null, reviewLink: tp.reviewLink || "", kind } });
     }
     if (k) {
       const a = k.length >= 16 && agents.find((x) => x.token === k);
       if (!a) return json({ error: "This link isn't active. Contact Jack at Bardon Clean for a new one." }, 404);
-      const jobs = roster.jobs.filter((j) => j.agentId === a.id).map((j) => view(j, roster, live[j.id], true));
+      const jobs = roster.jobs.filter((j) => j.agentId === a.id).map((j) => view(j, roster, live[j.id], true, photos));
       return json({ ...base, mode: "agent", agent: { name: a.name, agency: a.agency }, jobs });
     }
     if (await checkAdmin(s, req)) {
       const as = u.searchParams.get("as") || "";
       const jobs = roster.jobs.filter((j) => (as ? j.agentId === as : true))
-        .map((j) => ({ ...view(j, roster, live[j.id], true), agentId: j.agentId || "", client: j.client }));
+        .map((j) => ({ ...view(j, roster, live[j.id], true, photos), agentId: j.agentId || "", client: j.client }));
       return json({ ...base, mode: "admin", agents: agents.map(({ id, name, agency }) => ({ id, name, agency })), jobs });
     }
     return json({ error: "Open this page from the link Bardon Clean sent you." }, 401);
@@ -154,6 +156,11 @@ export default async (req) => {
       if (mood === "issue" && !text) return json({ error: "Tell Jack what wasn't right." }, 400);
       const rec = { mood, text, at: new Date().toISOString() };
       await s.set(`fb/${bk}`, rec);
+      // Happy clients: pass the kind words to the cleaners who did the job.
+      if (mood === "happy") {
+        const staff = [...new Set(roster.jobs.filter((j) => (j.group || j.id) === bk).flatMap((j) => j.staff || []))];
+        await s.set(`kudos/${bk}`, { text, at: rec.at, where: job.suburb || "", service: job.service || "", staff });
+      }
       await notify(s, mood === "happy"
         ? { type: "feedback", title: `Happy client: ${where(job)}`, body: text || "They tapped \"Really happy\" on their link.", tags: "star", url: "/" }
         : { type: "feedback", title: `Client says something's not right: ${where(job)}`, body: text, tags: "warning", priority: 5, url: "/" });

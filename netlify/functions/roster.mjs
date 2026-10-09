@@ -89,7 +89,11 @@ export default async (req) => {
     // Access details clients add on their own link, keyed by booking (the team needs them on the day).
     const access = {};
     await Promise.all((await s.list("access/")).map(async (k) => { const v = await s.get(k); if (v) access[k.slice(7)] = v; }));
-    const out = { team, jobs, info: roster.info || {}, confirms, acks, live, access, admin, adminSet: await adminIsSet(s), savedAt: roster.savedAt || "" };
+    // Compliments from happy clients in the last 30 days (suburb only, no client names).
+    const kudos = [], since = new Date(Date.now() - 30 * 864e5).toISOString();
+    await Promise.all((await s.list("kudos/")).map(async (k) => { const v = await s.get(k); if (v && v.at >= since) kudos.push(v); }));
+    kudos.sort((a, b) => b.at.localeCompare(a.at));
+    const out = { team, jobs, info: roster.info || {}, confirms, acks, live, access, kudos, admin, adminSet: await adminIsSet(s), savedAt: roster.savedAt || "" };
     if (admin) {
       out.agents = roster.agents || [];
       out.pay = roster.pay || null;
