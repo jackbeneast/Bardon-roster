@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#F5F0EB">
+<title>Team &amp; Pay</title>
+<link rel="icon" type="image/png" href="/icons/favicon.png?v=2"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--terracotta:#C06B3C;--terracotta-dark:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cream-dark:#EDE6DE;--body:#4A4A4A;--meta:#7A7A7A;--gold:#F4B942;--white:#FFFFFF;--line:#DDD3C8;--tint:#FBF3EE;--green:#2F5A35;
+  --serif:"Playfair Display",Georgia,serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--body);font:400 15px/1.5 var(--sans);-webkit-text-size-adjust:100%}
+#app{max-width:720px;margin:0 auto;padding:16px 16px calc(110px + env(safe-area-inset-bottom,0px))}
+a{color:var(--terracotta-dark)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.top a,.top button{font:500 14px var(--sans);color:var(--meta);text-decoration:none;background:none;border:0;cursor:pointer;padding:8px 0}
+.top .wm{display:flex;gap:8px;align-items:center;font:700 17px/1 var(--serif);color:var(--dark)}
+.top .wm svg{width:26px;height:26px}
+h1{font:700 28px/1.15 var(--serif);color:var(--dark);margin:6px 0 0}
+h1 em,h2 em{font-style:italic;font-weight:500}
+h2{font:700 20px/1.2 var(--serif);color:var(--dark);margin:0}
+.sub{color:var(--meta);font-size:14px;margin:4px 0 0}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.kpis.k2{grid-template-columns:repeat(2,1fr)}
+.kpi{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.kpi b{display:block;font:700 19px/1.2 var(--serif);color:var(--dark);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--meta)}
+.kpi.dark{background:var(--dark);border-color:var(--dark)}.kpi.dark b{color:var(--cream)}.kpi.dark span{color:#BDB5AD}
+.kpi.warn b{color:var(--terracotta-dark)}
+@media (max-width:400px){.kpi b{font-size:16px}}
+.sect{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 8px;font:600 12px var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--meta)}
+.list{display:grid;gap:8px}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%;text-decoration:none}
+.row.rl{grid-template-columns:1fr auto}
+.row .c{font:700 16px/1.3 var(--serif);color:var(--dark);min-width:0;overflow-wrap:anywhere}
+.row .a{font:600 15px/1.3 var(--sans);color:var(--dark);text-align:right;font-variant-numeric:tabular-nums}
+.row .m{font-size:13px;color:var(--meta);min-width:0;overflow-wrap:anywhere}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font:600 14px var(--sans);color:#fff;background:var(--terracotta);grid-row:span 2}
+.pill{display:inline-block;font:600 10.5px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:5px 8px;background:var(--cream-dark);color:var(--dark);white-space:nowrap;vertical-align:middle}
+.pill.ok{background:#E6EFE3;color:var(--green)}
+.pill.due{background:#FBEBD9;color:#8A4A1F}
+.pill.left{background:var(--cream);color:var(--meta);border:1px dashed var(--line)}
+.empty{background:var(--white);border:1px dashed var(--line);border-radius:10px;padding:22px;text-align:center;color:var(--meta)}
+.alert{display:block;width:100%;text-align:left;margin-top:10px;background:var(--white);border:1px solid var(--line);border-left:4px solid var(--terracotta);border-radius:8px;padding:11px 12px;font:inherit;font-size:14px;color:var(--dark);text-decoration:none}
+.alert.ok{border-left-color:var(--green)}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--white);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar .in{max-width:720px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.bar .sum{flex:1;min-width:0;font-size:12px;color:var(--meta);line-height:1.2}
+.bar .sum b{display:block;font:700 19px/1.2 var(--serif);color:var(--dark);font-variant-numeric:tabular-nums}
+.btn{font:600 15px/1 var(--sans);border-radius:8px;min-height:48px;padding:0 18px;cursor:pointer;border:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn.primary{background:var(--terracotta);color:var(--white)}
+.btn.primary:disabled{opacity:.6}
+.btn.dark{background:var(--dark);color:var(--cream)}
+.btn.outline{background:var(--white);border:2px solid var(--terracotta);color:var(--terracotta)}
+.btn.plain{background:var(--white);border:1px solid var(--line);color:var(--dark)}
+.btn.danger{background:var(--white);border:1px solid var(--line);color:var(--terracotta-dark)}
+.btn.wide{width:100%}
+.ghost{background:none;border:0;color:var(--terracotta);font:500 14px var(--sans);text-decoration:underline;cursor:pointer;padding:8px 0}
+.card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:14px}
+.card .hrow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.card .hrow h2{margin:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+@media (max-width:440px){.grid{grid-template-columns:1fr}}
+label.l{display:block;font:500 13px/1.3 var(--sans);color:var(--dark);min-width:0}
+label.l small{font-weight:400;color:var(--meta)}
+input,select,textarea{width:100%;margin-top:6px;font:400 16px/1.35 var(--sans);color:var(--dark);background:var(--white);border:1px solid #CFC5BA;border-radius:6px;padding:11px;min-height:46px}
+textarea{resize:vertical;min-height:80px}
+input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--terracotta);outline-offset:1px}
+.check{display:flex;gap:10px;align-items:center;font-size:14px;color:var(--dark);cursor:pointer}
+.check input{width:22px;height:22px;min-height:0;margin:0;accent-color:var(--terracotta);flex:none}
+.dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:0}
+.dl dt{color:var(--meta)}
+.dl dd{margin:0;color:var(--dark);text-align:right;overflow-wrap:anywhere}
+.dl dd.no{color:var(--terracotta-dark)}
+.docs{display:grid;gap:4px}
+.doc{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--cream-dark);font-size:14px;color:var(--dark)}
+.doc:last-child{border-bottom:0}
+.doc .d{font-size:12px;color:var(--meta)}
+.doc .x{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;border:1px solid var(--line);color:var(--meta)}
+.doc .x.on{background:var(--green);border-color:var(--green);color:#fff}
+.doc input[type=date]{width:150px;margin:0;min-height:40px;padding:8px}
+.tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+.tbl td{padding:7px 0;border-bottom:1px solid var(--cream-dark);color:var(--dark)}
+.tbl td:last-child{text-align:right;white-space:nowrap}
+.tbl tr.t td{font-weight:600;border-bottom:0}
+.tbl tr.m td{color:var(--meta);font-size:13px}
+.person{border:1px solid var(--line);border-radius:12px;background:var(--white);padding:14px;margin-top:12px}
+.person.off{background:transparent;border-style:dashed}
+.person .ph{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.person .ph b{font:700 17px var(--serif);color:var(--dark)}
+.person .ph .n{font:700 17px var(--serif);color:var(--dark);font-variant-numeric:tabular-nums}
+.shift{display:grid;grid-template-columns:1.4fr .8fr 1.2fr 40px;gap:6px;align-items:end;margin-top:8px}
+.shift input,.shift select{margin-top:2px;min-height:42px;padding:8px;font-size:15px}
+.shift .x{height:42px;border:1px solid var(--line);border-radius:6px;background:none;color:var(--meta);font-size:20px;cursor:pointer}
+.shift .jb{grid-column:1/-1;font-size:12px;color:var(--meta);margin-top:-2px}
+.slipwrap{background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:14px;overflow-x:auto}
+@media (max-width:560px){.slipwrap td,.slipwrap th{padding-left:5px!important;padding-right:5px!important}.slipwrap>div{padding:14px!important}}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.acts .btn{width:100%;min-height:50px;font-size:14px}
+.acts .wide{grid-column:1/-1}
+.err{color:var(--terracotta-dark);font:500 13px/1.4 var(--sans);margin-top:10px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:40;max-width:90vw;text-align:center}
+.center{text-align:center;padding:60px 16px;color:var(--dark)}
+.hint{font-size:13px;color:var(--meta);margin-top:8px}
+.nav{display:flex;align-items:center;gap:8px;margin-top:14px}
+.nav .range{flex:1;text-align:center;font:600 15px var(--sans);color:var(--dark)}
+.nav button{min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:8px;background:var(--white);font:600 16px var(--sans);color:var(--dark);cursor:pointer}
+details.more summary{cursor:pointer;color:var(--terracotta-dark);font:500 14px var(--sans);padding:8px 0}
+</style></head><body>
+<div id="app"><div class="center">Loading…</div></div>
+<script src="/lib/sms.js"></script>
+<script src="/lib/payslip.js"></script>
+<script type="module">
+import { QLD_PH } from '/lib/wages.mjs';
+var app=document.getElementById('app'), P=window.BCPay;
+var S=null, R=null, loadErr='', RUN=null;
+var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
+var DOCS=[['tfn','TFN declaration received'],['superChoice','Super choice form (or stapled fund)'],['bank','Bank details for pay'],['id','ID sighted'],['contract','Employment contract signed'],['fwis','Fair Work Information Statement given'],['ceis','Casual Employment Information Statement given'],['induction','First-day induction done']];
+var TFT={'2':'Claimed (main job)','1':'Not claimed (second job)','3':'Foreign resident'};
+var esc=P.esc, money=P.money, fdate=P.fdate;
+
+function ls(k){ try{ return localStorage.getItem(k)||sessionStorage.getItem(k)||''; }catch(e){ return ''; } }
+function key(){ return ls('roster_admin_key'); }
+function pad(n){ return (n<10?'0':'')+n; }
+function iso(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function today(){ return iso(new Date()); }
+function addDays(s,n){ var p=s.split('-'), d=new Date(+p[0],+p[1]-1,+p[2]); d.setDate(d.getDate()+n); return iso(d); }
+function dnum(s){ return Math.round(Date.parse(s+'T00:00:00Z')/864e5); }
+function mins(t){ return t? +t.slice(0,2)*60 + +t.slice(3,5) : NaN; }
+function r2(v){ return Math.round(v*100)/100; }
+function toast(m){ var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2600); }
+function initials(n){ return String(n||'?').trim().split(/\s+/).map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase(); }
+function colour(id){ var c=['#C06B3C','#2F5A35','#2D4A6B','#7A5A12','#8A4A1F','#5B4A7A'], h=0; for(var i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0; return c[h%c.length]; }
+function api(method,url,body){
+  return fetch(url,{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
+    .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok){ var e=new Error(d.error||'Something went wrong. Try again.'); e.status=r.status; throw e; } return d; }); });
+}
+function load(){
+  if(!key()){ loadErr='login'; render(); return Promise.resolve(); }
+  return Promise.all([api('GET','/api/staff'), api('GET','/api/roster')]).then(function(r){
+    S=r[0]; R=r[1]; loadErr=''; if(window.BCSms) BCSms.check(key()); render();
+  }).catch(function(e){ loadErr=e.status===401?'login':e.message; render(); });
+}
+
+// ---------- data helpers ----------
+function prof(pid){ return (S.profiles&&S.profiles[pid])||{docs:{}}; }
+function member(pid){ return S.team.filter(function(t){return t.id===pid;})[0]||null; }
+function nameOf(pid){ var m=member(pid); if(m) return m.name; var s=slipsOf(pid)[0]; return s?s.name:'Former employee'; }
+function slipsOf(pid){ return S.slips.filter(function(x){return x.pid===pid;}).sort(function(a,b){return b.periodEnd.localeCompare(a.periodEnd);}); }
+function slipById(id){ return S.slips.filter(function(x){return x.id===id;})[0]||null; }
+function people(){
+  var ids=[]; S.team.forEach(function(t){ if(!t.owner) ids.push(t.id); });
+  Object.keys(S.profiles||{}).forEach(function(id){ if(ids.indexOf(id)<0 && !(member(id)||{}).owner) ids.push(id); });
+  S.slips.forEach(function(x){ if(ids.indexOf(x.pid)<0) ids.push(x.pid); });
+  return ids.map(function(id){ var p=prof(id); return {id:id, name:nameOf(id), p:p, onRoster:!!member(id), left:p.status==='left'||!member(id)}; })
+    .sort(function(a,b){ return (a.left?1:0)-(b.left?1:0) || a.name.localeCompare(b.name); });
+}
+function gaps(pid){
+  var p=prof(pid), m=member(pid)||{}, g=[];
+  if(!p.email) g.push('email'); if(!m.phone) g.push('mobile'); if(!p.dob) g.push('date of birth'); if(!p.address) g.push('address'); if(!p.startDate) g.push('start date');
+  if(!p.superFund) g.push('super fund'); if(!p.superNo) g.push('super member number'); if(!p.emergName||!p.emergPhone) g.push('emergency contact');
+  DOCS.forEach(function(d){ if(!(p.docs||{})[d[0]]) g.push(/^(Fair|Casual|ID|TFN)/.test(d[1])?d[1]:d[1].charAt(0).toLowerCase()+d[1].slice(1)); });
+  return g;
+}
+function fyStart(d){ var y=+d.slice(0,4), m=+d.slice(5,7); return (m>=7?y:y-1)+'-07-01'; }
+function ytd(pid){ var f=fyStart(today()), t={gross:0,tax:0,net:0,sup:0,hrs:0,n:0}; slipsOf(pid).forEach(function(x){ if(x.paidOn>=f){ t.gross+=x.gross; t.tax+=x.tax; t.net+=x.net; t.sup+=x.sup; t.hrs+=x.hrs; t.n++; } }); return t; }
+function payLink(pid){ var p=prof(pid); return p.token?location.origin+'/pay/'+p.token:''; }
+function runs(){
+  var by={}; S.slips.forEach(function(x){ var k=x.periodEnd; (by[k]=by[k]||{end:k,start:x.periodStart,paidOn:x.paidOn,slips:[]}).slips.push(x); if(x.paidOn>by[k].paidOn) by[k].paidOn=x.paidOn; });
+  return Object.keys(by).sort().reverse().map(function(k){ var r=by[k]; r.net=0; r.tax=0; r.sup=0; r.gross=0; r.supOwing=0; r.taxOwing=0; r.unsent=0;
+    r.slips.forEach(function(x){ r.net+=x.net; r.tax+=x.tax; r.sup+=x.sup; r.gross+=x.gross; if(!x.superPaid) r.supOwing+=x.sup; if(!x.taxPaid) r.taxOwing+=x.tax; if(!x.sentAt) r.unsent++; });
+    r.supDue=addDays(r.paidOn,7); return r; });
+}
+
+// ---------- pay periods (same settings as the hub's wage estimate) ----------
+function paySet(){ var p=S.pay||{}; return {cycle:p.cycle===2?2:1, anchor:p.anchor||'2026-10-05', lunch:p.lunch!==false, rates:Object.assign({},P.DEF,p.rates||{}), ph:p.ph||[]}; }
+function isPH(d){ return QLD_PH.indexOf(d)>=0 || paySet().ph.indexOf(d)>=0; }
+function periodOf(dateStr){ var p=paySet(), len=p.cycle*7, a=dnum(p.anchor), k=Math.floor((dnum(dateStr)-a)/len); var s=addDays(p.anchor,k*len); return {start:s,end:addDays(s,len-1),cycle:p.cycle}; }
+function lastPeriod(){ var cur=periodOf(today()); return periodOf(addDays(cur.start,-1)); }
+
+// Shifts for one person in a period from the roster: clocked hours where they clocked in and off, otherwise rostered.
+function rosterShifts(pid, per){
+  var p=paySet(), out=[];
+  (R.jobs||[]).forEach(function(j){
+    if(j.sample||j.date<per.start||j.date>per.end||(j.staff||[]).indexOf(pid)<0) return;
+    var c=R.confirms&&R.confirms[j.id]&&R.confirms[j.id][pid]; if(c&&c.s==='no') return;
+    var sh=(j.shifts&&j.shifts[pid])||{}, st=sh.start||j.start, en=sh.end||j.end, span=(mins(en)-mins(st))/60, src='rostered';
+    var L=(R.live&&R.live[j.id])||{}, ar=L.arrived&&L.arrived[pid], lf=L.left&&L.left[pid];
+    if(ar&&lf){ var cs=(Date.parse(lf)-Date.parse(ar))/36e5; if(cs>0&&cs<16){ span=cs; src='clocked'; } }
+    if(!(span>0)) return;
+    var hrs=r2(span-(p.lunch&&span>4.5?0.5:0)), d=new Date(j.date+'T00:00:00').getDay();
+    var kind=isPH(j.date)?'ph':d===0?'sun':d===6?'sat':(mins(st)<360||mins(en)>1080)?'el':'wk';
+    out.push({date:j.date,hrs:hrs,kind:kind,job:(j.client||'Job')+(j.suburb?', '+j.suburb:'')+' · '+src});
+  });
+  return out.sort(function(a,b){return a.date.localeCompare(b.date);});
+}
+function startRun(start){
+  var per=start?periodOf(start):lastPeriod(), ppl={};
+  people().forEach(function(x){
+    if(x.left && !S.slips.some(function(s){return s.pid===x.id&&s.periodEnd===per.end;})) return;
+    var old=S.slips.filter(function(s){return s.pid===x.id&&s.periodStart===per.start&&s.periodEnd===per.end;})[0];
+    var sh=old?old.shifts.map(function(s){return Object.assign({},s);}):rosterShifts(x.id,per);
+    var c=old?P.calc({shifts:old.shifts,periodStart:per.start,cycle:per.cycle,level:old.level,tft:prof(x.id).tft,rates:paySet().rates}):null;
+    ppl[x.id]={on:sh.length>0, shifts:sh, taxOv:old&&c&&old.tax!==c.taxAuto?String(old.tax):'', old:old||null};
+  });
+  RUN={start:per.start,end:per.end,cycle:per.cycle,paidOn:(function(){ var o=S.slips.filter(function(s){return s.periodEnd===per.end;})[0]; return o?o.paidOn:today(); })(),ppl:ppl,saving:false,err:''};
+}
+function personCalc(pid){
+  var x=RUN.ppl[pid], p=prof(pid), c=P.calc({shifts:x.shifts,periodStart:RUN.start,cycle:RUN.cycle,level:p.level||'1',tft:p.tft||'2',rates:paySet().rates});
+  var ov=x.taxOv.trim(), tax=ov!==''&&isFinite(parseFloat(ov))&&parseFloat(ov)>=0?r2(parseFloat(ov)):c.taxAuto;
+  c.tax=Math.min(tax,c.gross); c.net=r2(c.gross-c.tax); return c;
+}
+
+// ---------- routing ----------
+function route(){ var h=location.hash.replace(/^#\/?/,'').split('/'); return {v:h[0]||'', id:decodeURIComponent(h[1]||'')}; }
+function go(h){ if(location.hash==='#/'+h) render(); else location.hash='#/'+h; }
+window.addEventListener('hashchange',function(){ render(); window.scrollTo(0,0); });
+function topbar(back){ return '<div class="top">'+(back?'<a href="'+back+'">← Back</a>':'<a href="/">← Hub</a>')+'<span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
+
+function render(){
+  if(loadErr==='login'){ app.innerHTML='<div class="center">'+LOGO.replace('<svg','<svg style="width:48px;height:48px"')+'<h1 style="margin-top:12px">Log in <em>first</em></h1><p class="sub">Open the hub, log in with your password, then come back here.</p><p><a class="btn primary" href="/">Go to the hub</a></p></div>'; return; }
+  if(loadErr){ app.innerHTML='<div class="center"><p>'+esc(loadErr)+'</p><button class="btn dark" data-act="refresh">Try again</button></div>'; return; }
+  if(!S){ app.innerHTML='<div class="center">Loading…</div>'; return; }
+  var r=route();
+  if(r.v==='p') return renderPerson(r.id);
+  if(r.v==='edit') return renderEdit(r.id);
+  if(r.v==='slip') return renderSlip(r.id);
+  if(r.v==='run'){ if(!RUN||(r.id&&r.id!==RUN.start)||(!r.id&&RUN.start!==lastPeriod().start&&!RUN.manual)) startRun(r.id||null); return renderRun(); }
+  if(r.v==='runs') return renderRunView(r.id);
+  return renderHome();
+}
+
+// ---------- home ----------
+function renderHome(){
+  var rs=runs(), last=rs[0], owe=0, held=0, overdue=[];
+  rs.forEach(function(x){ owe+=x.supOwing; held+=x.taxOwing; if(x.supOwing>0.004&&x.supDue<today()) overdue.push(x); });
+  var h=topbar()+'<h1>Team <em>&amp; pay</em></h1><p class="sub">Employee profiles, pay runs and every payslip.</p>';
+  h+='<div class="kpis"><div class="kpi dark"><b>'+(last?money(last.net):'—')+'</b><span>'+(last?'Last pay run, paid '+fdate(last.paidOn).replace(/ \d{4}$/,''):'No pay runs yet')+'</span></div><div class="kpi'+(owe>0.004?' warn':'')+'"><b>'+money(owe)+'</b><span>Super owing</span></div><div class="kpi"><b>'+money(held)+'</b><span>PAYG held for ATO</span></div></div>';
+  overdue.forEach(function(x){ h+='<a class="alert" href="#/runs/'+x.end+'"><b>Super is overdue</b> for the '+fdate(x.start).replace(/ \d{4}$/,'')+' – '+fdate(x.end).replace(/ \d{4}$/,'')+' pay: '+money(x.supOwing)+' was due '+fdate(x.supDue)+'. Tick it off once paid.</a>'; });
+  rs.forEach(function(x){ if(x.supOwing>0.004&&x.supDue>=today()) h+='<a class="alert" href="#/runs/'+x.end+'">Super of '+money(x.supOwing)+' for the '+fdate(x.start).replace(/ \d{4}$/,'')+' – '+fdate(x.end).replace(/ \d{4}$/,'')+' pay is due by <b>'+fdate(x.supDue)+'</b>.</a>'; });
+  var lp=lastPeriod(), done=S.slips.some(function(s){return s.periodEnd===lp.end;});
+  h+='<div class="acts"><a class="btn primary wide" href="#/run">'+(done?'Open last pay run':'Run pay for '+fdate(lp.start).replace(/ \d{4}$/,'')+' – '+fdate(lp.end).replace(/ \d{4}$/,''))+'</a></div>';
+  var ppl=people();
+  h+='<div class="sect"><span>Team</span><span>'+ppl.filter(function(x){return !x.left;}).length+' active</span></div><div class="list">';
+  ppl.forEach(function(x){ var g=gaps(x.id), sl=slipsOf(x.id)[0];
+    h+='<a class="row" href="#/p/'+x.id+'"><span class="av" style="background:'+colour(x.id)+'">'+esc(initials(x.name))+'</span><span class="c">'+esc(x.name)+(x.left?' <span class="pill left">Not on roster</span>':'')+'</span><span class="a">'+(sl?money(sl.net):'')+'</span><span class="m">'+(g.length?g.length+' detail'+(g.length===1?'':'s')+' missing':'Profile complete')+'</span><span class="m" style="text-align:right">'+(sl?'paid '+fdate(sl.paidOn).replace(/ \d{4}$/,''):'not paid yet')+'</span></a>'; });
+  if(!ppl.length) h+='<div class="empty">Add team members in the hub under Manage team.</div>';
+  h+='</div><div class="sect"><span>Pay runs</span><span>'+rs.length+'</span></div><div class="list">';
+  rs.forEach(function(x){ h+='<a class="row rl" href="#/runs/'+x.end+'"><span class="c">'+fdate(x.start).replace(/ \d{4}$/,'')+' – '+fdate(x.end)+'</span><span class="a">'+money(x.net)+'</span><span class="m">Paid '+fdate(x.paidOn)+' · '+x.slips.length+' payslip'+(x.slips.length===1?'':'s')+'</span><span>'+(x.supOwing>0.004?'<span class="pill due">Super owing</span>':'<span class="pill ok">Super paid</span>')+'</span></a>'; });
+  if(!rs.length) h+='<div class="empty">No pay runs yet.</div>';
+  h+='</div><p class="hint" style="margin-top:18px">This page doesn\'t report pays to the ATO. Each pay still needs lodging through Single Touch Payroll (Xero or another STP-enabled payroll app).</p>';
+  app.innerHTML=h;
+}
+
+// ---------- person ----------
+function renderPerson(pid){
+  var p=prof(pid), m=member(pid)||{}, name=nameOf(pid), y=ytd(pid), g=gaps(pid), sl=slipsOf(pid), link=payLink(pid);
+  var h=topbar('#/')+'<h1>'+esc(name)+'</h1><p class="sub">'+esc((p.type||'casual').replace(/^./,function(c){return c.toUpperCase();}))+' · Cleaning Services Award Level '+esc(p.level||'1')+(p.startDate?' · Started '+fdate(p.startDate):'')+(p.status==='left'||!member(pid)?' · <span class="pill left">'+(p.endDate?'Finished '+fdate(p.endDate):'Not on roster')+'</span>':'')+'</p>';
+  h+='<div class="acts"><a class="btn outline" href="#/edit/'+pid+'">Edit profile</a><a class="btn plain" href="#/run">Pay run</a></div>';
+  if(g.length) h+='<a class="alert" href="#/edit/'+pid+'"><b>Missing:</b> '+esc(g.join(', '))+'.</a>';
+  function dd(label,v,fallback){ return '<dt>'+label+'</dt><dd'+(v?'':' class="no"')+'>'+(v?v:(fallback||'Not added'))+'</dd>'; }
+  h+='<div class="card"><h2>Contact</h2><dl class="dl" style="margin-top:10px">'+dd('Mobile',m.phone?'<a href="tel:'+esc(m.phone)+'">'+esc(m.phone)+'</a>':'')+dd('Email',p.email?'<a href="mailto:'+esc(p.email)+'">'+esc(p.email)+'</a>':'')+dd('Address',esc(p.address))+dd('Date of birth',p.dob?fdate(p.dob):'')+dd('Emergency contact',p.emergName?esc(p.emergName)+(p.emergRel?' ('+esc(p.emergRel)+')':'')+(p.emergPhone?'<br><a href="tel:'+esc(p.emergPhone)+'">'+esc(p.emergPhone)+'</a>':''):'')+'</dl></div>';
+  h+='<div class="card"><h2>Tax <em>&amp; super</em></h2><dl class="dl" style="margin-top:10px">'+dd('Tax-free threshold',esc(TFT[p.tft||'2']))+dd('HELP / study loan',p.help?'Yes, add it to tax':'No','No')+dd('Super fund',esc(p.superFund))+dd('Member number',esc(p.superNo))+dd('Fund USI',esc(p.superUsi),'Optional')+'</dl><p class="hint">TFN and bank account numbers stay on their onboarding form and in your bank, not here.</p></div>';
+  h+='<div class="card"><h2>Paperwork</h2><div class="docs" style="margin-top:6px">'+DOCS.map(function(d){ var v=(p.docs||{})[d[0]]; return '<div class="doc"><span class="x'+(v?' on':'')+'">'+(v?'✓':'')+'</span><span>'+esc(d[1])+'</span><span class="d">'+(v&&v!=='yes'?fdate(v):v?'Done':'')+'</span></div>'; }).join('')+'</div></div>';
+  h+='<div class="card"><h2>This <em>financial year</em></h2><p class="sub">From 1 July · '+y.n+' pay'+(y.n===1?'':'s')+'</p><table class="tbl" style="margin-top:8px"><tr><td>Gross pay</td><td>'+money(y.gross)+'</td></tr><tr><td>PAYG withheld</td><td>'+money(y.tax)+'</td></tr><tr><td>Net pay</td><td>'+money(y.net)+'</td></tr><tr><td>Super</td><td>'+money(y.sup)+'</td></tr><tr class="m"><td>Paid hours</td><td>'+P.hrs(y.hrs)+'</td></tr></table></div>';
+  h+='<div class="card"><div class="hrow"><h2>Payslips</h2><span class="sub" style="margin:0">'+sl.length+'</span></div><div class="list">';
+  sl.forEach(function(x){ h+='<a class="row rl" href="#/slip/'+x.id+'"><span class="c" style="font-size:15px">'+fdate(x.periodStart).replace(/ \d{4}$/,'')+' – '+fdate(x.periodEnd)+'</span><span class="a">'+money(x.net)+'</span><span class="m">Paid '+fdate(x.paidOn)+' · '+P.hrs(x.hrs)+' hrs · gross '+money(x.gross)+'</span><span>'+(x.sentAt?'<span class="pill ok">Sent</span>':'<span class="pill due">Not sent</span>')+'</span></a>'; });
+  if(!sl.length) h+='<div class="empty">No payslips yet.</div>';
+  h+='</div></div>';
+  h+='<div class="card"><h2>Their <em>pay link</em></h2><p class="sub">A private page with all their payslips. Send it once; new payslips show up on it automatically.</p>';
+  h+=link?'<div class="acts"><a class="btn primary" href="#" data-sendlink="'+pid+'">Text it</a><button class="btn plain" data-copy="'+esc(link)+'">Copy link</button><a class="btn plain wide" href="'+esc(link)+'" target="_blank" rel="noopener">See what they see</a></div><details class="more"><summary>Link shared with the wrong person?</summary><p class="sub">Make a new link. The old one stops working straight away.</p><button class="btn danger" data-newlink="'+pid+'">Replace their link</button></details>':'<p class="hint">Save their profile once to make the link.</p>';
+  h+='</div>';
+  if(p.notes) h+='<div class="card"><h2>Notes</h2><p style="white-space:pre-wrap;margin:8px 0 0;color:var(--dark)">'+esc(p.notes)+'</p></div>';
+  app.innerHTML=h;
+  var sb=app.querySelector('[data-sendlink]');
+  if(sb) sb.onclick=function(e){ if(!m.phone){ e.preventDefault(); toast('Add their mobile in Manage team first'); return; }
+    if(BCSms.go(sb, m.phone, 'Hi '+name.split(' ')[0]+', here\'s your private Bardon Clean pay link. All your payslips are here and new ones appear after each pay day: '+link+'\n\nJack', key(), {toast:toast})) e.preventDefault(); };
+}
+
+// ---------- edit ----------
+function renderEdit(pid){
+  var p=prof(pid), name=nameOf(pid), d=p.docs||{};
+  function f(n,label,v,type,ph,extra){ return '<label class="l">'+label+'<input name="'+n+'" type="'+(type||'text')+'" value="'+esc(v||'')+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+(extra||'')+'></label>'; }
+  function sel(n,label,v,opts){ return '<label class="l">'+label+'<select name="'+n+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(String(v)===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>'; }
+  var h=topbar('#/p/'+pid)+'<h1>Edit <em>'+esc(name.split(' ')[0])+'</em></h1><p class="sub">Name and mobile are changed in the hub under Manage team.</p><form id="pf" novalidate>';
+  h+='<div class="card"><h2>Contact</h2><div class="grid" style="margin-top:12px">'+f('preferred','Goes by <small>optional</small>',p.preferred)+f('email','Email',p.email,'email','name@email.com',' autocomplete="off" inputmode="email"')+f('dob','Date of birth',p.dob,'date')+'<label class="l full">Home address<input name="address" value="'+esc(p.address||'')+'" autocomplete="off"></label>'+f('emergName','Emergency contact',p.emergName,'text','Name')+f('emergRel','Relationship',p.emergRel,'text','e.g. Partner')+f('emergPhone','Emergency phone',p.emergPhone,'tel','',' inputmode="tel"')+'</div></div>';
+  h+='<div class="card"><h2>Employment</h2><div class="grid" style="margin-top:12px">'+sel('type','Employment type',p.type||'casual',[['casual','Casual'],['part-time','Part-time'],['full-time','Full-time']])+sel('level','Award level',p.level||'1',[['1','Level 1 (most cleaners)'],['2','Level 2'],['3','Level 3']])+f('startDate','Start date',p.startDate,'date')+sel('status','Status',p.status||'active',[['active','Working with us'],['left','Finished up']])+f('endDate','Finish date <small>if they\'ve left</small>',p.endDate,'date')+'</div></div>';
+  h+='<div class="card"><h2>Tax <em>&amp; super</em></h2><div class="grid" style="margin-top:12px">'+sel('tft','Tax-free threshold <small>from their TFN declaration</small>',p.tft||'2',[['2','Claimed (their main job)'],['1','Not claimed (second job)'],['3','Foreign resident']])+'<label class="check" style="margin-top:22px"><input type="checkbox" name="help"'+(p.help?' checked':'')+'>Has a HELP or study loan</label>'+f('superFund','Super fund',p.superFund,'text','e.g. AustralianSuper')+f('superNo','Member number',p.superNo)+f('superUsi','Fund USI <small>optional</small>',p.superUsi)+'</div><p class="hint">HELP repayments aren\'t worked out automatically. Use the tax override on their pay until that\'s added.</p></div>';
+  h+='<div class="card"><h2>Paperwork</h2><p class="sub">Tick each one and the date you got it.</p><div class="docs" style="margin-top:6px">'+DOCS.map(function(x){ var v=d[x[0]]; return '<div class="doc"><input type="checkbox" data-doc="'+x[0]+'"'+(v?' checked':'')+' style="width:22px;height:22px;min-height:0;margin:0;accent-color:var(--terracotta)"><span>'+esc(x[1])+'</span><input type="date" name="doc_'+x[0]+'" value="'+(v&&v!=='yes'?esc(v):'')+'"'+(v?'':' hidden')+'></div>'; }).join('')+'</div></div>';
+  h+='<div class="card"><h2>Notes</h2><textarea name="notes" placeholder="Availability, sizes, anything worth remembering">'+esc(p.notes||'')+'</textarea></div>';
+  h+='<div class="err" id="perr" hidden></div><div class="acts"><a class="btn plain" href="#/p/'+pid+'">Cancel</a><button class="btn primary" type="submit">Save profile</button></div></form>';
+  app.innerHTML=h;
+  var form=app.querySelector('#pf');
+  app.querySelectorAll('[data-doc]').forEach(function(c){ c.onchange=function(){ var di=form.elements['doc_'+c.dataset.doc]; di.hidden=!c.checked; if(c.checked&&!di.value) di.value=today(); }; });
+  form.onsubmit=function(e){ e.preventDefault(); var E=form.elements, err=app.querySelector('#perr'), btn=form.querySelector('[type=submit]');
+    var em=E.email.value.trim(); if(em&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ err.textContent='That email doesn\'t look right.'; err.hidden=false; return; }
+    var docs={}; DOCS.forEach(function(x){ var c=form.querySelector('[data-doc="'+x[0]+'"]'); docs[x[0]]=c.checked?(E['doc_'+x[0]].value||'yes'):''; });
+    var body={preferred:E.preferred.value,email:em,dob:E.dob.value,address:E.address.value,emergName:E.emergName.value,emergRel:E.emergRel.value,emergPhone:E.emergPhone.value,type:E.type.value,level:E.level.value,startDate:E.startDate.value,status:E.status.value,endDate:E.endDate.value,tft:E.tft.value,help:E.help.checked,superFund:E.superFund.value,superNo:E.superNo.value,superUsi:E.superUsi.value,notes:E.notes.value,docs:docs};
+    btn.disabled=true; btn.textContent='Saving…';
+    api('POST','/api/staff',{action:'profile',id:pid,profile:body}).then(function(d){ S.profiles[pid]=d.profile; toast('Profile saved'); go('p/'+pid); }).catch(function(x){ btn.disabled=false; btn.textContent='Save profile'; err.textContent=x.message; err.hidden=false; });
+  };
+}
+
+// ---------- payslip ----------
+function slipLink(x){ var l=payLink(x.pid); return l?l+'#'+x.num:''; }
+function renderSlip(id){
+  var x=slipById(id); if(!x){ app.innerHTML=topbar('#/')+'<div class="empty" style="margin-top:20px">That payslip isn\'t here any more.</div>'; return; }
+  var m=member(x.pid)||{}, p=prof(x.pid), first=x.name.split(' ')[0], link=slipLink(x), supDue=addDays(x.paidOn,7);
+  var h=topbar('#/runs/'+x.periodEnd)+'<h1>'+esc(first)+'\'s <em>payslip</em></h1><p class="sub">'+esc(x.num)+' · '+fdate(x.periodStart).replace(/ \d{4}$/,'')+' – '+fdate(x.periodEnd)+(x.source==='import'?' · from the old Pay Run page':'')+'</p>';
+  h+='<div class="kpis"><div class="kpi dark"><b>'+money(x.net)+'</b><span>Net into their account</span></div><div class="kpi"><b>'+money(x.tax)+'</b><span>PAYG withheld</span></div><div class="kpi"><b>'+money(x.sup)+'</b><span>Super</span></div></div>';
+  h+='<div class="card"><h2>Status</h2><div class="docs" style="margin-top:6px">';
+  h+='<div class="doc"><span class="x'+(x.sentAt?' on':'')+'">'+(x.sentAt?'✓':'')+'</span><span>Payslip sent'+(x.sentTo?'<br><small class="d">'+esc(x.sentTo)+'</small>':'')+'</span><span class="d">'+(x.sentAt?fdate(x.sentAt.slice(0,10)):'<button class="ghost" data-mark="sentAt" data-v="1">Mark sent</button>')+'</span></div>';
+  h+='<label class="doc"><input type="checkbox" data-mark="superPaid"'+(x.superPaid?' checked':'')+' style="width:22px;height:22px;min-height:0;margin:0;accent-color:var(--terracotta)"><span>Super paid to '+esc(x.superFund||'their fund')+'</span><span class="d">'+(x.superPaid?fdate(x.superPaid):'Due '+fdate(supDue))+'</span></label>';
+  h+='<label class="doc"><input type="checkbox" data-mark="taxPaid"'+(x.taxPaid?' checked':'')+' style="width:22px;height:22px;min-height:0;margin:0;accent-color:var(--terracotta)"><span>PAYG paid to the ATO</span><span class="d">'+(x.taxPaid?fdate(x.taxPaid):'With your BAS')+'</span></label>';
+  h+='</div></div>';
+  h+='<div class="slipwrap">'+P.html(x,S.employer)+'</div>';
+  h+='<div class="acts"><a class="btn primary" href="#" data-text>Text to '+esc(first)+'</a><a class="btn outline" href="#" data-email>Email</a><button class="btn plain" data-copytext>Copy as text</button><button class="btn plain" data-copy="'+esc(link)+'">Copy link</button><a class="btn plain wide" href="#/run/'+x.periodStart+'">Change this pay</a></div>';
+  h+='<details class="more" style="margin-top:14px"><summary>Delete this payslip</summary><p class="sub">Only if it was made by mistake. Keep payslips you\'ve paid: they\'re your pay records.</p><button class="btn danger" data-del>Delete payslip</button></details>';
+  app.innerHTML=h;
+  var subj='Your payslip: '+fdate(x.periodStart)+' – '+fdate(x.periodEnd);
+  var tb=app.querySelector('[data-text]');
+  tb.onclick=function(e){ if(!m.phone){ e.preventDefault(); toast('Add their mobile in Manage team first'); return; }
+    if(BCSms.go(tb, m.phone, 'Hi '+first+', your payslip for '+fdate(x.periodStart).replace(/ \d{4}$/,'')+' – '+fdate(x.periodEnd).replace(/ \d{4}$/,'')+' is ready. Net pay '+money(x.net)+', paid '+fdate(x.paidOn).replace(/ \d{4}$/,'')+'. See it here: '+link+'\n\nJack', key(), {toast:toast, done:function(){ mark(x,'sentAt',1,m.phone).then(function(){ renderSlip(id); }); }})) e.preventDefault();
+    else mark(x,'sentAt',1,m.phone); };
+  var eb=app.querySelector('[data-email]');
+  eb.onclick=function(e){ if(!p.email){ e.preventDefault(); toast('Add their email to their profile first'); return; }
+    eb.href='mailto:'+encodeURIComponent(p.email)+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent('Hi '+first+',\n\nHere\'s your payslip for this pay period. You can also see it, and all your past payslips, here: '+link+'\n\n'+P.text(x,S.employer)+'\n\nThanks,\nJack\nBardon Clean');
+    mark(x,'sentAt',1,p.email); };
+  app.querySelector('[data-copytext]').onclick=function(){ copy(P.text(x,S.employer),'Payslip copied'); };
+  app.querySelectorAll('[data-mark]').forEach(function(c){ var ev=c.tagName==='INPUT'?'onchange':'onclick'; c[ev]=function(){ mark(x,c.dataset.mark,c.tagName==='INPUT'?c.checked:1).then(function(){ renderSlip(id); }); }; });
+  var del=app.querySelector('[data-del]');
+  del.onclick=function(){ if(!del.dataset.sure){ del.dataset.sure='1'; del.textContent='Tap again to delete'; return; }
+    api('POST','/api/staff',{action:'delete',id:x.id}).then(function(){ S.slips=S.slips.filter(function(s){return s.id!==x.id;}); RUN=null; toast('Payslip deleted'); go('p/'+x.pid); }).catch(function(e){ toast(e.message); }); };
+}
+function mark(x,field,value,to){
+  if(field!=='sentAt'&&value===true) value=today();
+  return api('POST','/api/staff',{action:'mark',id:x.id,field:field,value:value,to:to}).then(function(d){ var i=S.slips.indexOf(x); if(i>=0) S.slips[i]=d.slip; Object.assign(x,d.slip); }).catch(function(e){ toast(e.message); });
+}
+function copy(t,msg){ if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){ toast(msg||'Copied'); },function(){ prompt('Copy this:',t); }); else prompt('Copy this:',t); }
+
+// ---------- pay run view ----------
+function renderRunView(end){
+  var r=runs().filter(function(x){return x.end===end;})[0];
+  if(!r){ app.innerHTML=topbar('#/')+'<div class="empty" style="margin-top:20px">No payslips for that period.</div>'; return; }
+  var h=topbar('#/')+'<h1>Pay <em>run</em></h1><p class="sub">'+fdate(r.start)+' – '+fdate(r.end)+' · paid '+fdate(r.paidOn)+'</p>';
+  h+='<div class="kpis k2"><div class="kpi dark"><b>'+money(r.net)+'</b><span>Net paid to the team</span></div><div class="kpi"><b>'+money(r.gross+r.sup)+'</b><span>Total cost (gross + super)</span></div><div class="kpi'+(r.supOwing>0.004?' warn':'')+'"><b>'+money(r.supOwing>0.004?r.supOwing:r.sup)+'</b><span>Super '+(r.supOwing>0.004?'owing, due by '+fdate(r.supDue):'paid')+'</span></div><div class="kpi"><b>'+money(r.tax)+'</b><span>PAYG withheld, '+(r.taxOwing>0.004?'pay with your BAS':'paid to ATO')+'</span></div></div>';
+  if(r.unsent) h+='<div class="alert">'+r.unsent+' payslip'+(r.unsent===1?' hasn\'t':'s haven\'t')+' been sent. Payslips must go out within one working day of paying.</div>';
+  h+='<div class="sect"><span>Payslips</span><span>'+r.slips.length+'</span></div><div class="list">';
+  r.slips.sort(function(a,b){return a.name.localeCompare(b.name);}).forEach(function(x){ h+='<a class="row" href="#/slip/'+x.id+'"><span class="av" style="background:'+colour(x.pid)+'">'+esc(initials(x.name))+'</span><span class="c">'+esc(x.name)+'</span><span class="a">'+money(x.net)+'</span><span class="m">'+P.hrs(x.hrs)+' hrs · gross '+money(x.gross)+' · tax '+money(x.tax)+' · super '+money(x.sup)+'</span><span style="text-align:right">'+(x.sentAt?'<span class="pill ok">Sent</span>':'<span class="pill due">Not sent</span>')+'</span></a>'; });
+  h+='</div><div class="card"><h2>Pay these</h2><table class="tbl" style="margin-top:8px">';
+  r.slips.forEach(function(x){ h+='<tr><td>'+esc(x.name)+' <span class="sub" style="font-size:12px">net pay</span></td><td>'+money(x.net)+'</td></tr>'; });
+  r.slips.forEach(function(x){ h+='<tr><td>'+esc(x.superFund||'Super fund')+' <span class="sub" style="font-size:12px">'+esc(x.name.split(' ')[0])+(x.superNo?' · '+esc(x.superNo):'')+'</span></td><td>'+money(x.sup)+(x.superPaid?' ✓':'')+'</td></tr>'; });
+  h+='<tr class="t"><td>PAYG to the ATO</td><td>'+money(r.tax)+'</td></tr></table>';
+  h+='<div class="acts">'+(r.supOwing>0.004?'<button class="btn primary" data-all="superPaid">Mark all super paid</button>':'<button class="btn plain" data-all="superPaid" data-off="1">Undo super paid</button>')+(r.taxOwing>0.004?'<button class="btn outline" data-all="taxPaid">Mark PAYG paid</button>':'<button class="btn plain" data-all="taxPaid" data-off="1">Undo PAYG paid</button>')+'<a class="btn plain wide" href="#/run/'+r.start+'">Change this pay run</a></div></div>';
+  app.innerHTML=h;
+  app.querySelectorAll('[data-all]').forEach(function(b){ b.onclick=function(){ b.disabled=true; var f=b.dataset.all, v=!b.dataset.off;
+    Promise.all(r.slips.filter(function(x){ return !!x[f]!==v; }).map(function(x){ return mark(x,f,v); })).then(function(){ toast(v?'Marked paid':'Marked unpaid'); renderRunView(end); }); }; });
+}
+
+// ---------- run pay ----------
+function renderRun(){
+  var p=paySet(), ids=Object.keys(RUN.ppl), on=ids.filter(function(id){return RUN.ppl[id].on;}), tot={net:0,tax:0,sup:0,gross:0};
+  var calcs={}; on.forEach(function(id){ var c=personCalc(id); calcs[id]=c; tot.net+=c.net; tot.tax+=c.tax; tot.sup+=c.sup; tot.gross+=c.gross; });
+  var existing=S.slips.filter(function(s){return s.periodEnd===RUN.end;}).length;
+  var h=topbar('#/')+'<h1>Run <em>pay</em></h1><p class="sub">Hours come from clock-in and clock-off where the cleaner used them, otherwise from the roster. Check them, then save.</p>';
+  h+='<div class="nav"><button data-per="-1" aria-label="Previous pay period">&larr;</button><div class="range">'+fdate(RUN.start).replace(/ \d{4}$/,'')+' – '+fdate(RUN.end)+'<br><small style="font-weight:400;color:var(--meta)">'+(RUN.cycle===2?'Fortnightly':'Weekly')+' pay</small></div><button data-per="1" aria-label="Next pay period">&rarr;</button></div>';
+  if(existing) h+='<div class="alert ok">This period was paid on '+fdate(RUN.paidOn)+'. Saving again replaces those payslips with what\'s below.</div>';
+  if(RUN.end>=today()) h+='<div class="alert">This pay period hasn\'t finished yet.</div>';
+  h+='<div class="card" style="margin-top:12px"><label class="l">Payment date<input type="date" id="paidOn" value="'+esc(RUN.paidOn)+'"></label></div>';
+  ids.forEach(function(id){
+    var x=RUN.ppl[id], pr=prof(id), name=nameOf(id), c=calcs[id];
+    if(!x.on){ h+='<div class="person off"><div class="ph"><b>'+esc(name)+'</b><button class="ghost" data-on="'+id+'">Pay '+esc(name.split(' ')[0])+' this period</button></div><p class="hint" style="margin:2px 0 0">No shifts on the roster in this period.</p></div>'; return; }
+    h+='<div class="person" data-p="'+id+'"><div class="ph"><b>'+esc(name)+'</b><span class="n">'+money(c.net)+'</span></div><p class="hint" style="margin:2px 0 6px">Level '+esc(pr.level||'1')+' · tax-free threshold '+esc((TFT[pr.tft||'2']||'').toLowerCase())+(pr.help?' · <b>HELP debt: set tax below</b>':'')+(x.old?' · replaces '+esc(x.old.num):'')+'</p>';
+    x.shifts.forEach(function(s,i){
+      var dates=[]; for(var k=0;k<RUN.cycle*7;k++) dates.push(addDays(RUN.start,k));
+      h+='<div class="shift" data-i="'+i+'"><label class="l" style="font-size:12px">Day<select data-f="date">'+dates.map(function(d){return '<option value="'+d+'"'+(d===s.date?' selected':'')+'>'+P.fshort(d)+'</option>';}).join('')+'</select></label><label class="l" style="font-size:12px">Paid hrs<input data-f="hrs" type="number" step="0.25" min="0" inputmode="decimal" value="'+s.hrs+'"></label><label class="l" style="font-size:12px">Rate<select data-f="kind">'+['wk','el','sat','sun','ph'].map(function(k){return '<option value="'+k+'"'+(k===s.kind?' selected':'')+'>'+{wk:'Weekday',el:'Early/late',sat:'Saturday',sun:'Sunday',ph:'Pub. holiday'}[k]+'</option>';}).join('')+'</select></label><button class="x" data-rm aria-label="Remove shift">×</button>'+(s.job?'<span class="jb">'+esc(s.job)+'</span>':'')+'</div>';
+    });
+    h+='<button class="ghost" data-add>+ Add shift</button>';
+    h+='<table class="tbl" style="margin-top:6px">'+c.lines.map(function(l){ return '<tr class="m"><td>'+esc(l.label)+' · '+P.hrs(l.hrs)+' × '+money(l.rate)+'</td><td>'+money(l.amt)+'</td></tr>'; }).join('')+'<tr><td>Gross ('+P.hrs(c.hrs)+' hrs'+(c.otHrs?', '+P.hrs(c.otHrs)+' overtime':'')+')</td><td>'+money(c.gross)+'</td></tr><tr><td>PAYG tax'+(x.taxOv.trim()!==''?' (your figure, calculated '+money(c.taxAuto)+')':'')+'</td><td>−'+money(c.tax)+'</td></tr><tr class="t"><td>Net pay</td><td>'+money(c.net)+'</td></tr><tr class="m"><td>Super 12% of '+money(c.ordPay)+'</td><td>'+money(c.sup)+'</td></tr></table>';
+    h+='<div class="grid" style="margin-top:8px"><label class="l">Tax override <small>blank = calculated</small><input data-f="taxOv" type="number" step="1" min="0" inputmode="decimal" placeholder="'+c.taxAuto+'" value="'+esc(x.taxOv)+'"></label><span style="align-self:end;text-align:right"><button class="ghost" data-off>Don\'t pay '+esc(name.split(' ')[0])+'</button></span></div></div>';
+  });
+  if(!ids.length) h+='<div class="empty" style="margin-top:14px">No team members to pay.</div>';
+  h+='<div class="err" id="rerr"'+(RUN.err?'':' hidden')+'>'+esc(RUN.err)+'</div>';
+  h+='<p class="hint">Rates: your pay settings in the hub, or the award minimum for their level if that\'s higher. Tax uses the ATO weekly withholding formula; it doesn\'t include HELP. Super is 12% of ordinary pay, due within 7 days of payday.</p>';
+  h+='<div class="bar"><div class="in"><div class="sum">'+on.length+' to pay · tax '+money(tot.tax)+' · super '+money(tot.sup)+'<b>'+money(tot.net)+'</b></div><button class="btn primary" id="saveRun"'+(on.length&&!RUN.saving?'':' disabled')+'>'+(RUN.saving?'Saving…':'Save '+on.length+' payslip'+(on.length===1?'':'s'))+'</button></div></div>';
+  app.innerHTML=h;
+  app.querySelector('#paidOn').onchange=function(){ RUN.paidOn=this.value; };
+  app.querySelectorAll('[data-per]').forEach(function(b){ b.onclick=function(){ var s=addDays(RUN.start, +b.dataset.per*RUN.cycle*7); go('run/'+s); }; });
+  app.querySelectorAll('[data-on]').forEach(function(b){ b.onclick=function(){ var x=RUN.ppl[b.dataset.on]; x.on=true; if(!x.shifts.length) x.shifts.push({date:RUN.start,hrs:7.5,kind:'wk'}); renderRun(); }; });
+  app.querySelectorAll('.person[data-p]').forEach(function(card){
+    var x=RUN.ppl[card.dataset.p];
+    card.addEventListener('change',function(e){ var f=e.target.dataset.f; if(!f) return;
+      if(f==='taxOv'){ x.taxOv=e.target.value; }
+      else { var i=+e.target.closest('.shift').dataset.i, s=x.shifts[i];
+        if(f==='hrs') s.hrs=Math.max(0,parseFloat(e.target.value)||0);
+        else if(f==='date'){ s.date=e.target.value; var d=new Date(s.date+'T00:00:00').getDay(); s.kind=isPH(s.date)?'ph':d===0?'sun':d===6?'sat':(s.kind==='el'?'el':'wk'); delete s.job; }
+        else s[f]=e.target.value; }
+      x.shifts.sort(function(a,b){return a.date.localeCompare(b.date);}); renderRun(); });
+    card.addEventListener('click',function(e){
+      if(e.target.closest('[data-rm]')){ x.shifts.splice(+e.target.closest('.shift').dataset.i,1); if(!x.shifts.length) x.on=false; renderRun(); }
+      else if(e.target.closest('[data-add]')){ var last=x.shifts[x.shifts.length-1]; var d=last?addDays(last.date,1):RUN.start; if(d>RUN.end) d=RUN.end; var dw=new Date(d+'T00:00:00').getDay(); x.shifts.push({date:d,hrs:7.5,kind:isPH(d)?'ph':dw===0?'sun':dw===6?'sat':'wk'}); renderRun(); }
+      else if(e.target.closest('[data-off]')){ x.on=false; renderRun(); }
+    });
+  });
+  var sv=app.querySelector('#saveRun');
+  if(sv) sv.onclick=function(){
+    if(!RUN.paidOn){ RUN.err='Pick the payment date.'; renderRun(); return; }
+    var slips=on.map(function(id){ var x=RUN.ppl[id], c=calcs[id], pr=prof(id);
+      return {id:x.old?x.old.id:undefined,pid:id,name:nameOf(id),level:pr.level||'1',periodStart:RUN.start,periodEnd:RUN.end,paidOn:RUN.paidOn,cycle:RUN.cycle,lines:c.lines,shifts:x.shifts.filter(function(s){return s.hrs>0;}),tax:c.tax,taxAuto:c.taxAuto,superFund:pr.superFund||'',superNo:pr.superNo||'',superPaid:x.old?x.old.superPaid:'',taxPaid:x.old?x.old.taxPaid:''}; });
+    if(slips.some(function(s){return !s.lines.length;})){ RUN.err='Someone being paid has no hours. Add their shifts or take them off this run.'; renderRun(); return; }
+    RUN.saving=true; RUN.err=''; renderRun();
+    api('POST','/api/staff',{action:'slips',slips:slips}).then(function(d){
+      d.slips.forEach(function(n){ S.slips=S.slips.filter(function(s){return s.id!==n.id;}); S.slips.push(n); });
+      // Anyone taken off this run: their old payslip for the period goes.
+      var gone=S.slips.filter(function(s){ return s.periodEnd===RUN.end&&s.periodStart===RUN.start&&on.indexOf(s.pid)<0; });
+      return Promise.all(gone.map(function(g){ return api('POST','/api/staff',{action:'delete',id:g.id}).then(function(){ S.slips=S.slips.filter(function(s){return s.id!==g.id;}); }); })).then(function(){ return api('GET','/api/staff'); });
+    }).then(function(d){ S=d; var end=RUN.end; RUN=null; toast('Payslips saved. Now send them.'); go('runs/'+end); })
+      .catch(function(e){ RUN.saving=false; RUN.err=e.message; renderRun(); });
+  };
+}
+
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-act],[data-copy],[data-newlink]'); if(!t) return;
+  if(t.dataset.act==='refresh'){ RUN=null; S=null; render(); load(); }
+  else if(t.dataset.copy!=null){ if(t.dataset.copy) copy(t.dataset.copy,'Link copied'); else toast('Save their profile first'); }
+  else if(t.dataset.newlink){ if(!t.dataset.sure){ t.dataset.sure='1'; t.textContent='Tap again: old link stops working'; return; }
+    api('POST','/api/staff',{action:'newlink',id:t.dataset.newlink}).then(function(d){ S.profiles[t.dataset.newlink]=d.profile; toast('New link made. Send it to them.'); render(); }).catch(function(x){ toast(x.message); }); }
+});
+load();
+</script>
+</body></html>

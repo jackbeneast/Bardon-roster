@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#F5F0EB">
+<title>My Pay</title>
+<link rel="icon" type="image/png" href="/icons/favicon.png?v=2"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--terracotta:#C06B3C;--terracotta-dark:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cream-dark:#EDE6DE;--meta:#7A7A7A;--line:#DDD3C8;--white:#fff;--serif:"Playfair Display",Georgia,serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,Arial,sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:#4A4A4A;font:400 15px/1.5 var(--sans)}
+#app{max-width:660px;margin:0 auto;padding:20px 16px 48px}
+.wm{display:flex;gap:8px;align-items:center;font:700 18px/1 var(--serif);color:var(--dark)}
+.wm svg{width:28px;height:28px}
+h1{font:700 28px/1.15 var(--serif);color:var(--dark);margin:18px 0 0}
+h1 em{font-style:italic;font-weight:500;color:var(--terracotta)}
+.sub{color:var(--meta);font-size:14px;margin:4px 0 0}
+.list{display:grid;gap:8px;margin-top:16px}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 12px;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:13px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
+.row[aria-pressed="true"]{border:2px solid var(--terracotta);padding:12px 13px}
+.row .c{font:700 16px/1.3 var(--serif);color:var(--dark)}
+.row .a{font:600 15px var(--sans);color:var(--dark);font-variant-numeric:tabular-nums;text-align:right}
+.row .m{font-size:13px;color:var(--meta)}
+.slip{background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:16px;overflow-x:auto}
+@media (max-width:560px){.slip td,.slip th{padding-left:5px!important;padding-right:5px!important}.slip>div{padding:14px!important}}
+.btn{font:600 15px var(--sans);border-radius:8px;min-height:48px;padding:0 18px;cursor:pointer;border:1px solid var(--line);background:var(--white);color:var(--dark);margin-top:12px;width:100%}
+.btn:focus-visible,.row:focus-visible{outline:2px solid var(--terracotta);outline-offset:2px}
+.center{text-align:center;padding:60px 16px;color:var(--dark)}
+.note{font-size:13px;color:var(--meta);margin-top:18px}
+@media print{.list,.btn,.note,h1,.sub{display:none}.slip{border:0}body{background:#fff}}
+</style></head><body>
+<div id="app"><div class="center">Loading…</div></div>
+<script src="/lib/payslip.js"></script>
+<script>
+(function(){
+  var app=document.getElementById('app'), P=window.BCPay, esc=P.esc;
+  var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
+  var t=(location.pathname.split('/pay/')[1]||'').replace(/[^a-f0-9]/g,''), D=null, cur='';
+  function show(){
+    var sel=D.slips.filter(function(x){return x.num===cur;})[0]||D.slips[0];
+    var first=(D.name||'').split(' ')[0];
+    var h='<div class="wm">'+LOGO+'Bardon Clean</div><h1>'+(first?esc(first)+'\'s ':'Your ')+'<em>pay</em></h1><p class="sub">Your payslips from Bardon Clean. Keep this link private.</p>';
+    if(!sel){ app.innerHTML=h+'<div class="center">No payslips yet. They\'ll appear here after your first pay day.</div>'; return; }
+    h+='<div class="slip">'+P.html(sel,D.employer)+'</div><button class="btn" id="pr">Save as PDF or print</button>';
+    if(D.slips.length>1){ h+='<div class="list" aria-label="All payslips">'+D.slips.map(function(x){ return '<button class="row" data-n="'+esc(x.num)+'" aria-pressed="'+(x===sel)+'"><span class="c">'+P.fdate(x.periodStart).replace(/ \d{4}$/,'')+' – '+P.fdate(x.periodEnd)+'</span><span class="a">'+P.money(x.net)+'</span><span class="m">Paid '+P.fdate(x.paidOn)+' · '+P.hrs(x.hrs)+' hrs</span><span class="m" style="text-align:right">'+(x.superPaid?'Super paid':'')+'</span></button>'; }).join('')+'</div>'; }
+    h+='<p class="note">Questions about your pay? Call or text Jack on '+esc(D.employer.phone)+'.</p>';
+    app.innerHTML=h;
+    document.getElementById('pr').onclick=function(){ window.print(); };
+    Array.prototype.forEach.call(app.querySelectorAll('[data-n]'),function(b){ b.onclick=function(){ cur=b.dataset.n; history.replaceState(null,'','#'+cur); show(); window.scrollTo(0,0); }; });
+  }
+  if(!t){ app.innerHTML='<div class="center">This link isn\'t complete. Ask Jack to send it again.</div>'; return; }
+  cur=decodeURIComponent(location.hash.slice(1));
+  fetch('/api/staff?t='+t,{cache:'no-store'}).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong.'); return d; }); })
+    .then(function(d){ D=d; show(); })
+    .catch(function(e){ app.innerHTML='<div class="center">'+esc(e.message)+'</div>'; });
+})();
+</script>
+</body></html>

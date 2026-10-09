@@ -38,6 +38,12 @@
   to = "/d/index.html"
   status = 200
 
+# Employee pay link /pay/<token>: their own payslips
+[[redirects]]
+  from = "/pay/*"
+  to = "/payslip/index.html"
+  status = 200
+
 # Public quote request form
 [[redirects]]
   from = "/quote"
