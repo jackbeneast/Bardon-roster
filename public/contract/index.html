@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Bardon Clean — Casual Employment Agreement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{
+  --terracotta:#C06B3C;--terracotta-dark:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cream-dark:#EDE6DE;
+  --body:#4A4A4A;--meta:#7A7A7A;--white:#FFFFFF;--line:#DDD3C8;--tint:#FBF3EE;--err:#B3261E;--ok:#2E6B3F;
+  --serif:"Playfair Display",Georgia,serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--cream);color:var(--body);font:400 15px/1.6 var(--sans)}
+.wrap{max-width:720px;margin:0 auto;padding:22px 16px calc(48px + env(safe-area-inset-bottom,0px))}
+.wm{font:700 20px/1 var(--serif);color:var(--dark)}
+.hero h1{font:700 30px/1.15 var(--serif);color:var(--dark);margin:14px 0 6px;text-wrap:balance}
+.hero h1 em{font-style:italic;font-weight:500}
+.hero p{margin:0;color:var(--meta)}
+.steps{display:flex;gap:8px;margin:18px 0 0;padding:0;list-style:none;flex-wrap:wrap}
+.steps li{font:500 12px/1 var(--sans);background:var(--white);border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--dark)}
+.steps b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--terracotta);color:#fff;font-size:11px;margin-right:6px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:18px;margin-top:18px}
+.contract h2{font:700 18px/1.3 var(--serif);color:var(--dark);margin:22px 0 6px}
+.contract h2:first-child{margin-top:0}
+.contract h3{font:600 14px/1.3 var(--sans);color:var(--dark);margin:16px 0 6px;letter-spacing:.02em}
+.contract p{margin:6px 0}
+.contract ol,.contract ul{margin:6px 0;padding-left:22px}
+.contract li{margin:4px 0}
+.contract strong{color:var(--dark)}
+.contract .callout{background:var(--tint);border-left:3px solid var(--terracotta);padding:10px 12px;border-radius:4px;margin:10px 0}
+.parties{display:grid;gap:10px}
+.parties div{background:var(--cream);border-radius:6px;padding:10px 12px}
+.parties .lbl{font:600 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--meta);margin-bottom:4px}
+.parties .val{color:var(--dark);font-weight:500}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--dark)}
+td:last-child{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--dark);font-weight:500}
+.scroll-hint{font-size:13px;color:var(--meta);margin-top:10px}
+form h2{font:700 20px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
+form .sub{color:var(--meta);margin:0 0 14px;font-size:14px}
+.field{display:grid;gap:5px;margin-top:14px}
+label,.lbl2{font:600 13px/1.3 var(--sans);color:var(--dark)}
+input[type=text],input[type=email],input[type=tel],input[type=date]{width:100%;min-height:46px;border:1px solid var(--line);border-radius:6px;padding:10px 12px;font:400 16px var(--sans);color:var(--dark);background:var(--white)}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--dark);outline-offset:2px}
+input[readonly]{background:var(--cream)}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:14px;color:var(--body)}
+.check input{width:22px;height:22px;margin:1px 0 0;flex:none;accent-color:var(--terracotta)}
+.check a{color:var(--terracotta-dark)}
+.sigbox{position:relative;border:1px dashed var(--meta);border-radius:8px;background:var(--white);height:180px;touch-action:none}
+.sigbox canvas{position:absolute;inset:0;width:100%;height:100%;border-radius:8px;cursor:crosshair}
+.sigbox .ph{position:absolute;inset:auto 14px 14px 14px;border-top:1px solid var(--line);padding-top:6px;font-size:12px;color:var(--meta);pointer-events:none}
+.sigrow{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.link{background:none;border:0;color:var(--terracotta-dark);font:600 13px var(--sans);padding:6px 0;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 20px;border-radius:6px;font:600 16px/1 var(--sans);border:0;cursor:pointer;text-decoration:none;width:100%}
+.btn.primary{background:var(--terracotta);color:#fff}
+.btn.primary:hover{background:var(--terracotta-dark)}
+.btn.primary[disabled]{opacity:.6;cursor:wait}
+.btn.outline{background:none;border:2px solid var(--line);color:var(--dark)}
+.err{color:var(--err);font-size:13px;margin-top:6px;min-height:0}
+.formerr{background:#FCEDEC;color:var(--err);border-radius:6px;padding:10px 12px;margin-top:14px;font-size:14px}
+.done{text-align:left}
+.done .tick{width:44px;height:44px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-size:24px;margin-bottom:10px}
+.done h2{font:700 24px/1.2 var(--serif);color:var(--dark);margin:0 0 6px}
+.signed{display:none}
+.signed img{max-width:280px;height:auto;display:block;border-bottom:1px solid var(--line)}
+.foot{margin-top:24px;font-size:12.5px;color:var(--meta)}
+[hidden]{display:none!important}
+@media print{
+  body{background:#fff;font-size:11.5pt}
+  .wrap{max-width:none;padding:0}
+  .steps,.scroll-hint,#signForm,.done .actions,.foot,.noprint{display:none!important}
+  .card{border:0;padding:0;margin-top:10pt}
+  .signed{display:block!important}
+  .contract h2{break-after:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="wm">Bardon Clean</div>
+    <h1>Your casual <em>employment</em> agreement</h1>
+    <p id="greet">Please read the agreement below, then fill in your details and sign at the bottom.</p>
+    <ol class="steps noprint"><li><b>1</b>Read</li><li><b>2</b>Your details</li><li><b>3</b>Sign</li></ol>
+  </header>
+
+  <!-- Netlify form detection (hidden, never shown) -->
+
+
+  <article class="card contract" id="contract">
+    <h2>Casual Employment Agreement — Casual Residential Cleaner</h2>
+
+    <h2>1. Parties</h2>
+    <div class="parties">
+      <div><div class="lbl">Employer</div><div class="val">Jack East trading as Bardon Clean<br>ABN 46 426 437 394<br>49 Empress Tce, Bardon QLD 4065</div></div>
+      <div><div class="lbl">Employee</div><div class="val"><span class="v-name">[Employee name]</span><br><span class="v-address">[Address — entered below]</span></div></div>
+      <div><div class="lbl">Start date</div><div class="val v-start">[Start date — entered below]</div></div>
+    </div>
+    <p>In this agreement, <strong>Bardon Clean</strong>, <strong>we</strong> and <strong>us</strong> mean the employer, and <strong>you</strong> means the employee.</p>
+
+    <h2>2. Position</h2>
+    <p>You are employed as a <strong>Casual Residential Cleaner</strong>, cleaning clients' homes (including pre-sale, bond/end-of-lease and deep cleans) to Bardon Clean's standards.</p>
+    <p>Your employment is covered by the <strong>Cleaning Services Award 2020</strong> (<strong>Award</strong>) and the National Employment Standards (<strong>NES</strong>). You are classified as a <strong>Cleaning Services Employee Level 1</strong>. If anything in this agreement gives you less than the Award or NES, the Award or NES applies instead.</p>
+
+    <h2>3. Casual employment</h2>
+    <ol>
+      <li>You are a casual employee. There is no firm advance commitment to continuing and indefinite work according to an agreed pattern of work.</li>
+      <li>Hours vary week to week depending on client bookings. We will offer shifts as work is available, and you may accept or decline any shift offered.</li>
+      <li><strong>Notice of shifts:</strong> We will aim to give you at least <strong>24 hours' notice</strong> of a shift being offered or cancelled. You must give us at least <strong>24 hours' notice</strong> if you can't attend a shift you have accepted, except in a genuine emergency or illness (in which case tell Jack as soon as possible by phone).</li>
+      <li>Once you accept a shift, you are expected to attend it. Repeatedly cancelling accepted shifts or failing to show up may lead to no further shifts being offered.</li>
+      <li>You must be upfront and keep us updated about your availability.</li>
+      <li>Each engagement will be for at least the minimum engagement period required by the Award.</li>
+    </ol>
+
+    <h2>4. Pay</h2>
+    <ol>
+      <li>Your hourly rates are set out in the Pay Schedule below. They include the 25% casual loading, which is paid instead of paid leave entitlements (such as annual leave and personal/carer's leave) and notice of termination.</li>
+      <li>Where the Award requires a higher rate for any hours worked (for example, early-morning or evening work, overtime or public holidays), you will be paid the higher Award rate.</li>
+      <li><strong>Pay cycle:</strong> The pay week runs <strong>Sunday to Saturday</strong>. You will be paid <strong>weekly on Tuesday</strong> for the work done in the pay week ending the previous Saturday, by electronic transfer into your nominated bank account.</li>
+      <li>You must record your start and finish times for each job accurately, in the way Bardon Clean directs.</li>
+      <li>Tax will be withheld as required by law, and you will receive a payslip each pay day.</li>
+      <li><strong>Superannuation</strong> will be paid into your chosen fund (or our default fund if you don't choose one) in line with superannuation guarantee laws.</li>
+      <li>Pay rates will be reviewed when the Award changes and will never fall below the Award minimum.</li>
+    </ol>
+    <h3>Pay Schedule (from 1 July 2026)</h3>
+    <table>
+      <thead><tr><th>Hours worked</th><th>Hourly rate (incl. casual loading)</th></tr></thead>
+      <tbody>
+        <tr><td>Monday to Friday</td><td>$37.50</td></tr>
+        <tr><td>Monday to Friday, shift starting before 6am or finishing after 6pm</td><td>$37.91</td></tr>
+        <tr><td>Saturday</td><td>$47.39</td></tr>
+        <tr><td>Sunday</td><td>$60.93</td></tr>
+        <tr><td>Public holidays</td><td>Award rate</td></tr>
+      </tbody>
+    </table>
+
+    <h2>5. Travel</h2>
+    <ol>
+      <li>Travel to your first job of the day and home from your last job is your own time and cost.</li>
+      <li>Where you are required to travel <strong>between</strong> jobs on the same day, that travel time is paid in line with the Award.</li>
+      <li>Most work is expected to be at a single location per day.</li>
+    </ol>
+
+    <h2>6. Uniform, presentation and equipment</h2>
+    <ol>
+      <li>Bardon Clean provides all cleaning equipment and products on site, and your Bardon Clean uniform shirt.</li>
+      <li>You must only use the equipment and products we provide or approve.</li>
+      <li>On every job you must wear your Bardon Clean shirt; plain <strong>black shorts</strong> (men), or plain <strong>black shorts or black tights</strong> (women); and <strong>clean sneakers or running shoes</strong>.</li>
+      <li>You must arrive clean, tidy and ready to work. Uniform shirts and any equipment must be returned when your employment ends.</li>
+    </ol>
+
+    <h2>7. Standards, training and conduct</h2>
+    <ol>
+      <li>Before your first job, you must complete Bardon Clean's onboarding training. You must follow our cleaning standards, SOPs, checklists and photo-evidence requirements on every job.</li>
+      <li>You must follow reasonable and lawful directions, treat clients, their homes and their belongings with care and respect, and act professionally at all times as a representative of Bardon Clean.</li>
+      <li>You must report any damage, breakage, accident, injury or near miss to Jack <strong>immediately</strong>, before leaving the property. Bardon Clean will not deduct money from your pay for damage except where the law allows it.</li>
+      <li>You must follow all work health and safety instructions, use any PPE provided, and take reasonable care for your own safety and the safety of others.</li>
+    </ol>
+
+    <h2>8. Client keys, access codes and property</h2>
+    <ol>
+      <li>Any keys, lockbox codes, alarm codes, gate codes or other access information are given to you only to complete the job. You must keep them secure, never copy them, never share them with anyone, and return keys as directed.</li>
+      <li>You must not enter a client's property other than for a scheduled Bardon Clean job, and must not bring anyone else onto a property.</li>
+      <li>Photos taken on a job are for Bardon Clean use only. You must not keep, share or post them (including on social media).</li>
+    </ol>
+
+    <h2>9. Confidentiality</h2>
+    <ol>
+      <li><strong>Confidential Information</strong> includes all information about Bardon Clean's clients (including names, addresses, phone numbers, emails, access details, schedules, prices and anything you see or learn in their homes), and Bardon Clean's pricing, processes, SOPs and business information.</li>
+      <li>You must not share, disclose or use any Confidential Information for any purpose other than doing your job, either during your employment or after it ends.</li>
+      <li class="callout"><strong>Sharing client information with anyone is serious misconduct and will result in termination of your employment.</strong></li>
+    </ol>
+
+    <h2>10. Other work and protecting Bardon Clean's clients</h2>
+    <ol>
+      <li>You may work for other employers or businesses (including other cleaning businesses) while you are employed by Bardon Clean, provided it does not conflict with your duties to us or involve Bardon Clean's clients.</li>
+      <li>During your employment and for <strong>12 months</strong> after it ends, you must not, directly or indirectly (including through another business):
+        <ul>
+          <li>provide cleaning or similar services to any person who was a Bardon Clean client during your employment;</li>
+          <li>approach or encourage any Bardon Clean client to use you or anyone else instead of Bardon Clean; or</li>
+          <li>encourage any Bardon Clean employee to leave Bardon Clean.</li>
+        </ul>
+      </li>
+      <li>If a Bardon Clean client approaches you directly, you must refer them to Jack.</li>
+      <li>You agree these restrictions are reasonable to protect Bardon Clean's business and client relationships.</li>
+    </ol>
+
+    <h2>11. Ending employment</h2>
+    <ol>
+      <li>As a casual employee, either party may end the employment at any time, subject to any notice required by the Award or NES.</li>
+      <li>Bardon Clean may end your employment immediately and without notice for serious misconduct, including theft, dishonesty, breaching confidentiality, misuse of client access, being under the influence of alcohol or drugs at work, or deliberately damaging property.</li>
+      <li>When your employment ends, you must immediately return all keys, access cards, uniforms, equipment and any client or Bardon Clean information.</li>
+      <li>Clauses 8, 9 and 10 continue after your employment ends.</li>
+    </ol>
+
+    <h2>12. Casual conversion</h2>
+    <p>After the qualifying period set out in the <em>Fair Work Act 2009</em> (Cth), you may be entitled to request to change to full-time or part-time employment. Bardon Clean will respond to any such request as required by law.</p>
+
+    <h2>13. Information statements and general</h2>
+    <ol>
+      <li>You acknowledge receiving the <strong>Fair Work Information Statement</strong> and the <strong>Casual Employment Information Statement</strong> with this agreement (links in the signing section below).</li>
+      <li>Bardon Clean's policies and procedures may change from time to time. They do not form part of this agreement, but you must follow them.</li>
+      <li>This agreement replaces any earlier discussions about your employment. It is governed by the laws of Queensland.</li>
+      <li>You confirm you have the legal right to work in Australia and will tell us immediately if that changes.</li>
+    </ol>
+
+    <h2>14. Signatures</h2>
+    <p>By signing, you confirm you have read and understood this agreement, had the opportunity to get independent advice, and accept its terms. You agree to sign this agreement electronically.</p>
+    <div class="signed" id="signedBlock">
+      <p><strong>Employee:</strong> <span class="v-name"></span></p>
+      <img id="signedImg" alt="Employee signature">
+      <p>Typed signature: <span id="signedTyped"></span><br>Signed: <span id="signedAt"></span></p>
+      <p><strong>Employer:</strong> Jack East trading as Bardon Clean</p>
+    </div>
+    <p class="scroll-hint noprint">Version 2026-10-01</p>
+  </article>
+
+  <form class="card" id="signForm" novalidate>
+    <h2>Your details and signature</h2>
+    <p class="sub">All fields are required.</p>
+
+    <div class="field"><label for="f_name">Full legal name</label><input type="text" id="f_name" autocomplete="name" required></div>
+    <div class="field"><label for="f_email">Email</label><input type="email" id="f_email" autocomplete="email" inputmode="email" required></div>
+    <div class="field"><label for="f_phone">Mobile</label><input type="tel" id="f_phone" autocomplete="tel" inputmode="tel" required></div>
+    <div class="field"><label for="f_address">Home address</label><input type="text" id="f_address" autocomplete="street-address" required></div>
+    <div class="field"><label for="f_start">Start date</label><input type="date" id="f_start" required></div>
+
+    <label class="check"><input type="checkbox" id="c_fwis"><span>I have received and read the <a href="https://www.fairwork.gov.au/employment-conditions/information-statements/fair-work-information-statement" target="_blank" rel="noopener">Fair Work Information Statement</a>.</span></label>
+    <label class="check"><input type="checkbox" id="c_ceis"><span>I have received and read the <a href="https://www.fairwork.gov.au/employment-conditions/information-statements/casual-employment-information-statement" target="_blank" rel="noopener">Casual Employment Information Statement</a>.</span></label>
+    <label class="check"><input type="checkbox" id="c_agree"><span>I have read this agreement in full and agree to its terms, including the confidentiality and client clauses (9 and 10).</span></label>
+
+    <div class="field">
+      <span class="lbl2">Sign here with your finger</span>
+      <div class="sigbox" id="sigbox"><canvas id="sig" aria-label="Signature pad"></canvas><div class="ph">Signature</div></div>
+      <div class="sigrow"><span class="err" id="sigErr"></span><button type="button" class="link" id="sigClear">Clear</button></div>
+    </div>
+    <div class="field"><label for="f_typed">Type your full name to confirm your signature</label><input type="text" id="f_typed" autocomplete="off" required></div>
+
+    <div class="formerr" id="formErr" hidden></div>
+    <div style="margin-top:18px"><button class="btn primary" id="submitBtn" type="submit">Sign and submit</button></div>
+  </form>
+
+  <section class="card done" id="done" hidden>
+    <div class="tick">✓</div>
+    <h2>Signed — thank you</h2>
+    <p>Your agreement has been sent to Bardon Clean. Jack will be in touch about your first shift.</p>
+    <div class="actions" style="margin-top:14px"><button class="btn outline" type="button" id="saveCopy">Save a copy (PDF)</button></div>
+  </section>
+
+  <p class="foot noprint">Questions about this agreement? Call Jack on 0406 216 212 before signing.</p>
+</div>
+
+<script>
+(function(){
+  var VERSION = '2026-10-01';
+  var $ = function(id){ return document.getElementById(id); };
+
+  // ---- Prefill from link ----
+  function b64urlDecode(s){
+    s = s.replace(/-/g,'+').replace(/_/g,'/'); while (s.length % 4) s += '=';
+    return decodeURIComponent(escape(atob(s)));
+  }
+  var q = new URLSearchParams(location.search), pre = {};
+  try { if (q.get('c')) pre = JSON.parse(b64urlDecode(q.get('c'))) || {}; } catch(e){ pre = {}; }
+  pre.n = pre.n || q.get('name') || '';
+  pre.e = pre.e || q.get('email') || '';
+  pre.s = pre.s || q.get('start') || '';
+
+  if (pre.n) { $('f_name').value = pre.n; $('greet').textContent = 'Hi ' + pre.n.split(' ')[0] + ' — please read the agreement below, then fill in your details and sign at the bottom.'; }
+  if (pre.e) $('f_email').value = pre.e;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(pre.s)) $('f_start').value = pre.s;
+
+  function fmtDate(iso){
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '';
+    var p = iso.split('-'); var d = new Date(+p[0], +p[1]-1, +p[2]);
+    return d.toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+  }
+  function syncContract(){
+    var n = $('f_name').value.trim(), a = $('f_address').value.trim(), s = $('f_start').value;
+    document.querySelectorAll('.v-name').forEach(function(el){ el.textContent = n || '[Employee name]'; });
+    document.querySelectorAll('.v-address').forEach(function(el){ el.textContent = a || '[Address — entered below]'; });
+    document.querySelectorAll('.v-start').forEach(function(el){ el.textContent = fmtDate(s) || '[Start date — entered below]'; });
+  }
+  ['f_name','f_address','f_start'].forEach(function(id){ $(id).addEventListener('input', syncContract); });
+  syncContract();
+
+  // ---- Signature pad ----
+  var canvas = $('sig'), ctx = canvas.getContext('2d'), drawing = false, hasInk = false, last = null;
+  function sizeCanvas(){
+    var r = canvas.getBoundingClientRect(), dpr = Math.max(1, window.devicePixelRatio || 1);
+    var old = hasInk ? canvas.toDataURL() : null;
+    canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1A1A1A';
+    if (old) { var img = new Image(); img.onload = function(){ ctx.drawImage(img,0,0,r.width,r.height); }; img.src = old; }
+  }
+  sizeCanvas();
+  window.addEventListener('resize', sizeCanvas);
+  function pt(e){ var r = canvas.getBoundingClientRect(); return {x:e.clientX - r.left, y:e.clientY - r.top}; }
+  canvas.addEventListener('pointerdown', function(e){ e.preventDefault(); drawing = true; last = pt(e); canvas.setPointerCapture(e.pointerId);
+    ctx.beginPath(); ctx.arc(last.x,last.y,1.1,0,Math.PI*2); ctx.fillStyle='#1A1A1A'; ctx.fill(); hasInk = true; $('sigErr').textContent=''; });
+  canvas.addEventListener('pointermove', function(e){ if (!drawing) return; e.preventDefault(); var p = pt(e);
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last = p; });
+  ['pointerup','pointercancel','pointerleave'].forEach(function(t){ canvas.addEventListener(t, function(){ drawing = false; }); });
+  $('sigClear').addEventListener('click', function(){ ctx.clearRect(0,0,canvas.width,canvas.height); hasInk = false; });
+
+  function signatureDataUrl(){
+    // Flatten onto white and downscale to keep the submission small
+    var w = 600, r = canvas.getBoundingClientRect(), h = Math.round(w * r.height / r.width);
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0,0,w,h); x.drawImage(canvas,0,0,w,h);
+    return c.toDataURL('image/png');
+  }
+
+  // ---- Submit ----
+  function fail(msg){ var b = $('formErr'); b.textContent = msg; b.hidden = false; b.scrollIntoView({behavior:'smooth',block:'center'}); }
+  $('signForm').addEventListener('submit', function(e){
+    e.preventDefault(); $('formErr').hidden = true;
+    var v = {
+      full_name: $('f_name').value.trim(), email: $('f_email').value.trim(), phone: $('f_phone').value.trim(),
+      address: $('f_address').value.trim(), start_date: $('f_start').value, typed_signature: $('f_typed').value.trim()
+    };
+    if (!v.full_name || !v.email || !v.phone || !v.address || !v.start_date) return fail('Please fill in all your details.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)) return fail('Please check your email address.');
+    if (!$('c_fwis').checked || !$('c_ceis').checked || !$('c_agree').checked) return fail('Please tick all three boxes.');
+    if (!hasInk) { $('sigErr').textContent = 'Please sign in the box.'; return fail('Please sign in the box.'); }
+    if (!v.typed_signature) return fail('Please type your full name to confirm your signature.');
+    if (v.typed_signature.toLowerCase().replace(/\s+/g,' ') !== v.full_name.toLowerCase().replace(/\s+/g,' '))
+      return fail('Your typed name must match your full legal name exactly.');
+
+    var now = new Date();
+    var signedAt = now.toLocaleString('en-AU',{timeZone:'Australia/Brisbane',dateStyle:'long',timeStyle:'short'}) + ' (Brisbane) — ' + now.toISOString();
+    var sig = signatureDataUrl();
+    syncContract();
+    $('signedImg').src = sig; $('signedTyped').textContent = v.typed_signature; $('signedAt').textContent = signedAt;
+
+    var data = Object.assign({ action:'sign', t:q.get('t')||'' }, v, {
+      signed_at: signedAt, ack_fwis: true, ack_ceis: true, ack_agree: true, version: VERSION, signature: sig,
+      agreement_text: $('contract').innerText.replace(/\n{3,}/g,'\n\n'), device: navigator.userAgent
+    });
+    var btn = $('submitBtn'); btn.disabled = true; btn.textContent = 'Submitting…';
+    fetch('/api/contracts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)})
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); }); })
+      .then(function(){
+        $('signForm').hidden = true; $('done').hidden = false;
+        document.querySelector('.steps').hidden = true;
+        $('done').scrollIntoView({behavior:'smooth',block:'start'});
+      })
+      .catch(function(err){
+        btn.disabled = false; btn.textContent = 'Sign and submit';
+        fail(err && err.message && !/^HTTP/.test(err.message) ? err.message : 'That didn\'t go through. Check your connection and try again, or call Jack on 0406 216 212.');
+      });
+  });
+  $('saveCopy').addEventListener('click', function(){ window.print(); });
+})();
+</script>
+</body>
+</html>

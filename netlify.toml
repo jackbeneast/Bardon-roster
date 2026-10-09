@@ -49,3 +49,9 @@
   from = "/jobs"
   to = "/careers/"
   status = 301
+
+# Employment contract signing page
+[[redirects]]
+  from = "/contract"
+  to = "/contract/index.html"
+  status = 200
