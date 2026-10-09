@@ -729,6 +729,45 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     o.staff.forEach(function(id){ var s=(d.shifts&&d.shifts[id])||{}; o.sh[id]={start:s.start||o.start, end:s.end||o.end}; if(s.start&&s.start!==o.start || s.end&&s.end!==o.end) o.open=true; });
     return o;
   }
+  // ---- Text team: send this job's details to whoever is on it, one text each, from the business number ----
+  function teamOn(job){
+    var ids={}; groupOf(job).forEach(function(d){ (d.staff||[]).forEach(function(id){ ids[id]=1; }); });
+    return (state.team||[]).filter(function(t){ return ids[t.id]&&!t.owner&&/^04\d{8}$/.test(String(t.phone||'').replace(/[^\d+]/g,'').replace(/^\+?61(?=4\d{8}$)/,'0')); });
+  }
+  function teamDay(job){
+    var sib=groupOf(job), t=iso(today);
+    return sib.filter(function(d){ return d.date>=t; })[0]||sib[sib.length-1]||job;
+  }
+  function teamTextSheet(job){
+    var day=teamDay(job), people=teamOn(job);
+    var dd=parse(day.date), t=iso(today), tm=new Date(today); tm.setDate(tm.getDate()+1);
+    var when=day.date===t?'today':day.date===iso(tm)?'tomorrow':fmtDay(dd);
+    var where=[day.address||job.address,day.suburb||job.suburb].filter(Boolean).join(', ');
+    var notes=String(day.notes||job.notes||'').replace(/(^|[.\n]\s*)Client:\s*[+\d][\d\s]{7,15}\d\.?/g,'$1').replace(/ {2,}/g,' ').trim();
+    var def='Hi {first}, details for '+when+(when==='today'||when==='tomorrow'?' ('+fmtDay(dd)+')':'')+':\n{time}'+(where?' at '+where:'')+(notes?'\n\n'+notes:'')+'\n\nReply here if anything is unclear. Thanks, Jack';
+    function shift(p){ var sh=(day.shifts||{})[p.id]||{}; var a=sh.start||day.start, b=sh.end||day.end; return a?fmtTime(a)+(b?' to '+fmtTime(b):''):''; }
+    function fill(txt,p){ return txt.replace(/\{first\}/g,String(p.name||'').trim().split(/\s+/)[0]).replace(/\{time\}/g,shift(p)); }
+    var h='<h3>Text <em>team</em></h3><p class="sub" style="margin-top:0">Each person gets their own text from the business number. Add access details here: alarm or lockbox codes are fine in a private text.</p>';
+    h+='<div style="margin:10px 0">'+people.map(function(p){ return '<label style="display:flex;align-items:center;gap:10px;padding:8px 0"><input type="checkbox" data-tp="'+esc(p.id)+'" checked style="width:20px;height:20px">'+esc(p.name)+((day.staff||[]).indexOf(p.id)<0?' <span class="sub" style="margin:0">(not on this day)</span>':'')+'</label>'; }).join('')+'</div>';
+    h+='<label class="l">Message<textarea data-tmsg rows="8" style="min-height:180px">'+esc(def)+'</textarea></label>';
+    h+='<p class="sub" style="margin:6px 0 0">{first} and {time} fill in each person\'s name and shift.</p>';
+    h+='<div class="l" style="margin-top:12px">Preview<div data-tpv style="white-space:pre-wrap;background:var(--cream,#f4f0eb);border-radius:10px;padding:12px;margin-top:6px;font-size:14px"></div></div>';
+    h+='<p class="err" hidden data-terr></p><div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="button" class="btn primary" data-tsend>Send</button></div>';
+    var s=openSheet(h), box=s.querySelector('[data-tmsg]'), pv=s.querySelector('[data-tpv]'), err=s.querySelector('[data-terr]');
+    function chosen(){ return people.filter(function(p){ var c=s.querySelector('[data-tp="'+p.id+'"]'); return c&&c.checked; }); }
+    function draw(){ var c=chosen(); pv.textContent=c.length?fill(box.value,c[0]):'Pick someone to text.'; var b=s.querySelector('[data-tsend]'); b.disabled=!c.length||!box.value.trim(); b.textContent=c.length>1?'Send to '+c.length:'Send'; }
+    box.addEventListener('input',draw); s.addEventListener('change',draw); draw();
+    s.querySelector('[data-close]').onclick=closeSheet;
+    s.querySelector('[data-tsend]').onclick=function(){
+      var b=this, c=chosen(), sent=[], fails=[]; b.disabled=true; b.textContent='Sending…'; err.hidden=true;
+      c.reduce(function(pr,p){ return pr.then(function(){
+        return api('/api/sms',{method:'POST',body:{to:p.phone,message:fill(box.value,p),ref:'team '+job.id,name:p.name}}).then(function(){ sent.push(String(p.name).split(' ')[0]); }).catch(function(e){ fails.push(String(p.name).split(' ')[0]+': '+e.message); });
+      }); },Promise.resolve()).then(function(){
+        if(!fails.length){ closeSheet(); toast('Sent to '+sent.join(' and ')); return; }
+        err.textContent=(sent.length?'Sent to '+sent.join(' and ')+'. ':'')+'Not sent: '+fails.join('; '); err.hidden=false; b.disabled=false; b.textContent='Try again';
+      });
+    };
+  }
   function jobSheet(job, tpl){
     var isNew=!job;
     var base = job || Object.assign({client:'',suburb:'',address:'',service:'Bond clean',notes:''}, tpl||{});
@@ -754,6 +793,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save job</button></div>';
     if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Copy client link</button>':'')+'</div>'+(job.share?'<div class="actions" style="margin-top:8px"><button type="button" class="btn primary" data-confirmj style="flex:1">Send booking confirmation</button></div>':'');
     if(!isNew&&clientMob(job)) h+='<div class="actions"><a class="btn outline" href="'+textClientHref(job)+'" style="flex:1;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">Text client</a></div>';
+    if(!isNew&&teamOn(job).length) h+='<div class="actions"><button type="button" class="btn primary" data-textteam style="flex:1">Text team</button></div>';
     if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-dup>Duplicate</button><button type="button" class="btn danger" data-del>'+(sib.length>1?'Delete all '+sib.length+' days':'Delete job')+'</button></div>';
     h+='</form>';
     var s=openSheet(h), form=s.querySelector('#jobForm'), list=form.querySelector('#dayList');
@@ -860,6 +900,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       if(del.dataset.sure){ save({team:state.team,jobs:state.jobs.filter(function(j){return !gone[j.id];})}, del, s.querySelector('#jobErr'), 'Job deleted'); }
       else { del.dataset.sure='1'; del.textContent='Tap again to delete'; }
     };
+    var tt=s.querySelector('[data-textteam]'); if(tt) tt.onclick=function(){ teamTextSheet(job); };
     var lj=s.querySelector('[data-livej]'); if(lj) lj.onclick=function(){ liveSheet(job.id,''); };
     var cj=s.querySelector('[data-confirmj]'); if(cj) cj.onclick=function(){ cj.disabled=true; cj.textContent='Loading…';
       var ids=sib.map(function(j){return j.id;}), first=BCConfirm.withDays(sib[0], state.jobs);
