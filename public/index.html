@@ -230,9 +230,9 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
 /* On-the-go: bottom bar, today screen, quick actions */
 body.has-nav #app{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--white);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
-.tabbar .in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);align-items:end}
-.tabbar button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;font:500 11px/1 var(--sans);color:var(--meta);padding:6px 2px;min-height:52px;cursor:pointer;position:relative}
-.tabbar button svg{width:24px;height:24px}
+.tabbar .in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);align-items:end}
+.tabbar button,.tabbar .tablink{text-decoration:none;background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;font:500 11px/1 var(--sans);color:var(--meta);padding:6px 2px;min-height:52px;cursor:pointer;position:relative}
+.tabbar button svg,.tabbar .tablink svg{width:24px;height:24px}
 .tabbar button[aria-current="page"]{color:var(--terracotta-dark)}
 .tabbar .badge{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;height:17px;border-radius:9px;background:var(--terracotta);color:#fff;font:600 10px/17px var(--sans);padding:0 4px}
 .tabbar .add{color:var(--dark)}
@@ -1120,6 +1120,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>',
     out:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"/></svg>',
     bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>',
+    chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10.5H10l-4.5 3.5V16H4z"/><path d="M8 9.5h8M8 12.5h5"/></svg>',
     tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg>'
   };
   function hubConfirm(job, d, dep){
@@ -1163,7 +1164,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function navBar(){
     var a=alertCount(), rq=(state.requests||[]).length;
     function b(v,label,icon,badge){ return '<button type="button" data-view="'+v+'"'+(view===v?' aria-current="page"':'')+'>'+icon+label+(badge?'<span class="badge">'+badge+'</span>':'')+'</button>'; }
-    return '<nav class="tabbar" aria-label="Main"><div class="in">'+b('today','Today',IC.today,a)+b('roster','Roster',IC.roster)+'<button type="button" class="add" data-act="add" aria-label="Add job"><span class="c">'+IC.plus+'</span>Add job</button>'+b('agents','Agents',IC.agents,rq)+b('more','Tools',IC.grid)+'</div></nav>';
+    return '<nav class="tabbar" aria-label="Main"><div class="in">'+b('today','Today',IC.today,a)+b('roster','Roster',IC.roster)+'<button type="button" class="add" data-act="add" aria-label="Add job"><span class="c">'+IC.plus+'</span>Add job</button>'+'<a href="/messages/" class="tablink">'+IC.chat+'Messages'+(state.msgUnread?'<span class="badge">'+(state.msgUnread>99?'99+':state.msgUnread)+'</span>':'')+'</a>'+b('agents','Agents',IC.agents,rq)+b('more','Tools',IC.grid)+'</div></nav>';
   }
   function topbar(title){ var u=state.actUnread||0; return '<div class="topbar"><span class="wm">Bardon Clean</span><span class="tr"><button class="refresh" data-act="sync">Refresh</button><button type="button" class="bell" data-view="activity" aria-label="Activity'+(u?', '+u+' new':'')+'">'+IC.bell+(u?'<span class="badge">'+(u>99?'99+':u)+'</span>':'')+'</button></span></div><h1>'+title+'</h1>'; }
   function jobsFor(dateIso){ return state.jobs.filter(function(j){return j.date===dateIso && !j.sample;}).sort(function(a,b){return (a.start||'').localeCompare(b.start||'');}); }
@@ -1430,6 +1431,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function renderMore(){
     var h=topbar('Tools');
     function it(act,icon,label){ return '<button type="button" data-act="'+act+'">'+icon+label+'<span class="chev">›</span></button>'; }
+    h+='<div class="sect"><span>Clients</span></div><div class="menu" style="margin-top:0"><a href="/messages/">'+IC.chat+'Messages'+(state.msgUnread?' ('+state.msgUnread+' new)':'')+'<span class="chev">›</span></a></div>';
     h+='<div class="sect"><span>Money</span></div><div class="menu" style="margin-top:0"><a href="/money/">'+IC.text+'Quotes &amp; invoices<span class="chev">›</span></a><a href="/money/#/edit/new-quote">'+IC.plus+'New quote<span class="chev">›</span></a><a href="/money/#/edit/new-invoice">'+IC.plus+'New invoice<span class="chev">›</span></a><a href="/books/">'+IC.grid+'Profit &amp; expenses<span class="chev">›</span></a><a href="/books/#/add">'+IC.plus+'Log an expense<span class="chev">›</span></a><a href="/books/#/jobber">'+IC.roster+'Jobber sync<span class="chev">›</span></a></div>';
     h+='<div class="sect"><span>Roster</span></div><div class="menu" style="margin-top:0">'+it('confirms',IC.tick,'Shift confirmations')+'<button type="button" data-view="wages">'+IC.grid+'Wage estimate<span class="chev">›</span></button>'+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'</div>';
     h+='<div class="sect"><span>Notifications</span></div><div class="menu" style="margin-top:0"><button type="button" data-view="activity">'+IC.bell+'Activity'+(state.actUnread?' ('+state.actUnread+' new)':'')+'<span class="chev">›</span></button>'+it('notify',IC.bell,'Phone notifications'+(state.notifyOn?'':' (off)'))+'</div>';
@@ -1518,7 +1520,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   function refresh(){
     return api('/api/roster').then(function(d){
-      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},requests:d.requests||[],pay:d.pay||null,money:state.money||[],books:state.books||null,savedAt:d.savedAt||'',actUnread:d.actUnread||0,notifyOn:!!d.notifyOn}; adminSet=d.adminSet; loaded=true; loadErr='';
+      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},requests:d.requests||[],pay:d.pay||null,money:state.money||[],books:state.books||null,savedAt:d.savedAt||'',actUnread:d.actUnread||0,msgUnread:d.msgUnread||0,notifyOn:!!d.notifyOn}; adminSet=d.adminSet; loaded=true; loadErr='';
       if(key() && !d.admin){ key(null); }
       if(d.admin) api('/api/books?sum=1').then(function(b){ state.books=b; if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
       if(d.admin) api('/api/docs').then(function(m){ state.money=(m.docs||[]).filter(function(x){ return x.flag||x.state==='overdue'; }).slice(0,8); if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});

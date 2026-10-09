@@ -658,7 +658,10 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(a==='copyform'){ var fu=location.origin+'/quote'; (navigator.clipboard?navigator.clipboard.writeText(fu):Promise.reject()).then(function(){ toast('Link copied'); },function(){ prompt('Copy this link',fu); }); return; }
     var rq=route().v==='req'?reqById(route().id):null;
     if(rq&&a==='req-quote'){ quoteFromReq(rq); return; }
-    if(rq&&a==='req-text'){ e.preventDefault(); var msg=reqText(rq); if(BCSms.ready){ msg=prompt('Text to '+rq.phone+' from '+BCSms.from,msg); if(!msg) return; } if(!BCSms.go(el,rq.phone,msg,key(),{ref:'req:'+rq.id,toast:toast})) location.href=el.href; return; }
+    if(rq&&a==='req-text'){ e.preventDefault(); var msg=reqText(rq), mob=String(rq.phone||'').replace(/[^\d+]/g,'').replace(/^\+61/,'0').replace(/^61(?=4\d{8}$)/,'0');
+      // With Mobile Message on, the conversation lives in Messages: open it with this text ready to send.
+      if(BCSms.ready&&/^04\d{8}$/.test(mob)){ location.href='/messages/#/t/'+mob+'?name='+encodeURIComponent(rq.name||'')+'&draft='+encodeURIComponent(msg); return; }
+      if(!BCSms.go(el,rq.phone,msg,key(),{ref:'req:'+rq.id,toast:toast})) location.href=el.href; return; }
     if(rq&&a==='req-archive'){ reqStatus(rq,'archived').then(function(){ toast('Archived'); go('list'); }); return; }
     if(rq&&a==='req-new'){ reqStatus(rq,'new').then(function(){ toast('Moved to new'); render(); }); return; }
     if(rq&&a==='req-delete'){ if(!el.dataset.sure){ el.dataset.sure=1; el.firstChild.nodeValue='Tap again to delete'; return; } api('POST','/api/request',{action:'delete',id:rq.id}).then(load).then(function(){ toast('Deleted'); go('list'); }); return; }

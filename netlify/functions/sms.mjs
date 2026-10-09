@@ -15,7 +15,7 @@ export default async (req) => {
   if (req.method === "GET") return json({ ready: mmReady(), from: set.biz.sms });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
   let b; try { b = await req.json(); } catch { return json({ error: "Bad data" }, 400); }
-  const r = await sendSms(b.to, b.message, b.ref || "");
+  const r = await sendSms(b.to, b.message, b.ref || "", { name: typeof b.name === "string" ? b.name : "" });
   return r.ok ? json(r) : json({ error: r.error }, r.status);
 };
 

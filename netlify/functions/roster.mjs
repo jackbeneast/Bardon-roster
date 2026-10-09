@@ -96,6 +96,9 @@ export default async (req) => {
       const seen = (await s.get("actseen"))?.at || "";
       out.actUnread = (await s.list("act/")).filter((k) => k.slice(4) > seen).length;
       out.notifyOn = !!(await s.get("notify"))?.topic;
+      // Unread client texts for the Messages tab.
+      const mi = (await s.get("msgindex")) || {};
+      out.msgUnread = Object.values(mi).filter((x) => !x.archived).reduce((n, x) => n + (x.unread || 0), 0);
     }
     return json(out);
   }

@@ -82,7 +82,7 @@ export default async (req) => {
   // A short confirmation from the business number. No promised turnaround.
   if (mmReady()) {
     const first = firstName(r.name);
-    const sent = await sendSms(r.phone, `Hi ${first}, thanks for your quote request for a ${S.label.toLowerCase()}${r.suburb ? ` in ${r.suburb}` : ""}. Jack will look over the details and be in touch. If anything else would help with the quote, just reply here. - Jack, Bardon Clean`, `req:${r.id}`);
+    const sent = await sendSms(r.phone, `Hi ${first}, thanks for your quote request for a ${S.label.toLowerCase()}${r.suburb ? ` in ${r.suburb}` : ""}. Jack will look over the details and be in touch. If anything else would help with the quote, just reply here. - Jack, Bardon Clean`, `req:${r.id}`, { name: r.name });
     if (sent.ok) { r.texted = true; await s.set(`req/${r.id}`, r); }
   }
   return json({ ok: true, first: firstName(r.name) });
