@@ -402,9 +402,524 @@
         ['o_gdoor','Garage door, inside','d'],
         ['o_gsweep','Garage floor swept','d']
       ]]
+    ],
+
+    'Pantry': [
+      ['Prep', [
+        ['pa_light','Pantry light on','a'],
+        ['pa_clear','Items off one shelf at a time (if full)','d'],
+        ['pa_pests','Signs of pests noted and flagged to Jack','a']
+      ]],
+      ['Shelves', [
+        ['pa_cobweb','Cobwebs from the corners','a'],
+        ['pa_lightfit','Light fitting dusted','d'],
+        ['pa_top','Top shelf wiped','a'],
+        ['pa_shelves','Every shelf wiped, top to bottom','a'],
+        ['pa_edges','Shelf front edges','a'],
+        ['pa_walls','Pantry walls inside','d'],
+        ['pa_drawers','Pantry drawers inside (if empty)','d'],
+        ['pa_doorin','Pantry door, inside','d']
+      ]],
+      ['Outside and floor', [
+        ['pa_doorout','Pantry door, outside','a'],
+        ['pa_handle','Pantry door handle','a'],
+        ['pa_track','Sliding door track (if sliding)','d'],
+        ['pa_vac','Pantry floor vacuumed, corners included','a'],
+        ['pa_mop','Pantry floor mopped','a'],
+        ['pa_return','Items put back neatly, labels facing out','r'],
+        ['pa_final','Final check: no crumbs on shelves','a']
+      ]]
+    ],
+
+    'Powder room': [
+      ['Prep', [
+        ['pw_vent','Exhaust fan on or window open','a'],
+        ['pw_clear','Hand towel and items off the vanity','a'],
+        ['pw_bin','Bin emptied and new liner in','a'],
+        ['pw_tgel','Toilet cleaner under the rim, leave to soak','a']
+      ]],
+      ['Up high', [
+        ['pw_cobweb','Cobwebs from the ceiling corners','a'],
+        ['pw_fan','Exhaust fan cover dusted','a'],
+        ['pw_light','Light fitting','a']
+      ]],
+      ['Vanity', [
+        ['pw_mirror','Mirror wiped streak-free','a'],
+        ['pw_basin','Basin scrubbed','a'],
+        ['pw_plug','Basin plug and overflow hole','a'],
+        ['pw_tap','Tap descaled at the base','a'],
+        ['pw_tapdry','Tap polished dry','a'],
+        ['pw_vtop','Vanity top wiped and dried','a'],
+        ['pw_vfront','Vanity doors and handles','a'],
+        ['pw_vin','Vanity cupboard inside','d'],
+        ['pw_vkick','Vanity kickboard','a']
+      ]],
+      ['Toilet (clean to dirty)', [
+        ['pw_tcis','Cistern top and flush button','a'],
+        ['pw_tcisf','Cistern front and sides','a'],
+        ['pw_tlid','Lid, top','a'],
+        ['pw_tlidu','Lid, underside','a'],
+        ['pw_tseat','Seat, top','a'],
+        ['pw_tseatu','Seat, underside','a'],
+        ['pw_thinge','Seat hinges and bolts','a'],
+        ['pw_tbowl','Bowl scrubbed, including under the rim','a'],
+        ['pw_tout','Bowl outside','a'],
+        ['pw_tbase','Base and pedestal','a'],
+        ['pw_tpipe','Water pipe and tap behind the toilet','a'],
+        ['pw_tfloor','Floor and wall behind the toilet','a'],
+        ['pw_brush','Toilet brush holder','a'],
+        ['pw_gloves','Change gloves before moving on','a']
+      ]],
+      ['Fittings and walls', [
+        ['pw_rail','Hand towel rail or ring','a'],
+        ['pw_roll','Toilet roll holder','a'],
+        ['pw_switch','Light switch','a'],
+        ['pw_tiles','Wall tiles spot-cleaned','a'],
+        ['pw_door','Door, both sides','d'],
+        ['pw_dframe','Door frame and handle','a'],
+        ['pw_skirt','Skirting or skirting tiles','d']
+      ]],
+      ['Floor and finish', [
+        ['pw_vac','Floor vacuumed, hair out of the corners','a'],
+        ['pw_mop','Floor mopped, behind the toilet and door','a'],
+        ['pw_towel','Fresh hand towel hung neatly','rp'],
+        ['pw_final','Final check: mirror streak-free, tap dry, smells fresh','a']
+      ]]
+    ],
+
+    'Toilet': [
+      ['Prep', [
+        ['wc_vent','Exhaust fan on or window open','a'],
+        ['wc_bin','Bin emptied and new liner in','a'],
+        ['wc_tgel','Toilet cleaner under the rim, leave to soak','a']
+      ]],
+      ['Up high', [
+        ['wc_cobweb','Cobwebs from the ceiling corners','a'],
+        ['wc_fan','Exhaust fan cover dusted','a'],
+        ['wc_light','Light fitting','a'],
+        ['wc_sill','Window sill and glass','a']
+      ]],
+      ['Toilet (clean to dirty)', [
+        ['wc_tcis','Cistern top and flush button','a'],
+        ['wc_tcisf','Cistern front and sides','a'],
+        ['wc_tlid','Lid, top','a'],
+        ['wc_tlidu','Lid, underside','a'],
+        ['wc_tseat','Seat, top','a'],
+        ['wc_tseatu','Seat, underside','a'],
+        ['wc_thinge','Seat hinges and bolts','a'],
+        ['wc_tbowl','Bowl scrubbed, including under the rim','a'],
+        ['wc_tout','Bowl outside','a'],
+        ['wc_tbase','Base and pedestal','a'],
+        ['wc_tpipe','Water pipe and tap behind the toilet','a'],
+        ['wc_brush','Toilet brush holder','a'],
+        ['wc_gloves','Change gloves before moving on','a']
+      ]],
+      ['Fittings and walls', [
+        ['wc_roll','Toilet roll holder','a'],
+        ['wc_switch','Light switch','a'],
+        ['wc_tiles','Wall tiles spot-cleaned','a'],
+        ['wc_door','Door, both sides','d'],
+        ['wc_dframe','Door frame and handle','a'],
+        ['wc_skirt','Skirting or skirting tiles','d']
+      ]],
+      ['Floor and finish', [
+        ['wc_vac','Floor vacuumed or swept','a'],
+        ['wc_tfloor','Floor and wall behind the toilet','a'],
+        ['wc_mop','Floor mopped, behind the door included','a'],
+        ['wc_final','Final check: bowl, seat and behind the toilet','a']
+      ]]
+    ],
+
+    'Living': [
+      ['Prep', [
+        ['lv_open','Open blinds for light','a'],
+        ['lv_tidy','Cushions, throws and remotes tidied','r'],
+        ['lv_bin','Rubbish collected and bin emptied','a']
+      ]],
+      ['Up high', [
+        ['lv_cobweb','Cobwebs from the ceiling corners','a'],
+        ['lv_fan','Ceiling fan blades','a'],
+        ['lv_light','Light fittings','a'],
+        ['lv_aircon','Air-con unit and vents','a'],
+        ['lv_frames','Picture frames dusted','a'],
+        ['lv_rail','Curtain rails and blind tops','d'],
+        ['lv_tops','Tops of tall shelves and cabinets','d']
+      ]],
+      ['Furniture', [
+        ['lv_tv','TV screen dusted with a dry microfibre','a'],
+        ['lv_tvunit','TV unit top and front','a'],
+        ['lv_tvback','Behind the TV unit and the cables (don\'t unplug)','d'],
+        ['lv_shelves','Shelves and ornaments','a'],
+        ['lv_coffee','Coffee table','a'],
+        ['lv_side','Side tables','a'],
+        ['lv_lamps','Lamps and shades','a'],
+        ['lv_glass','Glass tabletops and mirrors streak-free','a'],
+        ['lv_fire','Fireplace mantel and surround (if there is one)','d'],
+        ['lv_sofa','Sofa vacuumed, including the crevices','d'],
+        ['lv_cush','Under the sofa cushions','d']
+      ]],
+      ['Walls and fittings', [
+        ['lv_switch','Light switches','a'],
+        ['lv_power','Power points','d'],
+        ['lv_walls','Walls spot-cleaned','d'],
+        ['lv_handles','Door handles','a'],
+        ['lv_doors','Doors, both sides','d'],
+        ['lv_dframe','Door frames','d'],
+        ['lv_sills','Window sills and frames','a'],
+        ['lv_blinds','Blind slats','d'],
+        ['lv_skirt','Skirting boards','d']
+      ]],
+      ['Floor and finish', [
+        ['lv_under','Under and behind furniture that can be moved','d'],
+        ['lv_rug','Rugs vacuumed','a'],
+        ['lv_edges','Edges and corners with the crevice tool','a'],
+        ['lv_vac','Floor vacuumed','a'],
+        ['lv_mop','Hard floors mopped, working toward the exit','a'],
+        ['lv_style','Cushions plumped, surfaces clear, room ready for photos','p'],
+        ['lv_final','Final look from the doorway','a']
+      ]]
+    ],
+
+    'Dining': [
+      ['Prep', [
+        ['dn_open','Open blinds for light','a'],
+        ['dn_clear','Table cleared','a']
+      ]],
+      ['Up high', [
+        ['dn_cobweb','Cobwebs from the ceiling corners','a'],
+        ['dn_pendant','Pendant light over the table','a'],
+        ['dn_fan','Ceiling fan blades','a'],
+        ['dn_frames','Picture frames dusted','a']
+      ]],
+      ['Table and chairs', [
+        ['dn_table','Table top','a'],
+        ['dn_tedge','Table edges','a'],
+        ['dn_tlegs','Table legs','d'],
+        ['dn_seats','Chair seats','a'],
+        ['dn_backs','Chair backs','a'],
+        ['dn_clegs','Chair legs','d']
+      ]],
+      ['Storage', [
+        ['dn_sbtop','Sideboard or buffet top','a'],
+        ['dn_sbfront','Sideboard doors and handles','a'],
+        ['dn_sbin','Sideboard inside (if empty)','pb'],
+        ['dn_display','Display cabinet glass streak-free','a']
+      ]],
+      ['Walls and fittings', [
+        ['dn_switch','Light switches','a'],
+        ['dn_power','Power points','d'],
+        ['dn_walls','Walls spot-cleaned','d'],
+        ['dn_sills','Window sills and frames','a'],
+        ['dn_blinds','Blind slats','d'],
+        ['dn_skirt','Skirting boards','d']
+      ]],
+      ['Floor and finish', [
+        ['dn_chairsout','Chairs pulled out from the table','a'],
+        ['dn_under','Under the table vacuumed','a'],
+        ['dn_edges','Edges and corners with the crevice tool','a'],
+        ['dn_vac','Floor vacuumed','a'],
+        ['dn_mop','Hard floors mopped','a'],
+        ['dn_chairsin','Chairs pushed back in evenly','a'],
+        ['dn_style','Table clear or styled for photos','p']
+      ]]
+    ],
+
+    'Study': [
+      ['Prep', [
+        ['st_open','Open blinds for light','a'],
+        ['st_bin','Bin emptied','a'],
+        ['st_papers','Leave papers where they are: clean around them','a']
+      ]],
+      ['Up high', [
+        ['st_cobweb','Cobwebs from the ceiling corners','a'],
+        ['st_fan','Ceiling fan blades','a'],
+        ['st_light','Light fittings','a'],
+        ['st_aircon','Air-con unit and vents','a'],
+        ['st_tops','Tops of bookshelves','d']
+      ]],
+      ['Desk and shelves', [
+        ['st_desk','Clear areas of the desk top','a'],
+        ['st_monitor','Monitor dusted with a dry microfibre','a'],
+        ['st_cables','Around the computer and cables (don\'t unplug)','a'],
+        ['st_draw','Desk drawer fronts and handles','a'],
+        ['st_lamp','Desk lamp','a'],
+        ['st_chair','Desk chair arms and base','a'],
+        ['st_shelves','Bookshelf shelves','a'],
+        ['st_filing','Filing cabinet front','a'],
+        ['st_frames','Picture frames','a']
+      ]],
+      ['Walls and fittings', [
+        ['st_switch','Light switches','a'],
+        ['st_power','Power points','d'],
+        ['st_walls','Walls spot-cleaned','d'],
+        ['st_handle','Door handle','a'],
+        ['st_door','Door, both sides','d'],
+        ['st_sill','Window sill and frame','a'],
+        ['st_blinds','Blind slats','d'],
+        ['st_skirt','Skirting boards','d']
+      ]],
+      ['Floor', [
+        ['st_under','Under the desk vacuumed','a'],
+        ['st_edges','Edges and corners with the crevice tool','a'],
+        ['st_vac','Floor vacuumed','a'],
+        ['st_mop','Hard floors mopped','a'],
+        ['st_final','Chair pushed in, nothing on the desk moved','a']
+      ]]
+    ],
+
+    'Hallway & stairs': [
+      ['Up high', [
+        ['hs_cobweb','Cobwebs from the ceiling and stairwell','a'],
+        ['hs_light','Light fittings','a'],
+        ['hs_smoke','Smoke alarm dusted gently','d'],
+        ['hs_frames','Picture frames dusted','a'],
+        ['hs_dtops','Tops of door frames','d']
+      ]],
+      ['Hallway', [
+        ['hs_table','Hall table','a'],
+        ['hs_linen','Linen cupboard doors','a'],
+        ['hs_linenin','Linen cupboard shelves (if empty)','pb'],
+        ['hs_switch','Light switches','a'],
+        ['hs_power','Power points','d'],
+        ['hs_handles','Door handles','a'],
+        ['hs_doors','Doors, both sides','d'],
+        ['hs_walls','Walls spot-cleaned for scuffs','d']
+      ]],
+      ['Stairs', [
+        ['hs_rail','Handrail wiped','a'],
+        ['hs_posts','Balustrade posts and spindles','a'],
+        ['hs_glass','Glass balustrade, both sides (if glass)','a'],
+        ['hs_treads','Stair treads vacuumed, top to bottom','a'],
+        ['hs_sedge','Stair edges with the crevice tool','a'],
+        ['hs_risers','Stair risers wiped','d'],
+        ['hs_smop','Hard stairs mopped, top to bottom','a']
+      ]],
+      ['Floor', [
+        ['hs_skirt','Skirting boards','d'],
+        ['hs_edges','Hallway edges with the crevice tool','a'],
+        ['hs_vac','Hallway floor vacuumed','a'],
+        ['hs_mop','Hard floors mopped','a']
+      ]]
+    ],
+
+    'Entry': [
+      ['Outside the door', [
+        ['en_cobweb','Cobwebs around the porch and door frame','a'],
+        ['en_light','Porch light wiped','a'],
+        ['en_doorout','Front door, outside','a'],
+        ['en_handle','Door handle and lock','a'],
+        ['en_bell','Doorbell and house number','a'],
+        ['en_side','Door glass or sidelights streak-free','a'],
+        ['en_mat','Doormat shaken out','a'],
+        ['en_step','Front step and porch swept','a']
+      ]],
+      ['Inside', [
+        ['en_lightin','Light fitting dusted','a'],
+        ['en_doorin','Front door, inside','a'],
+        ['en_frame','Door frame','d'],
+        ['en_thresh','Threshold','a'],
+        ['en_mirror','Entry mirror streak-free','a'],
+        ['en_console','Console table','a'],
+        ['en_hooks','Key hooks','a'],
+        ['en_shoe','Shoe cabinet','a'],
+        ['en_switch','Light switches','a'],
+        ['en_skirt','Skirting','d']
+      ]],
+      ['Floor', [
+        ['en_vac','Entry floor vacuumed','a'],
+        ['en_mop','Hard floor mopped','a'],
+        ['en_matback','Doormat put back straight','a']
+      ]]
+    ],
+
+    'Balcony': [
+      ['Safety', [
+        ['bc_safe','Never lean over the balustrade or stand on furniture','a']
+      ]],
+      ['Up high', [
+        ['bc_cobweb','Cobwebs from the ceiling and corners','a'],
+        ['bc_light','Outdoor light wiped','a'],
+        ['bc_fan','Ceiling fan (if there is one)','a']
+      ]],
+      ['Rails and furniture', [
+        ['bc_rail','Balustrade top rail','a'],
+        ['bc_glassin','Balustrade glass, inside face','a'],
+        ['bc_glassout','Balustrade glass, outside face within safe reach','d'],
+        ['bc_table','Outdoor table','a'],
+        ['bc_chairs','Outdoor chairs','a'],
+        ['bc_cush','Outdoor cushions brushed off','a'],
+        ['bc_pots','Around pot plants','a']
+      ]],
+      ['Door', [
+        ['bc_slglass','Sliding door glass, outside','a'],
+        ['bc_track','Sliding door track vacuumed and wiped','d']
+      ]],
+      ['Floor', [
+        ['bc_sweep','Floor swept','a'],
+        ['bc_drain','Leaves cleared from the drain','a'],
+        ['bc_mop','Tiles mopped or scrubbed','a'],
+        ['bc_style','Furniture set straight for photos','p']
+      ]]
+    ],
+
+    'Deck': [
+      ['Up high', [
+        ['dk_cobweb','Cobwebs from the eaves and ceiling','a'],
+        ['dk_light','Outdoor lights wiped','a'],
+        ['dk_fan','Ceiling fan (if there is one)','a']
+      ]],
+      ['Rails and furniture', [
+        ['dk_rail','Railings wiped','a'],
+        ['dk_posts','Balustrade posts','d'],
+        ['dk_glass','Balustrade glass within safe reach','a'],
+        ['dk_table','Outdoor table','a'],
+        ['dk_chairs','Outdoor chairs','a'],
+        ['dk_cush','Outdoor cushions brushed off','a'],
+        ['dk_bbq','BBQ outside and lid','a'],
+        ['dk_bar','Outdoor bench or bar top','a']
+      ]],
+      ['Floor', [
+        ['dk_sweep','Deck swept','a'],
+        ['dk_gaps','Debris cleared from gaps between boards','d'],
+        ['dk_steps','Deck steps swept','a'],
+        ['dk_mop','Deck mopped or washed (no pressure washer unless the job notes say so)','d'],
+        ['dk_style','Furniture set straight for photos','p']
+      ]]
+    ],
+
+    'Patio': [
+      ['Up high', [
+        ['pt_cobweb','Cobwebs from the eaves and ceiling','a'],
+        ['pt_light','Outdoor lights wiped','a'],
+        ['pt_fan','Ceiling fan (if there is one)','a']
+      ]],
+      ['Furniture', [
+        ['pt_table','Outdoor table','a'],
+        ['pt_chairs','Outdoor chairs','a'],
+        ['pt_cush','Outdoor cushions brushed off','a'],
+        ['pt_bbq','BBQ outside and lid','a'],
+        ['pt_bar','Outdoor bench or bar top','a'],
+        ['pt_tap','Outdoor tap and surrounds','d']
+      ]],
+      ['Floor', [
+        ['pt_sweep','Patio swept','a'],
+        ['pt_edges','Patio edges and corners swept','a'],
+        ['pt_drain','Leaves cleared from the drains','a'],
+        ['pt_mop','Pavers or tiles mopped or scrubbed (no pressure washer unless the job notes say so)','d'],
+        ['pt_style','Furniture set straight for photos','p']
+      ]]
+    ],
+
+    'Garage': [
+      ['Up high', [
+        ['gr_cobweb','Cobwebs from the ceiling and corners','a'],
+        ['gr_light','Light fittings dusted','a'],
+        ['gr_tracks','Garage door tracks dusted','d']
+      ]],
+      ['Doors and fittings', [
+        ['gr_door','Garage door, inside','a'],
+        ['gr_indoor','Internal door, both sides','a'],
+        ['gr_handle','Internal door handle','a'],
+        ['gr_switch','Light switches and power points','a'],
+        ['gr_shelves','Shelves (if empty)','d'],
+        ['gr_bench','Bench top','a']
+      ]],
+      ['Floor', [
+        ['gr_rubbish','Rubbish removed','a'],
+        ['gr_sweep','Floor swept, back to front','a'],
+        ['gr_edges','Corners and edges swept','a'],
+        ['gr_oil','Oil stains spot-cleaned (if the job notes say so)','pb']
+      ]]
+    ],
+
+    'Outdoor': [
+      ['Safety', [
+        ['od_safe','Ground level only: no ladders or roofs','a']
+      ]],
+      ['Around the house', [
+        ['od_cobweb','Cobwebs from the eaves within reach','a'],
+        ['od_lights','Outdoor lights within reach','a'],
+        ['od_letter','Letterbox wiped','a'],
+        ['od_gate','Side gate handles','a'],
+        ['od_taps','Outdoor taps','d'],
+        ['od_bins','Bin lids wiped','d'],
+        ['od_binarea','Bin area swept','d']
+      ]],
+      ['Paths', [
+        ['od_front','Front path swept','a'],
+        ['od_side','Side paths swept','d'],
+        ['od_drive','Driveway edges swept (if the job notes say so)','p'],
+        ['od_drains','Leaves cleared from the drains','a'],
+        ['od_street','Nothing left out in view of the street','p']
+      ]]
+    ],
+
+    // Fallback for any area typed in that isn't matched below.
+    '_general': [
+      ['Up high', [
+        ['g_cobweb','Cobwebs from the ceiling corners','a'],
+        ['g_light','Light fittings','a'],
+        ['g_fan','Ceiling fan blades','a']
+      ]],
+      ['Surfaces', [
+        ['g_surf','All clear surfaces wiped','a'],
+        ['g_frames','Picture frames dusted','a'],
+        ['g_sill','Window sills and frames','a'],
+        ['g_blinds','Blind slats','d']
+      ]],
+      ['Walls and fittings', [
+        ['g_switch','Light switches','a'],
+        ['g_power','Power points','d'],
+        ['g_handle','Door handles','a'],
+        ['g_walls','Walls spot-cleaned','d'],
+        ['g_skirt','Skirting boards','d']
+      ]],
+      ['Floor', [
+        ['g_edges','Edges and corners with the crevice tool','a'],
+        ['g_vac','Floor vacuumed','a'],
+        ['g_mop','Hard floors mopped','a']
+      ]]
     ]
   };
-  var NAMES = { regular:'Regular clean', deep:'Deep clean', presale:'Pre-sale clean', bond:'Bond clean' };
+
+  // Main bedroom = the bedroom list plus a walk-in robe after the wardrobe.
+  C['Main bedroom'] = C['Bedrooms'].slice(0, 3).concat([
+    ['Walk-in robe', [
+      ['mr_light','Walk-in robe light fitting','a'],
+      ['mr_shelf','Walk-in robe shelves (if empty)','d'],
+      ['mr_rail','Walk-in robe hanging rails (if empty)','d'],
+      ['mr_drawin','Walk-in robe drawers inside (if empty)','d'],
+      ['mr_drawfront','Walk-in robe drawer fronts and handles','a'],
+      ['mr_mirror','Walk-in robe mirrors streak-free','a'],
+      ['mr_vac','Walk-in robe floor vacuumed','a']
+    ]]
+  ], C['Bedrooms'].slice(3));
+
+  // Granny flat = kitchen, bathroom, bedroom and living, one after the other.
+  C['Granny flat'] = [['Kitchen','Kitchen'],['Bathroom','Bathrooms'],['Bedroom','Bedrooms'],['Living','Living & dining']].reduce(function(all, p){
+    return all.concat(C[p[1]].map(function(s){ return [p[0] + ': ' + s[0], s[1]]; }));
+  }, []);
+
+  // Areas that share a list, then keywords for anything typed in ("Bedroom 5", "Media room").
+  var SAME = { 'Bathroom':'Bathrooms', 'Bathroom 2':'Bathrooms', 'Ensuite':'Bathrooms', 'Family room':'Living', 'Rumpus':'Living', 'Kitchenette':'Kitchen' };
+  var KEYS = [
+    [/powder/i,'Powder room'], [/toilet|\bwc\b/i,'Toilet'], [/ensuite|bath/i,'Bathrooms'],
+    [/main|master/i,'Main bedroom'], [/bed|guest|nursery/i,'Bedrooms'],
+    [/pantry/i,'Pantry'], [/kitchen/i,'Kitchen'], [/laundry/i,'Laundry'],
+    [/living.*dining|dining.*living/i,'Living & dining'], [/dining/i,'Dining'],
+    [/living|lounge|family|rumpus|media|theatre|games|sitting/i,'Living'], [/study|office/i,'Study'],
+    [/hall|stair|landing/i,'Hallway & stairs'], [/entry|entrance|foyer/i,'Entry'], [/window|track/i,'Windows & tracks'],
+    [/balcony/i,'Balcony'], [/deck|veranda/i,'Deck'], [/patio|alfresco|courtyard|pergola/i,'Patio'],
+    [/garage|carport|shed/i,'Garage'], [/granny|studio|flat/i,'Granny flat'], [/outdoor|outside|yard|garden/i,'Outdoor']
+  ];
+  function listOf(room){
+    var r = String(room||'').trim();
+    if (C[r]) return C[r];
+    if (SAME[r]) return C[SAME[r]];
+    for (var i=0;i<KEYS.length;i++) if (KEYS[i][0].test(r)) return C[KEYS[i][1]];
+    return r ? C['_general'] : [];
+  }
+  var NAMES ={ regular:'Regular clean', deep:'Deep clean', presale:'Pre-sale clean', bond:'Bond clean' };
   function kindOf(service){
     var s = String(service||'').toLowerCase();
     if (/bond|end of lease|end-of-lease|vacate|move.?out/.test(s)) return 'bond';
@@ -426,7 +941,7 @@
   // Sections for one room on one job: [{title, items:[{id,t}]}], empty sections dropped.
   function sectionsFor(room, service){
     var k = kindOf(service);
-    return (C[room] || []).map(function(s){
+    return listOf(room).map(function(s){
       return { title:s[0], items:s[1].filter(function(i){ return applies(i[2], k); }).map(function(i){ return { id:i[0], t:i[1] }; }) };
     }).filter(function(s){ return s.items.length; });
   }
