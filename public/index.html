@@ -146,6 +146,11 @@ label.l{font:500 13px/1.3 var(--sans);color:var(--dark);display:block}
 .kudos{background:#E6EFE3;border-radius:10px;padding:14px 16px;margin:12px 0;color:#1F3D24}
 .kudos .kk{font:600 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:#2F5A35}
 .kudos p{margin:6px 0 0;font-size:15px;line-height:1.45}
+.card2{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px;margin:0 0 14px}
+.hrow2{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}.hrow2 b{font:600 16px var(--sans);color:var(--dark)}.hrow2 span{font-size:13px;color:var(--meta)}
+.stp{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--cream-dark)}
+.stp .dot{flex:none;width:24px;height:24px;border-radius:50%;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;font:600 12px var(--sans);color:var(--dark)}
+.stp.ok .dot{background:#2F5A35;color:#fff}.stp b{display:block;font:600 14px var(--sans);color:var(--dark)}.stp.ok b{color:var(--meta)}.stp small{display:block;font-size:12.5px;color:var(--meta);line-height:1.4}
 .acard.hot{border-left:4px solid var(--terracotta)}
 .pcard .pact .later{flex:0 0 auto;border:0;color:var(--meta);font-weight:500;padding:0 6px}
 .pempty{padding:28px 8px;text-align:center;color:var(--meta);font-size:14.5px}
@@ -429,7 +434,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   var LOGO = '<svg viewBox="0 0 48 48" role="img" aria-label="Bardon Clean"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
   var canEdit = false, saving = false, pendingReq = null, liveOpen = null;
   var qv=(location.search.match(/[?&]v=(\w+)/)||[])[1];
-  var view = (qv && ['today','roster','pipeline','agents','more','activity'].indexOf(qv)>=0) ? qv : (ls('roster_view')||'today');
+  var view = (qv && ['today','roster','pipeline','agents','more','activity','regulars'].indexOf(qv)>=0) ? qv : (ls('roster_view')||'today');
   var upState=null;
   function key(v){ if(v===undefined) return ls('roster_admin_key')||''; try{ if(v===null) localStorage.removeItem('roster_admin_key'); else localStorage.setItem('roster_admin_key',v);}catch(e){} }
   function api(path, opts){
@@ -596,7 +601,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     app.innerHTML='<div class="brand"><div class="wm">Bardon Clean</div></div><h1>Team <em>roster</em></h1><p class="sub" style="margin-top:14px">The hub hit an error showing this screen. Send Claude a screenshot of this.</p><p class="sub" style="font-size:12px;word-break:break-word">'+esc((e&&e.message)||String(e))+'<br>'+esc(st)+'</p><button class="ghost" data-act="reload">Try again</button>'; } }
   function renderMain(){
     document.body.classList.toggle('has-nav', !!(loaded && canEdit));
-    if(loaded && canEdit && view!=='roster'){ app.innerHTML=(view==='pipeline'?renderPipeline():view==='agents'?renderAgentsView():view==='more'?renderMore():view==='wages'?renderWages():view==='activity'?renderActivity():renderToday())+navBar(); if(view==='activity') loadActivity(); return; }
+    if(loaded && canEdit && view!=='roster'){ app.innerHTML=(view==='regulars'?renderRegulars():view==='pipeline'?renderPipeline():view==='agents'?renderAgentsView():view==='more'?renderMore():view==='wages'?renderWages():view==='activity'?renderActivity():renderToday())+navBar(); if(view==='activity') loadActivity(); return; }
     var h='';
     if(!loaded){ app.innerHTML='<div class="brand"><div class="wm">Bardon Clean</div></div><h1>Team <em>roster</em></h1><p class="sub" style="margin-top:14px">'+(loadErr?esc(loadErr)+' <button class="ghost" data-act="reload">Try again</button>':'Loading…')+'</p>'; return; }
     h+='<div class="brand"><div class="wm">Bardon Clean</div></div>';
@@ -1753,13 +1758,60 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     s.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
       if(b.dataset.rsx){ b.disabled=true; livePost({action:'unsupply',id:b.dataset.rsx},b,{jobId:b.dataset.rsj,pid:''}).then(function(){ closeSheet(); restockSheet(); }); } });
   }
+  // ---------- Regular clients (the hub's own recurring schedules) ----------
+  var REG=null, regErr='', FREQ={7:'Weekly',14:'Fortnightly',21:'Every 3 weeks',28:'Every 4 weeks'}, DOWN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  function loadReg(){ return api('/api/series').then(function(d){ REG=d; regErr=''; if(view==='regulars'&&!document.getElementById('scrim')) render(); }).catch(function(e){ regErr=e.message; if(view==='regulars') render(); }); }
+  function nextVisit(x){ if(x.paused) return ''; var t=iso(today), n=Math.round(Date.parse(x.anchor+'T00:00:00Z')/864e5), f=Math.round(Date.parse(t+'T00:00:00Z')/864e5); if(n<f) n+=Math.ceil((f-n)/x.every)*x.every; for(var k=0;k<20;k++){ var d=new Date(n*864e5).toISOString().slice(0,10); if((x.skip||[]).indexOf(d)<0){ return (x.ends&&d>x.ends)?'':d; } n+=x.every; } return ''; }
+  function renderRegulars(){
+    var h=topbar('Regular <em>clients</em>');
+    if(!REG){ h+=regErr?'<div class="err">'+esc(regErr)+'</div>':'<p class="sub">Loading…</p>'; if(!regErr) loadReg(); return h; }
+    var S=REG.series||[], P=REG.proposals||[], J=REG.jobber||{}, done5=ls('jobber_cancelled')==='1';
+    var steps=[
+      [P.length===0&&(S.length>0||!J.on), 'Regular clients run from the hub', P.length?P.length+' Jobber regular'+(P.length===1?'':'s')+' still to bring over (below)':S.length+' set up here'],
+      [true, 'Quotes and invoices in the hub', 'Done'],
+      [!J.pending, 'One-off Jobber jobs dealt with', J.pending?J.pending+' waiting in Profit → Jobber: add or ignore them':'None waiting'],
+      [!J.on, 'Disconnect the Jobber calendar', J.on?'Do this after a week with steps 1 to 3 done, in Profit → Prices &amp; apps → Jobber':'Disconnected'],
+      [done5, 'Cancel your Jobber subscription', done5?'Done':'In Jobber, then remove Jobber from your regular outgoings']];
+    var nDone=steps.filter(function(x){return x[0];}).length;
+    if(nDone<steps.length){ h+='<div class="card2"><div class="hrow2"><b>Retire Jobber</b><span>'+nDone+' of '+steps.length+'</span></div>'+steps.map(function(x,i){ return '<div class="stp'+(x[0]?' ok':'')+'"><span class="dot">'+(x[0]?'✓':(i+1))+'</span><span><b>'+x[1]+'</b><small>'+x[2]+'</small></span>'+(i===4&&!done5&&!J.on?'<button type="button" class="ghost" data-jcancel style="padding:0;margin-left:auto">Mark done</button>':'')+'</div>'; }).join('')+'</div>'; }
+    if(P.length){
+      h+='<div class="sect"><span>From Jobber, not set up here yet</span><span>'+P.length+'</span></div><p class="sub" style="margin:0 0 8px">Worked out from the visits Jobber has put on your roster. Check each one, untick any that have stopped, then bring them over.</p>';
+      P.forEach(function(x,i){ h+='<label class="pcard" style="display:flex;gap:12px;align-items:flex-start"><input type="checkbox" data-prop="'+i+'" checked style="width:22px;height:22px;margin-top:3px;accent-color:#2F5A35"><span style="flex:1"><span class="pt" style="display:flex;justify-content:space-between"><h3>'+esc(x.client)+'</h3>'+(x.price!=null?'<span class="amt">$'+x.price+'</span>':'')+'</span><span class="pm" style="display:block">'+esc([x.address,x.suburb].filter(Boolean).join(', '))+'<br>'+FREQ[x.every]+', '+DOWN[parse(x.next).getDay()]+'s '+range(x.start,x.end)+' · next '+fmtDay(parse(x.next))+'<br>'+x.visits+' visits seen'+((x.staff||[]).length?' · '+x.staff.map(function(id){ var m=member(id); return m?esc(m.name.split(' ')[0]):''; }).filter(Boolean).join(', '):'')+'</span></span></label>'; });
+      h+='<button type="button" class="btn primary" data-import style="width:100%;margin:4px 0 6px">Bring these over</button><p class="sub" style="font-size:12.5px">Nothing changes for your clients. The hub takes over keeping their visits on the roster; you can edit any of them afterwards.</p>';
+    }
+    h+='<div class="sect"><span>Set up here</span><span>'+S.length+'</span></div>';
+    if(!S.length) h+='<p class="sub">No regular clients set up in the hub yet.</p>';
+    S.slice().sort(function(a,b){return a.client.localeCompare(b.client);}).forEach(function(x){ var nv=nextVisit(x), pr=REG.prices&&REG.prices[x.key];
+      h+='<div class="pcard'+(x.paused?' dim':'')+'"><div class="pt"><h3>'+esc(x.client)+'</h3>'+(pr!=null?'<span class="amt">$'+pr+'</span>':'')+'</div><div class="pm">'+esc([x.address,x.suburb].filter(Boolean).join(', '))+'<br>'+FREQ[x.every]+', '+DOWN[parse(x.anchor).getDay()]+'s '+range(x.start,x.end)+(x.staff.length?' · '+x.staff.map(function(id){ var m=member(id); return m?esc(m.name.split(' ')[0]):''; }).filter(Boolean).join(', '):' · <span style="color:var(--terracotta-dark)">no team</span>')+'<br>'+(x.paused?'Paused':nv?'Next '+fmtDay(parse(nv)):'Ended')+'</div><div class="pact"><button type="button" class="go" data-reged="'+x.id+'">Edit</button>'+(mobOf(x.phone)?'<a href="/messages/#/t/'+mobOf(x.phone)+'?name='+encodeURIComponent(x.client)+'">Text</a>':'')+'</div></div>'; });
+    h+='<button type="button" class="btn outline" data-reged="" style="width:100%;margin-top:6px">+ Add a regular client</button>';
+    return h;
+  }
+  function regSheet(id){
+    var x=(REG.series||[]).filter(function(y){return y.id===id;})[0]||{every:14,start:'09:00',end:'12:00',staff:[],anchor:iso(addDays(today,7))}, pr=x.key&&REG.prices?REG.prices[x.key]:'';
+    var h='<h3>'+(x.id?'Edit':'New')+' <em>regular client</em></h3><form id="regForm" class="fgrid" novalidate>';
+    h+='<label class="l">Client name<input name="client" value="'+esc(x.client||'')+'" required></label><label class="l">Mobile<input name="phone" type="tel" inputmode="tel" value="'+esc(x.phone||'')+'"></label>';
+    h+='<label class="l">Street address<input name="address" value="'+esc(x.address||'')+'"></label><label class="l">Suburb<input name="suburb" value="'+esc(x.suburb||'')+'"></label>';
+    h+='<div class="two"><label class="l">How often<select name="every">'+[7,14,21,28].map(function(v){return '<option value="'+v+'"'+(x.every===v?' selected':'')+'>'+FREQ[v]+'</option>';}).join('')+'</select></label><label class="l">Next visit<input name="next" type="date" value="'+esc(nextVisit(x)||x.anchor)+'"></label></div>';
+    h+='<div class="two"><label class="l">Start<input name="start" type="time" value="'+esc(x.start)+'"></label><label class="l">Finish<input name="end" type="time" value="'+esc(x.end)+'"></label></div>';
+    h+='<div class="l">Team<div class="checks2">'+state.team.map(function(m){ return '<label class="tick" style="padding:4px 0"><input type="checkbox" name="staff" value="'+m.id+'"'+(x.staff.indexOf(m.id)>=0?' checked':'')+'>'+esc(m.name)+'</label>'; }).join('')+'</div></div>';
+    h+='<div class="two"><label class="l">Price per visit (inc GST)<input name="price" type="number" inputmode="decimal" step="0.01" value="'+(pr!=null?esc(pr):'')+'"></label><label class="l">Last visit <small>(optional)</small><input name="ends" type="date" value="'+esc(x.ends||'')+'"></label></div>';
+    h+='<label class="l">Notes for the team<textarea name="notes">'+esc(x.notes||'')+'</textarea></label>';
+    h+='<label class="tick"><input type="checkbox" name="paused"'+(x.paused?' checked':'')+'>Paused (no new visits)</label>';
+    h+='<p class="sub" style="font-size:12.5px">Saving updates future visits nobody has confirmed or started yet.</p><div class="err" id="regErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save</button></div>'+(x.id?'<button type="button" class="btn danger" data-regdel="'+x.id+'" style="width:100%;margin-top:10px">Stop this regular client</button>':'')+'</form>';
+    var s=openSheet(h), er=s.querySelector('#regErr');
+    s.querySelector('[data-close]').onclick=closeSheet;
+    s.querySelector('#regForm').onsubmit=function(e){ e.preventDefault(); var f=this, el=f.elements, bt=f.querySelector('.primary');
+      var body={action:'save',price:el.price.value,series:{id:x.id,client:el.client.value,phone:el.phone.value,address:el.address.value,suburb:el.suburb.value,every:+el.every.value,next:el.next.value,start:el.start.value,end:el.end.value,staff:Array.prototype.map.call(f.querySelectorAll('[name=staff]:checked'),function(c){return c.value;}),ends:el.ends.value,notes:el.notes.value,paused:el.paused.checked}};
+      bt.disabled=true; api('/api/series',{method:'POST',body:body}).then(function(r){ closeSheet(); toast('Saved'+(r.added?' · '+r.added+' visit'+(r.added===1?'':'s')+' on the roster':'')); return Promise.all([loadReg(),refresh()]); }).then(render).catch(function(x2){ bt.disabled=false; er.textContent=x2.message; er.hidden=false; }); };
+    var del=s.querySelector('[data-regdel]'); if(del) del.onclick=function(){ if(!del.dataset.sure){ del.dataset.sure='1'; del.textContent='Tap again: removes their future visits'; return; } del.disabled=true; api('/api/series',{method:'POST',body:{action:'delete',id:x.id}}).then(function(){ closeSheet(); toast('Stopped'); return Promise.all([loadReg(),refresh()]); }).then(render).catch(function(x2){ del.disabled=false; er.textContent=x2.message; er.hidden=false; }); };
+  }
   function renderMore(){
     var h=topbar('Tools');
     function it(act,icon,label){ return '<button type="button" data-act="'+act+'">'+icon+label+'<span class="chev">›</span></button>'; }
     h+='<div class="sect"><span>Clients</span></div><div class="menu" style="margin-top:0"><button type="button" data-view="agents">'+IC.agents+'Real estate agents'+((state.requests||[]).length?' ('+state.requests.length+' requests)':'')+'<span class="chev">›</span></button><a href="/messages/">'+IC.chat+'Messages'+(state.msgUnread?' ('+state.msgUnread+' new)':'')+'<span class="chev">›</span></a><a href="/messages/#/templates">'+IC.text+'Text templates<span class="chev">›</span></a></div>';
     h+='<div class="sect"><span>Money</span></div><div class="menu" style="margin-top:0"><a href="/money/">'+IC.text+'Quotes &amp; invoices<span class="chev">›</span></a><a href="/money/#/edit/new-quote">'+IC.plus+'New quote<span class="chev">›</span></a><a href="/money/#/edit/new-invoice">'+IC.plus+'New invoice<span class="chev">›</span></a><a href="/books/">'+IC.grid+'Profit &amp; expenses<span class="chev">›</span></a><a href="/books/#/add">'+IC.plus+'Log an expense<span class="chev">›</span></a><a href="/books/#/jobber">'+IC.roster+'Jobber sync<span class="chev">›</span></a></div>';
     var supN=allSupplies().length;
-    h+='<div class="sect"><span>Roster</span></div><div class="menu" style="margin-top:0">'+it('confirms',IC.tick,'Shift confirmations')+it('restock',IC.tick,'Restock list'+(supN?' ('+supN+')':''))+'<button type="button" data-view="wages">'+IC.grid+'Wage estimate<span class="chev">›</span></button>'+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'</div>';
+    h+='<div class="sect"><span>Roster</span></div><div class="menu" style="margin-top:0">'+it('confirms',IC.tick,'Shift confirmations')+'<button type="button" data-view="regulars">'+IC.roster+'Regular clients<span class="chev">›</span></button>'+it('restock',IC.tick,'Restock list'+(supN?' ('+supN+')':''))+'<button type="button" data-view="wages">'+IC.grid+'Wage estimate<span class="chev">›</span></button>'+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'</div>';
     h+='<div class="sect"><span>Notifications</span></div><div class="menu" style="margin-top:0"><button type="button" data-view="activity">'+IC.bell+'Activity'+(state.actUnread?' ('+state.actUnread+' new)':'')+'<span class="chev">›</span></button>'+it('notify',IC.bell,'Phone notifications'+(state.notifyOn?'':' (off)'))+'</div>';
     TOOLS.forEach(function(g){ h+='<div class="sect"><span>'+esc(g[0])+'</span></div><div class="tl2" style="margin-top:0">'+g[1].map(toolRow).join('')+'</div>'; });
     h+='<details class="olds"><summary>Design files and old drafts ('+OLD.length+')</summary><div class="tl2">'+OLD.map(function(o){return toolRow([o[0],'',o[1]]);}).join('')+'</div></details>';
@@ -1885,6 +1937,10 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   app.addEventListener('click', function(e){
     var ak=e.target.closest('[data-ack]'); if(ak){ ak.disabled=true; ak.textContent='Saving…'; api('/api/ack',{method:'POST',body:{personId:ak.dataset.ack}}).then(function(d){ state.acks[ak.dataset.ack]=d.ack; render(); toast('Thanks! See you there.'); }).catch(function(er){ ak.disabled=false; ak.textContent='Got it'; toast(er.message); }); return; }
     var r=e.target.closest('[data-reply]'); if(r){ if(r.dataset.reply==='yes') sendReply(r.dataset.j, r.dataset.p, 'yes', '', r); else replyNo(r.dataset.j, r.dataset.p); return; }
+    var rg=e.target.closest('[data-reged]'); if(rg){ regSheet(rg.dataset.reged); return; }
+    var jc=e.target.closest('[data-jcancel]'); if(jc){ ls('jobber_cancelled','1'); render(); return; }
+    var im=e.target.closest('[data-import]'); if(im){ var items=(REG.proposals||[]).filter(function(x,i){ var c=document.querySelector('[data-prop="'+i+'"]'); return c&&c.checked; }); if(!items.length){ toast('Tick at least one'); return; } im.disabled=true; im.textContent='Bringing over…';
+      api('/api/series',{method:'POST',body:{action:'import',items:items}}).then(function(r){ toast(r.made+' regular client'+(r.made===1?'':'s')+' now run from the hub'); return Promise.all([loadReg(),refresh()]); }).then(render).catch(function(x){ im.disabled=false; im.textContent='Bring these over'; toast(x.message); }); return; }
     var sz=e.target.closest('[data-snz]'); if(sz){ ls('snz_'+sz.dataset.snz, iso(today)); render(); toast('Hidden until tomorrow'); return; }
     var pg=e.target.closest('[data-pgo]'); if(pg){ board='leads'; ls('pipe_board','leads'); pipeTab=pg.dataset.pgo; ls('pipe_tab',pipeTab); setView('pipeline'); return; }
     var c2=e.target.closest('[data-cand2]'); if(c2){ candSheet(c2.dataset.cand2); return; }

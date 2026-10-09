@@ -51,6 +51,7 @@ function clean(data) {
     if (j.jid) o.jid = str(j.jid, 200);
     if (j.js) o.js = str(j.js, 40);
     if (j.rec) o.rec = str(j.rec, 80);
+    if (j.ser) o.ser = str(j.ser, 40); // hub regular-client schedule this visit came from
     if (j.addedAt) o.addedAt = str(j.addedAt, 30);
     if (Array.isArray(j.rooms)) {
       const seen = new Set(), r = [];

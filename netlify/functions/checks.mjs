@@ -5,6 +5,7 @@ import { loadDocs, isDepositInv, addDays } from "../../lib/docs.mjs";
 import { syncJobber, loadJobber } from "../../lib/jobber.mjs";
 import { weeklyMoney } from "../../lib/weekly.mjs";
 import { loadBooks } from "../../lib/books.mjs";
+import { generate } from "../../lib/series.mjs";
 import { toWrap } from "../../public/lib/profit.mjs";
 import { notify, once, fmtDay, fmtTime, firstName, where, money } from "../../lib/notify.mjs";
 
@@ -99,6 +100,9 @@ export async function runChecks(s) {
       });
     }
   }
+  // ---- Regular clients: keep 8 weeks of visits on the roster ----
+  if (await once(s, `seriesgen/${today}`)) { try { await generate(s); } catch (e) { console.error("series failed", e); } }
+
   // ---- Money ----
   // Jobber sync every 6 hours: recurring visits go straight onto the roster.
   const jb = await loadJobber(s);
