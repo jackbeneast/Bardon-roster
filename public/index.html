@@ -283,7 +283,7 @@ body.has-nav #app{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .qlinks{display:flex;justify-content:space-between;gap:10px;margin-top:10px;flex-wrap:wrap}
 .qlinks button,.qlinks a{background:none;border:0;color:var(--terracotta-dark);font:500 14px var(--sans);text-decoration:underline;cursor:pointer;padding:8px 0}
 .mini{display:grid;gap:8px}
-.mini button{display:grid;grid-template-columns:62px 1fr;gap:10px;text-align:left;background:var(--white);border:1px solid var(--line);border-radius:8px;padding:12px;font:inherit;color:inherit;cursor:pointer;width:100%}
+.mini button,.mini a.wr{display:grid;text-decoration:none;grid-template-columns:62px 1fr;gap:10px;text-align:left;background:var(--white);border:1px solid var(--line);border-radius:8px;padding:12px;font:inherit;color:inherit;cursor:pointer;width:100%}
 .mini .t{font:600 14px/1.2 var(--sans);color:var(--dark);font-variant-numeric:tabular-nums}
 .mini .t small{display:block;font-weight:400;color:var(--meta);font-size:12px;margin-top:2px}
 .mini .c{font:700 16px/1.25 var(--serif);color:var(--dark)}
@@ -1220,11 +1220,20 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(!out.length) return '';
     return '<a class="warn" href="/books/" style="display:block;text-decoration:none"><strong>Profit isn\'t complete:</strong> '+esc(out.join(', '))+'. <span style="color:var(--terracotta-dark);text-decoration:underline">Fix it</span></a>';
   }
+  // Finished jobs waiting for actual hours and costs, so each job's real $/hr and profit are known.
+  function wrapCard(){
+    var w=state.books&&state.books.wrap; if(!w||!w.length) return '';
+    var h='<div class="sect"><span>Wrap up · hours &amp; costs</span><span>'+w.length+'</span></div><div class="mini">';
+    w.slice(0,4).forEach(function(b){ h+='<a class="wr" href="/books/#/wrap/'+encodeURIComponent(b.key)+'" style="border-left:4px solid var(--terracotta)"><span class="t">'+(b.last===iso(today)?'Today':fmtDay(parse(b.last)).replace(/ \w+$/,'')) +'<small>finished</small></span><span><span class="c">'+esc(b.client||'Job')+'</span><span class="m">'+esc([b.suburb,b.service].filter(Boolean).join(' · '))+'</span><span class="m" style="color:var(--terracotta-dark);font-weight:600">Log actual hours and costs ›</span></span></a>'; });
+    if(w.length>4) h+='<a class="wr" href="/books/#/wrap" style="grid-template-columns:1fr"><span class="m">+ '+(w.length-4)+' more finished job'+(w.length-4===1?'':'s')+'</span></a>';
+    return h+'</div><p class="sub" style="margin:6px 0 0;font-size:12.5px">Shows what each job really made per hour, after wages and costs.</p>';
+  }
   function renderToday(){
     var t=iso(today), tl=jobsFor(t), tm=jobsFor(iso(addDays(today,1))), h=topbar('Today<em>,</em> '+fmtDay(today).replace(/^\w+ /,''));
     h+=alertsHtml();
     h+=moneyAlerts();
     h+=booksNudge();
+    h+=wrapCard();
     h+=wagesCard();
     var me=(state.team.find(function(x){return x.owner;})||{}).id;
     h+='<div class="sect"><span class="today">On today</span><span>'+tl.length+' job'+(tl.length===1?'':'s')+'</span></div>';

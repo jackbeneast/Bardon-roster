@@ -4,6 +4,8 @@ import { store, loadRoster, loadConfirms, loadAcks, loadAllLive, sig, shiftOf } 
 import { loadDocs, isDepositInv, addDays } from "../../lib/docs.mjs";
 import { syncJobber, loadJobber } from "../../lib/jobber.mjs";
 import { weeklyMoney } from "../../lib/weekly.mjs";
+import { loadBooks } from "../../lib/books.mjs";
+import { toWrap } from "../../public/lib/profit.mjs";
 import { notify, once, fmtDay, fmtTime, firstName, where, money } from "../../lib/notify.mjs";
 
 const BNE = 10 * 3600e3;
@@ -53,6 +55,12 @@ export async function runChecks(s) {
     }
     for (const nm of newbies) lines.push(`${nm} hasn't read their first-day info`);
     if (lines.length) await fire(`tomorrow/${today}`, { type: "tomorrow", title: `Tomorrow (${fmtDay(tomorrow)}): ${lines.length} thing${lines.length === 1 ? "" : "s"} to sort`, body: lines.join("\n"), tags: "calendar", priority: 4, url: "/" });
+  }
+
+  // 6pm: jobs that finished today — log actual hours and costs so the job's real hourly rate and profit are known.
+  if (nowMin >= 18 * 60) {
+    const fin = toWrap({ jobs, books: await loadBooks(s) }, today, "23:59").filter((b) => b.last === today);
+    if (fin.length) await fire(`wrap/${today}`, { type: "wrap", title: `Wrap up today's job${fin.length === 1 ? "" : "s"}: hours and costs`, body: fin.map((b) => where(b.j)).join("\n") + "\nTakes 30 seconds. Shows what each job really made per hour.", tags: "stopwatch", url: fin.length === 1 ? `/books/#/wrap/${encodeURIComponent(fin[0].key)}` : "/books/#/wrap" });
   }
 
   // ---- Clients ----

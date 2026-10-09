@@ -2,7 +2,7 @@
 // regular outgoings, and the Jobber sync controls.
 import { store, json, checkAdmin, loadRoster } from "../../lib/core.mjs";
 import { loadDocs, loadSettings } from "../../lib/docs.mjs";
-import { loadBooks, loadExpenses, cleanExpense, cleanFixed, quoteTotals, priceOf, moneySummary, CATS, SETUP } from "../../lib/books.mjs";
+import { loadBooks, loadExpenses, cleanExpense, cleanFixed, cleanActual, quoteTotals, priceOf, moneySummary, CATS, SETUP } from "../../lib/books.mjs";
 import { loadJobber, syncJobber } from "../../lib/jobber.mjs";
 
 const r2 = (v) => Math.round(v * 100) / 100;
@@ -56,6 +56,23 @@ export default async (req) => {
     case "prices": { // several at once from the "no price yet" list
       for (const [k, p] of Object.entries(b.prices || {}).slice(0, 300)) { const v = Number(p); if (p !== "" && p != null && isFinite(v) && v >= 0 && v < 1e6) books.prices[String(k).slice(0, 60)] = r2(v); }
       for (const [k, p] of Object.entries(b.recur || {}).slice(0, 100)) { const v = Number(p); if (p === "" || p == null) delete books.recur[k]; else if (isFinite(v) && v >= 0 && v < 1e6) books.recur[String(k).slice(0, 80)] = r2(v); }
+      await saveBooks(); return json({ ok: true });
+    }
+    case "wrap": { // actual hours + any job costs for a finished booking
+      const k = String(b.key || "").slice(0, 60); if (!k) return json({ error: "Missing job" }, 400);
+      const a = cleanActual(b);
+      if (!a) return json({ error: "Enter the hours worked" }, 400);
+      if (b.price !== undefined && b.price !== "" && b.price !== null) { const v = Number(b.price); if (isFinite(v) && v >= 0 && v < 1e6) books.prices[k] = r2(v); }
+      const made = [];
+      if (!a.skip) for (const x of (Array.isArray(b.expenses) ? b.expenses : []).slice(0, 20)) {
+        const e = cleanExpense({ ...x, job: k, date: b.date });
+        if (e && e.date) { await s.set(`exp/${e.id}`, e); made.push(e); }
+      }
+      books.actuals[k] = a;
+      await saveBooks(); return json({ ok: true, actual: a, expenses: made, price: books.prices[k] ?? null });
+    }
+    case "unwrap": {
+      delete books.actuals[String(b.key || "").slice(0, 60)];
       await saveBooks(); return json({ ok: true });
     }
     case "recur": {

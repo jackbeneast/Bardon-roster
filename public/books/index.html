@@ -156,6 +156,18 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 .jrow{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:11px 0;border-bottom:1px solid var(--cream-dark);background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
 .jrow:last-child{border-bottom:0}
+.wrow{display:grid;grid-template-columns:1fr 110px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--cream-dark)}
+.wrow b{font:600 15px var(--sans);color:var(--dark)}.wrow small{display:block;font-size:12.5px;color:var(--meta)}
+.wrow input{margin:0;text-align:right}
+.crow{display:grid;grid-template-columns:110px 1fr 36px;gap:8px;align-items:center;margin-top:8px}
+.crow input,.crow select{margin:0}.crow .x{background:none;border:0;font-size:22px;color:var(--meta);cursor:pointer;min-height:44px}
+.wtot{display:flex;justify-content:space-between;padding:10px 0 0;font:600 15px var(--sans);color:var(--dark)}
+.wres{margin-top:16px;background:var(--dark);color:var(--cream);border-radius:12px;padding:14px 16px}
+.wres b{display:block;font:700 30px/1.15 var(--serif);font-variant-numeric:tabular-nums}
+.wres span{display:block;font-size:13.5px;color:#BDB5AD;margin-top:4px;font-variant-numeric:tabular-nums}
+.wres .neg{color:#F0A487}
+.qadd{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.qadd button{font:500 13.5px var(--sans);border:1px solid var(--line);background:var(--white);border-radius:999px;padding:8px 12px;cursor:pointer;color:var(--dark)}
 .jrow b{font:600 15px var(--sans);color:var(--dark);min-width:0;overflow-wrap:anywhere}
 .jrow .v{font:600 15px var(--sans);color:var(--dark);text-align:right;font-variant-numeric:tabular-nums}
 .jrow small{font-size:13px;color:var(--meta)}
@@ -191,7 +203,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 </style></head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <script type="module">
-import { pnl, bookingsOf, priceOf, perMonth, dueDates } from '/lib/profit.mjs';
+import { pnl, bookingsOf, priceOf, perMonth, dueDates, rosteredHours, toWrap } from '/lib/profit.mjs';
 
 var app=document.getElementById('app');
 var D=null, loadErr='', loaded=false, X=null, xMsg=null;
@@ -212,7 +224,7 @@ function today(){ return iso(new Date()); }
 function pdate(s){ var p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
 function addD(s,n){ var d=pdate(s); d.setDate(d.getDate()+n); return iso(d); }
 function fday(s,dow){ if(!s) return ''; var d=pdate(s); return (dow?DOW[d.getDay()]+' ':'')+d.getDate()+' '+MON[d.getMonth()]+(d.getFullYear()!==new Date().getFullYear()?' '+d.getFullYear():''); }
-function toast(m){ var t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2600); }
+function toast(m){ var t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},3200); }
 function key(){ return lsGet('roster_admin_key')||''; }
 function api(method,body,qs){
   return fetch('/api/books'+(qs||''),{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
@@ -241,8 +253,12 @@ function period(m,o){
   var sub=o===0?(m==='month'?'This month':m==='quarter'?'This BAS quarter':'This financial year'):(m==='quarter'?'BAS quarter':'');
   return {from:iso(s),to:iso(e),label:label,sub:sub};
 }
+function nowHM(){ var d=new Date(); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function wrapList(){ return toWrap(D,today(),nowHM()); }
 function nudges(p){
   var h='', t=today();
+  var wl=wrapList();
+  if(wl.length) h+='<button type="button" class="nudge" data-wrap="'+esc(wl[0].key)+'"><span><b>'+wl.length+' finished job'+(wl.length===1?' needs':'s need')+' actual hours.</b> '+(wl.length===1?esc(wl[0].j.client||'Job')+', '+fday(wl[0].last,true)+'. ':'')+'Log hours and costs to see what '+(wl.length===1?'it':'each one')+' really made per hour.</span><span class="go">Log ›</span></button>';
   var un=bookingsOf(D.jobs).filter(function(b){ return b.date<=addD(t,30) && priceOf(b,D.books,D.quoteTotals).price==null; });
   if(un.length) h+='<a class="nudge" href="#/prices"><span><b>'+un.length+' job'+(un.length===1?' has':'s have')+' no price.</b> Revenue and profit are short until they do.</span><span class="go">Add ›</span></a>';
   var left=D.setup.filter(function(x){ return !D.books.setup[x[0]]; }).length;
@@ -269,6 +285,7 @@ function render(){
   if(!loaded){ app.innerHTML='<div class="center">Loading…</div>'; return; }
   var r=route();
   if(r==='add'){ history.replaceState(null,'','#/'); expenseSheet(null); r='profit'; }
+  if(r==='wrap'){ var wk=decodeURIComponent(location.hash.replace(/^#\/?wrap\/?/,'').split('?')[0]); history.replaceState(null,'','#/'); r='profit'; setTimeout(function(){ var l=wrapList(); if(wk) wrapSheet(wk); else if(l.length) wrapSheet(l[0].key); else toast('All finished jobs have their hours logged'); },0); }
   var jump=r==='jobber'?'jobberCard':r==='xero'?'xeroCard':'';
   if(jump) r='prices';
   var h=topbar()+'<h1>'+(r==='profit'?'Profit':r==='spend'?'Spending':'Prices <em>&amp;</em> apps')+'</h1>'+tabs(r);
@@ -285,17 +302,18 @@ function renderProfit(){
   if(off===0) h+=nudges(x);
   var loss=x.profit<0;
   h+='<div class="kpis"><div class="kpi dark"><b>'+m0(x.profit)+'</b><span>Profit'+(x.margin!=null?' · '+Math.round(x.margin*100)+'% margin':'')+'</span></div><div class="kpi"><b>'+m0(x.rev)+'</b><span>Revenue'+(D.gstReg?' ex GST':'')+'</span></div><div class="kpi"><b>'+m0(x.costs)+'</b><span>Costs</span></div></div>';
+  if(x.perHour) h+='<div class="card"><div class="hrow"><h2>Per hour <em>worked</em></h2><span class="sub" style="margin:0">'+x.perHour.jobs+' job'+(x.perHour.jobs===1?'':'s')+' · '+Math.round(x.perHour.hrs*10)/10+' hrs</span></div><div class="kpis" style="margin-top:0;grid-template-columns:1fr 1fr"><div class="kpi"><b>'+money(x.perHour.rate)+'</b><span>Earned per hour'+(D.gstReg?' (ex GST)':'')+'</span></div><div class="kpi'+(x.perHour.profit<0?' warn':'')+'"><b>'+money(x.perHour.profit)+'</b><span>Profit per hour</span></div></div><p class="hint">From jobs where you\'ve logged actual hours (everyone\'s, yours included).</p></div>';
   if(x.unpriced.length && off!==0) h+='<a class="nudge" href="#/prices" style="border-left-color:var(--terracotta-dark)"><span><b>Missing revenue:</b> '+x.unpriced.length+' job'+(x.unpriced.length===1?'':'s')+' in this period '+(x.unpriced.length===1?'has':'have')+' no price.</span><span class="go">Fix ›</span></a>';
   // Profit and loss
   h+='<div class="card"><h2>Profit <em>&amp;</em> loss</h2><div class="pnl">';
   h+='<div><span>Revenue from '+x.jobs.length+' job'+(x.jobs.length===1?'':'s')+(D.gstReg?' (ex GST)':'')+'</span><span>'+money(x.rev)+'</span></div>';
-  h+='<div class="neg"><span>Team wages <small style="color:var(--meta)">('+Math.round(x.hrs*10)/10+' hrs rostered)</small></span><span>−'+money(x.wages).replace('−','')+'</span></div>';
+  h+='<div class="neg"><span>Team wages <small style="color:var(--meta)">('+Math.round(x.hrs*10)/10+' hrs)</small></span><span>−'+money(x.wages).replace('−','')+'</span></div>';
   h+='<div class="neg"><span>Super (12%)</span><span>−'+money(x.sup)+'</span></div>';
   var cats=Object.keys(x.cats).sort(function(a,b){return x.cats[b]-x.cats[a];});
   if(cats.length){ h+='<div class="neg"><span>Expenses &amp; outgoings'+(D.gstReg?' (ex GST)':'')+'</span><span>−'+money(x.otherCosts)+'</span></div>'; cats.forEach(function(c){ h+='<div class="sub2"><span>'+esc(c)+'</span><span>'+money(x.cats[c])+'</span></div>'; }); }
   else h+='<div class="neg"><span>Expenses &amp; outgoings <small style="color:var(--terracotta-dark)">none logged</small></span><span>$0.00</span></div>';
   h+='<div class="tot'+(loss?' loss':'')+'"><span>'+(loss?'Loss':'Profit')+'</span><span>'+money(x.profit)+'</span></div></div>';
-  h+='<p class="hint">Before income tax. Revenue counts on each job\'s first day. Wages are from the roster, not timesheets. Your own hours aren\'t costed.</p></div>';
+  h+='<p class="hint">Before income tax. Revenue counts on each job\'s first day. Wages use actual hours where you\'ve logged them, otherwise rostered hours. Your own hours aren\'t costed.</p></div>';
   // GST
   if(D.gstReg) h+='<div class="card"><h2>GST <em>for BAS</em></h2><div class="pnl"><div><span>GST on your jobs</span><span>'+money(x.gstCollected)+'</span></div><div><span>GST credits on expenses</span><span>−'+money(x.gstPaid)+'</span></div><div class="tot"><span>Estimated GST to pay</span><span>'+money(x.gstNet)+'</span></div></div><p class="hint">Estimate from job prices and logged expenses. Your BAS figures come from your actual records, so check with your accountant.</p></div>';
   // Cash
@@ -306,12 +324,14 @@ function renderProfit(){
   var js=x.jobs.slice().sort(function(a,b){ return a.date.localeCompare(b.date); });
   h+='<div class="card"><div class="hrow"><h2>Profit <em>by job</em></h2><span class="sub" style="margin:0">'+js.length+'</span></div>';
   if(!js.length) h+='<p class="sub">No jobs in this period.</p>';
+  var tt=today();
   js.forEach(function(b){
-    var j=b.j, days=b.days.length>1?' · '+b.days.length+' days':'';
+    var j=b.j, days=b.days.length>1?' · '+b.days.length+' days':'', ended=b.last<tt||(b.last===tt&&b.days[b.days.length-1].end&&b.days[b.days.length-1].end<=nowHM());
     var right=b.price==null?'<span class="bad">No price</span>':money(b.profit);
-    var meta=fday(b.date,true)+days+' · '+esc(j.service||'')+(b.price!=null?' · '+money(b.rev)+' in'+(b.labour?', '+money(b.labour)+' wages':'')+(b.exp?', '+money(b.exp)+' costs':''):'');
+    var meta=fday(b.date,true)+days+' · '+esc(j.service||'')+(b.actHrs?' · '+Math.round(b.actHrs*100)/100+' hrs worked':'')+(b.price!=null?' · '+money(b.rev)+' in'+(b.labour?', '+money(b.labour)+' wages':'')+(b.exp?', '+money(b.exp)+' costs':''):'');
     var mg=b.price!=null&&b.rev>0?Math.round(b.profit/b.rev*100):null;
-    h+='<button type="button" class="jrow" data-price="'+esc(b.key)+'"><b>'+esc(j.client||'Job')+(j.suburb?' <small>· '+esc(j.suburb)+'</small>':'')+'</b><span class="v">'+right+'</span><small>'+meta+'</small><small style="text-align:right">'+(mg!=null?mg+'%':'')+'</small></button>';
+    var tag=b.perHr!=null?'<b style="font-size:13px;color:var(--dark)">'+m0(b.perHr)+'/hr</b>'+(mg!=null?' · '+mg+'%':''):(ended&&!b.done?'<span class="bad">Log hours</span>':(mg!=null?mg+'%':''));
+    h+='<button type="button" class="jrow" '+(ended?'data-wrap':'data-price')+'="'+esc(b.key)+'"><b>'+esc(j.client||'Job')+(j.suburb?' <small>· '+esc(j.suburb)+'</small>':'')+'</b><span class="v">'+right+'</span><small>'+meta+'</small><small style="text-align:right">'+tag+'</small></button>';
   });
   h+='</div>';
   return h;
@@ -519,12 +539,80 @@ function priceSheet(key){
   f.onsubmit=function(ev){ ev.preventDefault(); var v=f.elements.price.value; api('POST',{action:'price',key:key,price:v===''?null:+v}).then(function(){ if(v==='') delete D.books.prices[key]; else D.books.prices[key]=+v; closeSheet(); render(); toast('Price saved'); }).catch(function(x){ var e=s.querySelector('#xErr'); e.textContent=x.message; e.hidden=false; }); };
 }
 
+// ---------- Job wrap-up: actual hours and costs → real hourly rate and profit ----------
+var WRAP_CATS=[['Cleaning products','Products'],['Fuel','Fuel'],['Other','Parking'],['Subcontractors','Subcontractor'],['Equipment','Equipment'],['Other','Other']];
+function teamName(pid){ var m=(D.team||[]).filter(function(t){return t.id===pid;})[0]; return m?(m.owner?'You':m.name):'Someone'; }
+function isOwner(pid){ return (D.team||[]).some(function(t){return t.id===pid&&t.owner;}); }
+function q4(v){ return Math.round(v*4)/4; }
+function wrapSheet(key){
+  var b=bookingsOf(D.jobs).filter(function(x){return x.key===key;})[0];
+  if(!b){ toast('That job isn\'t on the roster any more'); return; }
+  var acts=D.books.actuals||{}, a=acts[key]&&acts[key].staff?acts[key]:null, ro=rosteredHours(b,D.pay), p=priceOf(b,D.books,D.quoteTotals);
+  var people=a?Object.keys(a.staff):Object.keys(ro);
+  if(!people.length){ var me=(D.team||[]).filter(function(t){return t.owner;})[0]; if(me) people=[me.id]; }
+  var have=D.expenses.filter(function(e){return e.job===key;});
+  var h='<h3>Wrap up <em>'+esc(b.j.client||'job')+'</em></h3><p class="sub" style="margin:-6px 0 12px">'+fday(b.date,true)+(b.days.length>1?' to '+fday(b.last,true):'')+' · '+esc(b.j.service||'')+(b.j.suburb?' · '+esc(b.j.suburb):'')+'</p><form id="wf" novalidate>';
+  h+='<span class="l">Hours actually worked <small>(each person, not counting unpaid lunch)</small></span><div id="wppl">';
+  people.forEach(function(pid){ h+=wrapRow(pid, a?a.staff[pid]:(ro[pid]!=null?q4(ro[pid]):''), ro[pid]); });
+  h+='</div>';
+  var others=(D.team||[]).filter(function(t){ return people.indexOf(t.id)<0; });
+  if(others.length) h+='<select id="waddp" style="margin-top:10px"><option value="">+ Someone else worked on it</option>'+others.map(function(t){ return '<option value="'+esc(t.id)+'">'+esc(t.owner?'You':t.name)+'</option>'; }).join('')+'</select>';
+  h+='<div class="wtot"><span>Total hours</span><span id="wtot"></span></div>';
+  h+='<label class="l" style="margin-top:16px">Job price'+(D.gstReg?' <small>(inc GST)</small>':'')+'<span class="money-in" style="display:block"><input name="price" type="number" inputmode="decimal" step="0.01" min="0" value="'+(p.price!=null?p.price:'')+'" placeholder="What the client paid"></span></label>';
+  h+='<div style="margin-top:16px"><span class="l">Costs for this job <small>(products, fuel, parking, tip runs…)</small></span>';
+  if(have.length) h+='<div class="pnl">'+have.map(function(e){ return '<div><span>'+esc(e.cat)+(e.note?' · '+esc(e.note):e.who?' · '+esc(e.who):'')+'</span><span>'+money(e.amt)+'</span></div>'; }).join('')+'</div>';
+  h+='<div id="wcost"></div><div class="qadd">'+WRAP_CATS.map(function(c,i){ return '<button type="button" data-qc="'+i+'">+ '+esc(c[1])+'</button>'; }).join('')+'</div>';
+  if(D.gstReg) h+='<label class="check"><input type="checkbox" name="gst" checked>New costs include GST</label>';
+  h+='</div>';
+  h+='<div class="wres" id="wres"></div>';
+  h+='<div class="err" id="wErr" hidden></div><div class="actions"><button type="button" class="btn plain" data-close>Later</button><button type="submit" class="btn primary grow">Save</button></div>';
+  if(!a) h+='<div class="actions"><button type="button" class="btn plain grow" data-skip style="color:var(--meta)">Don\'t ask for this job</button></div>';
+  h+='</form>';
+  var s=sheet(h), f=s.querySelector('#wf');
+  function costs(){ return Array.prototype.map.call(s.querySelectorAll('.crow'),function(r){ return {amt:parseFloat(r.querySelector('[data-ca]').value), cat:r.querySelector('[data-cc]').value, note:r.querySelector('[data-cn]').value}; }).filter(function(c){ return c.amt>0; }); }
+  function staff(){ var o={}; s.querySelectorAll('[data-h]').forEach(function(i){ if(i.value!=='') o[i.dataset.h]=parseFloat(i.value)||0; }); return o; }
+  function calc(){
+    var st=staff(), tot=Object.keys(st).reduce(function(x,k){return x+st[k];},0);
+    s.querySelector('#wtot').textContent=(Math.round(tot*100)/100)+' hrs';
+    var pv=f.elements.price.value, gst=D.gstReg&&f.elements.gst&&f.elements.gst.checked;
+    var D2=Object.assign({},D,{books:Object.assign({},D.books,{actuals:Object.assign({},acts),prices:Object.assign({},D.books.prices)})});
+    D2.books.actuals[key]={staff:st}; if(pv!=='') D2.books.prices[key]=+pv;
+    D2.expenses=D.expenses.concat(costs().map(function(c){ return {job:key,date:b.last,amt:c.amt,gst:gst?c.amt/11:0,cat:c.cat}; }));
+    var r=pnl(D2,b.date,b.last).jobs.filter(function(x){return x.key===key;})[0], out=s.querySelector('#wres');
+    if(!tot){ out.innerHTML='<span style="margin:0">Enter the hours to see what this job made per hour.</span>'; return; }
+    if(!r||r.rev==null){ out.innerHTML='<b>'+(Math.round(tot*100)/100)+' hrs</b><span>Add the job price to see the hourly rate and profit.</span>'; return; }
+    out.innerHTML='<b>'+money(r.rev/tot)+' <small style="font:500 15px var(--sans)">per hour worked</small></b><span class="'+(r.profit<0?'neg':'')+'">'+(r.profit<0?'Loss ':'Profit ')+money(r.profit)+' · '+money(r.profit/tot)+'/hr'+(r.rev>0?' · '+Math.round(r.profit/r.rev*100)+'% margin':'')+'</span><span>'+money(r.rev)+(D.gstReg?' ex GST':'')+' in · '+money(r.labour)+' wages &amp; super · '+money(r.exp)+' costs</span>';
+  }
+  function addCost(cat,note){ var w=s.querySelector('#wcost'), d=document.createElement('div'); d.className='crow'; d.innerHTML='<span class="money-in" style="display:block"><input data-ca type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></span><select data-cc>'+D.cats.map(function(c){ return '<option'+(c===cat?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select><button type="button" class="x" data-rm aria-label="Remove">×</button><input data-cn type="hidden" value="'+esc(note||'')+'">'; w.appendChild(d); d.querySelector('[data-ca]').focus(); }
+  s.addEventListener('click',function(ev){
+    var qc=ev.target.closest('[data-qc]'); if(qc){ var c=WRAP_CATS[+qc.dataset.qc]; addCost(c[0], c[1]==='Parking'?'Parking':''); return; }
+    var rm=ev.target.closest('[data-rm]'); if(rm){ rm.closest('.crow,.wrow').remove(); calc(); return; }
+  });
+  s.addEventListener('input',calc); s.addEventListener('change',calc);
+  var ad=s.querySelector('#waddp'); if(ad) ad.onchange=function(){ var pid=ad.value; if(!pid) return; s.querySelector('#wppl').insertAdjacentHTML('beforeend',wrapRow(pid,'',null)); ad.querySelector('option[value="'+pid+'"]').remove(); ad.value=''; var i=s.querySelector('[data-h="'+pid+'"]'); if(i) i.focus(); };
+  calc();
+  function done(r,msg){ D.books.actuals=D.books.actuals||{}; D.books.actuals[key]=r.actual; if(r.price!=null) D.books.prices[key]=r.price; (r.expenses||[]).forEach(function(e){ D.expenses.unshift(e); }); D.expenses.sort(function(x,y){return (y.date+y.at).localeCompare(x.date+x.at);}); closeSheet(); render(); if(msg==null){ var j=pnl(D,b.date,b.last).jobs.filter(function(y){return y.key===key;})[0]; msg=j&&j.perHr!=null?(b.j.client||'Job')+': '+money(j.perHr)+'/hr · '+money(j.profit)+' profit':'Saved'; } toast(msg); var nx=wrapList()[0]; if(nx) setTimeout(function(){ wrapSheet(nx.key); },700); }
+  f.onsubmit=function(ev){ ev.preventDefault(); var err=s.querySelector('#wErr'), btn=f.querySelector('.primary'), st=staff();
+    if(!Object.keys(st).some(function(k){return st[k]>0;})){ err.textContent='Enter the hours worked.'; err.hidden=false; return; }
+    var gst=D.gstReg&&f.elements.gst&&f.elements.gst.checked, pv=f.elements.price.value;
+    btn.disabled=true; btn.textContent='Saving…';
+    api('POST',{action:'wrap',key:key,staff:st,date:b.last,price:pv===''?undefined:+pv,expenses:costs().map(function(c){ return {amt:c.amt,cat:c.cat,note:c.note,gst:gst}; })})
+      .then(function(r){ done(r,null); })
+      .catch(function(x){ btn.disabled=false; btn.textContent='Save'; err.textContent=x.message; err.hidden=false; });
+  };
+  var sk=s.querySelector('[data-skip]'); if(sk) sk.onclick=function(){ api('POST',{action:'wrap',key:key,skip:true}).then(function(r){ done(r,'Won\'t ask about this one'); }).catch(function(x){ toast(x.message); }); };
+}
+function wrapRow(pid,val,rost){
+  return '<div class="wrow"><span><b>'+esc(teamName(pid))+'</b><small>'+(rost!=null?'Rostered '+(Math.round(rost*100)/100)+' hrs':'Not rostered')+(isOwner(pid)?' · counts for $/hr, not wages':'')+'</small></span><input data-h="'+esc(pid)+'" type="number" inputmode="decimal" step="0.25" min="0" value="'+esc(val)+'" aria-label="Hours for '+esc(teamName(pid))+'"></div>';
+}
+
 // ---------- events ----------
 app.addEventListener('click',function(e){
   var g=e.target.closest('[data-go]'); if(g){ location.hash='#/'+(g.dataset.go==='profit'?'':g.dataset.go); return; }
   var md=e.target.closest('[data-mode]'); if(md){ mode=md.dataset.mode; off=0; lsSet('books_mode',mode); render(); return; }
   var of=e.target.closest('[data-off]'); if(of){ off=of.dataset.off==='0'?0:off+(+of.dataset.off); render(); return; }
   var pr=e.target.closest('[data-price]'); if(pr){ priceSheet(pr.dataset.price); return; }
+  var wr=e.target.closest('[data-wrap]'); if(wr){ wrapSheet(wr.dataset.wrap); return; }
   var ex=e.target.closest('[data-exp]'); if(ex){ expenseSheet(D.expenses.filter(function(x){return x.id===ex.dataset.exp;})[0]); return; }
   var fx=e.target.closest('[data-fixed]'); if(fx){ fixedSheet(fx.dataset.fixed==='new'?null:D.books.fixed.filter(function(x){return x.id===fx.dataset.fixed;})[0]); return; }
   var sa=e.target.closest('[data-setadd]'); if(sa){ var it=D.setup.filter(function(x){return x[0]===sa.dataset.setadd;})[0]; fixedSheet(null,{name:it[1],cat:it[2],freq:it[3],setup:it[0],gst:it[0]!=='workcover'&&it[0]!=='bank'}); return; }
