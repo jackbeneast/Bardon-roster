@@ -27,15 +27,20 @@ function cleanProfile(p, prev = {}) {
     startDate: day(p.startDate), endDate: day(p.endDate), status: p.status === "left" ? "left" : "active",
     type: ["casual", "part-time", "full-time"].includes(p.type) ? p.type : "casual",
     level: ["1", "2", "3"].includes(String(p.level)) ? String(p.level) : "1",
-    tft: ["1", "2", "3"].includes(String(p.tft)) ? String(p.tft) : "2",
+    tft: ["1", "2", "3", "4"].includes(String(p.tft)) ? String(p.tft) : "2",
     help: !!p.help, superFund: str(p.superFund, 80), superUsi: str(p.superUsi, 40), superNo: str(p.superNo, 40),
     emergName: str(p.emergName, 80), emergPhone: str(p.emergPhone, 30), emergRel: str(p.emergRel, 40),
     notes: str(p.notes, 3000), docs: {},
   };
   for (const k of DOCS) { const v = p.docs && p.docs[k]; o.docs[k] = day(v) || (v === true ? "yes" : v === "yes" ? "yes" : ""); }
+  // Shirt size, availability and the onboarding form's other answers are editable too.
+  if (p.shirt !== undefined) o.shirt = str(p.shirt, 4);
+  if (p.availNotes !== undefined) o.availNotes = str(p.availNotes, 600);
+  if (p.visaExpiry !== undefined) o.visaExpiry = day(p.visaExpiry);
   o.token = prev.token || tok();
   o.updatedAt = new Date().toISOString();
-  return o;
+  // Keep everything else on the profile (onboarding form answers, links) as it was.
+  return { ...prev, ...o };
 }
 
 const KINDS = new Set(["wk", "el", "sat", "sun", "ph"]);
@@ -106,6 +111,12 @@ export default async (req) => {
     const roster = await loadRoster(s);
     const profiles = {};
     for (const k of await s.list("staff/")) { const p = await s.get(k); if (p) profiles[k.slice(6)] = p; }
+    // Everyone on the team gets a profile with a personal new starter form link.
+    for (const t of roster.team) {
+      if (t.owner) continue;
+      const p = profiles[t.id] || cleanProfile({});
+      if (!p.startToken) { p.startToken = tok(); profiles[t.id] = p; await s.set(`staff/${t.id}`, p); }
+    }
     const slips = (await listAll(s, "slip/")).sort((a, b) => (b.periodEnd + b.name).localeCompare(a.periodEnd + a.name));
     return json({ team: roster.team, pay: roster.pay || null, profiles, slips, employer: EMPLOYER });
   }

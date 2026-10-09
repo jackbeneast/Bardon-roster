@@ -38,6 +38,12 @@
   to = "/d/index.html"
   status = 200
 
+# New starter form: /start (anyone) and /start/<token> (a personal, prefilled link)
+[[redirects]]
+  from = "/start/*"
+  to = "/start/index.html"
+  status = 200
+
 # Employee pay link /pay/<token>: their own payslips
 [[redirects]]
   from = "/pay/*"

@@ -25,6 +25,7 @@ function clean(data) {
     if (t.owner) o.owner = true;
     if (t.phone) o.phone = str(t.phone, 30);
     if (t.newStarter) o.newStarter = true;
+    if (t.addedAt) o.addedAt = str(t.addedAt, 30); // added by the onboarding form
     return o;
   }).filter((t) => t.id && t.name);
   const ids = new Set(team.map((t) => t.id));
@@ -122,6 +123,8 @@ export default async (req) => {
     // Jack's screen yet, so a save from that screen mustn't wipe them.
     const base = typeof body.base === "string" ? body.base : "";
     if (base) for (const j of prev.jobs || []) if (!ids.has(j.id) && j.addedAt && j.addedAt > base) data.jobs.push(j);
+    // Same for new starters the onboarding form added after this page loaded.
+    if (base) for (const t of prev.team || []) if (t.addedAt && t.addedAt > base && !data.team.some((x) => x.id === t.id)) data.team.push(t);
     // Jobber jobs Jack deleted here: don't bring them back on the next sync.
     const gone = (prev.jobs || []).filter((j) => j.jid && !data.jobs.some((x) => x.id === j.id)).map((j) => j.jid);
     if (gone.length) {

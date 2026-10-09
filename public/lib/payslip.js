@@ -30,7 +30,8 @@
   function award(level){ var a=AWARD[level]||AWARD[1], base=a[0]/1.25; return {wk:a[0],el:r2(base*1.40),sat:a[1],sun:a[2],ph:a[3],ot1:r2(base*1.75),ot2:r2(base*2.25),otSun:r2(base*2.25),otPh:r2(base*2.75)}; }
   function rates(level, mine){ var A=award(level), m=Object.assign({},DEF,mine||{}), R={}; ['wk','el','sat','sun','ph'].forEach(function(k){ R[k]=Math.max(+m[k]||0,A[k]); }); return R; }
   function weeklyTax(gross,scale){ var x=Math.floor(gross)+0.99, row=(SC[scale]||SC[2]).filter(function(r){return x<r[0];})[0]; return Math.max(0,Math.round(row[1]*x-row[2])); }
-  function tax(gross,scale,cycle){ return cycle===2?weeklyTax(gross/2,scale)*2:weeklyTax(gross,scale); }
+  // Scale 4: working holiday maker (visa 417/462), 15% on earnings up to $45,000 a year.
+  function tax(gross,scale,cycle){ if(+scale===4) return Math.round(gross*0.15); return cycle===2?weeklyTax(gross/2,scale)*2:weeklyTax(gross,scale); }
 
   // shifts: [{date, hrs, kind}] inside the period. Returns {lines, gross, ordPay, hrs, otHrs, sup, taxAuto}
   function calc(o){
