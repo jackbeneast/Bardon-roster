@@ -1,5 +1,5 @@
 // Messages: two-way texting with clients and leads from the business number.
-// GET                -> inbox { ready, from, hookOn, threads[], unread, people[] }
+// GET                -> inbox { ready, from, hookOn, threads[], unread, people[], team[] }
 // GET ?t=04xxxxxxxx  -> one conversation (and marks it read)
 // GET ?count=1       -> { unread }
 // POST {action:"send", to, text, name?} | {action:"read"|"archive"|"unarchive", phone}
@@ -60,7 +60,8 @@ export default async (req) => {
       return json({ ready: mmReady(), thread: { ...thread, unread: 0, name: thread.name || who.name }, ctx: who.ctx.slice(0, 6), rec: recordsFor(phone, src, url.searchParams.get("job") || "") });
     }
     await pullInbound(s);
-    const [idx, dir, set, hook] = await Promise.all([loadIndex(s), people(s), loadSettings(s), s.get("mmhook")]);
+    const src = await sources(s);
+    const [idx, dir, set, hook] = await Promise.all([loadIndex(s), people(s, src), loadSettings(s), s.get("mmhook")]);
     const threads = Object.entries(idx).map(([phone, x]) => {
       const who = dir[phone] || { name: "", ctx: [] };
       return { phone, ...x, name: x.name || who.name, tag: who.ctx[0] ? who.ctx[0].label : "" };
@@ -68,7 +69,10 @@ export default async (req) => {
     // Everyone with a mobile we know about, for "New message".
     const list = Object.entries(dir).map(([phone, x]) => ({ phone, name: x.name, tag: x.ctx[0] ? x.ctx[0].label : "", kind: x.ctx[0] ? x.ctx[0].kind : "", at: x.ctx[0]?.at || "" }))
       .sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 300);
-    return json({ ready: mmReady(), from: set.biz.sms, hookOn: !!(hook && hook.on), threads, unread: unreadCount(idx), people: list });
+    // Team members with a mobile, pinned at the top of the inbox for one-tap texting.
+    const team = (src.roster.team || []).filter((t) => !t.owner && !t.archived && auMobile(t.phone))
+      .map((t) => ({ phone: auMobile(t.phone), name: t.name || "" }));
+    return json({ ready: mmReady(), from: set.biz.sms, hookOn: !!(hook && hook.on), threads, unread: unreadCount(idx), people: list, team });
   }
 
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);

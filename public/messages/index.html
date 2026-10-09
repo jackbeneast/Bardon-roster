@@ -45,6 +45,13 @@ h1 em{font-style:italic;font-weight:500}
 .th .tm{font-size:12px;color:var(--meta);white-space:nowrap}
 .th .n{min-width:20px;height:20px;border-radius:10px;background:var(--terracotta);color:#fff;font:600 11px/20px var(--sans);text-align:center;padding:0 6px}
 .mid{min-width:0}
+.team{margin-top:14px}
+.team h2{font:600 12px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--meta);margin:0 0 8px}
+.team .row{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}
+.tm-b{flex:none;display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--line);border-radius:999px;padding:6px 16px 6px 6px;min-height:48px;text-decoration:none;color:var(--dark);font:600 15px/1.2 var(--sans)}
+.tm-b:active{background:var(--tint)}
+.tm-b .av{width:36px;height:36px;font-size:13px}
+.tm-b .u{min-width:18px;height:18px;border-radius:9px;background:var(--terracotta);color:#fff;font:600 11px/18px var(--sans);text-align:center;padding:0 5px}
 .empty{background:var(--white);border:1px dashed var(--line);border-radius:12px;padding:26px 18px;text-align:center;color:var(--meta);margin-top:12px}
 .fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--terracotta);color:#fff;border:0;border-radius:999px;min-height:54px;padding:0 22px;font:600 16px/1 var(--sans);box-shadow:0 6px 18px rgba(26,26,26,.18);cursor:pointer;z-index:10}
 .btn{font:600 15px/1 var(--sans);border-radius:8px;min-height:46px;padding:0 18px;cursor:pointer;border:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
@@ -183,9 +190,18 @@ function renderInbox(){
   var all=D.threads||[], un=all.filter(function(t){return t.unread&&!t.archived;}).length, ar=all.filter(function(t){return t.archived;}).length;
   function c(v,l){ return '<button class="chip" data-f="'+v+'" aria-pressed="'+(filter===v)+'">'+l+'</button>'; }
   h+='<div class="chips">'+c('all','All')+c('unread','Unread'+(un?' ('+un+')':''))+(ar?c('archived','Archived'):'')+'</div>';
+  h+=teamHtml();
   h+='<div data-list>'+listHtml()+'</div>';
   h+='<button class="fab" data-act="new">+ New message</button>';
   return h;
+}
+function teamHtml(){
+  var TM=(D&&D.team)||[]; if(!TM.length) return '';
+  var un={}; (D.threads||[]).forEach(function(t){ un[t.phone]=t.unread||0; });
+  return '<div class="team"><h2>Team</h2><div class="row">'+TM.map(function(m){
+    var first=String(m.name||'').trim().split(/\s+/)[0]||fmtPhone(m.phone);
+    return '<a class="tm-b" href="#/t/'+m.phone+'?name='+encodeURIComponent(m.name||'')+'" aria-label="Text '+esc(m.name||first)+'"><span class="av">'+esc(initials(m.name))+'</span>'+esc(first)+(un[m.phone]?'<span class="u">'+un[m.phone]+'</span>':'')+'</a>';
+  }).join('')+'</div></div>';
 }
 function listHtml(){
   var qq=q.trim().toLowerCase(), qd=qq.replace(/\D/g,'');
@@ -275,7 +291,9 @@ function newSheet(){
   var inp=s.querySelector('[data-pq]'), pl=s.querySelector('[data-pl]');
   function draw(){ var v=inp.value.trim().toLowerCase(), num=auMobile(v), h='';
     if(num) h+='<button class="pp" data-go="'+num+'"><span class="av">#</span><span><b>Text '+fmtPhone(num)+'</b><span>New number</span></span></button>';
-    var rows=P.filter(function(p){ return !v||(p.name||'').toLowerCase().indexOf(v)>=0||p.phone.indexOf(v.replace(/\D/g,'')||'~')>=0||(p.tag||'').toLowerCase().indexOf(v)>=0; }).slice(0,40);
+    var TM=(D&&D.team)||[], tp={}; TM.forEach(function(m){ tp[m.phone]=1; });
+    if(!v&&TM.length) h+=TM.map(function(m){ return '<button class="pp" data-go="'+m.phone+'" data-nm="'+esc(m.name||'')+'"><span class="av">'+esc(initials(m.name))+'</span><span><b>'+esc(m.name||fmtPhone(m.phone))+'</b><span>Team · '+fmtPhone(m.phone)+'</span></span></button>'; }).join('');
+    var rows=P.filter(function(p){ if(!v&&tp[p.phone]) return false; return !v||(p.name||'').toLowerCase().indexOf(v)>=0||p.phone.indexOf(v.replace(/\D/g,'')||'~')>=0||(p.tag||'').toLowerCase().indexOf(v)>=0; }).slice(0,40);
     h+=rows.map(function(p){ return '<button class="pp" data-go="'+p.phone+'" data-nm="'+esc(p.name||'')+'"><span class="av'+(p.kind==='lead'?' lead':'')+'">'+esc(initials(p.name))+'</span><span><b>'+esc(p.name||fmtPhone(p.phone))+'</b><span>'+esc([p.tag,fmtPhone(p.phone)].filter(Boolean).join(' · '))+'</span></span></button>'; }).join('');
     if(!h) h='<p class="sub">Type a mobile number, like 0412 345 678.</p>';
     pl.innerHTML=h; }
