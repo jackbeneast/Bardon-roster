@@ -1576,9 +1576,14 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
         if(j.sample||j.date<s0||j.date>e0||(j.staff||[]).indexOf(t.id)<0) return;
         var s=shiftOf(j,t.id), span=(mins(s.end)-mins(s.start))/60;
         if(!(span>0)){ warn.push(t.name.split(' ')[0]+' on '+fmtDay(parse(j.date))+' has no valid shift times.'); return; }
+        // Clocked hours win over rostered ones once the cleaner has clocked in and off.
+        var L=liveOf(j), ar=L.arrived[t.id], lf=L.left[t.id], src='roster';
+        if(ar&&lf){ var cs=(Date.parse(lf)-Date.parse(ar))/36e5; if(cs>0&&cs<16){ span=cs; src='clock'; } }
+        else if(ar&&j.date<iso(today)) src='open';
+        else if(!ar&&j.date<iso(today)) src='none';
         var lunch=p.lunch&&span>4.5?0.5:0, dow=parse(j.date).getDay();
         var kind=isPH(j.date)?'ph':dow===0?'sun':dow===6?'sat':(mins(s.start)<360||mins(s.end)>1080)?'el':'wk';
-        sh.push({job:j,date:j.date,start:s.start,end:s.end,span:span,lunch:lunch,hrs:span-lunch,kind:kind,ord:0,ot:0,pay:0,c:cstate(j,t.id).v});
+        sh.push({job:j,date:j.date,start:s.start,end:s.end,span:span,lunch:lunch,hrs:span-lunch,kind:kind,ord:0,ot:0,pay:0,c:cstate(j,t.id).v,src:src,clk:src==='clock'?fmtClock(ar)+'–'+fmtClock(lf):''});
       });
       if(!sh.length) return;
       sh.sort(function(a,b){return (a.date+a.start).localeCompare(b.date+b.start);});
@@ -1606,7 +1611,10 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
         });
       }
       var gross=ordPay+otPay, sup=ordPay*0.12;
-      people.push({t:t,sh:sh,hrs:hrs,otHrs:otHrs,gross:gross,sup:sup,cost:gross+sup,reasons:reasons.filter(function(v,i,a){return a.indexOf(v)===i;}),un:sh.filter(function(x){return x.c!=='yes';}).length});
+      var nClk=sh.filter(function(x){return x.src==='clock';}).length, nOpen=sh.filter(function(x){return x.src==='open';}).length, nNone=sh.filter(function(x){return x.src==='none';}).length;
+      if(nOpen) warn.push(t.name.split(' ')[0]+' clocked in but not off on '+nOpen+' shift'+(nOpen===1?'':'s')+'. Rostered hours used.');
+      if(nNone) warn.push(t.name.split(' ')[0]+' didn\'t clock in on '+nNone+' past shift'+(nNone===1?'':'s')+'. Rostered hours used; check they worked.');
+      people.push({nClk:nClk,t:t,sh:sh,hrs:hrs,otHrs:otHrs,gross:gross,sup:sup,cost:gross+sup,reasons:reasons.filter(function(v,i,a){return a.indexOf(v)===i;}),un:sh.filter(function(x){return x.c!=='yes';}).length});
     });
     var tot={hrs:0,gross:0,sup:0,cost:0,otHrs:0,shifts:0,un:0};
     people.forEach(function(x){ tot.hrs+=x.hrs; tot.gross+=x.gross; tot.sup+=x.sup; tot.cost+=x.cost; tot.otHrs+=x.otHrs; tot.shifts+=x.sh.length; tot.un+=x.un; });
@@ -1618,7 +1626,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   function renderWages(){
     var per=periodFor(wageOff), c=wageCalc(per), p=paySet(), t=c.tot;
-    var h=topbar('Wage <em>estimate</em>');
+    var h=topbar(wageOff===-1?'Pay <em>run</em>':'Wage <em>estimate</em>');
+    if(wageOff===0) h+='<button type="button" class="ghost" data-wnav="-1" style="padding:0;margin:0 0 10px">See last pay period (what you pay this Tuesday) ›</button>';
     h+='<div class="nav"><button class="icon-btn" data-wnav="-1" aria-label="Previous pay period">&larr;</button><div class="range">'+fmtDay(per.start)+' to '+fmtDay(per.end)+(wageOff===0?'<br><small style="font-weight:400;color:var(--meta)">This pay period</small>':'')+'</div>'+(wageOff!==0?'<button class="icon-btn" data-wnav="0">Now</button>':'')+'<button class="icon-btn" data-wnav="1" aria-label="Next pay period">&rarr;</button></div>';
     h+='<div class="wsum"><div class="wbox dark"><b>'+money(t.cost)+'</b><span>Total cost to you</span></div><div class="wbox"><b>'+money(t.gross)+'</b><span>Gross wages</span></div><div class="wbox"><b>'+money(t.sup)+'</b><span>Super (12%)</span></div><div class="wbox"><b>'+hrsTxt(t.hrs)+'</b><span>Paid hours, '+t.shifts+' shift'+(t.shifts===1?'':'s')+'</span></div></div>';
     if(t.otHrs>0.001) h+='<div class="warn">'+hrsTxt(t.otHrs)+' hrs of overtime in this period, already costed at overtime rates.</div>';
@@ -1626,13 +1635,13 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     c.warn.forEach(function(w){ h+='<div class="warn">'+esc(w)+'</div>'; });
     if(!c.people.length) h+='<div class="hint-card">No team shifts rostered in this pay period yet. Your own shifts aren\'t counted.</div>';
     c.people.forEach(function(x){
-      h+='<div class="sect"><span>'+esc(x.t.name)+'</span><span>'+money(x.cost)+'</span></div><div class="wrows">';
+      h+='<div class="sect"><span>'+esc(x.t.name)+(x.nClk?' <small style="font-weight:500;color:#2F5A35">· '+x.nClk+'/'+x.sh.length+' clocked</small>':'')+'</span><span>'+money(x.cost)+'</span></div><div class="wrows">';
       x.sh.forEach(function(s){
-        h+='<button type="button" class="wrow" data-edit="'+s.job.id+'"><span class="wd">'+fmtDay(parse(s.date))+'<small>'+range(s.start,s.end)+'</small></span><span class="wm2">'+esc(s.job.client||'Job')+(s.job.suburb?' · '+esc(s.job.suburb):'')+'<small>'+c.LBL[s.kind]+(isPH(s.date)&&QLD_PH[s.date]?' ('+esc(QLD_PH[s.date])+')':'')+' · '+hrsTxt(s.hrs)+' hrs'+(s.lunch?' after lunch':'')+(s.ot>0.001?' · <b class="ot">'+hrsTxt(s.ot)+' OT</b>':'')+(s.c==='yes'?'':' · '+(s.c==='no'?'<b class="ot">can\'t make it</b>':'not confirmed'))+'</small></span><span class="wa">'+money(s.pay)+'</span></button>';
+        h+='<button type="button" class="wrow" data-edit="'+s.job.id+'"><span class="wd">'+fmtDay(parse(s.date))+'<small>'+range(s.start,s.end)+'</small></span><span class="wm2">'+esc(s.job.client||'Job')+(s.job.suburb?' · '+esc(s.job.suburb):'')+'<small>'+c.LBL[s.kind]+(isPH(s.date)&&QLD_PH[s.date]?' ('+esc(QLD_PH[s.date])+')':'')+' · '+hrsTxt(s.hrs)+' hrs'+(s.lunch?' after lunch':'')+(s.src==='clock'?' · clocked '+s.clk:s.src==='roster'?' · rostered':s.src==='open'?' · clocked in, no clock-off':' · no clock-in')+(s.ot>0.001?' · <b class="ot">'+hrsTxt(s.ot)+' OT</b>':'')+(s.c==='yes'?'':' · '+(s.c==='no'?'<b class="ot">can\'t make it</b>':'not confirmed'))+'</small></span><span class="wa">'+money(s.pay)+'</span></button>';
       });
       h+='<div class="wfoot"><span>'+hrsTxt(x.hrs)+' hrs'+(x.otHrs>0.001?' ('+hrsTxt(x.otHrs)+' OT: '+x.reasons.join(', ')+')':'')+'</span><span>'+money(x.gross)+' + '+money(x.sup)+' super</span></div></div>';
     });
-    h+='<p class="sub" style="margin-top:18px;font-size:12.5px">Estimate before tax. '+(p.lunch?'Takes off a 30-min unpaid lunch on shifts over 4½ hrs. ':'')+'Overtime past 7.6 hrs a day, 38 a week or on a 6th day uses Cleaning Services Award casual rates, or your rate if higher. Super is 12% of ordinary pay. Only counts rostered shifts, not hours actually worked.</p>';
+    h+='<p class="sub" style="margin-top:18px;font-size:12.5px">Estimate before tax. '+(p.lunch?'Takes off a 30-min unpaid lunch on shifts over 4½ hrs. ':'')+'Overtime past 7.6 hrs a day, 38 a week or on a 6th day uses Cleaning Services Award casual rates, or your rate if higher. Super is 12% of ordinary pay. Uses each cleaner\'s clock-in and clock-off where they have them, otherwise rostered hours.</p>';
     h+='<div class="menu"><button type="button" data-act="paysettings">'+IC.grid+'Pay period, rates and holidays<span class="chev">›</span></button></div>';
     return h;
   }

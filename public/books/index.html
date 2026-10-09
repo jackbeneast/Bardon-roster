@@ -127,6 +127,12 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .sendopt small{display:block;font:400 13px var(--sans);color:var(--meta);margin-top:2px}
 .sendopt .ic{width:36px;height:36px;border-radius:50%;background:var(--tint);color:var(--terracotta-dark);display:grid;place-items:center;flex:none;font-size:16px}
 .pay{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--cream-dark);font-size:14px;color:var(--dark)}
+.svc{display:grid;gap:14px}
+.svt{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:15px;color:var(--dark)}
+.svt span{font-weight:600}
+.svb{height:8px;border-radius:4px;background:var(--cream-dark);margin:6px 0 4px;overflow:hidden}
+.svb i{display:block;height:100%;background:var(--terracotta);border-radius:4px}
+.svr small{font-size:12.5px;color:var(--meta)}
 </style>
 <style>
 .pnl{margin-top:4px;font-variant-numeric:tabular-nums}
@@ -206,7 +212,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 import { pnl, bookingsOf, priceOf, perMonth, dueDates, rosteredHours, toWrap } from '/lib/profit.mjs';
 
 var app=document.getElementById('app');
-var D=null, loadErr='', loaded=false, X=null, xMsg=null;
+var D=null, loadErr='', loaded=false, X=null, xMsg=null, PIPE=null;
 var mode=lsGet('books_mode')||'month', off=0;
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
@@ -233,6 +239,7 @@ function api(method,body,qs){
 function load(){
   if(!key()){ loadErr='login'; render(); return Promise.resolve(); }
   loadX();
+  fetch('/api/pipeline',{headers:{'x-admin-key':key()},cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).then(function(d){ PIPE=d; if(loaded) render(); }).catch(function(){});
   return api('GET').then(function(d){ D=d; loaded=true; loadErr=''; render(); }).catch(function(e){ loadErr=e.status===401?'login':e.message; render(); });
 }
 function xapi(method,body){
@@ -297,12 +304,36 @@ function render(){
 }
 
 // ---------- Profit ----------
+function svcKind(s){ s=String(s||'').toLowerCase(); return /bond|lease|vacate/.test(s)?'Bond':/pre.?sale/.test(s)?'Pre-sale':/deep|move.?in/.test(s)?'Deep':/regular/.test(s)?'Regular':'Other'; }
+// Which kind of clean actually pays best per hour, from jobs with hours logged.
+function byService(x){
+  var g={};
+  x.jobs.forEach(function(b){ if(!b.actHrs||b.rev==null) return; var k=svcKind(b.j.service), o=g[k]||(g[k]={n:0,hrs:0,rev:0,profit:0}); o.n++; o.hrs+=b.actHrs; o.rev+=b.rev; o.profit+=b.profit; });
+  var ks=Object.keys(g); if(!ks.length) return '';
+  ks.sort(function(a,b){ return g[b].profit/g[b].hrs - g[a].profit/g[a].hrs; });
+  var best=g[ks[0]].profit/g[ks[0]].hrs;
+  var h='<div class="card"><h2>Per hour <em>by service</em></h2><div class="svc">';
+  ks.forEach(function(k){ var o=g[k], ph=o.profit/o.hrs, w=best>0?Math.max(4,Math.round(Math.max(0,ph)/best*100)):0;
+    h+='<div class="svr"><div class="svt"><b>'+esc(k)+'</b><span>'+m0(ph)+'/hr profit</span></div><div class="svb"><i style="width:'+w+'%"></i></div><small>'+o.n+' job'+(o.n===1?'':'s')+' · '+Math.round(o.hrs*10)/10+' hrs · '+m0(o.rev/o.hrs)+'/hr earned'+(D.gstReg?' ex GST':'')+'</small></div>'; });
+  h+='</div><p class="hint">Only jobs with hours logged (clock-off or wrap-up). Profit is after team wages, super and job costs, before your own time and overheads.</p></div>';
+  return h;
+}
+// What's coming: booked work over the next 4 weeks and quotes waiting on a yes.
+function comingUp(){
+  var t=today(), y=pnl(D,t,addD(t,27)), un=y.unpriced.length;
+  var h='<div class="card"><h2>Coming <em>up</em></h2><div class="kpis" style="margin-top:0;grid-template-columns:1fr 1fr"><div class="kpi"><b>'+m0(y.revInc)+'</b><span>Booked, next 4 weeks'+(un?' · '+un+' job'+(un===1?'':'s')+' unpriced':'')+'</span></div>';
+  h+='<div class="kpi"><b>'+(PIPE?m0(PIPE.totals.quoted):'…')+'</b><span>Quoted, waiting on a yes'+(PIPE?' · '+PIPE.stages.quoted.filter(function(q){return !q.draft;}).length+' quotes':'')+'</span></div></div>';
+  h+='<p class="hint">Booked counts every rostered job starting in the next 28 days at its price, including GST. <a href="/?v=pipeline">Open the pipeline</a> to chase quotes.</p></div>';
+  return h;
+}
 function renderProfit(){
   var p=period(mode,off), x=pnl(D,p.from,p.to), h=periodNav(p);
   if(off===0) h+=nudges(x);
   var loss=x.profit<0;
   h+='<div class="kpis"><div class="kpi dark"><b>'+m0(x.profit)+'</b><span>Profit'+(x.margin!=null?' · '+Math.round(x.margin*100)+'% margin':'')+'</span></div><div class="kpi"><b>'+m0(x.rev)+'</b><span>Revenue'+(D.gstReg?' ex GST':'')+'</span></div><div class="kpi"><b>'+m0(x.costs)+'</b><span>Costs</span></div></div>';
   if(x.perHour) h+='<div class="card"><div class="hrow"><h2>Per hour <em>worked</em></h2><span class="sub" style="margin:0">'+x.perHour.jobs+' job'+(x.perHour.jobs===1?'':'s')+' · '+Math.round(x.perHour.hrs*10)/10+' hrs</span></div><div class="kpis" style="margin-top:0;grid-template-columns:1fr 1fr"><div class="kpi"><b>'+money(x.perHour.rate)+'</b><span>Earned per hour'+(D.gstReg?' (ex GST)':'')+'</span></div><div class="kpi'+(x.perHour.profit<0?' warn':'')+'"><b>'+money(x.perHour.profit)+'</b><span>Profit per hour</span></div></div><p class="hint">From jobs where you\'ve logged actual hours (everyone\'s, yours included).</p></div>';
+  h+=byService(x);
+  if(off===0) h+=comingUp();
   if(x.unpriced.length && off!==0) h+='<a class="nudge" href="#/prices" style="border-left-color:var(--terracotta-dark)"><span><b>Missing revenue:</b> '+x.unpriced.length+' job'+(x.unpriced.length===1?'':'s')+' in this period '+(x.unpriced.length===1?'has':'have')+' no price.</span><span class="go">Fix ›</span></a>';
   // Profit and loss
   h+='<div class="card"><h2>Profit <em>&amp;</em> loss</h2><div class="pnl">';
