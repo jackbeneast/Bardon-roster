@@ -43,3 +43,9 @@
   from = "/quote"
   to = "/request/index.html"
   status = 200
+
+# Careers page short links
+[[redirects]]
+  from = "/jobs"
+  to = "/careers/"
+  status = 301

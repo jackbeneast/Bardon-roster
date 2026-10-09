@@ -1283,7 +1283,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function navBar(){
     var a=alertCount(), rq=(state.requests||[]).length;
     function b(v,label,icon,badge){ return '<button type="button" data-view="'+v+'"'+(view===v?' aria-current="page"':'')+'>'+icon+label+(badge?'<span class="badge">'+badge+'</span>':'')+'</button>'; }
-    return '<nav class="tabbar" aria-label="Main"><div class="in">'+b('today','Today',IC.today,a)+b('roster','Roster',IC.roster)+'<button type="button" class="add" data-act="add" aria-label="Add job"><span class="c">'+IC.plus+'</span>Add job</button>'+'<a href="/messages/" class="tablink">'+IC.chat+'Messages'+(state.msgUnread?'<span class="badge">'+(state.msgUnread>99?'99+':state.msgUnread)+'</span>':'')+'</a>'+b('pipeline','Pipeline',IC.funnel,rq+(pipe?pipe.stages.new.length:0))+b('more','Tools',IC.grid)+'</div></nav>';
+    return '<nav class="tabbar" aria-label="Main"><div class="in">'+b('today','Today',IC.today,a)+b('roster','Roster',IC.roster)+'<button type="button" class="add" data-act="add" aria-label="Add job"><span class="c">'+IC.plus+'</span>Add job</button>'+'<a href="/messages/" class="tablink">'+IC.chat+'Messages'+(state.msgUnread?'<span class="badge">'+(state.msgUnread>99?'99+':state.msgUnread)+'</span>':'')+'</a>'+b('pipeline','Pipeline',IC.funnel,rq+(pipe?pipe.stages.new.length:0)+(cands?(cands.candidates||[]).filter(function(c){return c.stage==='applied'&&!c.seen;}).length:0))+b('more','Tools',IC.grid)+'</div></nav>';
   }
   function topbar(title){ var u=state.actUnread||0; return '<div class="topbar"><span class="wm">Bardon Clean</span><span class="tr"><button class="refresh" data-act="sync">Refresh</button><button type="button" class="bell" data-view="activity" aria-label="Activity'+(u?', '+u+' new':'')+'">'+IC.bell+(u?'<span class="badge">'+(u>99?'99+':u)+'</span>':'')+'</button></span></div><h1>'+title+'</h1>'; }
   // The client's mobile for a job: from its notes ("Client: 04…") as quotes write it.
@@ -1367,6 +1367,66 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   // ---------- Pipeline: enquiry → quote → booked → done ----------
   var pipe=null, pipeTab=ls('pipe_tab')||'new', pipeErr='';
+  var board=(location.hash==='#hiring')?'hiring':(ls('pipe_board')||'leads'), cands=null, hireTab=ls('hire_tab')||'applied', candErr='';
+  function loadCands(){ return api('/api/careers').then(function(d){ cands=d; candErr=''; if(view==='pipeline'&&!document.getElementById('scrim')) render(); }).catch(function(e){ candErr=e.message; if(view==='pipeline') render(); }); }
+  var HSTAGE=[['applied','Applied'],['screened','Screened'],['trial','Trial'],['onboarding','Onboarding'],['active','On the team']];
+  var SCORE=[['reliable','Reliable, turns up'],['attitude','Attitude and pride in work'],['availability','Availability fits'],['work','Quality of work (trial)']];
+  function candLine(c){ var L=(cands&&cands.labels)||{}; return [c.suburb,(c.days||[]).join(' '),c.hours&&L.HOURS?L.HOURS[c.hours]:''].filter(Boolean).join(' · '); }
+  function candCard(c){
+    var L=cands.labels, ago=Math.round((Date.now()-Date.parse(c.at))/864e5), sc=c.score||{}, tot=Object.keys(sc).reduce(function(a,k){return a+sc[k];},0), n=Object.keys(sc).length;
+    var mob=(c.phone||'').replace(/[^\d+]/g,'').replace(/^\+61/,'0');
+    var h='<div class="pcard"><div class="pt"><h3>'+esc(c.name)+'</h3>'+(n?'<span class="amt">'+tot+'/'+(n*3)+'</span>':'')+'</div><div class="pm">'+esc(candLine(c))+'<br>'+esc([c.exp?L.EXP[c.exp]:'',c.transport?L.TRANSPORT[c.transport]:''].filter(Boolean).join(' · '))+'</div><div class="pchips">';
+    if(c.stage==='applied') h+='<span class="cs '+(ago>=2?'no':'wait')+'">Applied '+dayAgo(ago)+'</span>'+(c.seen?'':'<span class="cs no">New</span>');
+    if(c.trialDate) h+='<span class="cs wait">Trial '+fmtDay(parse(c.trialDate))+'</span>';
+    if(c.stage==='onboarding'){ var ck=c.checks||{}, ack=c.teamId&&state.acks&&state.acks[c.teamId]; h+=['contract','form'].map(function(k){ return '<span class="cs '+(ck[k]?'ok':'wait')+'">'+(ck[k]?'✓ ':'')+(k==='contract'?'Contract':'Onboarding form')+'</span>'; }).join('')+'<span class="cs '+(ack?'ok':'wait')+'">'+(ack?'✓ ':'')+'First-day info</span>'; }
+    if(c.auto) h+='<span class="cs no">'+esc(c.auto)+'</span>';
+    h+='</div><div class="pact"><button type="button" class="go" data-cand="'+c.id+'">Open</button>';
+    var tp={applied:'hire_screen',screened:'hire_trial',trial:'hire_welcome',onboarding:'',no:'hire_decline'}[c.stage];
+    if(mob) h+='<a href="/messages/#/t/'+mob+'?name='+encodeURIComponent(c.name)+(tp?'&tpl='+tp:'')+'">Text</a><a href="tel:'+mob+'">Call</a>';
+    return h+'</div></div>';
+  }
+  function renderHiring(){
+    var h='';
+    if(!cands){ h+=candErr?'<div class="err">'+esc(candErr)+'</div>':'<p class="sub">Loading…</p>'; if(!candErr) loadCands(); return h; }
+    var all=cands.candidates||[], by={}; all.forEach(function(c){ (by[c.stage]||(by[c.stage]=[])).push(c); });
+    h+='<div class="ptabs" role="group" aria-label="Stage">'+HSTAGE.map(function(x){ return '<button type="button" data-htab="'+x[0]+'" aria-pressed="'+(hireTab===x[0])+'">'+x[1]+'<span>'+((by[x[0]]||[]).length)+'</span></button>'; }).join('')+'</div>';
+    var list=by[hireTab]||[];
+    if(!list.length) h+='<div class="pempty">'+{applied:'No new applicants. Share your careers page link to get some.',screened:'Nobody screened and waiting on a trial.',trial:'No trial shifts booked.',onboarding:'Nobody onboarding right now.',active:'Hired people show here once they\'re fully set up.'}[hireTab]+'</div>';
+    list.forEach(function(c){ h+=candCard(c); });
+    if(hireTab==='applied' && (by.no||[]).length) h+='<details class="olds"><summary>Not a fit ('+by.no.length+')</summary>'+by.no.map(candCard).join('')+'</details>';
+    h+='<div class="hint-card" style="margin-top:14px"><strong>Your careers page:</strong> '+esc(location.origin)+'/jobs<br><button type="button" class="btn outline" data-copyjobs style="margin-top:10px;min-height:42px">Copy link</button></div>';
+    return h;
+  }
+  function candSheet(id){
+    var c=(cands.candidates||[]).filter(function(x){return x.id===id;})[0]; if(!c) return;
+    var L=cands.labels, sc=c.score||{}, ck=c.checks||{};
+    var h='<h3>'+esc(c.name)+'</h3><p class="sub" style="margin:-6px 0 8px">Applied '+fmtDay(parse(c.at.slice(0,10)))+(c.heard?' · via '+esc(L.HEARD[c.heard]):'')+'</p>';
+    h+='<div class="lsec"><h4>Application</h4>'+[['Mobile',c.phone],['Email',c.email],['Suburb',c.suburb],['Work in Australia',c.rightToWork==='yes'?'Yes':'No'],['Days',(c.days||[]).join(', ')],['Hours',c.hours?L.HOURS[c.hours]:''],['Can start',c.start?fmtDay(parse(c.start)):''],['Experience',c.exp?L.EXP[c.exp]:''],['Transport',c.transport?L.TRANSPORT[c.transport]:''],['About them',c.about]].filter(function(r){return r[1];}).map(function(r){ return '<p class="sub" style="margin:4px 0;color:var(--dark)"><b>'+r[0]+':</b> '+esc(r[1])+'</p>'; }).join('')+'</div>';
+    h+='<div class="lsec"><h4>Your scorecard</h4>'+SCORE.map(function(s){ return '<div class="lrow"><span class="nm" style="font-weight:500">'+s[1]+'</span><span class="rseg">'+[1,2,3].map(function(v){ return '<button type="button" data-csc="'+s[0]+'" data-v="'+v+'" aria-pressed="'+(sc[s[0]]===v)+'"'+(sc[s[0]]===v?' style="background:var(--dark);color:#fff;border-color:var(--dark)"':'')+'>'+['','Low','OK','Strong'][v]+'</button>'; }).join('')+'</span></div>'; }).join('');
+    h+='<label class="l" for="c_notes" style="margin-top:10px">Notes from the call or trial<textarea id="c_notes">'+esc(c.notes||'')+'</textarea></label><button type="button" class="btn outline" data-cnotes style="width:100%;margin-top:8px">Save notes</button></div>';
+    if(c.stage==='onboarding') h+='<div class="lsec"><h4>Onboarding</h4><label class="tick"><input type="checkbox" data-cck="contract"'+(ck.contract?' checked':'')+'>Contract signed</label><label class="tick"><input type="checkbox" data-cck="form"'+(ck.form?' checked':'')+'>Onboarding form done (tax, super, bank, ID)</label><label class="tick"><input type="checkbox" data-cck="shirt"'+(ck.shirt?' checked':'')+'>Shirt given</label><p class="sub">First-day info: '+(c.teamId&&state.acks&&state.acks[c.teamId]?'read ✓':'not read yet (it\'s on their roster link)')+'</p></div>';
+    h+='<div class="lsec"><h4>Next step</h4>';
+    if(c.stage==='applied') h+='<button type="button" class="btn yes" data-cstage="screened" style="width:100%">Phone chat done: mark screened</button>';
+    if(c.stage==='applied'||c.stage==='screened') h+='<label class="l" for="c_trial" style="margin-top:10px">Trial shift date<input id="c_trial" type="date" value="'+esc(c.trialDate||'')+'"></label><button type="button" class="btn '+(c.stage==='screened'?'yes':'outline')+'" data-ctrial style="width:100%;margin-top:8px">Book trial and add to the team list</button><p class="sub">Adds them to your team so you can put the trial shift on the roster.</p>';
+    if(c.stage==='trial') h+='<button type="button" class="btn yes" data-chire style="width:100%">Trial went well: offer the job</button>';
+    if(c.stage==='onboarding') h+='<button type="button" class="btn yes" data-cstage="active" style="width:100%">All set up: move to On the team</button>';
+    if(c.stage!=='no') h+='<button type="button" class="btn outline" data-cstage="no" style="width:100%;margin-top:8px">Not a fit</button>';
+    else h+='<button type="button" class="btn outline" data-cstage="applied" style="width:100%">Move back to Applied</button><button type="button" class="btn danger" data-cdel style="width:100%;margin-top:8px">Delete application</button>';
+    h+='</div><div class="err" id="cErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Close</button></div>';
+    var s=openSheet(h);
+    function post(body,btn,done){ if(btn) btn.disabled=true; body.id=c.id; return api('/api/careers',{method:'POST',body:body}).then(function(d){ if(d.candidate){ cands.candidates=cands.candidates.map(function(x){ return x.id===c.id?d.candidate:x; }); } if(done) done(d); }).catch(function(e){ if(btn) btn.disabled=false; var er=document.getElementById('cErr'); if(er){ er.textContent=e.message; er.hidden=false; } }); }
+    s.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return;
+      if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
+      if(b.dataset.csc){ var o={}; o[b.dataset.csc]=+b.dataset.v; post({action:'update',score:o},b,function(){ closeSheet(); candSheet(c.id); }); return; }
+      if(b.hasAttribute('data-cnotes')){ post({action:'update',notes:document.getElementById('c_notes').value},b,function(){ b.disabled=false; toast('Notes saved'); }); return; }
+      if(b.dataset.cstage){ var st=b.dataset.cstage; post({action:'update',stage:st},b,function(){ closeSheet(); hireTab=st==='no'?hireTab:st; ls('hire_tab',hireTab); render(); toast(st==='no'?'Moved to Not a fit':'Moved on'); }); return; }
+      if(b.hasAttribute('data-ctrial')){ var dt=document.getElementById('c_trial').value; post({action:'hire',stage:'trial',trialDate:dt},b,function(){ closeSheet(); hireTab='trial'; ls('hire_tab','trial'); refresh().then(render); toast(c.name.split(' ')[0]+' is on your team list. Add the trial shift on the roster.'); }); return; }
+      if(b.hasAttribute('data-chire')){ post({action:'hire',stage:'onboarding'},b,function(){ closeSheet(); hireTab='onboarding'; ls('hire_tab','onboarding'); refresh().then(render); toast('Welcome aboard. Send the welcome text next.'); }); return; }
+      if(b.hasAttribute('data-cdel')){ if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent='Tap again to delete'; return; } post({action:'delete'},b,function(){ cands.candidates=cands.candidates.filter(function(x){return x.id!==c.id;}); closeSheet(); render(); }); return; }
+    });
+    s.addEventListener('change',function(e){ var t=e.target; if(t.dataset.cck){ var o={}; o[t.dataset.cck]=t.checked; post({action:'update',checks:o}); } });
+    if(!c.seen) post({action:'update'});
+  }
   function loadPipe(){ return api('/api/pipeline').then(function(d){ pipe=d; pipeErr=''; if((view==='pipeline'||view==='today')&&!document.getElementById('scrim')) render(); }).catch(function(e){ pipeErr=e.message; if(view==='pipeline') render(); }); }
   function money0(v){ return '$'+Math.round(+v||0).toLocaleString('en-AU'); }
   function dayAgo(n){ return n==null?'':n===0?'today':n===1?'yesterday':n+' days ago'; }
@@ -1395,6 +1455,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   function renderPipeline(){
     var h=topbar('Pipeline');
+    h+='<div class="kindsw" style="margin:0 0 12px"><button type="button" data-board="leads" aria-pressed="'+(board==='leads')+'">Clients</button><button type="button" data-board="hiring" aria-pressed="'+(board==='hiring')+'">Hiring'+(cands?' <span>'+(cands.candidates||[]).filter(function(c){return c.stage==='applied'&&!c.seen;}).length+'</span>':'')+'</button></div>';
+    if(board==='hiring') return h+renderHiring();
     if(!pipe){ h+=pipeErr?'<div class="err">'+esc(pipeErr)+'</div>':'<p class="sub">Loading…</p>'; if(!pipeErr) loadPipe(); return h; }
     var S=pipe.stages, rq=state.requests||[];
     var tabs=[['new','New',S.new.length+rq.length],['quoted','Quoted',S.quoted.length],['booked','Booked',S.booked.length],['done','Follow up',S.done.filter(function(c){return !c.dismissed;}).length]];
@@ -1554,7 +1616,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 
   // ---- Activity feed and phone notifications ----
   var act=null, actErr='', actLoading=false;
-  var ACT_ICON={shift_yes:['✓','ok'],shift_no:['✕','hot'],ack:['👌',''],arrive:['📍',''],access:['🔑',''],feedback:['⭐',''],supply:['🛒',''],leave:['👋',''],noclock:['⏳','hot'],hours:['⏱','ok'],late:['⏳','hot'],flag:['⚠️','hot'],finish:['✨','ok'],unfinished:['⏳',''],tomorrow:['📅','hot'],quote_view:['👀',''],inv_view:['👀',''],quote_accept:['🎉','ok'],quote_follow:['📞',''],quote_expiry:['⏳',''],paid:['💰','ok'],deposit:['💰','hot'],overdue:['⚠️','hot'],booking:['🏠','hot']};
+  var ACT_ICON={shift_yes:['✓','ok'],shift_no:['✕','hot'],ack:['👌',''],arrive:['📍',''],applicant:['👤','hot'],access:['🔑',''],feedback:['⭐',''],supply:['🛒',''],leave:['👋',''],noclock:['⏳','hot'],hours:['⏱','ok'],late:['⏳','hot'],flag:['⚠️','hot'],finish:['✨','ok'],unfinished:['⏳',''],tomorrow:['📅','hot'],quote_view:['👀',''],inv_view:['👀',''],quote_accept:['🎉','ok'],quote_follow:['📞',''],quote_expiry:['⏳',''],paid:['💰','ok'],deposit:['💰','hot'],overdue:['⚠️','hot'],booking:['🏠','hot']};
   function ago(isoStr){ var d=new Date(isoStr), m=Math.round((Date.now()-d)/60000); if(m<1) return 'Just now'; if(m<60) return m+' min ago'; var t=fmtTime(pad(d.getHours())+':'+pad(d.getMinutes())); if(iso(d)===iso(new Date())) return t; if(iso(d)===iso(addDays(new Date(),-1))) return 'Yesterday '+t; return fmtDay(d)+' '+t; }
   function loadActivity(){
     if(actLoading) return; actLoading=true;
@@ -1714,7 +1776,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       if(key() && !d.admin){ key(null); }
       if(d.admin&&window.BCTpl) BCTpl.load(key()).catch(function(){});
       if(d.admin) api('/api/books?sum=1').then(function(b){ state.books=b; if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
-      if(d.admin) loadPipe();
+      if(d.admin){ loadPipe(); loadCands(); }
       if(d.admin) api('/api/docs').then(function(m){ state.money=(m.docs||[]).filter(function(x){ return x.flag||x.state==='overdue'; }).slice(0,8); if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
       canEdit=!!d.admin;
       var hj=/^#job=([\w-]+)/.exec(location.hash); if(hj && canEdit){ history.replaceState(null,'',location.pathname); var jj=(d.jobs||[]).filter(function(x){return x.id===hj[1];})[0]; if(jj) setTimeout(function(){ view='roster'; render(); jobSheet(state.jobs.filter(function(x){return x.id===hj[1];})[0]); },0); }
@@ -1749,6 +1811,10 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   app.addEventListener('click', function(e){
     var ak=e.target.closest('[data-ack]'); if(ak){ ak.disabled=true; ak.textContent='Saving…'; api('/api/ack',{method:'POST',body:{personId:ak.dataset.ack}}).then(function(d){ state.acks[ak.dataset.ack]=d.ack; render(); toast('Thanks! See you there.'); }).catch(function(er){ ak.disabled=false; ak.textContent='Got it'; toast(er.message); }); return; }
     var r=e.target.closest('[data-reply]'); if(r){ if(r.dataset.reply==='yes') sendReply(r.dataset.j, r.dataset.p, 'yes', '', r); else replyNo(r.dataset.j, r.dataset.p); return; }
+    var bd=e.target.closest('[data-board]'); if(bd){ board=bd.dataset.board; ls('pipe_board',board); render(); return; }
+    var ht=e.target.closest('[data-htab]'); if(ht){ hireTab=ht.dataset.htab; ls('hire_tab',hireTab); render(); return; }
+    var cd=e.target.closest('[data-cand]'); if(cd){ candSheet(cd.dataset.cand); return; }
+    var cj=e.target.closest('[data-copyjobs]'); if(cj){ copyText(location.origin+'/jobs'); return; }
     var pt=e.target.closest('[data-ptab]'); if(pt){ pipeTab=pt.dataset.ptab; ls('pipe_tab',pipeTab); render(); return; }
     var pd=e.target.closest('[data-pdis]'); if(pd){ pd.disabled=true; api('/api/pipeline',{method:'POST',body:{action:pd.dataset.undo?'undismiss':'dismiss',key:pd.dataset.pdis}}).then(loadPipe).catch(function(er){ pd.disabled=false; toast(er.message); }); return; }
     var vw=e.target.closest('[data-view]'); if(vw){ setView(vw.dataset.view); return; }
