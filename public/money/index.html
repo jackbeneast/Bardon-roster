@@ -187,7 +187,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 
   function load(){
     if(!key()){ loadErr='login'; render(); return Promise.resolve(); }
-    return Promise.all([api('GET','/api/docs'), api('GET','/api/roster').catch(function(){return {jobs:[]};}), api('GET','/api/request').catch(function(){return {requests:[]};}), api('GET','/api/books?costs=1').catch(function(){return null;})]).then(function(r){ S.reqs=r[2].requests||[]; S.costs=r[3];
+    return Promise.all([api('GET','/api/docs'), api('GET','/api/roster').catch(function(){return {jobs:[]};}), api('GET','/api/request').catch(function(){return {requests:[]};}), api('GET','/api/books?costs=1').catch(function(){return null;})]).then(function(r){ S.reqs=r[2].requests||[]; S.costs=r[3]&&r[3].rates?r[3]:null;
       BCSms.check(key()); BCTpl.load(key()).catch(function(){}); S.docs=r[0].docs; S.settings=r[0].settings; S.card=r[0].card; S.jobs=(r[1].jobs||[]).filter(function(j){return !j.sample;});
       loaded=true; loadErr=''; render();
     }).catch(function(e){ loadErr=e.status===401?'login':e.message; render(); });
@@ -266,7 +266,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   }
   function renderEdit(id){
     if(!draft){
-      if(id==='new-quote'||id==='new-invoice'){ draft=blank(id.slice(4)); if(PREFILL&&id==='new-quote'){ for(var pk in PREFILL) draft[pk]=PREFILL[pk]; PREFILL=null; dirty=true; } }
+      if(id==='new-quote'||id==='new-invoice'){ draft=blank(id.slice(4)); if(!PREFILL&&id==='new-quote'){ try{ var qp=localStorage.getItem('quote_prefill'); if(qp){ localStorage.removeItem('quote_prefill'); PREFILL=JSON.parse(qp); } }catch(e){} } if(PREFILL&&id==='new-quote'){ for(var pk in PREFILL) draft[pk]=PREFILL[pk]; PREFILL=null; dirty=true; } }
       else { var d=docById(id); if(!d){ go('list'); return; } draft=JSON.parse(JSON.stringify(d)); }
     }
     var d=draft, isQ=d.kind==='quote', existing=!!d.id;

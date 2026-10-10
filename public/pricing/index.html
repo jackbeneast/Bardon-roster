@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#F5F0EB">
+<title>Price Calculator</title>
+<link rel="icon" type="image/png" href="/icons/favicon.png?v=2"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--terracotta:#C06B3C;--terracotta-dark:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cream-dark:#EDE6DE;--body:#4A4A4A;--meta:#7A7A7A;--gold:#F4B942;--white:#FFFFFF;--line:#DDD3C8;--tint:#FBF3EE;
+  --serif:"Playfair Display",Georgia,serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--body);font:400 15px/1.5 var(--sans);-webkit-text-size-adjust:100%}
+#app{max-width:720px;margin:0 auto;padding:16px 16px calc(110px + env(safe-area-inset-bottom,0px))}
+a{color:var(--terracotta-dark)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.top a,.top button{font:500 14px var(--sans);color:var(--meta);text-decoration:none;background:none;border:0;cursor:pointer;padding:8px 0}
+.top .wm{display:flex;gap:8px;align-items:center;font:700 17px/1 var(--serif);color:var(--dark)}
+.top .wm svg{width:26px;height:26px}
+h1{font:700 28px/1.15 var(--serif);color:var(--dark);margin:6px 0 0}
+h1 em,h2 em{font-style:italic;font-weight:500}
+h2{font:700 20px/1.2 var(--serif);color:var(--dark);margin:0 0 12px}
+.sub{color:var(--meta);font-size:14px;margin:4px 0 0}
+.card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+label.l{display:block;font:500 13px/1.3 var(--sans);color:var(--dark);min-width:0}
+label.l small{font-weight:400;color:var(--meta)}
+input,select{width:100%;margin-top:6px;font:400 16px/1.35 var(--sans);color:var(--dark);background:var(--white);border:1px solid #CFC5BA;border-radius:6px;padding:11px;min-height:46px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--terracotta);outline-offset:1px}
+.money-in{position:relative;display:block}.money-in::before{content:"$";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--meta);font-size:16px;pointer-events:none;margin-top:3px}
+.money-in input{padding-left:24px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.seg button{border:1px solid var(--line);background:var(--white);border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;font:inherit;color:var(--dark)}
+.seg button[aria-pressed="true"]{border:2px solid var(--terracotta);background:var(--tint)}
+.seg small{display:block;font-size:11.5px;color:var(--meta)}
+.seg b{display:block;font:600 15px var(--sans);font-variant-numeric:tabular-nums}
+.seg i{display:block;font-style:normal;font-size:11.5px;color:var(--terracotta-dark)}
+.hero{background:var(--dark);color:var(--cream);border-radius:12px;padding:18px 16px;margin-top:14px}
+.hero small{display:block;color:#BDB5AD;font-size:13px}
+.hero b{display:block;font:700 34px/1.1 var(--serif);margin:4px 0;font-variant-numeric:tabular-nums}
+.hero .row{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:#DDD5CC;margin-top:4px;font-variant-numeric:tabular-nums}
+.hero .row2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;border-top:1px solid #3A3A3A;padding-top:12px}
+.hero .row2 span{font-size:12px;color:#BDB5AD}.hero .row2 strong{display:block;font:600 16px var(--sans);color:var(--cream);font-variant-numeric:tabular-nums}
+.pc{font-variant-numeric:tabular-nums}
+.pc div{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:7px 0;border-bottom:1px solid var(--cream-dark);font-size:15px;color:var(--dark)}
+.pc div span:last-child{white-space:nowrap}
+.pc small{display:block;font:400 12.5px/1.3 var(--sans);color:var(--meta)}
+.pc .be{font-weight:600;border-top:1px solid var(--line)}
+.pc .g{border-top:2px solid var(--dark);border-bottom:0;margin-top:4px;padding-top:10px;font:700 20px var(--serif)}
+.hint{font-size:13px;color:var(--meta);margin-top:8px}
+.hint-card{margin-top:12px;background:var(--tint);border-radius:8px;padding:11px 13px;font-size:14px;color:var(--dark)}
+.verdict{margin-top:12px;border-radius:8px;padding:11px 13px;font-size:14px;line-height:1.4}
+.verdict b{display:block;font:600 15px var(--sans);margin-bottom:2px}
+.verdict.bad{background:#FBEBD9;color:#8A4A1F}.verdict.warn{background:#FCEFD0;color:#5E4510}.verdict.ok{background:#E6EFE3;color:#2F5A35}
+.btn{font:600 15px/1 var(--sans);border-radius:8px;min-height:48px;padding:0 18px;cursor:pointer;border:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn.primary{background:var(--terracotta);color:var(--white)}
+.btn.plain{background:var(--white);border:1px solid var(--line);color:var(--dark)}
+.btn:disabled{opacity:.6}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--white);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar .in{max-width:720px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.bar .sum{flex:1;min-width:0;font-size:12px;color:var(--meta);line-height:1.2}
+.bar .sum b{display:block;font:700 19px/1.2 var(--serif);color:var(--dark);font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;font:600 14px var(--sans);color:var(--dark);padding:6px 0}
+.hist{font-variant-numeric:tabular-nums}
+.hist .r{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:9px 0;border-bottom:1px solid var(--cream-dark);font-size:14px;color:var(--dark)}
+.hist .r small{color:var(--meta);font-size:12.5px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi{background:var(--cream);border-radius:10px;padding:10px}
+.kpi b{display:block;font:700 18px/1.2 var(--serif);color:var(--dark);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--meta)}
+.toast{pointer-events:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:40;max-width:90vw;text-align:center}
+.center{text-align:center;padding:60px 16px;color:var(--dark)}
+@media (max-width:400px){.grid3{grid-template-columns:1fr 1fr}.hero b{font-size:30px}}
+</style></head><body>
+<div id="app"><div class="center">Loading…</div></div>
+<script type="module">
+// Price calculator: what a job costs, its break-even, and the price that pays
+// Jack and grows the business. Uses the same cost basis as the quote price
+// check (lib/profit.mjs) and shows how similar past jobs actually went.
+import { costBasis, pnl, rosteredHours } from '/lib/profit.mjs';
+
+var app=document.getElementById('app');
+var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
+var SERVICES=['Pre-sale clean','Bond clean','Deep clean','Regular clean','Commercial','Other'];
+var KIND={wk:'Weekday',sat:'Saturday',sun:'Sunday',ph:'Public holiday'};
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var D=null, SET=null, C=null, err='';
+var F=Object.assign({service:'Pre-sale clean',beds:'',baths:'',cleaners:'2',each:'',own:'',day:'wk',travelMin:'',km:'',parking:'',extra:'',mat:'',card:false},lsJson('price_calc')||{});
+
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsJson(k){ try{ return JSON.parse(lsGet(k)||'null'); }catch(e){ return null; } }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function money(v,dp){ v=+v||0; var n=dp===0?0:2; return (v<0?'−':'')+'$'+Math.abs(v).toLocaleString('en-AU',{minimumFractionDigits:n,maximumFractionDigits:n}); }
+function r1(v){ return Math.round(v*10)/10; }
+function r2(v){ return Math.round(v*100)/100; }
+function pad(n){ return (n<10?'0':'')+n; }
+function today(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function addD(s,n){ var p=s.split('-'), d=new Date(+p[0],+p[1]-1,+p[2]); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function fdate(s){ if(!s) return ''; var p=s.split('-'); return +p[2]+' '+MON[+p[1]-1]; }
+function toast(m){ var t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2600); }
+function key(){ return lsGet('roster_admin_key')||''; }
+function api(method,url,body){
+  return fetch(url,{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
+    .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok){ var e=new Error(d.error||'Something went wrong. Try again.'); e.status=r.status; throw e; } return d; }); });
+}
+function load(){
+  if(!key()){ err='login'; render(); return; }
+  Promise.all([api('GET','/api/books'), api('GET','/api/docs').catch(function(){ return {settings:{prices:{}}}; })]).then(function(r){
+    D=r[0]; SET=r[1].settings||{prices:{}}; C=costBasis(D,today()); err=''; render();
+  }).catch(function(e){ err=e.status===401?'login':e.message; render(); });
+}
+function T(){ return D.books.pricing||{margin:20,tax:32}; }
+
+// ---------- the sums ----------
+function calc(day){
+  var t=T(), kind=day||F.day, cleaners=Math.max(0,+F.cleaners||0), each=+F.each||0, own=+F.own||0;
+  var staffHrs=cleaners*each, onSite=staffHrs+own;
+  var travelHrs=(+F.travelMin||0)/60, travelStaff=cleaners*travelHrs, travelOwn=own>0?travelHrs:0;
+  var rate=+C.rates[kind]||+C.rates.wk, ownerRate=t.ownerRate!=null?+t.ownerRate:+C.rates.wk;
+  var wages=(staffHrs+travelStaff)*rate*(1+C.superRate);
+  var hrsAll=onSite+travelStaff+travelOwn;
+  var mat=F.mat!==''?+F.mat||0:onSite*(+C.matPerHr||0);
+  var car=(+F.km||0)*(+t.carPerKm||0), park=+F.parking||0, extra=+F.extra||0;
+  var oh=hrsAll*(+C.ohPerHr||0);
+  var be=wages+mat+car+park+extra+oh, you=(own+travelOwn)*ownerRate;
+  var m=(+t.margin||0)/100, tx=(+t.tax||0)/100, card=F.card?(+t.cardPct||0)/100:0;
+  // Card fees come off the inc-GST total, so gross the price up to cover them.
+  var gst=C.gstReg?1.1:1, denom=(1-m)-card*gst; if(denom<=0.05) denom=0.05;
+  var target=(be+you)/denom, fee=target*gst*card, grow=target-be-you-fee;
+  return {kind:kind,cleaners:cleaners,each:each,own:own,staffHrs:staffHrs,onSite:onSite,travelStaff:travelStaff,travelOwn:travelOwn,hrsAll:hrsAll,rate:rate,ownerRate:ownerRate,
+    wages:wages,mat:mat,car:car,park:park,extra:extra,oh:oh,be:be,you:you,fee:fee,grow:grow,target:target,nice:Math.ceil(target/5)*5,m:m,tx:tx,gst:gst,
+    taxSet:(you+Math.max(0,grow))*tx};
+}
+function listPrice(){ var p=(SET.prices||{})[F.service]; if(!p||!(p.base||p.bed||p.bath)) return null; return r2((+p.base||0)+(+p.bed||0)*(+F.beds||0)+(+p.bath||0)*(+F.baths||0)); }
+function svcMatch(a,b){ a=String(a||'').toLowerCase(); b=String(b||'').toLowerCase(); var k=b.split(' ')[0]; return a===b||(k&&a.indexOf(k)>=0); }
+function history(){
+  var x=pnl(D,addD(today(),-365),today());
+  return x.jobs.filter(function(j){ return j.actHrs&&j.rev!=null&&svcMatch(j.j.service,F.service); }).map(function(j){
+    var a=(D.books.actuals||{})[j.key]||{}, mine=0; (D.team||[]).forEach(function(tm){ if(tm.owner&&a.staff&&a.staff[tm.id]) mine+=+a.staff[tm.id]; });
+    var net=j.profit-j.actHrs*(+C.ohPerHr||0);
+    return {client:j.j.client||'Job',suburb:j.j.suburb||'',date:j.date,price:j.price,rev:j.rev,hrs:j.actHrs,mine:mine,net:net,perHr:j.rev/j.actHrs};
+  }).sort(function(a,b){ return b.date.localeCompare(a.date); });
+}
+
+// ---------- page ----------
+function render(){
+  if(err==='login'){ app.innerHTML='<div class="center"><h1>Log in <em>first</em></h1><p class="sub">Open the hub, log in, then come back here.</p><p><a class="btn primary" href="/">Go to the hub</a></p></div>'; return; }
+  if(err){ app.innerHTML='<div class="center"><p>'+esc(err)+'</p><button class="btn plain" onclick="location.reload()">Try again</button></div>'; return; }
+  if(!D){ app.innerHTML='<div class="center">Loading…</div>'; return; }
+  var h='<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><a href="/money/">Quotes ›</a></div>';
+  h+='<h1>Price <em>calculator</em></h1><p class="sub">What a job costs you, where it breaks even, and the price that pays you and grows the business.</p>';
+  // The job
+  h+='<div class="card"><h2>The <em>job</em></h2><div class="grid3">';
+  h+='<label class="l">Service<select data-f="service">'+SERVICES.map(function(s){ return '<option'+(s===F.service?' selected':'')+'>'+s+'</option>'; }).join('')+'</select></label>';
+  h+='<label class="l">Bedrooms<select data-f="beds"><option value="">–</option>'+[1,2,3,4,5,6,7].map(function(n){ return '<option'+(String(n)===String(F.beds)?' selected':'')+'>'+n+'</option>'; }).join('')+'</select></label>';
+  h+='<label class="l">Bathrooms<select data-f="baths"><option value="">–</option>'+[1,2,3,4,5].map(function(n){ return '<option'+(String(n)===String(F.baths)?' selected':'')+'>'+n+'</option>'; }).join('')+'</select></label></div>';
+  h+='<div class="grid3" style="margin-top:12px"><label class="l">Cleaners <small>not you</small><input type="number" inputmode="numeric" min="0" step="1" data-f="cleaners" value="'+esc(F.cleaners)+'"></label>';
+  h+='<label class="l">Hours each <small>on site</small><input type="number" inputmode="decimal" min="0" step="0.5" data-f="each" value="'+esc(F.each)+'" placeholder="e.g. 6"></label>';
+  h+='<label class="l">Your hours <small>on site</small><input type="number" inputmode="decimal" min="0" step="0.5" data-f="own" value="'+esc(F.own)+'" placeholder="0"></label></div>';
+  h+='<span class="l" style="display:block;margin-top:14px;font:500 13px var(--sans);color:var(--dark)">Day <small style="color:var(--meta);font-weight:400">sets the staff pay rate</small></span><div class="seg" id="days"></div>';
+  h+='<details style="margin-top:12px"'+(F.travelMin||F.km||F.parking||F.extra||F.mat!==''?' open':'')+'><summary>Travel, parking and other costs</summary><div class="grid" style="margin-top:6px">';
+  h+='<label class="l">Travel time <small>minutes there and back, paid</small><input type="number" inputmode="numeric" min="0" step="5" data-f="travelMin" value="'+esc(F.travelMin)+'" placeholder="0"></label>';
+  h+='<label class="l">Driving <small>km round trip</small><input type="number" inputmode="decimal" min="0" step="1" data-f="km" value="'+esc(F.km)+'" placeholder="0"></label>';
+  h+='<label class="l">Parking &amp; tolls <small>ex GST</small><span class="money-in"><input type="number" inputmode="decimal" min="0" step="1" data-f="parking" value="'+esc(F.parking)+'" placeholder="0"></span></label>';
+  h+='<label class="l">Other job costs <small>tip run, subbie, ex GST</small><span class="money-in"><input type="number" inputmode="decimal" min="0" step="1" data-f="extra" value="'+esc(F.extra)+'" placeholder="0"></span></label>';
+  h+='<label class="l full">Products <small>ex GST. Blank uses your average'+(C.matPerHr!=null?' of '+money(C.matPerHr)+'/hr':'')+'</small><span class="money-in"><input type="number" inputmode="decimal" min="0" step="1" data-f="mat" value="'+esc(F.mat)+'" placeholder="auto"></span></label>';
+  h+='</div>'+(T().carPerKm?'':'<p class="hint">Set a car cost per km under Your targets to cost the driving.</p>')+'</details>';
+  h+='<label class="l" style="display:flex;gap:10px;align-items:center;margin-top:10px;font-size:14px"><input type="checkbox" data-f="card" style="width:22px;height:22px;min-height:0;margin:0;accent-color:var(--terracotta)"'+(F.card?' checked':'')+'>Client pays by card'+(T().cardPct?' <small>('+T().cardPct+'% fee)</small>':' <small>(set the fee under Your targets)</small>')+'</label>';
+  h+='</div><div id="out"></div>';
+  // Targets
+  var t=T();
+  h+='<div class="card"><h2>Your <em>targets</em></h2><form id="tf" class="grid">';
+  h+='<label class="l">Your pay per hour <small>before tax</small><span class="money-in"><input name="ownerRate" type="number" inputmode="decimal" step="0.5" min="0" value="'+esc(t.ownerRate!=null?t.ownerRate:'')+'" placeholder="'+C.rates.wk+'"></span></label>';
+  h+='<label class="l">Growth margin <small>% of price</small><input name="margin" type="number" inputmode="decimal" step="1" min="0" max="80" value="'+esc(t.margin)+'"></label>';
+  h+='<label class="l">Income tax <small>%</small><input name="tax" type="number" inputmode="decimal" step="1" min="0" max="60" value="'+esc(t.tax)+'"></label>';
+  h+='<label class="l">Hours worked a month <small>everyone, for overheads</small><input name="hrsMonth" type="number" inputmode="decimal" step="1" min="0" value="'+esc(t.hrsMonth!=null?t.hrsMonth:'')+'" placeholder="'+r1(C.hrsMonth)+' (roster)"></label>';
+  h+='<label class="l">Car cost per km <small>fuel, wear, rego</small><span class="money-in"><input name="carPerKm" type="number" inputmode="decimal" step="0.01" min="0" value="'+esc(t.carPerKm!=null?t.carPerKm:'')+'" placeholder="0.00"></span></label>';
+  h+='<label class="l">Card fee <small>% of what the client pays</small><input name="cardPct" type="number" inputmode="decimal" step="0.05" min="0" max="10" value="'+esc(t.cardPct!=null?t.cardPct:'')+'" placeholder="check your Stripe fees"></label>';
+  h+='<p class="hint full" style="margin:0">Income tax defaults to 32%: the 30% bracket ($45,001 to $135,000) plus the 2% Medicare levy. Ask your accountant for your real rate. Growth margin is profit left after costs and your pay, to reinvest and cover slow weeks.</p>';
+  h+='<div class="full"><button class="btn plain" type="submit" style="width:100%">Save targets</button></div></form></div>';
+  // Overheads working
+  h+='<div class="card"><h2>Your <em>overheads</em></h2><div class="pc">';
+  h+='<div><span>Regular outgoings <small>monthly average, ex GST</small></span><span>'+money(C.fixedMonth)+'</span></div>';
+  if(C.equipMonth>0) h+='<div><span>Equipment <small>last 12 months, spread over 12</small></span><span>'+money(C.equipMonth)+'</span></div>';
+  h+='<div><span>Other general expenses <small>per month since '+fdate(C.from)+'</small></span><span>'+money(C.generalMonth)+'</span></div>';
+  h+='<div class="be"><span>Overheads per month</span><span>'+money(C.ohMonth)+'</span></div>';
+  h+='<div><span>÷ Hours a month <small>'+(C.hrsTarget?'your figure (roster: '+r1(C.hrsMonth)+')':r1(C.hrs)+' hrs on the roster since '+fdate(C.from))+'</small></span><span>'+r1(C.hrsTarget||C.hrsMonth)+' hrs</span></div>';
+  h+='<div class="g"><span>Per hour worked</span><span>'+(C.ohPerHr!=null?money(C.ohPerHr):'–')+'</span></div></div>';
+  h+='<p class="hint">Overheads need covering every month whether you work or not. At '+money(C.ohMonth,0)+' a month that\'s '+money(C.ohMonth*12,0)+' a year before you pay yourself.</p></div>';
+  // History
+  h+='<div class="card" id="hist"></div>';
+  h+='<div class="bar"><div class="in"><div class="sum">Price to grow'+(C.gstReg?' inc GST':'')+'<b id="barP">–</b></div><button class="btn primary" data-act="quote" id="barQ">Start a quote</button></div></div>';
+  app.innerHTML=h;
+  draw();
+}
+function draw(){
+  var x=calc(), out=document.getElementById('out');
+  // day buttons
+  var base=calc('wk');
+  document.getElementById('days').innerHTML=['wk','sat','sun','ph'].map(function(k){ var y=calc(k); return '<button type="button" data-day="'+k+'" aria-pressed="'+(k===F.day)+'"><small>'+(k==='ph'?'Pub. hol':k==='wk'?'Weekday':KIND[k].slice(0,3))+'</small><b>'+(x.hrsAll?money(y.nice,0):'–')+'</b><i>'+(k!=='wk'&&x.hrsAll?'+'+money(y.nice-base.nice,0):'&nbsp;')+'</i></button>'; }).join('');
+  var bp=document.getElementById('barP');
+  if(!x.hrsAll){ out.innerHTML='<div class="hint-card">Enter the cleaners and hours (and your hours, if you\'re on it) to see break-even and the price to grow.</div>'; bp.textContent='–'; drawHist(); return; }
+  var h='<div class="hero"><small>Price to grow'+(C.gstReg?', ex GST':'')+'</small><b>'+money(x.nice,0)+'</b>';
+  if(C.gstReg) h+='<div class="row"><span>Client pays inc GST</span><span>'+money(x.nice*1.1)+'</span></div>';
+  h+='<div class="row"><span>Break-even'+(C.gstReg?' ex GST':'')+'</span><span>'+money(x.be)+'</span></div>';
+  h+='<div class="row"><span>50% deposit</span><span>'+money(x.nice*x.gst/2)+'</span></div>';
+  h+='<div class="row2"><div><span>Per hour on site</span><strong>'+money(x.nice/x.onSite)+'</strong></div><div><span>Your pay after tax</span><strong>'+money(x.you*(1-x.tx))+'</strong></div><div><span>Kept to grow</span><strong>'+money(x.grow-Math.max(0,x.grow)*x.tx)+'</strong></div></div></div>';
+  h+='<div class="card"><h2>How it <em>adds up</em></h2><div class="pc">';
+  if(x.staffHrs>0) h+='<div><span>Staff wages + '+Math.round(C.superRate*100)+'% super <small>'+x.cleaners+' × '+r1(x.each)+' hrs'+(x.travelStaff?' + '+r1(x.travelStaff)+' hrs travel':'')+' at '+money(x.rate)+' '+KIND[x.kind].toLowerCase()+'</small></span><span>'+money(x.wages)+'</span></div>';
+  h+='<div><span>Products <small>'+(F.mat!==''?'your figure':C.matPerHr!=null?r1(x.onSite)+' hrs at '+money(C.matPerHr)+'/hr':'none logged yet')+'</small></span><span>'+money(x.mat)+'</span></div>';
+  if(x.car) h+='<div><span>Driving <small>'+(+F.km)+' km at '+money(T().carPerKm)+'</small></span><span>'+money(x.car)+'</span></div>';
+  if(x.park) h+='<div><span>Parking &amp; tolls</span><span>'+money(x.park)+'</span></div>';
+  if(x.extra) h+='<div><span>Other job costs</span><span>'+money(x.extra)+'</span></div>';
+  h+='<div><span>Share of overheads <small>'+r1(x.hrsAll)+' hrs at '+money(C.ohPerHr||0)+'/hr</small></span><span>'+money(x.oh)+'</span></div>';
+  h+='<div class="be"><span>Break-even <small>covers costs, pays you nothing</small></span><span>'+money(x.be)+'</span></div>';
+  if(x.you) h+='<div><span>Your time <small>'+r1(x.own+x.travelOwn)+' hrs at '+money(x.ownerRate)+'</small></span><span>'+money(x.you)+'</span></div>';
+  if(x.fee) h+='<div><span>Card fee <small>'+T().cardPct+'% of the inc-GST price</small></span><span>'+money(x.fee)+'</span></div>';
+  h+='<div><span>Growth margin <small>'+Math.round(x.m*100)+'% of price</small></span><span>'+money(x.grow)+'</span></div>';
+  h+='<div class="g"><span>Price to grow'+(C.gstReg?' <small>ex GST</small>':'')+'</span><span>'+money(x.target)+'</span></div></div>';
+  h+='<p class="hint">Set aside about '+money(x.taxSet)+' for income tax ('+Math.round(x.tx*100)+'% of your pay and the growth margin). That leaves '+money(x.you-x.you*x.tx)+' for you and '+money(x.grow-Math.max(0,x.grow)*x.tx)+' to reinvest.'+(C.gstReg?' GST is the ATO\'s, so it\'s left out of every figure above.':'')+' Overtime isn\'t included: keep any one person under 7.6 hrs a day or the real wage cost is higher.</p>';
+  var lp=listPrice();
+  if(lp){
+    var cls=lp<x.be-0.5?'bad':lp<x.target-0.5?'warn':'ok';
+    h+='<div class="verdict '+cls+'"><b>Your price list: '+money(lp)+(C.gstReg?' ex GST':'')+'</b>'+(cls==='bad'?'That\'s '+money(x.be-lp)+' under break-even for this job.':cls==='warn'?'Covers costs but is '+money(x.target-lp)+' short of the price to grow.':'Clears the price to grow by '+money(lp-x.target)+'.')+' <small>('+esc(F.service.toLowerCase())+(F.beds?', '+F.beds+' bed':'')+(F.baths?' '+F.baths+' bath':'')+')</small></div>';
+  }
+  h+='</div>';
+  out.innerHTML=h; bp.textContent=money(x.nice*x.gst,0);
+  drawHist();
+}
+function drawHist(){
+  var el=document.getElementById('hist'); if(!el) return;
+  var hs=history(), h='<h2>How past '+esc(F.service.toLowerCase())+'s <em>went</em></h2>';
+  if(!hs.length){ el.innerHTML=h+'<p class="sub" style="margin:0">No finished '+esc(F.service.toLowerCase())+'s with logged hours yet. Log actual hours when you wrap up a job and they show here, so you can check your hours estimates against reality.</p>'; return; }
+  var n=hs.length, hrs=hs.reduce(function(a,j){return a+j.hrs;},0), rev=hs.reduce(function(a,j){return a+j.rev;},0), net=hs.reduce(function(a,j){return a+j.net;},0);
+  h+='<div class="kpis"><div class="kpi"><b>'+r1(hrs/n)+'</b><span>Avg hours, all staff</span></div><div class="kpi"><b>'+money(rev/hrs,0)+'</b><span>Earned per hour</span></div><div class="kpi"><b>'+money(net/n,0)+'</b><span>Avg left after costs</span></div></div>';
+  h+='<div class="hist" style="margin-top:8px">'+hs.slice(0,8).map(function(j){ return '<div class="r"><span>'+esc(j.client)+(j.suburb?' <small>· '+esc(j.suburb)+'</small>':'')+'<br><small>'+fdate(j.date)+' · '+r1(j.hrs)+' hrs · '+money(j.perHr,0)+'/hr</small></span><span style="text-align:right">'+money(j.price,0)+'<br><small'+(j.net<0?' style="color:var(--terracotta-dark)"':'')+'>'+money(j.net,0)+' left'+(j.mine?' for your '+r1(j.mine)+' hrs':'')+'</small></span></div>'; }).join('')+'</div>';
+  h+='<p class="hint">"Left" is after staff wages, job costs and overheads, before your pay and income tax. Last 12 months, jobs with logged hours.</p>';
+  el.innerHTML=h;
+}
+function save(){ lsSet('price_calc',JSON.stringify(F)); }
+app.addEventListener('input',function(e){
+  var t=e.target, k=t.dataset&&t.dataset.f; if(!k) return;
+  F[k]=t.type==='checkbox'?t.checked:t.value; save(); draw();
+});
+app.addEventListener('change',function(e){ var t=e.target; if(t.dataset&&t.dataset.f==='card'){ F.card=t.checked; save(); draw(); } });
+app.addEventListener('click',function(e){
+  var d=e.target.closest('[data-day]'); if(d){ F.day=d.dataset.day; save(); draw(); return; }
+  var q=e.target.closest('[data-act=quote]'); if(q){
+    var x=calc(); if(!x.hrsAll){ toast('Enter the hours first'); return; }
+    var title=F.service+(F.beds||F.baths?' | '+(F.beds?F.beds+' bed':'')+(F.beds&&F.baths?' ':'')+(F.baths?F.baths+' bath':''):'');
+    lsSet('quote_prefill',JSON.stringify({service:SERVICES.indexOf(F.service)>=0?F.service:'Other',beds:F.beds,baths:F.baths,
+      items:[{title:title,desc:'',qty:1,price:x.nice,auto:true}],
+      est:{staff:x.staffHrs,own:x.own,day:F.day,mat:F.mat}}));
+    location.href='/money/#/edit/new-quote';
+  }
+});
+app.addEventListener('submit',function(e){
+  if(e.target.id!=='tf') return; e.preventDefault(); var f=e.target, b=f.querySelector('[type=submit]'); b.disabled=true;
+  var p={}; ['ownerRate','margin','tax','hrsMonth','carPerKm','cardPct'].forEach(function(k){ p[k]=f.elements[k].value; });
+  api('POST','/api/books',{action:'pricing',pricing:p}).then(function(r){ D.books.pricing=r.pricing; C=costBasis(D,today()); render(); toast('Targets saved'); })
+    .catch(function(x){ b.disabled=false; toast(x.message); });
+});
+render(); load();
+</script>
+</body></html>
