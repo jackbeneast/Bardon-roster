@@ -135,6 +135,22 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .svr small{font-size:12.5px;color:var(--meta)}
 </style>
 <style>
+.wk .verdict{margin-top:0;border-radius:8px;padding:11px 13px;font-size:14px;line-height:1.4}
+.wk .verdict b{display:block;font:600 15px var(--sans);margin-bottom:2px}
+.verdict.bad{background:#FBEBD9;color:#8A4A1F}.verdict.warn{background:#FCEFD0;color:#5E4510}.verdict.ok{background:#E6EFE3;color:#2F5A35}
+.wk .kpis{margin-top:12px}
+.meter{position:relative;height:10px;background:var(--cream-dark);border-radius:5px;margin-top:14px}
+.meter i{display:block;height:100%;border-radius:5px;background:var(--terracotta)}
+.meter i.ok{background:#2F5A35}.meter i.warn{background:var(--gold)}
+.meter s{position:absolute;top:-4px;width:2px;height:18px;background:var(--dark)}
+.meter s.g{background:#2F5A35}
+.mlbl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--meta);margin-top:4px}
+.wkh{font:600 15px var(--sans);color:var(--dark);margin:16px 0 6px}
+.acts2{display:grid;gap:8px}
+.act{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--dark)}
+.act.bad{border-left-color:var(--terracotta)}.act.warn{border-left-color:var(--gold)}.act.ok{border-left-color:#2F5A35}
+.act b{font-weight:600}
+.act a{flex:none;font:600 13px var(--sans);color:var(--terracotta-dark);text-decoration:none;white-space:nowrap}
 .pnl{margin-top:4px;font-variant-numeric:tabular-nums}
 .pnl div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--cream-dark);font-size:15px;color:var(--dark)}
 .pnl div span:first-child{min-width:0}
@@ -239,6 +255,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 <div id="app"><div class="center">Loading…</div></div>
 <script type="module">
 import { pnl, bookingsOf, priceOf, perMonth, dueDates, rosteredHours, toWrap, costBasis } from '/lib/profit.mjs';
+import { shiftCosts } from '/lib/wages.mjs';
 
 var app=document.getElementById('app');
 var D=null, loadErr='', loaded=false, X=null, xMsg=null, PIPE=null;
@@ -283,6 +300,9 @@ window.addEventListener('hashchange',function(){ closeSheet(); render(); window.
 // ---------- periods ----------
 function period(m,o){
   var t=new Date(), y=t.getFullYear(), mo=t.getMonth(), s, e, label;
+  if(m==='week'){ var dw=(t.getDay()+6)%7; s=new Date(y,mo,t.getDate()-dw+7*o); e=new Date(s.getFullYear(),s.getMonth(),s.getDate()+6);
+    label=s.getDate()+(s.getMonth()!==e.getMonth()?' '+MON[s.getMonth()]:'')+'–'+e.getDate()+' '+MON[e.getMonth()]+(e.getFullYear()!==y?' '+e.getFullYear():'');
+    return {from:iso(s),to:iso(e),label:label,sub:o===0?'This week':o===1?'Next week':o===-1?'Last week':''}; }
   if(m==='month'){ s=new Date(y,mo+o,1); e=new Date(y,mo+o+1,0); label=MON[s.getMonth()]+' '+s.getFullYear(); }
   else if(m==='quarter'){ var q=Math.floor(mo/3)+o, qs=new Date(y,q*3,1); s=qs; e=new Date(qs.getFullYear(),qs.getMonth()+3,0); label=MON[s.getMonth()]+'–'+MON[e.getMonth()]+' '+e.getFullYear(); }
   else { var fy=(mo>=6?y:y-1)+o; s=new Date(fy,6,1); e=new Date(fy+1,5,30); label='FY '+fy+'–'+String(fy+1).slice(2); }
@@ -314,7 +334,7 @@ function topbar(){ return '<div class="top"><a href="/">← Hub</a><span class="
 function tabs(r){ function b(v,l){ return '<button type="button" data-go="'+v+'" aria-pressed="'+(r===v)+'">'+l+'</button>'; } return '<div class="seg">'+b('profit','Profit')+b('spend','Spending')+b('prices','Prices &amp; apps')+'</div>'; }
 function bottom(){ return '<div class="bar"><div class="in"><div class="sum">Paid for something?<b>Log it now</b></div><button type="button" class="btn plain" data-act="addexp">+ Manual</button>'+rcptBtn('btn primary','📷 Receipts')+'</div></div>'; }
 function rcptBtn(cls,label,style){ return '<label class="'+cls+'"'+(style?' style="'+style+'"':'')+'>'+label+'<input type="file" accept="image/*" multiple data-rcpts hidden></label>'; }
-function periodNav(p){ return '<div class="chips" style="margin-top:14px">'+['month','quarter','year'].map(function(m){ return '<button type="button" class="chip" data-mode="'+m+'" aria-pressed="'+(mode===m)+'">'+(m==='month'?'Month':m==='quarter'?'BAS quarter':'Financial year')+'</button>'; }).join('')+'</div><div class="navp"><button class="icon-btn" data-off="-1" aria-label="Previous">&larr;</button><div class="lbl">'+esc(p.label)+(p.sub?'<small>'+p.sub+'</small>':'')+'</div>'+(off?'<button class="icon-btn" data-off="0">Now</button>':'')+'<button class="icon-btn" data-off="1" aria-label="Next">&rarr;</button></div>'; }
+function periodNav(p){ return '<div class="chips" style="margin-top:14px">'+['week','month','quarter','year'].map(function(m){ return '<button type="button" class="chip" data-mode="'+m+'" aria-pressed="'+(mode===m)+'">'+(m==='week'?'Week':m==='month'?'Month':m==='quarter'?'BAS quarter':'Financial year')+'</button>'; }).join('')+'</div><div class="navp"><button class="icon-btn" data-off="-1" aria-label="Previous">&larr;</button><div class="lbl">'+esc(p.label)+(p.sub?'<small>'+p.sub+'</small>':'')+'</div>'+(off?'<button class="icon-btn" data-off="0">Now</button>':'')+'<button class="icon-btn" data-off="1" aria-label="Next">&rarr;</button></div>'; }
 
 function render(){
   if(loadErr==='login'){ app.innerHTML='<div class="center">'+LOGO.replace('<svg','<svg style="width:48px;height:48px"')+'<h1 style="margin-top:12px">Log in <em>first</em></h1><p class="sub">Open the hub, log in with your password, then come back here.</p><p><a class="btn primary" href="/">Go to the hub</a></p></div>'; return; }
@@ -356,6 +376,76 @@ function comingUp(){
   h+='<p class="hint">Booked counts every rostered job starting in the next 28 days at its price, including GST. <a href="/?v=pipeline">Open the pipeline</a> to chase quotes.</p></div>';
   return h;
 }
+
+// ---------- Week ahead: where you stand and what to do ----------
+// Forecast for a week from the roster: booked revenue against what it costs to
+// run that week (rostered wages + super, products, a week's share of overheads),
+// your pay target and growth margin, with the actions that close any gap.
+function weekAhead(p,isNext){
+  var x=pnl(D,p.from,p.to), C=costBasis(D,today()), T=D.books.pricing||{margin:20,tax:32};
+  var ownerIds={}; (D.team||[]).forEach(function(t){ if(t.owner) ownerIds[t.id]=1; });
+  var ownHrs=0; x.jobs.forEach(function(b){ var ro=rosteredHours(b,D.pay); Object.keys(ro).forEach(function(k){ if(ownerIds[k]) ownHrs+=ro[k]; }); });
+  var allHrs=x.jobs.reduce(function(a,b){return a+b.hrs;},0);
+  var labour=x.wages+x.sup, mat=allHrs*(+C.matPerHr||0), ohWk=C.ohMonth*12/52;
+  var be=labour+mat+ohWk, ownerRate=T.ownerRate!=null?+T.ownerRate:+((D.pay&&D.pay.rates&&D.pay.rates.wk)||37.5);
+  var you=ownHrs*ownerRate, m=(+T.margin||0)/100, goal=m<1?(be+you)/(1-m):be+you, tx=(+T.tax||0)/100;
+  var rev=x.rev, left=rev-be;
+  // Typical job from the last 90 days, to turn a gap into "about N jobs".
+  var hist=pnl(D,addD(today(),-90),today()).jobs.filter(function(j){ return j.rev!=null&&j.hrs>0; });
+  var avgRev=hist.length?hist.reduce(function(a,j){return a+j.rev;},0)/hist.length:0, avgHrs=hist.length?hist.reduce(function(a,j){return a+j.hrs;},0)/hist.length:0;
+  var capWk=(C.hrsTarget||0)*12/52;
+  // Staff overtime and penalty-rate days.
+  var sh=shiftCosts(D.jobs,D.team,D.pay,p.from,p.to), ot={}, wkPerson={}, names={};
+  (D.team||[]).forEach(function(t){ names[t.id]=t.name||'Staff'; });
+  sh.forEach(function(s){ if(s.ot>0.01) ot[s.pid]=(ot[s.pid]||0)+s.ot; wkPerson[s.pid]=(wkPerson[s.pid]||0)+s.hrs; });
+  var pen=x.jobs.reduce(function(a,b){ return a+b.days.filter(function(j){ var d=pdate(j.date).getDay(); return j.date>=p.from&&j.date<=p.to&&(d===0||d===6); }).length; },0);
+  // Days Mon–Sat with nothing on.
+  var busy={}; D.jobs.forEach(function(j){ if(!j.sample&&j.date>=p.from&&j.date<=p.to) busy[j.date]=1; });
+  var free=[]; for(var i=0;i<6;i++){ var dd=addD(p.from,i); if(!busy[dd]&&dd>=today()) free.push(DOW[pdate(dd).getDay()]); }
+  var bills=(x.fixedHits||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+
+  var h='<div class="card wk"><div class="hrow"><h2>'+(isNext?'Next <em>week</em>':'Where this week <em>stands</em>')+'</h2><span class="sub" style="margin:0">'+esc(p.label)+'</span></div>';
+  var cls, head;
+  if(!x.jobs.length){ cls='bad'; head='<b>Nothing booked yet.</b>A quiet week still costs about '+money(ohWk,0)+' in overheads.'; }
+  else if(rev<be-0.5){ cls='bad'; head='<b>'+money(be-rev,0)+' below break-even.</b>Booked work doesn\'t yet cover this week\'s wages, products and overheads.'; }
+  else if(rev<goal-0.5){ cls='warn'; head='<b>Covers costs, '+money(goal-rev,0)+' short of your goal.</b>'+(ownHrs?'Your '+r1(ownHrs)+' hrs are paid at '+money(Math.max(0,left)/ownHrs)+'/hr against your '+money(ownerRate)+' target.':'Short of your '+Math.round(m*100)+'% growth margin.'); }
+  else { cls='ok'; head='<b>On track: '+money(rev-goal,0)+' above your goal.</b>'+(ownHrs?'Your '+r1(ownHrs)+' hrs work out at '+money(left/ownHrs)+'/hr before tax.':'Costs, your pay and margin are covered.'); }
+  h+='<div class="verdict '+cls+'">'+head+'</div>';
+  h+='<div class="kpis"><div class="kpi dark"><b>'+m0(rev)+'</b><span>Booked'+(D.gstReg?' ex GST':'')+' · '+x.jobs.length+' job'+(x.jobs.length===1?'':'s')+'</span></div><div class="kpi"><b>'+m0(be)+'</b><span>Break-even</span></div><div class="kpi"><b>'+m0(goal)+'</b><span>Goal</span></div></div>';
+  // Meter
+  var mx=Math.max(goal,rev,1), pr=Math.min(100,rev/mx*100), pb=be/mx*100, pg=goal/mx*100;
+  h+='<div class="meter"><i style="width:'+pr+'%" class="'+cls+'"></i><s style="left:'+pb+'%" title="Break-even"></s><s style="left:'+pg+'%" class="g" title="Goal"></s></div><div class="mlbl"><span>$0</span><span>break-even ▲ goal ▲</span></div>';
+  h+='<div class="pnl" style="margin-top:10px">';
+  h+='<div class="neg"><span>Staff wages + super <small style="color:var(--meta)">'+r1(x.hrs)+' hrs rostered</small></span><span>'+money(labour)+'</span></div>';
+  h+='<div class="neg"><span>Products <small style="color:var(--meta)">'+r1(allHrs)+' hrs at '+money(C.matPerHr||0)+'/hr</small></span><span>'+money(mat)+'</span></div>';
+  h+='<div class="neg"><span>Overheads <small style="color:var(--meta)">a week\'s share of '+m0(C.ohMonth)+'/month</small></span><span>'+money(ohWk)+'</span></div>';
+  h+='<div class="tot'+(left<0?' loss':'')+'"><span>'+(left<0?'Short':'Left for you and growth')+'</span><span>'+money(left)+'</span></div></div>';
+  if(left>0) h+='<p class="hint">Set aside about '+money(left*tx,0)+' for income tax ('+Math.round(tx*100)+'%)'+(D.gstReg?' and '+money(x.gstCollected,0)+' GST':'')+' from this week\'s money.</p>';
+
+  // What to do
+  var acts=[];
+  if(x.unpriced.length) acts.push(['bad','<b>Price '+x.unpriced.length+' job'+(x.unpriced.length===1?'':'s')+'.</b> Booked work with no price counts as $0 here.','#/prices','Add prices']);
+  var gap=rev<goal-0.5?goal-rev:0;
+  if(gap>0){
+    var n=avgRev>0?Math.ceil(gap/avgRev):0;
+    var t='<b>Find '+money(gap,0)+' more work'+(rev<be?' ('+money(be-rev,0)+' just to break even)':'')+'.</b> ';
+    if(n) t+='That\'s about '+n+' more job'+(n===1?'':'s')+' like your average ('+money(avgRev,0)+', '+r1(avgHrs)+' hrs). ';
+    if(free.length) t+='Free days: '+free.join(', ')+'. ';
+    if(PIPE&&PIPE.totals&&PIPE.totals.quoted>0) t+=m0(PIPE.totals.quoted)+' is sitting in quotes waiting on a yes.';
+    acts.push([rev<be?'bad':'warn',t,'/?v=pipeline','Chase quotes']);
+  }
+  if(gap>0&&capWk>0&&allHrs<capWk) acts.push(['','<b>'+r1(capWk-allHrs)+' hrs of spare capacity</b> against the '+r1(capWk)+' hrs a week you planned for.','','']);
+  Object.keys(ot).forEach(function(pid){ acts.push(['warn','<b>Overtime: '+esc(names[pid])+'</b> has '+r1(wkPerson[pid])+' hrs rostered, '+r1(ot[pid])+' at overtime rates. Spread it across the team or check the price covers it.','/','Roster']); });
+  if(pen) acts.push(['','<b>'+pen+' weekend shift'+(pen===1?'':'s')+'</b> at penalty rates. Make sure those jobs were priced for it.','/pricing/','Price check']);
+  bills.forEach(function(f){ acts.push(['','<b>'+esc(f.name)+' '+money(f.amt,0)+'</b> comes out '+DOW[pdate(f.date).getDay()]+' '+fday(f.date)+'.','','']); });
+  if(D.owing>0.5) acts.push(['warn','<b>'+m0(D.owing)+' owed to you.</b> Chase unpaid invoices before the week starts.','/money/','Invoices']);
+  var wl=wrapList(); if(wl.length) acts.push(['','<b>'+wl.length+' finished job'+(wl.length===1?' needs':'s need')+' hours logged</b> so these numbers stay true.','#/wrap','Log hours']);
+  var lastExp=D.expenses[0]; if(!lastExp||lastExp.date<addD(today(),-10)) acts.push(['','<b>No expenses logged lately.</b> Snap this week\'s receipts so products and overheads are right.','#/add','Add receipts']);
+  if(!acts.length) acts.push(['ok','<b>Nothing needs you.</b> Prices are in, no overtime, nothing owed.','','']);
+  h+='<h3 class="wkh">What to do</h3><div class="acts2">'+acts.map(function(a){ return '<div class="act '+a[0]+'"><span>'+a[1]+'</span>'+(a[2]?'<a href="'+a[2]+'">'+a[3]+' ›</a>':'')+'</div>'; }).join('')+'</div>';
+  h+='<p class="hint">Forecast from the roster as it stands. Goal = break-even + your time ('+r1(ownHrs)+' hrs at '+money(ownerRate)+') + '+Math.round(m*100)+'% growth margin. Change these in the <a href="/pricing/">price calculator</a>.</p></div>';
+  return h;
+}
 function renderProfit(){
   var p=period(mode,off), x=pnl(D,p.from,p.to), h=periodNav(p);
   if(off===0) h+=nudges(x);
@@ -363,6 +453,8 @@ function renderProfit(){
   h+='<div class="kpis"><div class="kpi dark"><b>'+m0(x.profit)+'</b><span>Profit'+(x.margin!=null?' · '+Math.round(x.margin*100)+'% margin':'')+'</span></div><div class="kpi"><b>'+m0(x.rev)+'</b><span>Revenue'+(D.gstReg?' ex GST':'')+'</span></div><div class="kpi"><b>'+m0(x.costs)+'</b><span>Costs</span></div></div>';
   if(x.perHour) h+='<div class="card"><div class="hrow"><h2>Per hour <em>worked</em></h2><span class="sub" style="margin:0">'+x.perHour.jobs+' job'+(x.perHour.jobs===1?'':'s')+' · '+Math.round(x.perHour.hrs*10)/10+' hrs</span></div><div class="kpis" style="margin-top:0;grid-template-columns:1fr 1fr"><div class="kpi"><b>'+money(x.perHour.rate)+'</b><span>Earned per hour'+(D.gstReg?' (ex GST)':'')+'</span></div><div class="kpi'+(x.perHour.profit<0?' warn':'')+'"><b>'+money(x.perHour.profit)+'</b><span>Profit per hour</span></div></div><p class="hint">From jobs where you\'ve logged actual hours (everyone\'s, yours included).</p></div>';
   h+=byService(x);
+  if(mode==='week'&&off===0) h+=weekAhead(period('week',1),true);
+  else if(mode==='week'&&off>0) h+=weekAhead(p,false);
   if(off===0) h+=comingUp();
   if(x.unpriced.length && off!==0) h+='<a class="nudge" href="#/prices" style="border-left-color:var(--terracotta-dark)"><span><b>Missing revenue:</b> '+x.unpriced.length+' job'+(x.unpriced.length===1?'':'s')+' in this period '+(x.unpriced.length===1?'has':'have')+' no price.</span><span class="go">Fix ›</span></a>';
   // Profit and loss
