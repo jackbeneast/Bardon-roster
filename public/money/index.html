@@ -127,8 +127,11 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .sendopt small{display:block;font:400 13px var(--sans);color:var(--meta);margin-top:2px}
 .sendopt .ic{width:36px;height:36px;border-radius:50%;background:var(--tint);color:var(--terracotta-dark);display:grid;place-items:center;flex:none;font-size:16px}
 .pc small{display:block;font:400 12.5px/1.3 var(--sans);color:var(--meta)}
-.pc div{align-items:flex-start}
+.pc div{align-items:flex-start;gap:12px}
+.pc div span:last-child{white-space:nowrap}
 .pc .be{border-top:1px solid var(--line);margin-top:4px;padding-top:9px;font-weight:600}
+.working{margin-top:12px;border-top:1px solid var(--cream-dark);padding-top:8px}
+.working summary{cursor:pointer;font:600 14px var(--sans);color:var(--dark);padding:6px 0}
 .byday{margin-top:12px}
 .byday>div{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
 .byday button{border:1px solid var(--line);background:var(--white);border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;font:inherit;color:var(--dark)}
@@ -355,6 +358,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var auto=d.serviceDate?'From service date ('+KIND[dayKind(d.serviceDate)]+')':'From service date (none set: weekday)';
     h+='<label class="l" style="margin-top:10px">Staff pay rate<select data-est="day"><option value="">'+auto+'</option>'+['wk','sat','sun','ph'].map(function(k){ return '<option value="'+k+'"'+(e.day===k?' selected':'')+'>'+KIND[k].charAt(0).toUpperCase()+KIND[k].slice(1)+' · '+money(C.rates[k])+'/hr</option>'; }).join('')+'</select></label>';
     h+='<div id="pcout">'+checkOut(d)+'</div>';
+    h+=workingHtml();
     h+='<button type="button" class="ghost" data-act="targets" style="font-size:13px">Your targets: '+money(T.ownerRate!=null?T.ownerRate:C.rates.wk)+'/hr for you · '+(T.margin)+'% growth margin · '+T.tax+'% income tax. Change</button>';
     return h;
   }
@@ -384,6 +388,22 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     }
     h+='<button type="button" class="btn outline" style="width:100%;margin-top:10px" data-act="usetarget">Use '+money(x.nice)+(C.gstReg?' ex GST ('+money(x.nice*gst)+' inc)':'')+'</button>';
     return h;
+  }
+
+  // Shows exactly how the overhead and materials rates were worked out, from Jack's own data.
+  function workingHtml(){
+    var C=S.costs; if(!C) return '';
+    var h='<details class="working"><summary>How the overhead rate is worked out</summary>';
+    h+='<div class="totals pc" style="margin-top:8px">';
+    h+='<div><span>Regular outgoings <small>monthly average, ex GST, from Prices &amp; apps</small></span><span>'+money(C.fixedMonth)+'</span></div>';
+    h+='<div><span>General expenses <small>not linked to a job, last 90 days, per month</small></span><span>'+money(C.generalMonth)+'</span></div>';
+    h+='<div class="be"><span>Overheads per month</span><span>'+money(C.ohMonth)+'</span></div>';
+    h+='<div><span>÷ Hours worked per month <small>'+r1(C.hrs)+' hrs across '+C.jobs+' job'+(C.jobs===1?'':'s')+' in the last 90 days, everyone incl. you</small></span><span>'+r1(C.hrsMonth)+' hrs</span></div>';
+    h+='<div class="g"><span>Overheads per hour</span><span>'+(C.ohPerHr!=null?money(C.ohPerHr):'–')+'</span></div>';
+    h+='</div>';
+    if(C.hrsMonth<80) h+='<p class="hint">Only '+r1(C.hrsMonth)+' hours a month are on the roster, so each hour carries a lot. If jobs are missing from the roster, or have no staff or times, this rate is too high. As more work is rostered it comes down.</p>';
+    h+='<p class="hint">Materials: '+(C.matPerHr!=null?money(C.matPerHr)+'/hr = expenses linked to jobs ÷ those same hours.':'no job-linked expenses yet.')+'</p>';
+    return h+'</details>';
   }
   function r1(v){ return Math.round(v*10)/10; }
   function redrawCheck(){ var el=document.getElementById('pcout'); if(el&&draft) el.innerHTML=checkOut(draft); }
