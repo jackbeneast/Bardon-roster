@@ -508,7 +508,7 @@ function expenseSheet(e){
   if(D.gstReg) h+='<label class="check"><input type="checkbox" name="gst"'+(hasGst?' checked':'')+'>Includes GST</label>';
   h+='<label class="l" style="margin-top:12px">For a job <small>(optional, shows on that job\'s profit)</small><select name="job"><option value="">Business in general</option>'+jobs.map(function(b){ return '<option value="'+esc(b.key)+'"'+(b.key===e.job?' selected':'')+'>'+esc(b.j.client||'Job')+' · '+fday(b.date)+'</option>'; }).join('')+'</select></label>';
   h+='<label class="l" style="margin-top:12px">Note <small>(optional)</small><input name="note" value="'+esc(e.note)+'"></label>';
-  h+='<div style="margin-top:14px"><span class="l">Receipt</span><div id="rbox">'+(e.receipt?'<p class="sub">Loading receipt…</p>':'')+'</div><label class="btn plain" style="margin-top:8px;width:100%">'+(e.receipt?'Replace photo':'📷 Snap or choose receipt')+'<input type="file" accept="image/*" capture="environment" name="photo" hidden></label></div>';
+  h+='<div style="margin-top:14px"><span class="l">Receipt</span><div id="rbox">'+(e.receipt?'<p class="sub">Loading receipt…</p>':'')+'</div><label class="btn plain" style="margin-top:8px;width:100%">'+(e.receipt?'Replace photo':'📷 Snap or choose receipt')+'<input type="file" accept="image/*" name="photo" hidden></label></div>';
   h+='<div class="err" id="eErr" hidden></div><div class="actions"><button type="button" class="btn plain" data-close>Cancel</button><button type="submit" class="btn primary grow">Save expense</button></div>';
   if(!isNew) h+='<div class="actions"><button type="button" class="btn plain grow" data-del style="color:var(--terracotta-dark)">Delete expense</button></div>';
   h+='</form>';
