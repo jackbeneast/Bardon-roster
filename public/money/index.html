@@ -116,7 +116,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .sheet h3 em{font-style:italic;font-weight:500}
 .sheet .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
 .err{color:var(--terracotta-dark);font:500 13px/1.4 var(--sans);margin-top:10px}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:40;max-width:90vw;text-align:center}
+.toast{pointer-events:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:40;max-width:90vw;text-align:center}
 .center{text-align:center;padding:60px 16px;color:var(--dark)}
 .pricegrid{display:grid;gap:10px;margin-top:10px}
 .prow{border:1px solid var(--line);border-radius:10px;padding:12px}
@@ -126,6 +126,12 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .sendopt a,.sendopt button{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--white);font:600 15px var(--sans);color:var(--dark);text-decoration:none;cursor:pointer;text-align:left}
 .sendopt small{display:block;font:400 13px var(--sans);color:var(--meta);margin-top:2px}
 .sendopt .ic{width:36px;height:36px;border-radius:50%;background:var(--tint);color:var(--terracotta-dark);display:grid;place-items:center;flex:none;font-size:16px}
+.pc small{display:block;font:400 12.5px/1.3 var(--sans);color:var(--meta)}
+.pc div{align-items:flex-start}
+.pc .be{border-top:1px solid var(--line);margin-top:4px;padding-top:9px;font-weight:600}
+.verdict{margin-top:12px;border-radius:8px;padding:11px 13px;font-size:14px;line-height:1.4}
+.verdict b{display:block;font:600 15px var(--sans);margin-bottom:2px}
+.verdict.bad{background:#FBEBD9;color:#8A4A1F}.verdict.warn{background:#FCEFD0;color:#5E4510}.verdict.ok{background:#E6EFE3;color:#2F5A35}
 .pay{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--cream-dark);font-size:14px;color:var(--dark)}
 </style></head><body>
 <div id="app"><div class="center">Loading…</div></div>
@@ -171,7 +177,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 
   function load(){
     if(!key()){ loadErr='login'; render(); return Promise.resolve(); }
-    return Promise.all([api('GET','/api/docs'), api('GET','/api/roster').catch(function(){return {jobs:[]};}), api('GET','/api/request').catch(function(){return {requests:[]};})]).then(function(r){ S.reqs=r[2].requests||[];
+    return Promise.all([api('GET','/api/docs'), api('GET','/api/roster').catch(function(){return {jobs:[]};}), api('GET','/api/request').catch(function(){return {requests:[]};}), api('GET','/api/books?costs=1').catch(function(){return null;})]).then(function(r){ S.reqs=r[2].requests||[]; S.costs=r[3];
       BCSms.check(key()); BCTpl.load(key()).catch(function(){}); S.docs=r[0].docs; S.settings=r[0].settings; S.card=r[0].card; S.jobs=(r[1].jobs||[]).filter(function(j){return !j.sample;});
       loaded=true; loadErr=''; render();
     }).catch(function(e){ loadErr=e.status===401?'login':e.message; render(); });
@@ -284,6 +290,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     h+='<div class="addrow"><button class="btn plain grow" data-act="fromlib">+ From saved items</button><button class="btn plain grow" data-act="additem">+ Blank item</button></div>';
     h+='<div class="totals" id="totals">'+totalsHtml(d)+'</div>';
     h+='<label class="check"><input type="checkbox" data-f="gst"'+(d.gst?' checked':'')+'>Add GST (10%) on top</label></div>';
+    if(isQ&&S.costs) h+='<div class="card" id="pcheck">'+checkHtml(d)+'</div>';
 
     // Details
     h+='<div class="card"><h2>Details</h2><div class="grid"><label class="l">'+(isQ?'Quote date':'Issue date')+'<input type="date" data-f="issued" value="'+esc(d.issued)+'"></label>';
@@ -306,10 +313,89 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     }).join('');
   }
   function totalsHtml(d){ var t=totals(d); return '<div><span>Subtotal</span><span>'+money(t.sub)+'</span></div>'+(d.gst?'<div><span>GST</span><span>'+money(t.gst)+'</span></div>':'')+'<div class="g"><span>Total</span><span>'+money(t.total)+'</span></div>'+(d.kind==='quote'&&t.deposit>0?'<div style="color:var(--meta);font-size:14px"><span>Deposit ('+d.depositPct+'%)</span><span>'+money(t.deposit)+'</span></div>':''); }
-  function redrawTotals(){ var el=document.getElementById('totals'); if(el) el.innerHTML=totalsHtml(draft); var b=document.getElementById('barTotal'); if(b) b.textContent=money(totals(draft).total); }
+  function redrawTotals(){ redrawCheck(); var el=document.getElementById('totals'); if(el) el.innerHTML=totalsHtml(draft); var b=document.getElementById('barTotal'); if(b) b.textContent=money(totals(draft).total); }
   function redrawItems(){ document.getElementById('items').innerHTML=itemsHtml(draft); redrawTotals(); autosize(); }
   function autosize(){ Array.prototype.forEach.call(app.querySelectorAll('textarea'),function(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight+2,520)+'px'; }); }
   function setPath(o,p,v){ var k=p.split('.'); if(k.length>1) o[k[0]][k[1]]=v; else o[p]=v; }
+
+
+  // ---------- Price check: break-even and the price to grow on ----------
+  // Staff wages + super for their hours, job materials and a share of overheads
+  // (both per hour, from the last 90 days), then Jack's own time, a growth margin,
+  // and the income tax that comes out of both.
+  function dayKind(d){ var C=S.costs; if(!d) return 'wk'; if((C.ph||[]).indexOf(d)>=0) return 'ph'; var w=new Date(d+'T00:00:00').getDay(); return w===0?'sun':w===6?'sat':'wk'; }
+  var KIND={wk:'weekday',sat:'Saturday',sun:'Sunday',ph:'public holiday'};
+  function priceCalc(d){
+    var C=S.costs, T=C.pricing||{}, e=d.est||{}, hrs=+e.hrs||0, own=Math.min(+e.own||0,hrs), staff=hrs-own;
+    var kind=dayKind(d.serviceDate), rate=+C.rates[kind]||+C.rates.wk, ownerRate=T.ownerRate!=null?+T.ownerRate:+C.rates.wk;
+    var labour=staff*rate*(1+C.superRate), mat=e.mat!==''&&e.mat!=null?+e.mat||0:hrs*(+C.matPerHr||0), oh=hrs*(+C.ohPerHr||0);
+    var be=labour+mat+oh, you=own*ownerRate, m=(+T.margin||0)/100, t=(+T.tax||0)/100;
+    var target=m<1?(be+you)/(1-m):be+you, grow=target-be-you;
+    var t0=totals(d), ex=d.gst?t0.sub:(C.gstReg?t0.sub/1.1:t0.sub);
+    var left=ex-be-you;
+    return {hrs:hrs,own:own,staff:staff,kind:kind,rate:rate,ownerRate:ownerRate,labour:labour,mat:mat,oh:oh,be:be,you:you,target:target,grow:grow,
+      taxYou:you*t, taxGrow:Math.max(0,grow)*t, m:m, t:t, ex:ex, left:left, nice:Math.ceil(target/5)*5};
+  }
+  function checkHtml(d){
+    var C=S.costs, T=C.pricing||{}, e=d.est||{}, h='<div class="hrow"><h2>Price <em>check</em></h2></div>';
+    h+='<p class="sub" style="margin-top:-6px">Enter the hours and it works out break-even and the price that pays you and grows the business.</p>';
+    h+='<div class="grid3" style="margin-top:12px"><label class="l">Total hours <small>all cleaners</small><input type="number" inputmode="decimal" step="0.5" min="0" data-est="hrs" value="'+esc(e.hrs||'')+'" placeholder="e.g. 12"></label>';
+    h+='<label class="l">Your hours <small>of those</small><input type="number" inputmode="decimal" step="0.5" min="0" data-est="own" value="'+esc(e.own||'')+'" placeholder="0"></label>';
+    h+='<label class="l">Materials <small>$ ex GST</small><input type="number" inputmode="decimal" step="1" min="0" data-est="mat" value="'+esc(e.mat==null?'':e.mat)+'" placeholder="'+(C.matPerHr!=null?'auto':'0')+'"></label></div>';
+    h+='<div id="pcout">'+checkOut(d)+'</div>';
+    h+='<button type="button" class="ghost" data-act="targets" style="font-size:13px">Your targets: '+money(T.ownerRate!=null?T.ownerRate:C.rates.wk)+'/hr for you · '+(T.margin)+'% growth margin · '+T.tax+'% income tax. Change</button>';
+    return h;
+  }
+  function checkOut(d){
+    var C=S.costs, x=priceCalc(d), gst=C.gstReg?1.1:1;
+    if(!x.hrs) return '<div class="hint-card" style="margin-top:12px">Add the total hours to see break-even.'+(C.hrs<20?' Your overhead rate needs more logged jobs and expenses to be reliable.':'')+'</div>';
+    var h='<div class="totals pc">';
+    if(x.staff>0) h+='<div><span>Staff wages + '+Math.round(C.superRate*100)+'% super <small>'+r1(x.staff)+' hrs at '+money(x.rate)+' '+KIND[x.kind]+'</small></span><span>'+money(x.labour)+'</span></div>';
+    h+='<div><span>Materials <small>'+((d.est||{}).mat!=null&&(d.est||{}).mat!==''?'your figure':C.matPerHr!=null?money(C.matPerHr)+'/hr, your average':'none logged yet')+'</small></span><span>'+money(x.mat)+'</span></div>';
+    h+='<div><span>Share of overheads <small>'+(C.ohPerHr!=null?money(C.ohPerHr)+'/hr':'not enough data yet')+'</small></span><span>'+money(x.oh)+'</span></div>';
+    h+='<div class="be"><span>Break-even <small>covers costs, pays you nothing</small></span><span>'+money(x.be)+'</span></div>';
+    if(x.own>0) h+='<div><span>Your time <small>'+r1(x.own)+' hrs at '+money(x.ownerRate)+'</small></span><span>'+money(x.you)+'</span></div>';
+    h+='<div><span>Growth margin <small>'+Math.round(x.m*100)+'% of price</small></span><span>'+money(x.grow)+'</span></div>';
+    h+='<div class="g"><span>Price to grow'+(C.gstReg?' <small>ex GST</small>':'')+'</span><span>'+money(x.target)+'</span></div>';
+    if(C.gstReg) h+='<div style="font-size:14px;color:var(--meta)"><span>Client pays inc GST</span><span>'+money(x.target*1.1)+'</span></div>';
+    h+='</div>';
+    h+='<p class="hint">Set aside about '+money(x.taxYou+x.taxGrow)+' of this for income tax ('+Math.round(x.t*100)+'% of your pay and the growth margin), leaving '+money(x.you-x.taxYou)+' for you and '+money(x.grow-x.taxGrow)+' to reinvest.'+(C.gstReg?' GST isn\'t yours, so it\'s left out of every figure above.':'')+' Overtime and travel aren\'t included.</p>';
+    if(x.ex>0){
+      var cls=x.ex<x.be-0.5?'bad':x.ex<x.target-0.5?'warn':'ok';
+      var msg=cls==='bad'?'This quote is '+money(x.be-x.ex)+' under break-even. You lose money before paying yourself.'
+        :cls==='warn'?'This quote covers costs'+(x.own>0?(x.left>=x.you?' and your time':' but pays you '+money(Math.max(0,x.left))+' of '+money(x.you)+' for your time'):'')+', but is '+money(x.target-x.ex)+' short of the price to grow.'
+        :'This quote clears the price to grow by '+money(x.ex-x.target)+'.';
+      h+='<div class="verdict '+cls+'"><b>Your quote: '+money(x.ex)+(C.gstReg?' ex GST':'')+'</b><span>'+msg+'</span></div>';
+    }
+    h+='<button type="button" class="btn outline" style="width:100%;margin-top:10px" data-act="usetarget">Use '+money(x.nice)+(C.gstReg?' ex GST ('+money(x.nice*gst)+' inc)':'')+'</button>';
+    return h;
+  }
+  function r1(v){ return Math.round(v*10)/10; }
+  function redrawCheck(){ var el=document.getElementById('pcout'); if(el&&draft) el.innerHTML=checkOut(draft); }
+  function useTarget(){
+    var x=priceCalc(draft), others=0, idx=-1;
+    draft.items.forEach(function(it,i){ if(idx<0&&(it.auto||draft.items.length===1)) idx=i; });
+    if(idx<0&&!draft.items.length){ draft.items.push({title:draft.service,desc:'',qty:1,price:'',auto:true}); idx=0; }
+    if(idx<0){ toast('Several items: adjust them to total '+money(x.nice)); return; }
+    draft.items.forEach(function(it,i){ if(i!==idx) others+=(+it.qty||1)*(+it.price||0); });
+    var q=+draft.items[idx].qty||1, p=r2((x.nice-others)/q);
+    if(p<=0){ toast('Your other items already exceed that price'); return; }
+    draft.items[idx].price=p; dirty=true; redrawItems(); toast('Price set to '+money(x.nice));
+  }
+  function targetsSheet(){
+    var C=S.costs, T=C.pricing||{};
+    var h='<h3>Your pricing <em>targets</em></h3><form id="tf" class="grid">';
+    h+='<label class="l full">Your pay per hour on the job <small>before tax</small><input name="ownerRate" type="number" inputmode="decimal" step="0.5" min="0" value="'+esc(T.ownerRate!=null?T.ownerRate:'')+'" placeholder="'+C.rates.wk+' (staff weekday rate)"></label>';
+    h+='<label class="l">Growth margin <small>% of price</small><input name="margin" type="number" inputmode="decimal" step="1" min="0" max="80" value="'+esc(T.margin)+'"></label>';
+    h+='<label class="l">Income tax <small>%</small><input name="tax" type="number" inputmode="decimal" step="1" min="0" max="60" value="'+esc(T.tax)+'"></label>';
+    h+='<p class="hint full" style="margin-top:0">Growth margin is profit left after costs and your pay: money to reinvest, save, and cover slow weeks. Income tax defaults to 32%: the 30% bracket ($45,001 to $135,000) plus the 2% Medicare levy. As a sole trader your pay and the business profit are taxed together, so ask your accountant for your real rate. Your own super isn\'t compulsory as a sole trader; if you pay it, build it into your hourly pay.</p>';
+    h+='<div class="actions full"><button type="button" class="btn plain" data-close>Cancel</button><button type="submit" class="btn primary grow">Save targets</button></div></form>';
+    var sh=sheet(h), f=sh.querySelector('#tf');
+    f.onsubmit=function(ev){ ev.preventDefault(); var b=f.querySelector('[type=submit]'); b.disabled=true;
+      api('POST','/api/books',{action:'pricing',pricing:{ownerRate:f.elements.ownerRate.value,margin:f.elements.margin.value,tax:f.elements.tax.value}})
+        .then(function(r){ S.costs.pricing=r.pricing; closeSheet(); var c=document.getElementById('pcheck'); if(c&&draft) c.innerHTML=checkHtml(draft); toast('Targets saved'); })
+        .catch(function(x){ b.disabled=false; toast(x.message); }); };
+  }
 
   function autofill(){
     var d=draft, pr=S.settings.prices[d.service]||{}, beds=+d.beds||0, baths=+d.baths||0;
@@ -336,7 +422,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(!d.items.length){ toast('Add at least one item'); return; }
     btn.disabled=true; btn.textContent='Saving…';
     var body={kind:d.kind,client:d.client,site:d.site,suburb:d.suburb,service:d.service,beds:d.beds,baths:d.baths,issued:d.issued,validUntil:d.validUntil,dueDate:d.dueDate,serviceDate:d.serviceDate,
-      items:d.items.map(function(i){return {title:i.title,desc:i.desc,qty:+i.qty||1,price:+i.price||0};}),gst:d.gst,depositPct:+d.depositPct||0,notes:d.notes,showTerms:d.showTerms,jobId:d.jobId||''};
+      items:d.items.map(function(i){return {title:i.title,desc:i.desc,qty:+i.qty||1,price:+i.price||0};}),gst:d.gst,depositPct:+d.depositPct||0,notes:d.notes,showTerms:d.showTerms,jobId:d.jobId||'',est:d.est||null};
     api('POST','/api/docs',{action:'save',id:d.id||'',doc:body}).then(function(r){ dirty=false; draft=null; return (d.reqId?api('POST','/api/request',{action:'status',id:d.reqId,status:'quoted',quoteId:r.id}).catch(function(){}):Promise.resolve()).then(load).then(function(){ go('doc/'+r.id); toast('Saved'); }); })
       .catch(function(e){ btn.disabled=false; btn.textContent='Save'; toast(e.message); });
   }
@@ -645,7 +731,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(t.dataset.search!==undefined){ q=t.value; var rl=document.getElementById('rows'); var list=S.docs.filter(function(d){return d.kind===tab && match(d,filter) && (!q||(d.num+' '+d.client.name+' '+d.site+' '+d.suburb).toLowerCase().indexOf(q.toLowerCase())>=0);}); rl.innerHTML=rows(list); return; }
     if(t.tagName==='TEXTAREA'){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight+2,520)+'px'; }
     if(!draft) { if(t.dataset.p){ var pr=t.closest('.prow'), v=function(k){return +pr.querySelector('[data-p="'+k+'"]').value||0;}; pr.querySelector('[data-ex]').textContent='3 bed 2 bath: '+money(r2(v('base')+v('bed')*3+v('bath')*2))+' + GST'; } return; }
-    if(t.dataset.f){ var val=t.type==='checkbox'?t.checked:t.value; setPath(draft,t.dataset.f,val); dirty=true; if(t.dataset.f==='depositPct'||t.dataset.f==='gst') redrawTotals(); return; }
+    if(t.dataset.est){ draft.est=draft.est||{}; draft.est[t.dataset.est]=t.value; dirty=true; redrawCheck(); return; }
+    if(t.dataset.f){ var val=t.type==='checkbox'?t.checked:t.value; setPath(draft,t.dataset.f,val); dirty=true; if(t.dataset.f==='depositPct'||t.dataset.f==='gst') redrawTotals(); if(t.dataset.f==='serviceDate') redrawCheck(); return; }
     if(t.dataset.it){ var card=t.closest('.item'), i=+card.dataset.i; draft.items[i][t.dataset.it]=t.value; if(t.dataset.it==='title'||t.dataset.it==='desc') delete draft.items[i].auto; dirty=true; if(t.dataset.it==='qty'||t.dataset.it==='price'){ card.querySelector('[data-lt]').textContent=money((+draft.items[i].qty||0)*(+draft.items[i].price||0)); redrawTotals(); } }
   });
   app.addEventListener('change',function(e){
@@ -674,6 +761,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     }
     if(!(el=e.target.closest('[data-act]'))) return;
     var a=el.dataset.act, d=docById(route().id);
+    if(a==='usetarget'){ useTarget(); return; }
+    if(a==='targets'){ targetsSheet(); return; }
     if(a==='refresh'){ load().then(function(){ toast('Up to date'); }); return; }
     if(a==='more'){ LIMIT+=200; render(); return; }
     if(a==='copyform'){ var fu=location.origin+'/quote'; (navigator.clipboard?navigator.clipboard.writeText(fu):Promise.reject()).then(function(){ toast('Link copied'); },function(){ prompt('Copy this link',fu); }); return; }

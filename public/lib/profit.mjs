@@ -2,7 +2,7 @@
 // booking's first day), rostered team wages + super, logged expenses and regular
 // outgoings (counted on the days they fall due). Shared by the Profit page and
 // the Monday summary so both always agree.
-import { shiftCosts, paySet, SUPER } from "./wages.mjs";
+import { shiftCosts, paySet, SUPER, QLD_PH } from "./wages.mjs";
 
 const r2 = (v) => Math.round(v * 100) / 100;
 const bookingKey = (j) => j.group || j.id;
@@ -91,6 +91,14 @@ export function pnl(D, from, to) {
   const labourByJob = {};
   for (const s of shifts) labourByJob[s.jobId] = (labourByJob[s.jobId] || 0) + s.pay + s.sup;
 
+  // Paid hours on each booking: logged actual hours, else rostered hours for
+  // everyone on it (owner included), else the job's length for one person.
+  const hrsOf = (b) => {
+    if (actHrs[b.key]) return actHrs[b.key];
+    const ro = Object.values(rosteredHours(b, D.pay)).reduce((a, v) => a + v, 0);
+    if (ro > 0) return ro;
+    return b.days.reduce((a, j) => { const h = (hm(j.end) - hm(j.start)) / 60; return a + (h > 0 ? h : 0); }, 0);
+  };
   let revInc = 0;
   const jobs = inRange.map((b) => {
     const p = priceOf(b, books, qt);
@@ -101,7 +109,7 @@ export function pnl(D, from, to) {
     const profit = rev != null ? rev - labour - exp : null, h = actHrs[b.key];
     const done = !!act[b.key], skipped = !!(act[b.key] && act[b.key].skip);
     return { ...b, price: p.price, from: p.from, rev, labour, exp, profit, done, skipped,
-      actHrs: h || null, perHr: h && rev != null ? rev / h : null, profitHr: h && profit != null ? profit / h : null };
+      actHrs: h || null, hrs: hrsOf(b), perHr: h && rev != null ? rev / h : null, profitHr: h && profit != null ? profit / h : null };
   });
 
   const wages = shifts.reduce((a, s) => a + s.pay, 0) + extraPay, sup = shifts.reduce((a, s) => a + s.sup, 0) + extraPay * SUPER;
@@ -118,13 +126,42 @@ export function pnl(D, from, to) {
     const g = gstReg && f.gst ? f.amt / 11 : 0;
     cats[f.cat] = (cats[f.cat] || 0) + f.amt - g; expInc += f.amt; gstPaid += g; fixedHits.push({ ...f, date: d });
   }
+  // Overheads: everything not tied to a job (regular outgoings and general
+  // expenses), shared across this period's jobs by hours worked, so a 3-day
+  // pre-sale carries more than a 2-hour regular.
+  let overheads = 0;
+  for (const e of exps) if (!e.job) overheads += e.amt - (gstReg ? e.gst : 0);
+  for (const f of fixedHits) overheads += f.amt - (gstReg && f.gst ? f.amt / 11 : 0);
+  const jobHrs = jobs.reduce((a, j) => a + j.hrs, 0), ohRate = jobHrs > 0 ? overheads / jobHrs : 0;
+  for (const j of jobs) { j.overhead = j.hrs * ohRate; j.net = j.profit != null ? j.profit - j.overhead : null; j.netHr = j.actHrs && j.net != null ? j.net / j.actHrs : null; }
   const rev = exGst(revInc), gstCollected = revInc - rev;
   const otherCosts = Object.values(cats).reduce((a, v) => a + v, 0);
   const costs = wages + sup + otherCosts;
   return {
     from, to, jobs, rev: r2(rev), revInc: r2(revInc), gstCollected: r2(gstCollected), gstPaid: r2(gstPaid), gstNet: r2(gstCollected - gstPaid),
     wages: r2(wages), sup: r2(sup), hrs, cats, otherCosts: r2(otherCosts), costs: r2(costs), profit: r2(rev - costs),
-    margin: rev > 0 ? (rev - costs) / rev : null, perHour, unpriced: jobs.filter((j) => j.price == null), expCount: exps.length, fixedHits,
+    margin: rev > 0 ? (rev - costs) / rev : null, perHour, overheads: r2(overheads), jobHrs, ohRate, unpriced: jobs.filter((j) => j.price == null), expCount: exps.length, fixedHits,
     cashIn: r2((D.payments || []).filter((p) => p.date >= from && p.date <= to).reduce((a, p) => a + p.amt, 0)),
+  };
+}
+
+// What a job costs to run, from the last 90 days, for pricing quotes:
+// overheads per hour worked, job materials per hour, and staff rates.
+export function costBasis(D, today) {
+  const from = addIso(today, -89, 0), x = pnl(D, from, today);
+  const done = x.jobs.filter((j) => j.last <= today);
+  const hrs = done.reduce((a, j) => a + j.hrs, 0);
+  const mat = done.reduce((a, j) => a + j.exp, 0);
+  // Regular outgoings at their monthly average, so a yearly bill landing (or not)
+  // in the window doesn't swing the rate.
+  const gstReg = D.gstReg, fixedM = (D.books.fixed || []).filter((f) => !f.end || f.end >= today)
+    .reduce((a, f) => a + perMonth(f) * (gstReg && f.gst ? 10 / 11 : 1), 0);
+  const general = (D.expenses || []).filter((e) => !e.job && e.date >= from && e.date <= today).reduce((a, e) => a + e.amt - (gstReg ? e.gst : 0), 0);
+  const months = 90 / (365.25 / 12), ohMonth = fixedM + general / months, hrsMonth = hrs / months;
+  return {
+    from, to: today, jobs: done.length, hrs: r2(hrs), hrsMonth: r2(hrsMonth),
+    fixedMonth: r2(fixedM), generalMonth: r2(general / months), ohMonth: r2(ohMonth),
+    ohPerHr: hrs > 0 ? r2(ohMonth / hrsMonth) : null, matPerHr: hrs > 0 ? r2(mat / hrs) : null,
+    rates: paySet(D.pay).rates, ph: [...QLD_PH, ...paySet(D.pay).ph], superRate: SUPER, gstReg,
   };
 }

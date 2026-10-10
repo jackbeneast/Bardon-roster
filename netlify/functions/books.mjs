@@ -2,9 +2,10 @@
 // regular outgoings, and the Jobber sync controls.
 import { store, json, checkAdmin, loadRoster } from "../../lib/core.mjs";
 import { loadDocs, loadSettings } from "../../lib/docs.mjs";
-import { loadBooks, loadExpenses, cleanExpense, cleanFixed, cleanActual, quoteTotals, priceOf, moneySummary, CATS, SETUP } from "../../lib/books.mjs";
+import { pricingOf, loadBooks, loadExpenses, cleanExpense, cleanFixed, cleanActual, quoteTotals, priceOf, moneySummary, CATS, SETUP } from "../../lib/books.mjs";
 import { loadJobber, syncJobber } from "../../lib/jobber.mjs";
 import { scanReceipt, scanConfigured } from "../../lib/scan.mjs";
+import { costBasis } from "../../public/lib/profit.mjs";
 
 const r2 = (v) => Math.round(v * 100) / 100;
 
@@ -15,6 +16,12 @@ export default async (req) => {
 
   if (req.method === "GET") {
     if (u.searchParams.get("sum")) return json(await moneySummary(s));
+    if (u.searchParams.get("costs")) { // for the price check on quotes
+      const [roster, books, docs, expenses, set] = await Promise.all([loadRoster(s), loadBooks(s), loadDocs(s), loadExpenses(s), loadSettings(s)]);
+      const today = new Date(Date.now() + 10 * 3600e3).toISOString().slice(0, 10);
+      const D = { jobs: roster.jobs.filter((j) => !j.sample), team: roster.team, pay: roster.pay || null, books, expenses, quoteTotals: quoteTotals(docs), gstReg: set.gst !== false, payments: [] };
+      return json({ ...costBasis(D, today), pricing: books.pricing });
+    }
     const pk = u.searchParams.get("price");
     if (pk) { // one booking, for the job editor in the hub
       const [roster, books, docs] = await Promise.all([loadRoster(s), loadBooks(s), loadDocs(s)]);
@@ -94,6 +101,10 @@ export default async (req) => {
       if (b.dropReceipt) { await s.del(`rcpt/${e.id}`); delete e.receipt; }
       await s.set(`exp/${e.id}`, e);
       return json({ ok: true, expense: e });
+    }
+    case "pricing": {
+      books.pricing = pricingOf({ ...books.pricing, ...(b.pricing || {}) });
+      await saveBooks(); return json({ ok: true, pricing: books.pricing });
     }
     case "scan": { // read one receipt photo; nothing is saved until Jack confirms
       if (!scanConfigured()) return json({ error: "Receipt reading isn't switched on yet", off: true }, 503);

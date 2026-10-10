@@ -116,7 +116,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .sheet h3 em{font-style:italic;font-weight:500}
 .sheet .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
 .err{color:var(--terracotta-dark);font:500 13px/1.4 var(--sans);margin-top:10px}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:40;max-width:90vw;text-align:center}
+.toast{pointer-events:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:40;max-width:90vw;text-align:center}
 .center{text-align:center;padding:60px 16px;color:var(--dark)}
 .pricegrid{display:grid;gap:10px;margin-top:10px}
 .prow{border:1px solid var(--line);border-radius:10px;padding:12px}
@@ -385,12 +385,13 @@ function renderProfit(){
   var js=x.jobs.slice().sort(function(a,b){ return a.date.localeCompare(b.date); });
   h+='<div class="card"><div class="hrow"><h2>Profit <em>by job</em></h2><span class="sub" style="margin:0">'+js.length+'</span></div>';
   if(!js.length) h+='<p class="sub">No jobs in this period.</p>';
+  else if(x.overheads>0&&x.jobHrs>0) h+='<p class="hint" style="margin-top:-6px">After wages, job costs and a share of overheads. '+money(x.overheads)+' of outgoings and general expenses this period, spread across '+Math.round(x.jobHrs*10)/10+' hrs of work = '+money(x.ohRate)+' per hour on each job.</p>';
   var tt=today();
   js.forEach(function(b){
     var j=b.j, days=b.days.length>1?' · '+b.days.length+' days':'', ended=b.last<tt||(b.last===tt&&b.days[b.days.length-1].end&&b.days[b.days.length-1].end<=nowHM());
-    var right=b.price==null?'<span class="bad">No price</span>':money(b.profit);
-    var meta=fday(b.date,true)+days+' · '+esc(j.service||'')+(b.actHrs?' · '+Math.round(b.actHrs*100)/100+' hrs worked':'')+(b.price!=null?' · '+money(b.rev)+' in'+(b.labour?', '+money(b.labour)+' wages':'')+(b.exp?', '+money(b.exp)+' costs':''):'');
-    var mg=b.price!=null&&b.rev>0?Math.round(b.profit/b.rev*100):null;
+    var right=b.price==null?'<span class="bad">No price</span>':'<span'+(b.net<0?' class="bad"':'')+'>'+money(b.net)+'</span>';
+    var meta=fday(b.date,true)+days+' · '+esc(j.service||'')+(b.actHrs?' · '+Math.round(b.actHrs*100)/100+' hrs worked':'')+(b.price!=null?' · '+money(b.rev)+' in'+(b.labour?', '+money(b.labour)+' wages':'')+(b.exp?', '+money(b.exp)+' costs':'')+(b.overhead>0.005?', '+money(b.overhead)+' overheads':''):'');
+    var mg=b.price!=null&&b.rev>0?Math.round(b.net/b.rev*100):null;
     var tag=b.perHr!=null?'<b style="font-size:13px;color:var(--dark)">'+m0(b.perHr)+'/hr</b>'+(mg!=null?' · '+mg+'%':''):(ended&&!b.done?'<span class="bad">Log hours</span>':(mg!=null?mg+'%':''));
     h+='<button type="button" class="jrow" '+(ended?'data-wrap':'data-price')+'="'+esc(b.key)+'"><b>'+esc(j.client||'Job')+(j.suburb?' <small>· '+esc(j.suburb)+'</small>':'')+'</b><span class="v">'+right+'</span><small>'+meta+'</small><small style="text-align:right">'+tag+'</small></button>';
   });
