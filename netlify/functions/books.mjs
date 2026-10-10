@@ -4,6 +4,7 @@ import { store, json, checkAdmin, loadRoster } from "../../lib/core.mjs";
 import { loadDocs, loadSettings } from "../../lib/docs.mjs";
 import { loadBooks, loadExpenses, cleanExpense, cleanFixed, cleanActual, quoteTotals, priceOf, moneySummary, CATS, SETUP } from "../../lib/books.mjs";
 import { loadJobber, syncJobber } from "../../lib/jobber.mjs";
+import { scanReceipt, scanConfigured } from "../../lib/scan.mjs";
 
 const r2 = (v) => Math.round(v * 100) / 100;
 
@@ -35,7 +36,7 @@ export default async (req) => {
     return json({
       jobs: roster.jobs.filter((j) => !j.sample), team: roster.team, pay: roster.pay || null,
       books, expenses, payments, owing, quoteTotals: quoteTotals(docs), gstReg: set.gst !== false,
-      cats: CATS, setup: SETUP,
+      cats: CATS, setup: SETUP, scanOn: scanConfigured(),
       jobber: { on: !!jb.url, last: jb.last, series: jb.series, pending: jb.pending },
     });
   }
@@ -93,6 +94,11 @@ export default async (req) => {
       if (b.dropReceipt) { await s.del(`rcpt/${e.id}`); delete e.receipt; }
       await s.set(`exp/${e.id}`, e);
       return json({ ok: true, expense: e });
+    }
+    case "scan": { // read one receipt photo; nothing is saved until Jack confirms
+      if (!scanConfigured()) return json({ error: "Receipt reading isn't switched on yet", off: true }, 503);
+      try { return json({ ok: true, read: await scanReceipt(b.receipt, new Date(Date.now() + 10 * 3600e3).toISOString().slice(0, 10)) }); }
+      catch (e) { return json({ error: e.message || "Couldn't read that receipt" }, e.status || 502); }
     }
     case "delexpense": {
       const id = String(b.id || "").replace(/[^\w-]/g, "");

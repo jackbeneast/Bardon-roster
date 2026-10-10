@@ -192,6 +192,35 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .cats button[aria-pressed="true"]{background:var(--dark);border-color:var(--dark);color:var(--cream)}
 .big{font:700 28px var(--serif)!important;padding:12px 12px 12px 30px!important}
 .money-in.bigw::before{font:700 24px var(--serif);color:var(--dark)}
+.scanbox{margin-bottom:6px}
+.orline{display:flex;align-items:center;gap:10px;margin:14px 0 10px;color:var(--meta);font-size:13px}
+.orline::before,.orline::after{content:"";flex:1;height:1px;background:var(--line)}
+.sheet.tall{max-height:94vh;padding-bottom:0}
+.rfoot{position:sticky;bottom:0;background:var(--white);margin:12px -16px 0;padding:6px 16px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.ritem{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:var(--white)}
+.ritem.skip{background:var(--cream);border-style:dashed}
+.ritem.busy .rtitle small{color:var(--terracotta-dark)}
+.rhead{display:flex;gap:12px;align-items:center}
+.rthumb{flex:none;width:56px;height:56px;border-radius:8px;overflow:hidden;border:1px solid var(--line);padding:0;background:var(--cream);cursor:zoom-in}
+.rthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.rthumb.ph{cursor:default}
+.rtitle{flex:1;min-width:0}
+.rtitle b{display:block;font:600 15px/1.3 var(--sans);color:var(--dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rtitle small{font-size:13px;color:var(--meta)}
+.rx{flex:none;width:40px;height:40px;border:0;background:none;color:var(--meta);font-size:16px;cursor:pointer;border-radius:50%}
+.rflags{margin:10px 0 0;padding:9px 12px 9px 28px;background:#FCEFD0;border-radius:8px;color:#5E4510;font-size:13px}
+.rflags li+li{margin-top:3px}
+.rskip{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;font-size:14px;color:var(--meta)}
+.rskip .btn{min-height:40px;font-size:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.grid2 input,.grid2 select{margin-top:4px}
+.rg{font-size:13px;padding:6px 0 0}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);border-top-color:var(--terracotta);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.zoom{position:fixed;inset:0;z-index:50;background:rgba(26,26,26,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}
+.zoom img{max-width:100%;max-height:82vh;object-fit:contain;border-radius:6px}
+.bar label.btn{position:relative}
+@media (max-width:400px){.bar .sum{display:none}.bar .btn{flex:1}}
 .rcpt{max-width:100%;border-radius:8px;border:1px solid var(--line);margin-top:8px;display:block}
 .chk{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;padding:10px 0;border-bottom:1px solid var(--cream-dark)}
 .chk:last-child{border-bottom:0}
@@ -283,7 +312,8 @@ function nudges(p){
 
 function topbar(){ return '<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
 function tabs(r){ function b(v,l){ return '<button type="button" data-go="'+v+'" aria-pressed="'+(r===v)+'">'+l+'</button>'; } return '<div class="seg">'+b('profit','Profit')+b('spend','Spending')+b('prices','Prices &amp; apps')+'</div>'; }
-function bottom(){ return '<div class="bar"><div class="in"><div class="sum">Paid for something?<b>Log it now</b></div><button type="button" class="btn primary" data-act="addexp">+ Expense</button></div></div>'; }
+function bottom(){ return '<div class="bar"><div class="in"><div class="sum">Paid for something?<b>Log it now</b></div><button type="button" class="btn plain" data-act="addexp">+ Manual</button>'+rcptBtn('btn primary','📷 Receipts')+'</div></div>'; }
+function rcptBtn(cls,label,style){ return '<label class="'+cls+'"'+(style?' style="'+style+'"':'')+'>'+label+'<input type="file" accept="image/*" multiple data-rcpts hidden></label>'; }
 function periodNav(p){ return '<div class="chips" style="margin-top:14px">'+['month','quarter','year'].map(function(m){ return '<button type="button" class="chip" data-mode="'+m+'" aria-pressed="'+(mode===m)+'">'+(m==='month'?'Month':m==='quarter'?'BAS quarter':'Financial year')+'</button>'; }).join('')+'</div><div class="navp"><button class="icon-btn" data-off="-1" aria-label="Previous">&larr;</button><div class="lbl">'+esc(p.label)+(p.sub?'<small>'+p.sub+'</small>':'')+'</div>'+(off?'<button class="icon-btn" data-off="0">Now</button>':'')+'<button class="icon-btn" data-off="1" aria-label="Next">&rarr;</button></div>'; }
 
 function render(){
@@ -494,14 +524,16 @@ function sheet(inner){ closeSheet(); var s=document.createElement('div'); s.clas
 function closeSheet(){ var s=document.getElementById('scrim'); if(s) s.remove(); }
 function recentCats(){ var seen={}, out=[]; D.expenses.forEach(function(e){ if(!seen[e.cat]){ seen[e.cat]=1; out.push(e.cat); } }); D.cats.forEach(function(c){ if(!seen[c]){ seen[c]=1; out.push(c); } }); return out; }
 
-function shrink(file){ return new Promise(function(res,rej){ var img=new Image(), u=URL.createObjectURL(file); img.onload=function(){ var m=1400, w=img.width, h=img.height, k=Math.min(1,m/Math.max(w,h)); var c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg',0.72)); }; img.onerror=function(){ rej(new Error('Couldn\'t read that photo')); }; img.src=u; }); }
+function shrink(file,max){ return new Promise(function(res,rej){ var img=new Image(), u=URL.createObjectURL(file); img.onload=function(){ var m=max||1400, w=img.width, h=img.height, k=Math.min(1,m/Math.max(w,h)); var c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg',0.72)); }; img.onerror=function(){ rej(new Error('Couldn\'t read that photo')); }; img.src=u; }); }
 
 function expenseSheet(e){
   var isNew=!e; e=e||{date:today(),cat:'',amt:'',who:'',note:'',job:'',gst:0};
   var cats=recentCats(), cat=e.cat||'', photo=null, dropR=false;
   var hasGst=!isNew ? (e.gst>0) : D.gstReg;
   var t=today(), jobs=bookingsOf(D.jobs).filter(function(b){ return b.last>=addD(t,-21) && b.date<=addD(t,7); }).sort(function(a,b){return b.date.localeCompare(a.date);});
-  var h='<h3>'+(isNew?'Log an <em>expense</em>':'Edit <em>expense</em>')+'</h3><form id="ef" novalidate>';
+  var h='<h3>'+(isNew?'Log an <em>expense</em>':'Edit <em>expense</em>')+'</h3>';
+  if(isNew) h+='<div class="scanbox">'+rcptBtn('btn primary','📷 Upload receipts','width:100%')+'<p class="hint" style="text-align:center;margin-top:6px">Pick up to '+MAXR+' at once. Claude reads them, you check and save.</p><div class="orline"><span>or enter one by hand</span></div></div>';
+  h+='<form id="ef" novalidate>';
   h+='<label class="l">Amount'+(D.gstReg?' <small>(total paid, inc GST)</small>':'')+'<span class="money-in bigw" style="display:block"><input class="big" name="amt" type="number" inputmode="decimal" step="0.01" min="0" value="'+esc(e.amt)+'" required></span></label>';
   h+='<div style="margin-top:14px"><span class="l">What for</span><div class="cats">'+cats.map(function(c){ return '<button type="button" data-cat="'+esc(c)+'" aria-pressed="'+(c===cat)+'">'+esc(c)+'</button>'; }).join('')+'</div></div>';
   h+='<div class="grid" style="margin-top:14px"><label class="l">Date<input name="date" type="date" value="'+esc(e.date)+'"></label><label class="l">Where / who<input name="who" value="'+esc(e.who)+'" placeholder="e.g. Bunnings"></label></div>';
@@ -529,6 +561,167 @@ function expenseSheet(e){
       .catch(function(x){ btn.disabled=false; btn.textContent='Save expense'; err.textContent=x.message; err.hidden=false; });
   };
   var del=s.querySelector('[data-del]'); if(del) del.onclick=function(){ if(!del.dataset.sure){ del.dataset.sure=1; del.textContent='Tap again to delete'; return; } api('POST',{action:'delexpense',id:e.id}).then(function(){ D.expenses=D.expenses.filter(function(x){return x.id!==e.id;}); closeSheet(); render(); toast('Deleted'); }).catch(function(x){ toast(x.message); }); };
+}
+
+
+// ---------- many receipts at once ----------
+// Claude reads each photo and fills in an expense; Jack checks them all on one screen and saves.
+var MAXR=20, RB=null;
+document.addEventListener('change',function(e){
+  var i=e.target; if(!i.matches||!i.matches('input[data-rcpts]')) return;
+  var files=Array.prototype.slice.call(i.files||[]); i.value='';
+  if(files.length) addReceipts(files);
+});
+function addReceipts(files){
+  var open=RB&&document.getElementById('rbatch');
+  if(!open){ RB={rows:[],seq:0,busy:0,saving:false}; }
+  var room=MAXR-RB.rows.filter(function(r){return !r.saved;}).length;
+  if(files.length>room) toast('Up to '+MAXR+' at a time. Added the first '+Math.max(room,0)+'.');
+  files.slice(0,Math.max(room,0)).forEach(function(file){
+    RB.rows.push({id:'r'+(++RB.seq),file:file,st:'wait',f:{amt:'',date:'',who:'',cat:'',gstAmt:'',job:'',note:''},msg:'',skip:false,saved:false});
+  });
+  if(!open) batchSheet(); else { drawRows(); }
+  pump();
+}
+function pump(){
+  while(RB&&RB.busy<3){
+    var r=RB.rows.filter(function(x){return x.st==='wait';})[0]; if(!r) break;
+    r.st='read'; RB.busy++; drawRow(r); readOne(r);
+  }
+  drawFoot();
+}
+function readOne(r){
+  var batch=RB;
+  shrink(r.file,1800).then(function(d){
+    r.photo=d;
+    if(!D.scanOn) throw Object.assign(new Error('off'),{off:true});
+    return api('POST',{action:'scan',receipt:d});
+  }).then(function(res){
+    var x=res.read, f=r.f;
+    f.amt=x.amt!=null?x.amt.toFixed(2):''; f.date=x.date||today(); f.who=x.who||''; f.cat=x.cat||''; f.note=x.note||'';
+    var gstDefault=x.gstAmt!=null?x.gstAmt:0;
+    f.gstAmt=D.gstReg?gstDefault.toFixed(2):'0';
+    var flags=[];
+    if(!x.receipt) flags.push('Doesn\'t look like a receipt');
+    if(x.foreign) flags.push('Not in Australian dollars');
+    if(x.amt==null) flags.push('Couldn\'t find the total');
+    if(!x.date) flags.push('No date found, set to today');
+    if(D.gstReg&&x.gstAmt==null&&x.amt!=null&&NOGST.indexOf(x.cat)<0) flags.push('No GST shown, so none claimed. Add it if the receipt includes GST');
+    if(x.unsure) flags.push(x.unsure);
+    r.flags=flags; r.st='ok';
+    if(!x.receipt) r.skip=true;
+  }).catch(function(e){
+    r.st='fail'; r.f.date=r.f.date||today(); if(D.gstReg) r.f.gstAmt='';
+    r.msg=e.off?'':(e.message||'Couldn\'t read it');
+  }).then(function(){
+    batch.busy--; if(RB!==batch) return;
+    checkDupes(); drawRow(r); pump();
+  });
+}
+function sameish(a,b){ return a&&b&&Math.abs(+a.amt-+b.amt)<0.005&&a.date===b.date; }
+function checkDupes(){
+  var done=RB.rows.filter(function(r){ return (r.st==='ok'||r.st==='fail')&&!r.saved; });
+  done.forEach(function(r,i){
+    if(!(+r.f.amt>0)) return;
+    var me={amt:+r.f.amt,date:r.f.date};
+    var old=D.expenses.filter(function(e){ return sameish(e,me); })[0];
+    var twin=done.slice(0,i).filter(function(o){ return !o.skip&&sameish({amt:+o.f.amt,date:o.f.date},me); })[0];
+    var was=r.dupe;
+    r.dupe=old?'Already logged: '+(old.who||old.cat)+' '+money(old.amt)+' on '+fday(old.date):twin?'Same total and date as another receipt here':'';
+    if(r.dupe&&!was&&!r.touched){ r.skip=true; drawRow(r); }
+    else if(!r.dupe&&was&&!r.touched){ r.skip=false; drawRow(r); }
+  });
+}
+function batchJobs(){ var t=today(); return bookingsOf(D.jobs).filter(function(b){ return b.last>=addD(t,-60) && b.date<=addD(t,7); }).sort(function(a,b){return b.date.localeCompare(a.date);}); }
+function batchSheet(){
+  var h='<div id="rbatch"><h3>Check your <em>receipts</em></h3>';
+  if(!D.scanOn) h+='<div class="hint-card">Receipt reading isn\'t switched on yet, so fill each one in below. Once it\'s on, Claude fills these in for you.</div>';
+  else h+='<p class="sub" style="margin-top:-6px">Claude fills these in. Check anything marked, then save.</p>';
+  h+='<div id="rrows"></div><div style="margin-top:12px">'+rcptBtn('btn plain','+ Add more receipts','width:100%')+'</div>';
+  h+='<div class="rfoot"><div class="err" id="rErr" hidden></div><div class="actions" style="margin-top:8px"><button type="button" class="btn plain" data-rcancel>Cancel</button><button type="button" class="btn primary grow" data-rsave>Save</button></div></div></div>';
+  var s=sheet(h);
+  s.querySelector('.sheet').classList.add('tall');
+  s.addEventListener('click',onBatchClick,true);
+  s.addEventListener('input',onBatchInput);
+  s.addEventListener('change',onBatchInput);
+  drawRows();
+}
+function drawRows(){ var box=document.getElementById('rrows'); if(!box) return; box.innerHTML=''; RB.rows.forEach(function(r){ if(!r.saved){ var d=document.createElement('div'); d.id=r.id; box.appendChild(d); drawRow(r); } }); drawFoot(); }
+function drawRow(r){
+  var el=document.getElementById(r.id); if(!el) return;
+  var f=r.f, n=RB.rows.indexOf(r)+1;
+  el.className='ritem'+(r.skip?' skip':'')+(r.st==='read'||r.st==='wait'?' busy':'');
+  var thumb=r.photo?'<button type="button" class="rthumb" data-zoom="'+r.id+'" aria-label="View receipt '+n+'"><img alt="" src="'+r.photo+'"></button>':'<div class="rthumb ph"></div>';
+  var h='<div class="rhead">'+thumb+'<div class="rtitle"><b>'+(r.st==='ok'||r.st==='fail'?esc(f.who||'Receipt '+n):'Receipt '+n)+'</b><small>'+
+    (r.st==='wait'?'Waiting…':r.st==='read'?'<span class="spin"></span> Reading…':(+f.amt>0?money(+f.amt):'No total yet')+(f.date?' · '+fday(f.date):''))+'</small></div>'+
+    '<button type="button" class="rx" data-rdel="'+r.id+'" aria-label="Remove receipt '+n+'">✕</button></div>';
+  if(r.st==='wait'||r.st==='read'){ el.innerHTML=h; return; }
+  var notes=[];
+  if(r.msg) notes.push(r.msg+'. Fill it in below.');
+  if(r.dupe) notes.push(r.dupe);
+  (r.flags||[]).forEach(function(x){ notes.push(x); });
+  if(notes.length) h+='<ul class="rflags">'+notes.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>';
+  if(r.skip){ h+='<div class="rskip"><span>Won\'t be saved</span><button type="button" class="btn plain" data-rkeep="'+r.id+'">Save it anyway</button></div>'; el.innerHTML=h; return; }
+  h+='<div class="grid2">';
+  h+='<label class="l">Total'+(D.gstReg?' <small>inc GST</small>':'')+'<span class="money-in" style="display:block"><input data-k="amt" type="number" inputmode="decimal" step="0.01" min="0" value="'+esc(f.amt)+'"></span></label>';
+  h+='<label class="l">Date<input data-k="date" type="date" value="'+esc(f.date)+'"></label>';
+  h+='<label class="l">Where / who<input data-k="who" value="'+esc(f.who)+'" placeholder="e.g. Bunnings"></label>';
+  if(D.gstReg) h+='<label class="l">GST <small>in the total</small><span class="money-in" style="display:block"><input data-k="gstAmt" type="number" inputmode="decimal" step="0.01" min="0" value="'+esc(f.gstAmt)+'"></span></label>';
+  h+='<label class="l'+(D.gstReg?' full':'')+'">What for<select data-k="cat"><option value="">Pick one…</option>'+D.cats.map(function(c){ return '<option'+(c===f.cat?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select></label>';
+  h+='<label class="l full">For a job <small>(optional)</small><select data-k="job"><option value="">Business in general</option>'+batchJobs().map(function(b){ return '<option value="'+esc(b.key)+'"'+(b.key===f.job?' selected':'')+'>'+esc(b.j.client||'Job')+' · '+fday(b.date)+'</option>'; }).join('')+'</select></label>';
+  h+='<label class="l full">Note <small>(optional)</small><input data-k="note" value="'+esc(f.note)+'"></label>';
+  h+='</div>';
+  if(D.gstReg&&+f.amt>0&&Math.abs((+f.gstAmt||0)-Math.round(+f.amt/11*100)/100)>0.004) h+='<button type="button" class="ghost rg" data-r11="'+r.id+'">Set GST to 1/11 ('+money(+f.amt/11)+')</button>';
+  el.innerHTML=h;
+}
+function rowOf(el){ var c=el.closest('.ritem'); return c&&RB.rows.filter(function(r){return r.id===c.id;})[0]; }
+function onBatchInput(e){
+  var i=e.target, k=i.dataset&&i.dataset.k; if(!k) return; var r=rowOf(i); if(!r) return;
+  r.f[k]=i.value; r.touched=true;
+  if(k==='amt'||k==='date'){ checkDupes(); var t=document.getElementById(r.id).querySelector('.rtitle small'); if(t) t.textContent=(+r.f.amt>0?money(+r.f.amt):'No total yet')+(r.f.date?' · '+fday(r.f.date):''); }
+  if(k==='who'){ var b=document.getElementById(r.id).querySelector('.rtitle b'); if(b) b.textContent=r.f.who||'Receipt'; }
+  if(k==='cat'&&D.gstReg&&NOGST.indexOf(r.f.cat)>=0){ r.f.gstAmt='0'; var g=document.getElementById(r.id).querySelector('[data-k=gstAmt]'); if(g) g.value='0'; }
+  drawFoot();
+}
+function onBatchClick(e){
+  var t=e.target;
+  var z=t.closest('[data-zoom]'); if(z){ e.stopPropagation(); var r=RB.rows.filter(function(x){return x.id===z.dataset.zoom;})[0]; zoom(r.photo); return; }
+  var d=t.closest('[data-rdel]'); if(d){ e.stopPropagation(); RB.rows=RB.rows.filter(function(x){return x.id!==d.dataset.rdel;}); var el=document.getElementById(d.dataset.rdel); if(el) el.remove(); checkDupes(); drawFoot(); if(!RB.rows.filter(function(x){return !x.saved;}).length) endBatch(); return; }
+  var k=t.closest('[data-rkeep]'); if(k){ e.stopPropagation(); var r2=rowOf(k); r2.skip=false; r2.touched=true; drawRow(r2); drawFoot(); return; }
+  var g=t.closest('[data-r11]'); if(g){ e.stopPropagation(); var r3=rowOf(g); r3.f.gstAmt=(Math.round(+r3.f.amt/11*100)/100).toFixed(2); r3.touched=true; drawRow(r3); return; }
+  if(t.closest('[data-rcancel]')){ e.stopPropagation(); var left=RB.rows.filter(function(x){return !x.saved&&!x.skip;}).length; if(left&&!t.dataset.sure){ t.dataset.sure=1; t.textContent='Discard '+left+'?'; return; } endBatch(); return; }
+  if(t.closest('[data-rsave]')){ e.stopPropagation(); saveBatch(); return; }
+  if(t.closest('[data-close]')||t.id==='scrim'){ e.stopPropagation(); e.preventDefault(); }
+}
+function endBatch(){ RB=null; closeSheet(); }
+function zoom(src){ var z=document.createElement('div'); z.className='zoom'; z.innerHTML='<img alt="Receipt" src="'+src+'"><button type="button" class="btn dark">Close</button>'; z.onclick=function(){ z.remove(); }; document.body.appendChild(z); }
+function pending(){ return RB.rows.filter(function(r){ return !r.saved&&!r.skip; }); }
+function drawFoot(){
+  var b=document.querySelector('[data-rsave]'); if(!b||RB.saving) return;
+  var p=pending(), reading=RB.rows.filter(function(r){return r.st==='wait'||r.st==='read';}).length;
+  var tot=p.reduce(function(a,r){ return a+(+r.f.amt||0); },0);
+  b.disabled=!p.length||reading>0;
+  b.textContent=reading?'Reading '+(RB.rows.length-reading)+' of '+RB.rows.length+'…':p.length?'Save '+p.length+' expense'+(p.length===1?'':'s')+' · '+money(tot):'Nothing to save';
+}
+function saveBatch(){
+  var p=pending(), err=document.getElementById('rErr');
+  var bad=p.filter(function(r){ return !(+r.f.amt>0)||!r.f.cat||!r.f.date; });
+  if(bad.length){ err.textContent=bad.length+' still need'+(bad.length===1?'s':'')+' a total, date and category.'; err.hidden=false; document.getElementById(bad[0].id).scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  err.hidden=true; RB.saving=true; var b=document.querySelector('[data-rsave]'); b.disabled=true;
+  var batch=RB, n=0, fails=[];
+  p.reduce(function(q,r){ return q.then(function(){
+    b.textContent='Saving '+(++n)+' of '+p.length+'…';
+    var g=D.gstReg?Math.max(0,+r.f.gstAmt||0):0;
+    return api('POST',{action:'expense',expense:{amt:+r.f.amt,date:r.f.date,cat:r.f.cat,who:r.f.who,note:r.f.note,job:r.f.job,gst:false,gstAmt:g},receipt:r.photo||undefined})
+      .then(function(res){ r.saved=true; D.expenses.unshift(res.expense); var el=document.getElementById(r.id); if(el) el.remove(); })
+      .catch(function(x){ fails.push(r); r.msg=x.message; drawRow(r); });
+  }); },Promise.resolve()).then(function(){
+    D.expenses.sort(function(x,y){return (y.date+y.at).localeCompare(x.date+x.at);});
+    batch.saving=false; render();
+    var ok=p.length-fails.length;
+    if(!fails.length){ endBatch(); toast(ok+' expense'+(ok===1?'':'s')+' logged'); return; }
+    if(RB===batch){ err.textContent=ok+' saved. '+fails.length+' didn\'t save, try again.'; err.hidden=false; drawFoot(); }
+  });
 }
 
 function fixedSheet(f, preset){
