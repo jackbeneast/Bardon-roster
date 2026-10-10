@@ -238,7 +238,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 </style></head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <script type="module">
-import { pnl, bookingsOf, priceOf, perMonth, dueDates, rosteredHours, toWrap } from '/lib/profit.mjs';
+import { pnl, bookingsOf, priceOf, perMonth, dueDates, rosteredHours, toWrap, costBasis } from '/lib/profit.mjs';
 
 var app=document.getElementById('app');
 var D=null, loadErr='', loaded=false, X=null, xMsg=null, PIPE=null;
@@ -269,7 +269,7 @@ function load(){
   if(!key()){ loadErr='login'; render(); return Promise.resolve(); }
   loadX();
   fetch('/api/pipeline',{headers:{'x-admin-key':key()},cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).then(function(d){ PIPE=d; if(loaded) render(); }).catch(function(){});
-  return api('GET').then(function(d){ D=d; loaded=true; loadErr=''; render(); }).catch(function(e){ loadErr=e.status===401?'login':e.message; render(); });
+  return api('GET').then(function(d){ D=d; OHR=null; loaded=true; loadErr=''; render(); }).catch(function(e){ loadErr=e.status===401?'login':e.message; render(); });
 }
 function xapi(method,body){
   return fetch('/api/xero',{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
@@ -770,6 +770,10 @@ var WRAP_CATS=[['Cleaning products','Products'],['Fuel','Fuel'],['Other','Parkin
 function teamName(pid){ var m=(D.team||[]).filter(function(t){return t.id===pid;})[0]; return m?(m.owner?'You':m.name):'Someone'; }
 function isOwner(pid){ return (D.team||[]).some(function(t){return t.id===pid&&t.owner;}); }
 function q4(v){ return Math.round(v*4)/4; }
+var OHR=null;
+function ohRate(){ if(OHR==null){ try{ OHR=costBasis(D,today()).ohPerHr||0; }catch(e){ OHR=0; } } return OHR; }
+function ownerHrs(st){ var o=0; (D.team||[]).forEach(function(t){ if(t.owner&&st[t.id]) o+=+st[t.id]||0; }); return o; }
+function r1(v){ return Math.round(v*10)/10; }
 function wrapSheet(key){
   var b=bookingsOf(D.jobs).filter(function(x){return x.key===key;})[0];
   if(!b){ toast('That job isn\'t on the roster any more'); return; }
@@ -807,7 +811,15 @@ function wrapSheet(key){
     var r=pnl(D2,b.date,b.last).jobs.filter(function(x){return x.key===key;})[0], out=s.querySelector('#wres');
     if(!tot){ out.innerHTML='<span style="margin:0">Enter the hours to see what this job made per hour.</span>'; return; }
     if(!r||r.rev==null){ out.innerHTML='<b>'+(Math.round(tot*100)/100)+' hrs</b><span>Add the job price to see the hourly rate and profit.</span>'; return; }
-    out.innerHTML='<b>'+money(r.rev/tot)+' <small style="font:500 15px var(--sans)">per hour worked</small></b><span class="'+(r.profit<0?'neg':'')+'">'+(r.profit<0?'Loss ':'Profit ')+money(r.profit)+' · '+money(r.profit/tot)+'/hr'+(r.rev>0?' · '+Math.round(r.profit/r.rev*100)+'% margin':'')+'</span><span>'+money(r.rev)+(D.gstReg?' ex GST':'')+' in · '+money(r.labour)+' wages &amp; super · '+money(r.exp)+' costs</span>';
+    // Overheads at the steady 90-day rate (not just what fell due on these days),
+    // and the owner's hours are unpaid here, so what's left is what Jack earned.
+    var oh=ohRate()*tot, net=r.profit-oh, mine=ownerHrs(st);
+    var h='<b>'+(mine>0?money(net/mine)+' <small style="font:500 15px var(--sans)">per hour for you</small>':money(net)+' <small style="font:500 15px var(--sans)">profit</small>')+'</b>';
+    h+='<span class="'+(net<0?'neg':'')+'">'+(mine>0?'You earned '+money(net)+' for your '+r1(mine)+' hrs, after everything':(net<0?'Loss ':'Profit ')+money(net)+' after everything')+(r.rev>0?' · '+Math.round(net/r.rev*100)+'% margin':'')+'</span>';
+    h+='<span>'+money(r.rev)+(D.gstReg?' ex GST':'')+' in − '+money(r.labour)+' staff wages &amp; super − '+money(r.exp)+' job costs − '+money(oh)+' overheads ('+r1(tot)+' hrs × '+money(ohRate())+')</span>';
+    h+='<span>'+money(r.rev/tot)+' earned per hour worked, all '+r1(tot)+' hrs</span>';
+    if(mine>0) h+='<span>Income tax comes out of what you earned; it isn\'t taken off here.</span>';
+    out.innerHTML=h;
   }
   function addCost(cat,note){ var w=s.querySelector('#wcost'), d=document.createElement('div'); d.className='crow'; d.innerHTML='<span class="money-in" style="display:block"><input data-ca type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></span><select data-cc>'+D.cats.map(function(c){ return '<option'+(c===cat?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select><button type="button" class="x" data-rm aria-label="Remove">×</button><input data-cn type="hidden" value="'+esc(note||'')+'">'; w.appendChild(d); d.querySelector('[data-ca]').focus(); }
   s.addEventListener('click',function(ev){
@@ -817,7 +829,7 @@ function wrapSheet(key){
   s.addEventListener('input',calc); s.addEventListener('change',calc);
   var ad=s.querySelector('#waddp'); if(ad) ad.onchange=function(){ var pid=ad.value; if(!pid) return; s.querySelector('#wppl').insertAdjacentHTML('beforeend',wrapRow(pid,'',null)); ad.querySelector('option[value="'+pid+'"]').remove(); ad.value=''; var i=s.querySelector('[data-h="'+pid+'"]'); if(i) i.focus(); };
   calc();
-  function done(r,msg){ D.books.actuals=D.books.actuals||{}; D.books.actuals[key]=r.actual; if(r.price!=null) D.books.prices[key]=r.price; (r.expenses||[]).forEach(function(e){ D.expenses.unshift(e); }); D.expenses.sort(function(x,y){return (y.date+y.at).localeCompare(x.date+x.at);}); closeSheet(); render(); if(msg==null){ var j=pnl(D,b.date,b.last).jobs.filter(function(y){return y.key===key;})[0]; msg=j&&j.perHr!=null?(b.j.client||'Job')+': '+money(j.perHr)+'/hr · '+money(j.profit)+' profit':'Saved'; } toast(msg); var nx=wrapList()[0]; if(nx) setTimeout(function(){ wrapSheet(nx.key); },700); }
+  function done(r,msg){ D.books.actuals=D.books.actuals||{}; D.books.actuals[key]=r.actual; if(r.price!=null) D.books.prices[key]=r.price; (r.expenses||[]).forEach(function(e){ D.expenses.unshift(e); }); D.expenses.sort(function(x,y){return (y.date+y.at).localeCompare(x.date+x.at);}); closeSheet(); render(); if(msg==null){ var j=pnl(D,b.date,b.last).jobs.filter(function(y){return y.key===key;})[0]; var a2=(D.books.actuals||{})[key], tt=a2&&a2.staff?Object.keys(a2.staff).reduce(function(x,k){return x+a2.staff[k];},0):0, mh=a2&&a2.staff?ownerHrs(a2.staff):0, nt=j&&j.profit!=null?j.profit-ohRate()*tt:null; msg=nt!=null?(b.j.client||'Job')+': '+money(nt)+' after everything'+(mh>0?' · '+money(nt/mh)+'/hr for you':''):'Saved'; } toast(msg); var nx=wrapList()[0]; if(nx) setTimeout(function(){ wrapSheet(nx.key); },700); }
   f.onsubmit=function(ev){ ev.preventDefault(); var err=s.querySelector('#wErr'), btn=f.querySelector('.primary'), st=staff();
     if(!Object.keys(st).some(function(k){return st[k]>0;})){ err.textContent='Enter the hours worked.'; err.hidden=false; return; }
     var gst=D.gstReg&&f.elements.gst&&f.elements.gst.checked, pv=f.elements.price.value;
