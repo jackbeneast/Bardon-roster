@@ -224,6 +224,9 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
 .lrow .nm{font:600 14px/1.3 var(--sans);color:var(--dark)}
 .lrow .ds{font-size:12px;color:var(--meta)}
 .rseg{display:flex;gap:4px;flex:none}
+.lrow.wrap{flex-wrap:wrap}
+.asg{display:flex;flex-wrap:wrap;gap:6px;width:100%;margin-top:2px}
+.asg .chip{min-height:32px;padding:6px 12px;font-size:13px}
 .rseg button{min-height:36px;border:1px solid var(--line);background:var(--white);border-radius:6px;font:500 12px var(--sans);color:var(--dark);padding:0 9px;cursor:pointer}
 .rseg button[aria-pressed="true"][data-st="p"]{background:var(--terracotta);border-color:var(--terracotta);color:#fff}
 .rseg button[aria-pressed="true"][data-st="d"]{background:#2F5A35;border-color:#2F5A35;color:#fff}
@@ -421,7 +424,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function roomsOf(j){ return (j.rooms&&j.rooms.length)?j.rooms:DEF_ROOMS; }
   function tok(){ var a=new Uint8Array(18); crypto.getRandomValues(a); return Array.prototype.map.call(a,function(b){return (b<16?'0':'')+b.toString(16);}).join(''); }
   function agentOf(id){ for(var i=0;i<(state.agents||[]).length;i++) if(state.agents[i].id===id) return state.agents[i]; return null; }
-  function liveOf(j){ var L=(state.live&&state.live[j.id])||{}; return Object.assign({},L,{arrived:L.arrived||{},left:L.left||{},items:L.items||{},supplies:L.supplies||[],rooms:L.rooms||{},photos:L.photos||[],flags:L.flags||[],lock:L.lock||{}}); }
+  function liveOf(j){ var L=(state.live&&state.live[j.id])||{}; return Object.assign({},L,{arrived:L.arrived||{},left:L.left||{},items:L.items||{},supplies:L.supplies||[],rooms:L.rooms||{},assign:L.assign||{},photos:L.photos||[],flags:L.flags||[],lock:L.lock||{}}); }
   function liveSum(j){ var L=liveOf(j), rs=roomsOf(j), d=rs.filter(function(r){return L.rooms[r]&&L.rooms[r].s==='d';}).length; var arrived=Object.keys(L.arrived||{}).length;
     if(L.done) return {c:'ok',t:'Ready · handed over'}; if(!arrived&&!d&&!Object.keys(L.rooms||{}).length) return null; if(d===rs.length) return {c:'on',t:'Final check'}; return {c:'on',t:(arrived?'On site':'Underway')+' · '+d+'/'+rs.length+' rooms'}; }
   var SERVICES = ['Bond clean','Pre-sale clean','Deep clean','Regular clean','Commercial','Other'];
@@ -1131,14 +1134,19 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<div class="lsec"><h4>Clock in and off</h4><p class="sub" style="margin:0 0 8px">Your hours come from these taps, so clock off when you leave the house.</p>';
     (j.staff||[]).forEach(function(id){ var m=member(id); if(!m) return; if(!canEdit && id!==pid) { h+='<div class="lrow"><span class="nm">'+esc(m.name)+'</span><span class="ds">'+(L.left[id]?'Off '+fmtClock(L.left[id]):L.arrived[id]?'In '+fmtClock(L.arrived[id]):'Not yet')+'</span></div>'; return; }
       var ar=L.arrived[id], lf=L.left[id], ds=!ar?'Not arrived':'In '+fmtClock(ar)+(lf?' · Off '+fmtClock(lf)+(onSite(ar,lf)?' · '+onSite(ar,lf):''):''), bt;
+      if(canEdit && liveOpen.tEdit===id){ var hhmm=function(x){ if(!x) return ''; var d=new Date(x); return pad(d.getHours())+':'+pad(d.getMinutes()); };
+        h+='<div class="lrow" style="display:block"><span class="nm">'+esc(m.name)+'</span><div class="two" style="margin-top:8px"><label class="l">Started<input type="time" id="tin" value="'+esc(hhmm(ar)||shiftOf(j,id).start||'')+'"></label><label class="l">Finished<input type="time" id="tout" value="'+esc(hhmm(lf))+'"></label></div><p class="sub" style="margin:6px 0 8px">Leave Finished blank if they\'re still here.</p><div style="display:flex;gap:6px"><button type="button" class="btn outline" data-tcancel style="flex:1">Cancel</button>'+(ar?'<button type="button" class="btn danger" data-tclear="'+id+'">Clear</button>':'')+'<button type="button" class="btn yes" data-tsave="'+id+'" style="flex:1">Save times</button></div></div>'; return; }
       if(!ar) bt='<button type="button" class="btn yes" data-arr="'+id+'" style="flex:none">I\'ve arrived</button>';
       else if(!lf) bt='<span style="display:flex;gap:6px"><button type="button" class="btn danger" data-arr="'+id+'" data-undo="1">Undo</button><button type="button" class="btn yes" data-leave="'+id+'" style="flex:none">Clock off</button></span>';
       else bt='<button type="button" class="btn danger" data-leave="'+id+'" data-undo="1">Undo clock off</button>';
-      h+='<div class="lrow"><span><span class="nm">'+esc(m.name)+'</span><br><span class="ds">'+ds+'</span></span>'+bt+'</div>'; });
-    h+='</div><div class="lsec"><h4>Areas'+(canEdit?'<button type="button" class="ed" data-editareas>Add or remove areas</button>':'')+'</h4>';
+      h+='<div class="lrow"><span><span class="nm">'+esc(m.name)+'</span><br><span class="ds">'+ds+'</span>'+(canEdit?'<br><button type="button" class="clk" data-tedit="'+id+'">Type in times ›</button>':'')+'</span>'+bt+'</div>'; });
+    h+='</div><div class="lsec"><h4>Areas'+(canEdit?'<button type="button" class="ed" data-editareas>Add or remove areas</button>':'')+'</h4>'+(canEdit&&(j.staff||[]).length?'<p class="sub" style="margin:0 0 8px">Tap names to assign each area. When you tick an area off, it\'s credited to whoever it\'s assigned to.</p>':'');
     roomsOf(j).forEach(function(r){ var st=(L.rooms[r]&&L.rooms[r].s)||'w', by=L.rooms[r]&&member(L.rooms[r].by);
       var ci=CHECKLISTS.itemsFor(r,j.service), cd=ci.filter(function(i){return L.items[r]&&L.items[r][i.id];}).length;
-      h+='<div class="lrow"><span><span class="nm">'+esc(r)+'</span>'+(by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+(ci.length?'<br><button type="button" class="clk'+(cd===ci.length?' ok':'')+'" data-cl="'+esc(r)+'">Checklist '+cd+'/'+ci.length+' ›</button>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span></div>'; });
+      var asg=(L.assign[r]||[]).filter(function(x){return (j.staff||[]).includes(x);}), mine=pid&&asg.includes(pid)&&!canEdit;
+      var who=canEdit&&(j.staff||[]).length?'<span class="asg">'+(j.staff||[]).map(function(x){ var mm=member(x); return mm?'<button type="button" class="chip" data-asg="'+esc(r)+'" data-who="'+x+'" aria-pressed="'+asg.includes(x)+'">'+esc(mm.name.split(' ')[0])+'</button>':''; }).join('')+'</span>'
+        :asg.length?'<br><span class="ds"'+(mine?' style="color:var(--terracotta-dark);font-weight:600"':'')+'>'+(mine?'Yours':'')+(mine&&asg.length>1?' with ':'')+esc(asg.filter(function(x){return !mine||x!==pid;}).map(function(x){var mm=member(x);return mm?mm.name.split(' ')[0]:'';}).filter(Boolean).join(' & '))+'</span>':'';
+      h+='<div class="lrow'+(canEdit?' wrap':'')+'"><span><span class="nm">'+esc(r)+'</span>'+(canEdit?'':who)+(by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+(ci.length?'<br><button type="button" class="clk'+(cd===ci.length?' ok':'')+'" data-cl="'+esc(r)+'">Checklist '+cd+'/'+ci.length+' ›</button>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span>'+(canEdit?who:'')+'</div>'; });
     h+='</div>'+photoSec(j,L);
     h+='<div class="lsec"><h4>Notes for the agent</h4><p class="sub" style="margin:0 0 8px">Anything they should know before photos or buyers: damage, mould, broken fittings, stains that won\'t shift.</p>';
     L.flags.forEach(function(f){ h+='<div class="flagi"><span><b>'+esc(f.t)+'</b>'+esc(f.d)+'</span><button type="button" class="btn danger" data-unflag="'+f.id+'" style="min-height:0">Remove</button></div>'; });
@@ -1161,14 +1169,19 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     ctx=ctx||liveOpen; if(!ctx) return Promise.resolve();
     if(btn) btn.disabled=true;
     body.jobId=ctx.jobId; body.personId=ctx.pid;
-    return api('/api/live',{method:'POST',body:body}).then(function(d){ state.live[ctx.jobId]=d.live; if(liveOpen) drawLive(); else if(!document.getElementById('scrim')) render(); })
-      .catch(function(e){ if(btn) btn.disabled=false; var er=document.getElementById('liveErr'); if(er){ er.textContent=e.message; er.hidden=false; } toast(e.message); });
+    return api('/api/live',{method:'POST',body:body}).then(function(d){ state.live[ctx.jobId]=d.live; if(liveOpen) drawLive(); else if(!document.getElementById('scrim')) render(); return true; })
+      .catch(function(e){ if(btn) btn.disabled=false; var er=document.getElementById('liveErr'); if(er){ er.textContent=e.message; er.hidden=false; } toast(e.message); return false; });
   }
   function liveClick(e){
     var b=e.target.closest('button'); if(!b||!liveOpen) return;
     if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
     if(b.closest('#phsec') && phClick(b)) return;
     if(b.hasAttribute('data-editareas')){ var jid=liveOpen.jobId, pp=liveOpen.pid; closeSheet(); liveOpen={jobId:jid,pid:pp}; areasSheet(jid); return; }
+    if(b.dataset.tedit){ liveOpen.tEdit=b.dataset.tedit; drawLive(); return; }
+    if(b.hasAttribute('data-tcancel')){ liveOpen.tEdit=null; drawLive(); return; }
+    if(b.dataset.tclear){ if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent='Tap again'; return; } liveOpen.tEdit=null; livePost({action:'settime',who:b.dataset.tclear,in:'',out:''},b); return; }
+    if(b.dataset.tsave){ var ti=document.getElementById('tin').value, to=document.getElementById('tout').value; if(!ti){ toast('Add a start time'); return; } livePost({action:'settime',who:b.dataset.tsave,in:ti,out:to},b).then(function(ok){ if(ok&&liveOpen){ liveOpen.tEdit=null; drawLive(); toast('Times saved'); } }); return; }
+    if(b.dataset.asg){ var jj=state.jobs.find(function(x){return x.id===liveOpen.jobId;}), cur=(liveOf(jj).assign[b.dataset.asg]||[]).slice(), w=b.dataset.who, ix=cur.indexOf(w); if(ix>=0) cur.splice(ix,1); else cur.push(w); livePost({action:'assign',room:b.dataset.asg,who:cur},b); return; }
     if(b.dataset.arr){ livePost({action:'arrive',who:b.dataset.arr,undo:!!b.dataset.undo},b); return; }
     if(b.dataset.leave){ livePost({action:'leave',who:b.dataset.leave,undo:!!b.dataset.undo},b).then(function(){ if(!b.dataset.undo) toast('Clocked off. Thanks!'); }); return; }
     if(b.dataset.cl!=null){ liveOpen.room=b.dataset.cl; liveOpen.keepTop=0; drawLive(); return; }

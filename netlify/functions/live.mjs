@@ -23,6 +23,8 @@ export default async (req) => {
   let wrapCheck = false;
   const now = new Date().toISOString();
   const str = (v, n) => (typeof v === "string" ? v.trim().slice(0, n) : "");
+  // When Jack ticks off an area on someone's behalf, credit the person assigned to it.
+  const doer = (room) => { const a = (L.assign || {})[room] || []; return admin && a.length === 1 ? a[0] : pid; };
 
   switch (b.action) {
     case "arrive": {
@@ -55,10 +57,36 @@ export default async (req) => {
       wrapCheck = true;
       break;
     }
+    case "settime": { // Jack types someone's start / finish time for them (no phone needed)
+      if (!admin) return json({ error: "Only Jack can type in times" }, 401);
+      const who = String(b.who || "");
+      if (!onJob(who)) return json({ error: "That person isn't on this job." }, 400);
+      const iso = (t) => {
+        if (!t) return "";
+        if (!/^\d{2}:\d{2}$/.test(t)) return null;
+        const d = new Date(`${job.date}T${t}:00+10:00`); // Brisbane, no daylight saving
+        return isNaN(d) ? null : d.toISOString();
+      };
+      const a = iso(str(b.in, 5)), l = iso(str(b.out, 5));
+      if (a === null || l === null) return json({ error: "Check the times" }, 400);
+      if (!a && l) return json({ error: "Add a start time before a finish time." }, 400);
+      if (a && l && Date.parse(l) <= Date.parse(a)) return json({ error: "Finish time has to be after the start time." }, 400);
+      if (a) L.arrived[who] = a; else delete L.arrived[who];
+      if (l) { L.left[who] = l; wrapCheck = true; } else delete L.left[who];
+      break;
+    }
+    case "assign": { // who's doing which area
+      if (!admin) return json({ error: "Only Jack can assign areas" }, 401);
+      if (!roomsOf(job).includes(b.room)) return json({ error: "Unknown room" }, 400);
+      const ids = [...new Set((Array.isArray(b.who) ? b.who : []).map(String))].filter(onJob);
+      L.assign = { ...(L.assign || {}) };
+      if (ids.length) L.assign[b.room] = ids; else delete L.assign[b.room];
+      break;
+    }
     case "room": {
       if (!roomsOf(job).includes(b.room)) return json({ error: "Unknown room" }, 400);
       if (b.status === "w") delete L.rooms[b.room];
-      else if (b.status === "p" || b.status === "d") L.rooms[b.room] = { s: b.status, by: pid, at: now };
+      else if (b.status === "p" || b.status === "d") L.rooms[b.room] = { s: b.status, by: doer(b.room), at: now };
       else return json({ error: "Bad status" }, 400);
       break;
     }
@@ -67,10 +95,10 @@ export default async (req) => {
       const id = str(b.item, 24);
       if (!/^[a-z]_[a-z]{2,16}$/.test(id)) return json({ error: "Unknown checklist item" }, 400);
       const r = (L.items[b.room] ||= {});
-      if (b.value) r[id] = { by: pid, at: now }; else delete r[id];
+      if (b.value) r[id] = { by: doer(b.room), at: now }; else delete r[id];
       if (!Object.keys(r).length) delete L.items[b.room];
       // First tick in a room moves it to "Doing" so the agent sees progress.
-      if (b.value && !L.rooms[b.room]) L.rooms[b.room] = { s: "p", by: pid, at: now };
+      if (b.value && !L.rooms[b.room]) L.rooms[b.room] = { s: "p", by: doer(b.room), at: now };
       break;
     }
     case "flag": {
