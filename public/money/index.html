@@ -129,6 +129,13 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .pc small{display:block;font:400 12.5px/1.3 var(--sans);color:var(--meta)}
 .pc div{align-items:flex-start}
 .pc .be{border-top:1px solid var(--line);margin-top:4px;padding-top:9px;font-weight:600}
+.byday{margin-top:12px}
+.byday>div{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.byday button{border:1px solid var(--line);background:var(--white);border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;font:inherit;color:var(--dark)}
+.byday button[aria-pressed="true"]{border:2px solid var(--terracotta);background:var(--tint)}
+.byday small{display:block;font-size:11.5px;color:var(--meta)}
+.byday b{display:block;font:600 15px var(--sans);font-variant-numeric:tabular-nums}
+.byday i{display:block;font-style:normal;font-size:11.5px;color:var(--terracotta-dark)}
 .verdict{margin-top:12px;border-radius:8px;padding:11px 13px;font-size:14px;line-height:1.4}
 .verdict b{display:block;font:600 15px var(--sans);margin-bottom:2px}
 .verdict.bad{background:#FBEBD9;color:#8A4A1F}.verdict.warn{background:#FCEFD0;color:#5E4510}.verdict.ok{background:#E6EFE3;color:#2F5A35}
@@ -152,7 +159,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
-  function money(v){ v=+v||0; return (v<0?'−':'')+'$'+Math.abs(v).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function money(v,dp){ v=+v||0; var n=dp===0?0:2; return (v<0?'−':'')+'$'+Math.abs(v).toLocaleString('en-AU',{minimumFractionDigits:n,maximumFractionDigits:n}); }
   function r2(v){ return Math.round(v*100)/100; }
   function pad(n){ return (n<10?'0':'')+n; }
   function iso(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -325,9 +332,9 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   // and the income tax that comes out of both.
   function dayKind(d){ var C=S.costs; if(!d) return 'wk'; if((C.ph||[]).indexOf(d)>=0) return 'ph'; var w=new Date(d+'T00:00:00').getDay(); return w===0?'sun':w===6?'sat':'wk'; }
   var KIND={wk:'weekday',sat:'Saturday',sun:'Sunday',ph:'public holiday'};
-  function priceCalc(d){
+  function priceCalc(d,force){
     var C=S.costs, T=C.pricing||{}, e=d.est||{}, hrs=+e.hrs||0, own=Math.min(+e.own||0,hrs), staff=hrs-own;
-    var kind=dayKind(d.serviceDate), rate=+C.rates[kind]||+C.rates.wk, ownerRate=T.ownerRate!=null?+T.ownerRate:+C.rates.wk;
+    var kind=force||e.day||dayKind(d.serviceDate), rate=+C.rates[kind]||+C.rates.wk, ownerRate=T.ownerRate!=null?+T.ownerRate:+C.rates.wk;
     var labour=staff*rate*(1+C.superRate), mat=e.mat!==''&&e.mat!=null?+e.mat||0:hrs*(+C.matPerHr||0), oh=hrs*(+C.ohPerHr||0);
     var be=labour+mat+oh, you=own*ownerRate, m=(+T.margin||0)/100, t=(+T.tax||0)/100;
     var target=m<1?(be+you)/(1-m):be+you, grow=target-be-you;
@@ -342,6 +349,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     h+='<div class="grid3" style="margin-top:12px"><label class="l">Total hours <small>all cleaners</small><input type="number" inputmode="decimal" step="0.5" min="0" data-est="hrs" value="'+esc(e.hrs||'')+'" placeholder="e.g. 12"></label>';
     h+='<label class="l">Your hours <small>of those</small><input type="number" inputmode="decimal" step="0.5" min="0" data-est="own" value="'+esc(e.own||'')+'" placeholder="0"></label>';
     h+='<label class="l">Materials <small>$ ex GST</small><input type="number" inputmode="decimal" step="1" min="0" data-est="mat" value="'+esc(e.mat==null?'':e.mat)+'" placeholder="'+(C.matPerHr!=null?'auto':'0')+'"></label></div>';
+    var auto=d.serviceDate?'From service date ('+KIND[dayKind(d.serviceDate)]+')':'From service date (none set: weekday)';
+    h+='<label class="l" style="margin-top:10px">Staff pay rate<select data-est="day"><option value="">'+auto+'</option>'+['wk','sat','sun','ph'].map(function(k){ return '<option value="'+k+'"'+(e.day===k?' selected':'')+'>'+KIND[k].charAt(0).toUpperCase()+KIND[k].slice(1)+' · '+money(C.rates[k])+'/hr</option>'; }).join('')+'</select></label>';
     h+='<div id="pcout">'+checkOut(d)+'</div>';
     h+='<button type="button" class="ghost" data-act="targets" style="font-size:13px">Your targets: '+money(T.ownerRate!=null?T.ownerRate:C.rates.wk)+'/hr for you · '+(T.margin)+'% growth margin · '+T.tax+'% income tax. Change</button>';
     return h;
@@ -363,9 +372,12 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(x.ex>0){
       var cls=x.ex<x.be-0.5?'bad':x.ex<x.target-0.5?'warn':'ok';
       var msg=cls==='bad'?'This quote is '+money(x.be-x.ex)+' under break-even. You lose money before paying yourself.'
-        :cls==='warn'?'This quote covers costs'+(x.own>0?(x.left>=x.you?' and your time':' but pays you '+money(Math.max(0,x.left))+' of '+money(x.you)+' for your time'):'')+', but is '+money(x.target-x.ex)+' short of the price to grow.'
+        :cls==='warn'?'This quote covers costs'+(x.own>0?(x.left>=0?' and your time':' but pays you '+money(Math.max(0,x.ex-x.be))+' of '+money(x.you)+' for your time'):'')+', but is '+money(x.target-x.ex)+' short of the price to grow.'
         :'This quote clears the price to grow by '+money(x.ex-x.target)+'.';
       h+='<div class="verdict '+cls+'"><b>Your quote: '+money(x.ex)+(C.gstReg?' ex GST':'')+'</b><span>'+msg+'</span></div>';
+    }
+    if(x.staff>0){
+      h+='<div class="byday"><span class="l">Price to grow by day'+(C.gstReg?' <small>ex GST</small>':'')+'</span><div>'+['wk','sat','sun','ph'].map(function(k){ var y=priceCalc(d,k); return '<button type="button" data-day="'+k+'" aria-pressed="'+(k===x.kind)+'"><small>'+(k==='wk'?'Weekday':k==='ph'?'Pub. hol':KIND[k].slice(0,3))+'</small><b>'+money(y.nice,0)+'</b>'+(k!=='wk'?'<i>+'+money(y.nice-priceCalc(d,'wk').nice,0)+'</i>':'<i>&nbsp;</i>')+'</button>'; }).join('')+'</div></div>';
     }
     h+='<button type="button" class="btn outline" style="width:100%;margin-top:10px" data-act="usetarget">Use '+money(x.nice)+(C.gstReg?' ex GST ('+money(x.nice*gst)+' inc)':'')+'</button>';
     return h;
@@ -732,7 +744,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(t.tagName==='TEXTAREA'){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight+2,520)+'px'; }
     if(!draft) { if(t.dataset.p){ var pr=t.closest('.prow'), v=function(k){return +pr.querySelector('[data-p="'+k+'"]').value||0;}; pr.querySelector('[data-ex]').textContent='3 bed 2 bath: '+money(r2(v('base')+v('bed')*3+v('bath')*2))+' + GST'; } return; }
     if(t.dataset.est){ draft.est=draft.est||{}; draft.est[t.dataset.est]=t.value; dirty=true; redrawCheck(); return; }
-    if(t.dataset.f){ var val=t.type==='checkbox'?t.checked:t.value; setPath(draft,t.dataset.f,val); dirty=true; if(t.dataset.f==='depositPct'||t.dataset.f==='gst') redrawTotals(); if(t.dataset.f==='serviceDate') redrawCheck(); return; }
+    if(t.dataset.f){ var val=t.type==='checkbox'?t.checked:t.value; setPath(draft,t.dataset.f,val); dirty=true; if(t.dataset.f==='depositPct'||t.dataset.f==='gst') redrawTotals(); if(t.dataset.f==='serviceDate'){ var pc=document.getElementById('pcheck'); if(pc) pc.innerHTML=checkHtml(draft); } return; }
     if(t.dataset.it){ var card=t.closest('.item'), i=+card.dataset.i; draft.items[i][t.dataset.it]=t.value; if(t.dataset.it==='title'||t.dataset.it==='desc') delete draft.items[i].auto; dirty=true; if(t.dataset.it==='qty'||t.dataset.it==='price'){ card.querySelector('[data-lt]').textContent=money((+draft.items[i].qty||0)*(+draft.items[i].price||0)); redrawTotals(); } }
   });
   app.addEventListener('change',function(e){
@@ -748,6 +760,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if((el=e.target.closest('[data-new]'))){ draft=null; go('edit/new-'+el.dataset.new); return; }
     if((el=e.target.closest('[data-req]'))){ go('req/'+el.dataset.req); return; }
     if((el=e.target.closest('[data-rqf]'))){ RQF=el.dataset.rqf; renderList(); return; }
+    if((el=e.target.closest('[data-day]'))&&draft){ draft.est=draft.est||{}; draft.est.day=el.dataset.day; dirty=true; var pc=document.getElementById('pcheck'); if(pc) pc.innerHTML=checkHtml(draft); return; }
     if((el=e.target.closest('[data-tab]'))){ tab=el.dataset.tab; lsSet('money_tab',tab); filter='all'; q=''; renderList(); return; }
     if((el=e.target.closest('[data-filter]'))){ filter=el.dataset.filter; renderList(); return; }
     if((el=e.target.closest('[data-libedit]'))){ libEdit(el.dataset.libedit); return; }
