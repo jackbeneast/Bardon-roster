@@ -177,6 +177,8 @@ function render(){
   h+='<label class="l">Growth margin <small>% of price</small><input name="margin" type="number" inputmode="decimal" step="1" min="0" max="80" value="'+esc(t.margin)+'"></label>';
   h+='<label class="l">Income tax <small>%</small><input name="tax" type="number" inputmode="decimal" step="1" min="0" max="60" value="'+esc(t.tax)+'"></label>';
   h+='<label class="l">Hours worked a month <small>everyone, for overheads</small><input name="hrsMonth" type="number" inputmode="decimal" step="1" min="0" value="'+esc(t.hrsMonth!=null?t.hrsMonth:'')+'" placeholder="'+r1(C.hrsMonth)+' (roster)"></label>';
+  h+='<label class="l">Target per hour worked <small>ex GST, for the weekly forecast</small><span class="money-in"><input name="targetRate" type="number" inputmode="decimal" step="1" min="0" value="'+esc(t.targetRate!=null?t.targetRate:80)+'"></span></label>';
+  h+='<label class="l">Target left after overheads <small>% of revenue</small><input name="netTarget" type="number" inputmode="decimal" step="1" min="0" max="90" value="'+esc(t.netTarget!=null?t.netTarget:30)+'"></label>';
   h+='<label class="l">Car cost per km <small>fuel, wear, rego</small><span class="money-in"><input name="carPerKm" type="number" inputmode="decimal" step="0.01" min="0" value="'+esc(t.carPerKm!=null?t.carPerKm:'')+'" placeholder="0.00"></span></label>';
   h+='<label class="l">Card fee <small>% of what the client pays</small><input name="cardPct" type="number" inputmode="decimal" step="0.05" min="0" max="10" value="'+esc(t.cardPct!=null?t.cardPct:'')+'" placeholder="check your Stripe fees"></label>';
   h+='<p class="hint full" style="margin:0">Income tax defaults to 32%: the 30% bracket ($45,001 to $135,000) plus the 2% Medicare levy. Ask your accountant for your real rate. Growth margin is profit left after costs and your pay, to reinvest and cover slow weeks.</p>';
@@ -207,7 +209,7 @@ function draw(){
   if(C.gstReg) h+='<div class="row"><span>Client pays inc GST</span><span>'+money(x.nice*1.1)+'</span></div>';
   h+='<div class="row"><span>Break-even'+(C.gstReg?' ex GST':'')+'</span><span>'+money(x.be)+'</span></div>';
   h+='<div class="row"><span>50% deposit</span><span>'+money(x.nice*x.gst/2)+'</span></div>';
-  h+='<div class="row2"><div><span>Per hour on site</span><strong>'+money(x.nice/x.onSite)+'</strong></div><div><span>Your pay after tax</span><strong>'+money(x.you*(1-x.tx))+'</strong></div><div><span>Kept to grow</span><strong>'+money(x.grow-Math.max(0,x.grow)*x.tx)+'</strong></div></div></div>';
+  h+='<div class="row2"><div><span>Per hour worked</span><strong>'+money(x.nice/x.hrsAll)+'</strong>'+(T().targetRate?'<span style="font-size:11px;color:'+(x.nice/x.hrsAll>=T().targetRate?'#9BC59F':'#F4B942')+'">target '+money(T().targetRate,0)+'</span>':'')+'</div><div><span>Your pay after tax</span><strong>'+money(x.you*(1-x.tx))+'</strong></div><div><span>Kept to grow</span><strong>'+money(x.grow-Math.max(0,x.grow)*x.tx)+'</strong></div></div></div>';
   h+='<div class="card"><h2>How it <em>adds up</em></h2><div class="pc">';
   if(x.staffHrs>0) h+='<div><span>Staff wages + '+Math.round(C.superRate*100)+'% super <small>'+x.cleaners+' × '+r1(x.each)+' hrs'+(x.travelStaff?' + '+r1(x.travelStaff)+' hrs travel':'')+' at '+money(x.rate)+' '+KIND[x.kind].toLowerCase()+'</small></span><span>'+money(x.wages)+'</span></div>';
   h+='<div><span>Products <small>'+(F.mat!==''?'your figure':C.matPerHr!=null?r1(x.onSite)+' hrs at '+money(C.matPerHr)+'/hr':'none logged yet')+'</small></span><span>'+money(x.mat)+'</span></div>';
@@ -259,7 +261,7 @@ app.addEventListener('click',function(e){
 });
 app.addEventListener('submit',function(e){
   if(e.target.id!=='tf') return; e.preventDefault(); var f=e.target, b=f.querySelector('[type=submit]'); b.disabled=true;
-  var p={}; ['ownerRate','margin','tax','hrsMonth','carPerKm','cardPct'].forEach(function(k){ p[k]=f.elements[k].value; });
+  var p={}; ['ownerRate','margin','tax','hrsMonth','carPerKm','cardPct','targetRate','netTarget'].forEach(function(k){ p[k]=f.elements[k].value; });
   api('POST','/api/books',{action:'pricing',pricing:p}).then(function(r){ D.books.pricing=r.pricing; C=costBasis(D,today()); render(); toast('Targets saved'); })
     .catch(function(x){ b.disabled=false; toast(x.message); });
 });

@@ -145,6 +145,12 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .meter s{position:absolute;top:-4px;width:2px;height:18px;background:var(--dark)}
 .meter s.g{background:#2F5A35}
 .mlbl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--meta);margin-top:4px}
+.score{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.score>div{border:1px solid var(--line);border-top:4px solid var(--line);border-radius:8px;padding:10px}
+.score>div.ok{border-top-color:#2F5A35}.score>div.warn{border-top-color:var(--gold)}.score>div.bad{border-top-color:var(--terracotta)}
+.score b{display:block;font:700 20px/1.1 var(--serif);color:var(--dark);font-variant-numeric:tabular-nums}
+.score span{display:block;font-size:12.5px;color:var(--dark);margin-top:2px}
+.score small{display:block;font-size:11.5px;color:var(--meta)}
 .wkh{font:600 15px var(--sans);color:var(--dark);margin:16px 0 6px}
 .acts2{display:grid;gap:8px}
 .act{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--dark)}
@@ -422,8 +428,29 @@ function weekAhead(p,isNext){
   h+='<div class="tot'+(left<0?' loss':'')+'"><span>'+(left<0?'Short':'Left for you and growth')+'</span><span>'+money(left)+'</span></div></div>';
   if(left>0) h+='<p class="hint">Set aside about '+money(left*tx,0)+' for income tax ('+Math.round(tx*100)+'%)'+(D.gstReg?' and '+money(x.gstCollected,0)+' GST':'')+' from this week\'s money.</p>';
 
+  // Plan scorecard: the four numbers that decide whether growth makes money.
+  var tRate=T.targetRate!=null?+T.targetRate:80, tNet=(T.netTarget!=null?+T.netTarget:30)/100;
+  var pricedHrs=x.jobs.reduce(function(a,b){ return a+(b.rev!=null?b.hrs:0); },0), perHr=pricedHrs>0?rev/pricedHrs:0, netPct=rev>0?left/rev:0, util=capWk>0?allHrs/capWk:null, youPct=allHrs>0?ownHrs/allHrs:0;
+  function sc(ok,warn){ return ok?'ok':warn?'warn':'bad'; }
+  if(x.jobs.length){
+    h+='<h3 class="wkh">Your plan</h3><div class="score">';
+    h+='<div class="'+sc(perHr>=tRate,perHr>=tRate*0.85)+'"><b>'+money(perHr,0)+'</b><span>per hour worked</span><small>target '+money(tRate,0)+'</small></div>';
+    h+='<div class="'+sc(netPct>=tNet,netPct>=tNet*0.6)+'"><b>'+Math.round(netPct*100)+'%</b><span>left after overheads</span><small>target '+Math.round(tNet*100)+'%</small></div>';
+    h+='<div class="'+(util==null?'':sc(util>=0.9,util>=0.7))+'"><b>'+(util==null?r1(allHrs):Math.round(util*100)+'%')+'</b><span>'+(util==null?'hrs booked':'of planned hours')+'</span><small>'+(util==null?'set hours a month':r1(allHrs)+' of '+r1(capWk)+' hrs')+'</small></div>';
+    h+='<div class="'+(youPct<=0.25?'ok':youPct<=0.5?'warn':'bad')+'"><b>'+Math.round(youPct*100)+'%</b><span>of hours are yours</span><small>'+r1(ownHrs)+' hrs on the tools</small></div>';
+    h+='</div>';
+    if(util==null) h+='<p class="hint">Set <b>hours worked a month</b> in the <a href="/pricing/">price calculator</a> to track how full the week is.</p>';
+  }
+  // Jobs priced under the target rate this week.
+  var under=x.jobs.filter(function(b){ return b.rev!=null&&b.hrs>0&&b.rev/b.hrs<tRate-0.5; }).sort(function(a,b){ return (a.rev/a.hrs)-(b.rev/b.hrs); });
+
   // What to do
   var acts=[];
+  if(under.length){
+    var lost=under.reduce(function(a,b){ return a+(b.hrs*tRate-b.rev); },0);
+    acts.push(['warn','<b>'+under.length+' job'+(under.length===1?'':'s')+' under '+money(tRate,0)+'/hr</b>: '+under.slice(0,3).map(function(b){ return esc(b.j.client||'Job')+' '+money(b.rev/b.hrs,0)+'/hr'; }).join(', ')+'. At your target they\'d bring in '+money(lost,0)+' more. Check hours or reprice next time.','/pricing/','Price check']);
+  }
+  if(x.jobs.length&&youPct>0.5) acts.push(['','<b>You\'re working '+Math.round(youPct*100)+'% of the hours.</b> Your time is paying for the gap. As bookings grow, roster staff on the hands-on hours and keep yours for quoting, agents and quality checks.','','']);
   if(x.unpriced.length) acts.push(['bad','<b>Price '+x.unpriced.length+' job'+(x.unpriced.length===1?'':'s')+'.</b> Booked work with no price counts as $0 here.','#/prices','Add prices']);
   var gap=rev<goal-0.5?goal-rev:0;
   if(gap>0){
