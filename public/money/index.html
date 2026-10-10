@@ -396,13 +396,15 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var h='<details class="working"><summary>How the overhead rate is worked out</summary>';
     h+='<div class="totals pc" style="margin-top:8px">';
     h+='<div><span>Regular outgoings <small>monthly average, ex GST, from Prices &amp; apps</small></span><span>'+money(C.fixedMonth)+'</span></div>';
-    h+='<div><span>General expenses <small>not linked to a job, last 90 days, per month</small></span><span>'+money(C.generalMonth)+'</span></div>';
+    if(C.equipMonth>0) h+='<div><span>Equipment <small>bought in the last 12 months, spread over 12</small></span><span>'+money(C.equipMonth)+'</span></div>';
+    h+='<div><span>Other general expenses <small>not linked to a job, per month since '+fdate(C.from)+'</small></span><span>'+money(C.generalMonth)+'</span></div>';
     h+='<div class="be"><span>Overheads per month</span><span>'+money(C.ohMonth)+'</span></div>';
-    h+='<div><span>÷ Hours worked per month <small>'+r1(C.hrs)+' hrs across '+C.jobs+' job'+(C.jobs===1?'':'s')+' in the last 90 days, everyone incl. you</small></span><span>'+r1(C.hrsMonth)+' hrs</span></div>';
+    if(C.hrsTarget) h+='<div><span>÷ Hours per month <small>your figure, under targets (actual: '+r1(C.hrsMonth)+' hrs/month)</small></span><span>'+r1(C.hrsTarget)+' hrs</span></div>';
+    else h+='<div><span>÷ Hours worked per month <small>'+r1(C.hrs)+' hrs across '+C.jobs+' job'+(C.jobs===1?'':'s')+' since '+fdate(C.from)+', everyone incl. you</small></span><span>'+r1(C.hrsMonth)+' hrs</span></div>';
     h+='<div class="g"><span>Overheads per hour</span><span>'+(C.ohPerHr!=null?money(C.ohPerHr):'–')+'</span></div>';
     h+='</div>';
-    if(C.hrsMonth<80) h+='<p class="hint">Only '+r1(C.hrsMonth)+' hours a month are on the roster, so each hour carries a lot. If jobs are missing from the roster, or have no staff or times, this rate is too high. As more work is rostered it comes down.</p>';
-    h+='<p class="hint">Materials: '+(C.matPerHr!=null?money(C.matPerHr)+'/hr = expenses linked to jobs ÷ those same hours.':'no job-linked expenses yet.')+'</p>';
+    if(!C.hrsTarget&&C.hrsMonth<120) h+='<p class="hint">Only '+r1(C.hrsMonth)+' hours a month are on the roster, so each hour carries a lot. Pricing every job to cover all overheads at today\'s volume can price you out. Set the hours you expect to work in a typical month under <b>Your targets</b> to spread overheads over that instead.</p>';
+    h+='<p class="hint">Materials: '+(C.matPerHr!=null?money(C.matPerHr)+'/hr = products bought for jobs and cleaning products bought for stock'+(C.stockMonth>0?' ('+money(C.stockMonth)+'/month)':'')+' ÷ hours worked.':'no products logged yet.')+'</p>';
     return h+'</details>';
   }
   function r1(v){ return Math.round(v*10)/10; }
@@ -423,12 +425,13 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     h+='<label class="l full">Your pay per hour on the job <small>before tax</small><input name="ownerRate" type="number" inputmode="decimal" step="0.5" min="0" value="'+esc(T.ownerRate!=null?T.ownerRate:'')+'" placeholder="'+C.rates.wk+' (staff weekday rate)"></label>';
     h+='<label class="l">Growth margin <small>% of price</small><input name="margin" type="number" inputmode="decimal" step="1" min="0" max="80" value="'+esc(T.margin)+'"></label>';
     h+='<label class="l">Income tax <small>%</small><input name="tax" type="number" inputmode="decimal" step="1" min="0" max="60" value="'+esc(T.tax)+'"></label>';
+    h+='<label class="l full">Hours worked in a typical month <small>everyone added up, for spreading overheads. Leave blank to use the roster ('+r1(C.hrsMonth)+')</small><input name="hrsMonth" type="number" inputmode="decimal" step="1" min="0" value="'+esc(T.hrsMonth!=null?T.hrsMonth:'')+'" placeholder="'+r1(C.hrsMonth)+'"></label>';
     h+='<p class="hint full" style="margin-top:0">Growth margin is profit left after costs and your pay: money to reinvest, save, and cover slow weeks. Income tax defaults to 32%: the 30% bracket ($45,001 to $135,000) plus the 2% Medicare levy. As a sole trader your pay and the business profit are taxed together, so ask your accountant for your real rate. Your own super isn\'t compulsory as a sole trader; if you pay it, build it into your hourly pay.</p>';
     h+='<div class="actions full"><button type="button" class="btn plain" data-close>Cancel</button><button type="submit" class="btn primary grow">Save targets</button></div></form>';
     var sh=sheet(h), f=sh.querySelector('#tf');
     f.onsubmit=function(ev){ ev.preventDefault(); var b=f.querySelector('[type=submit]'); b.disabled=true;
-      api('POST','/api/books',{action:'pricing',pricing:{ownerRate:f.elements.ownerRate.value,margin:f.elements.margin.value,tax:f.elements.tax.value}})
-        .then(function(r){ S.costs.pricing=r.pricing; closeSheet(); var c=document.getElementById('pcheck'); if(c&&draft) c.innerHTML=checkHtml(draft); toast('Targets saved'); })
+      api('POST','/api/books',{action:'pricing',pricing:{ownerRate:f.elements.ownerRate.value,margin:f.elements.margin.value,tax:f.elements.tax.value,hrsMonth:f.elements.hrsMonth.value}})
+        .then(function(r){ S.costs.pricing=r.pricing; var hm=r.pricing.hrsMonth; S.costs.hrsTarget=hm||null; var ph=hm||S.costs.hrsMonth; S.costs.ohPerHr=ph>0?r2(S.costs.ohMonth/ph):null; closeSheet(); var c=document.getElementById('pcheck'); if(c&&draft) c.innerHTML=checkHtml(draft); toast('Targets saved'); })
         .catch(function(x){ b.disabled=false; toast(x.message); }); };
   }
 

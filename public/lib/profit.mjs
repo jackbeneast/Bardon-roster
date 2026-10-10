@@ -148,20 +148,33 @@ export function pnl(D, from, to) {
 // What a job costs to run, from the last 90 days, for pricing quotes:
 // overheads per hour worked, job materials per hour, and staff rates.
 export function costBasis(D, today) {
-  const from = addIso(today, -89, 0), x = pnl(D, from, today);
-  const done = x.jobs.filter((j) => j.last <= today);
+  // Window: the last 90 days, but no earlier than the first job on the roster,
+  // so weeks before the hub was in use don't count as weeks with no work.
+  const gstReg = D.gstReg, ex = (e) => e.amt - (gstReg ? e.gst : 0);
+  const first = bookingsOf(D.jobs).map((b) => b.date).filter((d) => d <= today).sort()[0];
+  let from = addIso(today, -89, 0);
+  if (first && first > from) from = first;
+  const days = Math.max(14, (Date.parse(today) - Date.parse(from)) / 864e5 + 1), months = days / (365.25 / 12);
+  const x = pnl(D, from, today), done = x.jobs.filter((j) => j.last <= today);
   const hrs = done.reduce((a, j) => a + j.hrs, 0);
-  const mat = done.reduce((a, j) => a + j.exp, 0);
+  // Materials: products bought for a job, plus cleaning products bought for stock.
+  const stock = (D.expenses || []).filter((e) => !e.job && e.cat === "Cleaning products" && e.date >= from && e.date <= today).reduce((a, e) => a + ex(e), 0);
+  const mat = done.reduce((a, j) => a + j.exp, 0) + stock;
   // Regular outgoings at their monthly average, so a yearly bill landing (or not)
   // in the window doesn't swing the rate.
-  const gstReg = D.gstReg, fixedM = (D.books.fixed || []).filter((f) => !f.end || f.end >= today)
+  const fixedM = (D.books.fixed || []).filter((f) => !f.end || f.end >= today)
     .reduce((a, f) => a + perMonth(f) * (gstReg && f.gst ? 10 / 11 : 1), 0);
-  const general = (D.expenses || []).filter((e) => !e.job && e.date >= from && e.date <= today).reduce((a, e) => a + e.amt - (gstReg ? e.gst : 0), 0);
-  const months = 90 / (365.25 / 12), ohMonth = fixedM + general / months, hrsMonth = hrs / months;
+  // Equipment lasts: one-off equipment bought in the last 12 months is spread over 12 months.
+  const yr = addIso(today, -364, 0);
+  const equipM = (D.expenses || []).filter((e) => !e.job && e.cat === "Equipment" && e.date >= yr && e.date <= today).reduce((a, e) => a + ex(e), 0) / 12;
+  const general = (D.expenses || []).filter((e) => !e.job && e.cat !== "Equipment" && e.cat !== "Cleaning products" && e.date >= from && e.date <= today).reduce((a, e) => a + ex(e), 0);
+  const ohMonth = fixedM + equipM + general / months, hrsMonth = hrs / months;
+  const target = D.books.pricing && D.books.pricing.hrsMonth > 0 ? D.books.pricing.hrsMonth : null;
+  const perHrs = target || hrsMonth;
   return {
-    from, to: today, jobs: done.length, hrs: r2(hrs), hrsMonth: r2(hrsMonth),
-    fixedMonth: r2(fixedM), generalMonth: r2(general / months), ohMonth: r2(ohMonth),
-    ohPerHr: hrs > 0 ? r2(ohMonth / hrsMonth) : null, matPerHr: hrs > 0 ? r2(mat / hrs) : null,
+    from, to: today, days: Math.round(days), jobs: done.length, hrs: r2(hrs), hrsMonth: r2(hrsMonth), hrsTarget: target,
+    fixedMonth: r2(fixedM), equipMonth: r2(equipM), generalMonth: r2(general / months), ohMonth: r2(ohMonth),
+    ohPerHr: perHrs > 0 ? r2(ohMonth / perHrs) : null, matPerHr: hrs > 0 ? r2(mat / hrs) : null, stockMonth: r2(stock / months),
     rates: paySet(D.pay).rates, ph: [...QLD_PH, ...paySet(D.pay).ph], superRate: SUPER, gstReg,
   };
 }
