@@ -2,7 +2,7 @@
 // is delivered or fails (status). Must answer 2xx fast; retries are safe
 // because every write is keyed on the message.
 import { store, json } from "../../lib/core.mjs";
-import { hookKey, verifySig, logIn, logStatus, directory } from "../../lib/messages.mjs";
+import { hookKey, verifySig, logIn, logStatus, directory, loadContacts } from "../../lib/messages.mjs";
 import { notify, firstName } from "../../lib/notify.mjs";
 import { timingSafeEqual } from "node:crypto";
 
@@ -28,7 +28,8 @@ export default async (req) => {
           const keys = (await s.list("req/")).slice(-300);
           const requests = (await Promise.all(keys.map((x) => s.get(x)))).filter(Boolean);
           const roster = (await s.get("roster")) || {};
-          name = directory({ requests, agents: roster.agents || [], team: roster.team || [] })[t.phone]?.name || "";
+          const contacts = await loadContacts(s).catch(() => []);
+          name = directory({ requests, agents: roster.agents || [], team: roster.team || [], contacts })[t.phone]?.name || "";
         } catch { /* number only is fine */ }
       }
       await notify(s, {

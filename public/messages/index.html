@@ -133,6 +133,13 @@ mark{background:var(--cream-dark);color:var(--dark);border-radius:4px;padding:0 
 .vchip{border:1px solid var(--line);background:var(--cream);border-radius:999px;padding:6px 9px;font:500 12px var(--sans);color:var(--dark);cursor:pointer}
 .actions{display:flex;gap:10px;flex-wrap:wrap}
 .sheet .actions .btn{flex:1 1 auto}
+.srcs{display:flex;gap:8px;margin-top:10px}
+.src{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:1px solid var(--line);background:var(--cream);border-radius:8px;font:600 14px var(--sans);color:var(--dark);cursor:pointer}
+.src svg{width:18px;height:18px;color:var(--terracotta-dark)}
+.addc{background:var(--tint);border-radius:10px;padding:12px;margin-top:10px;display:grid;gap:10px}
+.addc input{margin-top:4px}
+.addc .actions{margin-top:2px}
+.hint{margin:0;font-size:14px;color:var(--dark);line-height:1.45}
 </style></head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <script src="/lib/templates.js"></script>
@@ -143,6 +150,8 @@ var IC={
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
   call:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>',
   more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="10" r="2.6"/><path d="M8 17c.8-2 2.2-3 4-3s3.2 1 4 3"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg>'
 };
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -285,21 +294,90 @@ function send(){
 // ---------- sheets ----------
 function openSheet(inner){ closeSheet(); var s=document.createElement('div'); s.className='scrim'; s.id='scrim'; s.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+inner+'</div>'; s.addEventListener('click',function(e){ if(e.target===s) closeSheet(); }); document.body.appendChild(s); return s; }
 function closeSheet(){ var s=document.getElementById('scrim'); if(s) s.remove(); }
+function hasPicker(){ try{ return !!(navigator.contacts&&navigator.contacts.select&&window.ContactsManager); }catch(e){ return false; } }
+// Read .vcf files (what a phone's Contacts app shares). Returns [{name, phone}] for each Australian mobile.
+function parseVcf(txt){
+  var out=[], cards=String(txt||'').replace(/\r?\n[ \t]/g,'').split(/BEGIN:VCARD/i).slice(1);
+  function un(v){ return String(v||'').replace(/\\([,;\\])/g,'$1').replace(/\\n/gi,' ').trim(); }
+  cards.forEach(function(c){
+    var lines=c.split(/\r?\n/), fn='', n='', tels=[];
+    lines.forEach(function(l){ var m;
+      if((m=l.match(/^(?:[\w-]+\.)?FN(?:;[^:]*)?:(.*)$/i))) fn=un(m[1]);
+      else if((m=l.match(/^(?:[\w-]+\.)?N(?:;[^:]*)?:(.*)$/i))){ var p=m[1].split(';').map(un); n=[p[1],p[0]].filter(Boolean).join(' '); }
+      else if((m=l.match(/^(?:[\w-]+\.)?TEL(?:;[^:]*)?:(.*)$/i))) tels.push(un(m[1]).replace(/^tel:/i,''));
+    });
+    var name=fn||n, seen={};
+    tels.forEach(function(t){ var p=auMobile(t); if(p&&!seen[p]){ seen[p]=1; out.push({name:name,phone:p}); } });
+  });
+  return out;
+}
 function newSheet(){
-  var P=(D&&D.people)||[];
-  var s=openSheet('<h3>New <em>message</em></h3><input type="search" data-pq placeholder="Name or mobile number" autocomplete="off"><div data-pl style="margin-top:6px"></div><div class="actions"><button class="btn outline" data-close>Cancel</button></div>');
-  var inp=s.querySelector('[data-pq]'), pl=s.querySelector('[data-pl]');
+  var P=(D&&D.people)||[], fresh=null, mode='';
+  var s=openSheet('<h3>New <em>message</em></h3><input type="search" data-pq placeholder="Name or mobile number" autocomplete="off" inputmode="search">'+
+    '<div class="srcs"><button class="src" data-phone>'+IC.book+'From my phone</button><button class="src" data-add>'+IC.plus+'Add contact</button></div>'+
+    '<input type="file" data-vcf accept=".vcf,text/vcard,text/x-vcard,text/directory" multiple hidden>'+
+    '<div data-extra></div><div data-pl style="margin-top:6px"></div><div class="actions"><button class="btn outline" data-close>Cancel</button></div>');
+  var inp=s.querySelector('[data-pq]'), pl=s.querySelector('[data-pl]'), ex=s.querySelector('[data-extra]'), fi=s.querySelector('[data-vcf]');
+  function row(p,sub){ return '<button class="pp" data-go="'+p.phone+'" data-nm="'+esc(p.name||'')+'"><span class="av'+(p.kind==='lead'?' lead':'')+'">'+esc(initials(p.name))+'</span><span><b>'+esc(p.name||fmtPhone(p.phone))+'</b><span>'+esc(sub)+'</span></span></button>'; }
   function draw(){ var v=inp.value.trim().toLowerCase(), num=auMobile(v), h='';
-    if(num) h+='<button class="pp" data-go="'+num+'"><span class="av">#</span><span><b>Text '+fmtPhone(num)+'</b><span>New number</span></span></button>';
+    if(fresh&&!v){ h+='<div class="tsec">Just added</div>'+fresh.map(function(p){ return row(p,'Contact · '+fmtPhone(p.phone)); }).join('')+'<div class="tsec">Everyone</div>'; }
+    if(num){ var known=P.filter(function(p){return p.phone===num;})[0]; h+=known?row(known,[known.tag,fmtPhone(known.phone)].filter(Boolean).join(' · ')):'<button class="pp" data-go="'+num+'"><span class="av">#</span><span><b>Text '+fmtPhone(num)+'</b><span>New number · tap Add contact to save a name</span></span></button>'; }
+    else if(/^\+?\d[\d\s()-]{7,}$/.test(v)&&!/^(\+?61|0)4/.test(v.replace(/[^\d+]/g,''))) h+='<p class="sub">Texts only go to Australian mobiles (04…).</p>';
     var TM=(D&&D.team)||[], tp={}; TM.forEach(function(m){ tp[m.phone]=1; });
-    if(!v&&TM.length) h+=TM.map(function(m){ return '<button class="pp" data-go="'+m.phone+'" data-nm="'+esc(m.name||'')+'"><span class="av">'+esc(initials(m.name))+'</span><span><b>'+esc(m.name||fmtPhone(m.phone))+'</b><span>Team · '+fmtPhone(m.phone)+'</span></span></button>'; }).join('');
-    var rows=P.filter(function(p){ if(!v&&tp[p.phone]) return false; return !v||(p.name||'').toLowerCase().indexOf(v)>=0||p.phone.indexOf(v.replace(/\D/g,'')||'~')>=0||(p.tag||'').toLowerCase().indexOf(v)>=0; }).slice(0,40);
-    h+=rows.map(function(p){ return '<button class="pp" data-go="'+p.phone+'" data-nm="'+esc(p.name||'')+'"><span class="av'+(p.kind==='lead'?' lead':'')+'">'+esc(initials(p.name))+'</span><span><b>'+esc(p.name||fmtPhone(p.phone))+'</b><span>'+esc([p.tag,fmtPhone(p.phone)].filter(Boolean).join(' · '))+'</span></span></button>'; }).join('');
-    if(!h) h='<p class="sub">Type a mobile number, like 0412 345 678.</p>';
+    if(!v&&TM.length) h+=TM.map(function(m){ return row(m,'Team · '+fmtPhone(m.phone)); }).join('');
+    if(fresh&&!v) fresh.forEach(function(p){ tp[p.phone]=1; });
+    var dg=v.replace(/\D/g,'');
+    var rows=num?[]:P.filter(function(p){ if(!v&&tp[p.phone]) return false; return !v||(p.name||'').toLowerCase().indexOf(v)>=0||(dg.length>=3&&p.phone.indexOf(dg)>=0)||(p.tag||'').toLowerCase().indexOf(v)>=0; }).slice(0,v?60:40);
+    h+=rows.map(function(p){ return row(p,[p.tag,fmtPhone(p.phone)].filter(Boolean).join(' · ')); }).join('');
+    if(!h) h='<p class="sub">No one by that name. Type or paste a mobile number, or tap <b>Add contact</b>.</p>';
     pl.innerHTML=h; }
-  draw(); inp.addEventListener('input',draw); setTimeout(function(){ inp.focus(); },50);
+  function go(phone,name){ closeSheet(); location.hash='#/t/'+phone+(name?'?name='+encodeURIComponent(name):''); }
+  // Save to the hub's contacts, then open the chat (one person) or show the list (several).
+  function bring(list){
+    if(!list.length){ toast('No Australian mobile numbers in that'); return; }
+    return api('POST',{action:'contacts',list:list}).then(function(d){
+      var have={}; P.forEach(function(p){ have[p.phone]=p; });
+      list.forEach(function(x){ if(have[x.phone]){ if(x.name&&!have[x.phone].name) have[x.phone].name=x.name; } else { var r={phone:x.phone,name:x.name,tag:'Contact',kind:'contact',at:new Date().toISOString()}; P.unshift(r); have[x.phone]=r; } });
+      if(D) D.people=P;
+      if(list.length===1){ go(list[0].phone,list[0].name); return; }
+      fresh=list; ex.innerHTML=''; mode=''; inp.value=''; draw();
+      toast(d.added+' contact'+(d.added===1?'':'s')+' added'+(d.updated?', '+d.updated+' updated':''));
+    }).catch(function(e){ toast(e.message); });
+  }
+  function addForm(pre){ mode='add';
+    var v=inp.value.trim(), num=auMobile(v);
+    ex.innerHTML='<div class="addc"><label>Name<input data-an placeholder="e.g. Sam (plumber)" autocomplete="off" value="'+esc(num?'':(pre||v))+'"></label><label>Mobile<input data-ap type="tel" inputmode="tel" placeholder="0412 345 678" autocomplete="off" value="'+esc(num?fmtPhone(num):'')+'"></label><div class="err" hidden data-ae></div><div class="actions"><button class="btn primary" data-asave>Save and text</button></div></div>';
+    var an=ex.querySelector('[data-an]'), ap=ex.querySelector('[data-ap]');
+    (num?an:(an.value?ap:an)).focus();
+    ex.querySelector('[data-asave]').onclick=function(){ var b=this, ph=auMobile(ap.value), nm=an.value.trim(), er=ex.querySelector('[data-ae]');
+      if(!ph){ er.textContent='Enter an Australian mobile, like 0412 345 678.'; er.hidden=false; ap.focus(); return; }
+      b.disabled=true; Promise.resolve(bring([{name:nm,phone:ph}])).then(function(){ b.disabled=false; }); };
+  }
+  function phoneHelp(){ mode='help';
+    ex.innerHTML='<div class="addc"><p class="hint"><b>Fastest:</b> in Contacts, tap and hold their number, tap <b>Copy</b>, then paste it in the box above.</p>'+
+      '<p class="hint"><b>To save them here:</b> in Contacts, open the person, tap <b>Share Contact</b>, then <b>Save to Files</b>. Come back and tap the button below to pick the file. You can pick several at once.</p>'+
+      '<div class="actions"><button class="btn primary" data-pickf>Choose contact file</button></div></div>'; 
+    ex.querySelector('[data-pickf]').onclick=function(){ fi.click(); };
+  }
+  s.querySelector('[data-phone]').onclick=function(){
+    if(hasPicker()){
+      navigator.contacts.select(['name','tel'],{multiple:true}).then(function(cs){
+        var list=[], seen={};
+        (cs||[]).forEach(function(c){ var nm=(c.name&&c.name[0])||''; (c.tel||[]).forEach(function(t){ var p=auMobile(t); if(p&&!seen[p]){ seen[p]=1; list.push({name:nm,phone:p}); } }); });
+        if(cs&&cs.length) bring(list);
+      }).catch(function(){ phoneHelp(); });
+      return;
+    }
+    if(mode==='help'){ ex.innerHTML=''; mode=''; } else phoneHelp();
+  };
+  s.querySelector('[data-add]').onclick=function(){ if(mode==='add'){ ex.innerHTML=''; mode=''; } else addForm(); };
+  fi.addEventListener('change',function(){ var fs=[].slice.call(fi.files||[]); if(!fs.length) return;
+    Promise.all(fs.map(function(f){ return f.text?f.text():new Promise(function(r){ var rd=new FileReader(); rd.onload=function(){ r(String(rd.result||'')); }; rd.readAsText(f); }); }))
+      .then(function(ts){ var all=[], seen={}; ts.forEach(function(t){ parseVcf(t).forEach(function(x){ if(!seen[x.phone]){ seen[x.phone]=1; all.push(x); } }); }); fi.value=''; bring(all); })
+      .catch(function(){ toast('Couldn\'t read that file'); }); });
+  draw(); inp.addEventListener('input',function(){ if(mode==='add'){ ex.innerHTML=''; mode=''; } draw(); }); setTimeout(function(){ inp.focus(); },50);
   s.querySelector('[data-close]').onclick=closeSheet;
-  pl.addEventListener('click',function(e){ var b=e.target.closest('[data-go]'); if(!b) return; closeSheet(); location.hash='#/t/'+b.dataset.go+(b.dataset.nm?'?name='+encodeURIComponent(b.dataset.nm):''); });
+  pl.addEventListener('click',function(e){ var b=e.target.closest('[data-go]'); if(!b) return; go(b.dataset.go,b.dataset.nm||''); });
 }
 function infoSheet(){
   var t=T&&T.thread; if(!t) return;
