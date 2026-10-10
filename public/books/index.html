@@ -477,14 +477,24 @@ function renderProfit(){
   var js=x.jobs.slice().sort(function(a,b){ return a.date.localeCompare(b.date); });
   h+='<div class="card"><div class="hrow"><h2>Profit <em>by job</em></h2><span class="sub" style="margin:0">'+js.length+'</span></div>';
   if(!js.length) h+='<p class="sub">No jobs in this period.</p>';
-  else if(x.overheads>0&&x.jobHrs>0) h+='<p class="hint" style="margin-top:-6px">After wages, job costs and a share of overheads. '+money(x.overheads)+' of outgoings and general expenses this period, spread across '+Math.round(x.jobHrs*10)/10+' hrs of work = '+money(x.ohRate)+' per hour on each job.</p>';
+  // Every job carries overheads at the same steady rate used by the price
+  // calculator and wrap-up, not just whatever bills fell due in this period.
+  var oh=ohRate(), oids={}; (D.team||[]).forEach(function(t){ if(t.owner) oids[t.id]=1; });
+  if(js.length) h+='<p class="hint" style="margin-top:-6px">What each job left after staff wages, job costs and overheads ('+money(oh)+' per hour worked, from your <a href="/pricing/">overhead rate</a>). Where you worked the job, that\'s what <b>you</b> earned: your time isn\'t a wage, so it\'s shown as your $/hr rather than a margin.</p>';
   var tt=today();
   js.forEach(function(b){
     var j=b.j, days=b.days.length>1?' · '+b.days.length+' days':'', ended=b.last<tt||(b.last===tt&&b.days[b.days.length-1].end&&b.days[b.days.length-1].end<=nowHM());
-    var right=b.price==null?'<span class="bad">No price</span>':'<span'+(b.net<0?' class="bad"':'')+'>'+money(b.net)+'</span>';
-    var meta=fday(b.date,true)+days+' · '+esc(j.service||'')+(b.actHrs?' · '+Math.round(b.actHrs*100)/100+' hrs worked':'')+(b.price!=null?' · '+money(b.rev)+' in'+(b.labour?', '+money(b.labour)+' wages':'')+(b.exp?', '+money(b.exp)+' costs':'')+(b.overhead>0.005?', '+money(b.overhead)+' overheads':''):'');
-    var mg=b.price!=null&&b.rev>0?Math.round(b.net/b.rev*100):null;
-    var tag=b.perHr!=null?'<b style="font-size:13px;color:var(--dark)">'+m0(b.perHr)+'/hr</b>'+(mg!=null?' · '+mg+'%':''):(ended&&!b.done?'<span class="bad">Log hours</span>':(mg!=null?mg+'%':''));
+    var ohj=b.hrs*oh, net=b.profit!=null?b.profit-ohj:null;
+    var a=(D.books.actuals||{})[b.key], mine=0;
+    if(a&&a.staff){ Object.keys(a.staff).forEach(function(k){ if(oids[k]) mine+=+a.staff[k]||0; }); }
+    else { var ro=rosteredHours(b,D.pay); Object.keys(ro).forEach(function(k){ if(oids[k]) mine+=ro[k]; }); }
+    var right=b.price==null?'<span class="bad">No price</span>':'<span'+(net<0?' class="bad"':'')+'>'+money(net)+'</span>';
+    var meta=fday(b.date,true)+days+' · '+esc(j.service||'')+(b.actHrs?' · '+r1(b.actHrs)+' hrs worked':'')+(b.price!=null?' · '+money(b.rev)+' in'+(b.labour?', '+money(b.labour)+' wages':'')+(b.exp?', '+money(b.exp)+' costs':'')+(ohj>0.005?', '+money(ohj)+' overheads':''):'');
+    var tag;
+    if(ended&&!b.done) tag='<span class="bad">Log hours</span>';
+    else if(net==null) tag='';
+    else if(mine>0) tag='<b style="font-size:13px;color:'+(net<0?'var(--terracotta-dark)':'var(--dark)')+'">'+m0(net/mine)+'/hr</b> for you';
+    else tag=(b.rev>0?Math.round(net/b.rev*100)+'% margin':'');
     h+='<button type="button" class="jrow" '+(ended?'data-wrap':'data-price')+'="'+esc(b.key)+'"><b>'+esc(j.client||'Job')+(j.suburb?' <small>· '+esc(j.suburb)+'</small>':'')+'</b><span class="v">'+right+'</span><small>'+meta+'</small><small style="text-align:right">'+tag+'</small></button>';
   });
   h+='</div>';
