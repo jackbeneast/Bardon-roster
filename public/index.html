@@ -825,7 +825,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<label class="l" for="f_notes">Notes for the team<textarea id="f_notes" name="notes" placeholder="Access, inclusions, parking. Don\'t put alarm or lockbox codes here.">'+esc(base.notes)+'</textarea></label>';
     h+='<div class="err" id="jobErr" hidden></div>';
     h+='<div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save job</button></div>';
-    if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Copy client link</button>':'')+'</div>'+(job.share?'<div class="actions" style="margin-top:8px"><button type="button" class="btn primary" data-confirmj style="flex:1">Send booking confirmation</button></div>':'');
+    if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Copy client link</button>':'')+'</div>'+(job.share?'<div class="actions" style="margin-top:8px"><button type="button" class="btn primary" data-confirmj style="flex:1">'+(tmrJob(sib)?'Send day-before reminder':'Send booking confirmation')+'</button></div>':'');
     if(!isNew&&clientMob(job)) h+='<div class="actions"><a class="btn outline" href="'+textClientHref(job)+'" style="flex:1;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">Text client</a></div>';
     if(!isNew&&teamOn(job).length) h+='<div class="actions"><button type="button" class="btn primary" data-textteam style="flex:1">Text team</button></div>';
     if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-dup>Duplicate</button><button type="button" class="btn danger" data-del>'+(sib.length>1?'Delete all '+sib.length+' days':'Delete job')+'</button></div>';
@@ -937,9 +937,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var tt=s.querySelector('[data-textteam]'); if(tt) tt.onclick=function(){ teamTextSheet(job); };
     var lj=s.querySelector('[data-livej]'); if(lj) lj.onclick=function(){ liveSheet(job.id,''); };
     var cj=s.querySelector('[data-confirmj]'); if(cj) cj.onclick=function(){ cj.disabled=true; cj.textContent='Loading…';
-      var ids=sib.map(function(j){return j.id;}), first=BCConfirm.withDays(sib[0], state.jobs);
-      api('/api/docs').then(function(m){ var docs=m.docs||[], d=docs.filter(function(x){return ids.indexOf(x.jobId)>=0;})[0]||null, dep=d&&d.depositInvoice?docs.filter(function(x){return x.id===d.depositInvoice;})[0]:null; hubConfirm(first,d,dep); })
-        .catch(function(){ hubConfirm(first,null,null); }); };
+      var ids=sib.map(function(j){return j.id;}), first=BCConfirm.withDays(sib[0], state.jobs), tj=tmrJob(sib);
+      api('/api/docs').then(function(m){ var docs=m.docs||[], d=docs.filter(function(x){return ids.indexOf(x.jobId)>=0;})[0]||null, dep=d&&d.depositInvoice?docs.filter(function(x){return x.id===d.depositInvoice;})[0]:null; return tj?hubReminder(tj,d):hubConfirm(first,d,dep); })
+        .catch(function(){ return tj?hubReminder(tj,null):hubConfirm(first,null,null); }); };
     var vl=s.querySelector('[data-vlink]'); if(vl) vl.onclick=function(){ copyText(location.origin+'/v/'+job.share); };
     var dup=s.querySelector('[data-dup]');
     if(dup) dup.onclick=function(){
@@ -1319,6 +1319,27 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10.5H10l-4.5 3.5V16H4z"/><path d="M8 9.5h8M8 12.5h5"/></svg>',
     tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg>'
   };
+  // The day of a job group that falls tomorrow, if any: that's when the day-before reminder replaces the booking confirmation.
+  function tmrJob(sib){ var t=iso(addDays(new Date(),1)); return (sib||[]).filter(function(j){ return j.date===t; })[0]||null; }
+  // Day-before reminder: fills the saved "Day-before reminder" template (or the regular-clean one) from the job and its quote/invoice.
+  function hubReminder(job, d){
+    var id=/regular/i.test(job.service||'')?'day_before_regular':'day_before', ph=d&&d.client.phone||clientMob(job);
+    return BCTpl.load(key()).then(function(){
+      var x=BCTpl.get(id); if(!x) throw new Error('Day-before reminder template not found');
+      var f=BCTpl.fill(x.text, BCTpl.varsFor({job:job, jobs:state.jobs, quote:d&&d.kind==='quote'?d:null, invoice:d&&d.kind==='invoice'?d:null}));
+      BCSms.check(key()).then(function(){ var c=document.querySelector('[data-copen]'); if(c&&BCSms.ready) c.textContent='Send text'; });
+      var h='<h3>Day-before <em>reminder</em></h3><label class="l">To<input type="tel" id="cTo" value="'+esc(ph)+'" placeholder="Client mobile"></label><label class="l" style="margin-top:10px">Message<textarea id="cSms" style="min-height:260px">'+esc(f.text)+'</textarea></label>'+
+        (f.missing.length?'<p class="sub" style="margin-top:6px">Fill in '+esc(f.missing.map(function(k){return '{'+k+'}';}).join(', '))+' before sending.</p>':'')+
+        '<div class="actions"><button type="button" class="btn outline" data-ccopy>Copy</button><a class="btn primary" data-copen href="#" style="flex:1;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">'+(BCSms.ready?'Send text':'Open Messages')+'</a></div><div class="actions" style="margin-top:8px"><button type="button" class="btn outline" data-close style="flex:1">Close</button></div>';
+      var s=openSheet(h);
+      s.querySelector('[data-close]').onclick=closeSheet;
+      s.addEventListener('click',function(e){
+        var o=e.target.closest('[data-copen]');
+        if(o){ if(BCSms.go(o,s.querySelector('#cTo').value,s.querySelector('#cSms').value,key(),{ref:'remind',toast:toast})) e.preventDefault(); return; }
+        if(e.target.closest('[data-ccopy]')) copyText(s.querySelector('#cSms').value, s.querySelector('#cSms'));
+      });
+    }).catch(function(e){ toast(e.message||'Could not load the reminder template'); });
+  }
   function hubConfirm(job, d, dep){
     BCSms.check(key()).then(function(){ var c=document.querySelector('[data-copen]'); if(c&&BCSms.ready&&c.textContent==='Open Messages') c.textContent='Send text'; });
     var m=BCConfirm.build({job:job,doc:d,deposit:dep}), mode='sms', ph=d&&d.client.phone||'', em=d&&d.client.email||'';
