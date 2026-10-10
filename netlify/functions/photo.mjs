@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { store, json, loadRoster, loadLive, checkAdmin, roomsOf } from "../../lib/core.mjs";
+import { store, json, loadRoster, loadBooking, daysOf, checkAdmin, roomsOf } from "../../lib/core.mjs";
 
 const MAX = 5 * 1024 * 1024;
 const TMAX = 400 * 1024;
@@ -43,9 +43,9 @@ export default async (req) => {
     if (!b.length || b.length > MAX + TMAX || tl > TMAX || tl >= b.length) return json({ error: "Photo is too large. Try again." }, 413);
     const thumb = b.subarray(0, tl), full = b.subarray(tl);
     if (!isJpeg(full) || (tl && !isJpeg(thumb))) return json({ error: "That file isn't a photo." }, 400);
-    const id = randomBytes(12).toString("hex");
-    await s.setBin(`photo/${job.id}/${id}`, full.slice().buffer);
-    if (tl) await s.setBin(`photo/${job.id}/${id}.t`, thumb.slice().buffer);
+    const id = randomBytes(12).toString("hex"), hj = daysOf(roster, job)[0].id; // a booking's photos live on its first day
+    await s.setBin(`photo/${hj}/${id}`, full.slice().buffer);
+    if (tl) await s.setBin(`photo/${hj}/${id}.t`, thumb.slice().buffer);
     return json({ ok: true, id });
   }
 
@@ -54,15 +54,16 @@ export default async (req) => {
     try { body = await req.json(); } catch { return json({ error: "Bad data" }, 400); }
   }
   const ids = [...new Set(Array.isArray(body.ids) ? body.ids.filter((x) => ID.test(x)) : [])];
-  const L = await loadLive(s, job.id);
-  const save = async () => { L.updated = new Date().toISOString(); await s.set(`live/${job.id}`, L); return json({ ok: true, live: L }); };
+  const bk = await loadBooking(s, roster, job), L = bk.H, hj = bk.home.id;
+  const save = async (extra = {}) => json({ ok: true, ...(await bk.save()), ...extra });
   const tagOk = (room, kind) => roomsOf(job).includes(room) && ["before", "after"].includes(kind);
 
   if (req.method === "DELETE") {
     const del = u.searchParams.get("id") ? [u.searchParams.get("id")] : ids;
     if (!del.length || !del.every((x) => ID.test(x))) return json({ error: "Bad photo" }, 400);
+    const where = Object.fromEntries(L.photos.map((ph) => [ph.id, ph.j || hj]));
     L.photos = L.photos.filter((ph) => !del.includes(ph.id));
-    await Promise.all(del.flatMap((id) => [s.del(`photo/${job.id}/${id}`), s.del(`photo/${job.id}/${id}.t`)]));
+    await Promise.all(del.flatMap((id) => [s.del(`photo/${where[id] || hj}/${id}`), s.del(`photo/${where[id] || hj}/${id}.t`)]));
     return save();
   }
 
@@ -76,13 +77,12 @@ export default async (req) => {
     const have = new Set(L.photos.map((p) => p.id));
     const fresh = ids.filter((id) => !have.has(id));
     // Check each image really saved (reads the small thumbnail, or the full photo for old-style uploads)
-    const ok = await Promise.all(fresh.map(async (id) => !!((await s.getBin(`photo/${job.id}/${id}.t`)) || (await s.getBin(`photo/${job.id}/${id}`)))));
+    const ok = await Promise.all(fresh.map(async (id) => !!((await s.getBin(`photo/${hj}/${id}.t`)) || (await s.getBin(`photo/${hj}/${id}`)))));
     const add = fresh.filter((_, i) => ok[i]);
     if (L.photos.length + add.length > LIMIT) return json({ error: `This job is at the ${LIMIT} photo limit. Delete some first.` }, 400);
     const at = new Date().toISOString(), by = admin && !pid ? "admin" : pid;
-    add.forEach((id) => L.photos.push({ id, room, kind, by, at }));
-    L.updated = at; await s.set(`live/${job.id}`, L);
-    return json({ ok: true, live: L, added: add.length, missing: fresh.length - add.length });
+    add.forEach((id) => L.photos.push({ id, room, kind, by, at, j: hj }));
+    return save({ added: add.length, missing: fresh.length - add.length });
   }
 
   // Sort photos into a room and before/after.

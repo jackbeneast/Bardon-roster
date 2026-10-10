@@ -3,7 +3,7 @@
 // invoices, roster jobs), so nothing is typed twice.
 //   GET  (admin)  → { stages: { new, quoted, booked, done }, lost }
 //   POST (admin)  { action: "dismiss" | "undismiss", key }
-import { store, json, loadRoster, loadAllLive, checkAdmin } from "../../lib/core.mjs";
+import { store, json, loadRoster, loadAllLive, bookingLive, checkAdmin } from "../../lib/core.mjs";
 import { loadDocs, isDepositInv, today, addDays } from "../../lib/docs.mjs";
 import { loadRequests, SERVICES } from "../../lib/requests.mjs";
 import { bookingsOf } from "../../public/lib/profit.mjs";
@@ -18,7 +18,8 @@ const kind = (svc) => { const s = String(svc || "").toLowerCase(); return /bond|
 
 export async function buildPipeline(s) {
   const t = today();
-  const [roster, docs, reqs, live, dis] = await Promise.all([loadRoster(s), loadDocs(s), loadRequests(s), loadAllLive(s), s.get("pipe/dismissed")]);
+  const [roster, docs, reqs, rawLive, dis] = await Promise.all([loadRoster(s), loadDocs(s), loadRequests(s), loadAllLive(s), s.get("pipe/dismissed")]);
+  const live = bookingLive(roster, rawLive);
   const dismissed = dis || {};
   const jobs = roster.jobs.filter((j) => !j.sample);
   const jobById = Object.fromEntries(jobs.map((j) => [j.id, j]));

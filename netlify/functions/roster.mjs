@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { store, json, loadRoster, loadConfirms, loadAcks, loadAllLive, checkAdmin, adminIsSet } from "../../lib/core.mjs";
+import { store, json, loadRoster, loadConfirms, loadAcks, loadAllLive, bookingLive, checkAdmin, adminIsSet } from "../../lib/core.mjs";
 
 // Wage-estimate settings: pay cycle, rates, lunch rule, extra public holidays.
 function cleanPay(p) {
@@ -86,7 +86,7 @@ export default async (req) => {
     const confirms = await loadConfirms(s);
     const team = admin ? roster.team : roster.team.map(({ phone, ...t }) => t);
     const acks = await loadAcks(s);
-    const live = await loadAllLive(s);
+    const live = bookingLive(roster, await loadAllLive(s));
     const jobs = admin ? roster.jobs : roster.jobs.filter((j) => !j.sample).map(({ share, ...j }) => j);
     // Access details clients add on their own link, keyed by booking (the team needs them on the day).
     const access = {};

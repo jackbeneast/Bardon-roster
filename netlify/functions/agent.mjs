@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { store, json, loadRoster, loadAllLive, checkAdmin, roomsOf, DEFAULT_ROOMS, LOCK } from "../../lib/core.mjs";
+import { store, json, loadRoster, loadAllLive, bookingLive, checkAdmin, roomsOf, DEFAULT_ROOMS, LOCK } from "../../lib/core.mjs";
 import { notify, fmtDay, where } from "../../lib/notify.mjs";
 import { loadTemplates } from "../../lib/templates.mjs";
 import { loadTeamPhotos } from "./teamphoto.mjs";
@@ -63,7 +63,7 @@ function view(job, roster, L, withShare, photos = {}) {
     rooms: roomsOf(job), team,
     live: {
       arrived: live.arrived || {}, rooms: live.rooms || {}, flags: (live.flags || []).map(({ id, t, d, at }) => ({ id, t, d, at })),
-      photos: (live.photos || []).filter((p) => p.room && p.kind).map(({ id, room, kind, at }) => ({ id, room, kind, at })),
+      photos: (live.photos || []).filter((p) => p.room && p.kind).map(({ id, room, kind, at, j }) => ({ id, room, kind, at, j: j || job.id })),
       lock: live.lock || {}, eta: live.eta || "", done: live.done || "", updated: live.updated || "",
       checks: Object.fromEntries(Object.entries(live.items || {}).map(([r, v]) => [r, Object.keys(v || {}).length])),
     },
@@ -84,7 +84,7 @@ export default async (req) => {
 
   if (req.method === "GET") {
     const k = u.searchParams.get("k") || "", v = u.searchParams.get("v") || "";
-    const live = await loadAllLive(s);
+    const live = bookingLive(roster, await loadAllLive(s));
     const photos = await loadTeamPhotos(s);
     const base = { lock: LOCK, phone: "0406 216 212" };
     if (v) {

@@ -1,4 +1,4 @@
-import { store, json, loadRoster, loadLive, loadConfirms, checkAdmin, roomsOf, LOCK, shiftOf } from "../../lib/core.mjs";
+import { store, json, loadRoster, loadBooking, loadConfirms, checkAdmin, roomsOf, LOCK, shiftOf } from "../../lib/core.mjs";
 import { autoWrap, clockedHours } from "../../lib/clock.mjs";
 import { paySet } from "../../public/lib/wages.mjs";
 import { notify, firstName, where, fmtTime, clockNow } from "../../lib/notify.mjs";
@@ -19,7 +19,9 @@ export default async (req) => {
   if (!admin && !onJob(pid)) return json({ error: "Only the team on this job can update it." }, 403);
   if (admin && !pid) pid = owner ? owner.id : "admin";
 
-  const L = await loadLive(s, job.id);
+  // A booking's days share progress (areas, checklists, photos, notes). Clock in/off stays per day (D).
+  const bk = await loadBooking(s, roster, job), L = bk.H, D = bk.D;
+  const onBooking = (id) => bk.days.some((d) => (d.staff || []).includes(id));
   let wrapCheck = false;
   const now = new Date().toISOString();
   const str = (v, n) => (typeof v === "string" ? v.trim().slice(0, n) : "");
@@ -30,10 +32,10 @@ export default async (req) => {
     case "arrive": {
       const who = b.who && (admin || b.who === pid) ? b.who : pid;
       if (!onJob(who)) return json({ error: "That person isn't on this job." }, 400);
-      if (b.undo) { delete L.arrived[who]; delete L.left[who]; }
+      if (b.undo) { delete D.arrived[who]; delete D.left[who]; }
       else {
-        const first = !L.arrived[who];
-        L.arrived[who] = now;
+        const first = !D.arrived[who];
+        D.arrived[who] = now;
         const p = roster.team.find((x) => x.id === who);
         if (first && p && !p.owner) {
           const st = shiftOf(job, who).start;
@@ -45,13 +47,13 @@ export default async (req) => {
     case "leave": {
       const who = b.who && (admin || b.who === pid) ? b.who : pid;
       if (!onJob(who)) return json({ error: "That person isn't on this job." }, 400);
-      if (b.undo) { delete L.left[who]; break; }
-      if (!L.arrived[who]) return json({ error: "Tap \"I've arrived\" first, then clock off when you leave." }, 400);
-      const first = !L.left[who];
-      L.left[who] = now;
+      if (b.undo) { delete D.left[who]; break; }
+      if (!D.arrived[who]) return json({ error: "Tap \"I've arrived\" first, then clock off when you leave." }, 400);
+      const first = !D.left[who];
+      D.left[who] = now;
       const p = roster.team.find((x) => x.id === who);
       if (first && p && !p.owner) {
-        const h = clockedHours(L.arrived[who], now, paySet(roster.pay).lunch);
+        const h = clockedHours(D.arrived[who], now, paySet(roster.pay).lunch);
         await notify(s, { type: "leave", title: `${firstName(p.name)} clocked off at ${where(job)}`, body: `${clockNow()}${h != null ? ` · ${h} h paid` : ""}`, tags: "wave", priority: 2, url: "/" });
       }
       wrapCheck = true;
@@ -71,14 +73,14 @@ export default async (req) => {
       if (a === null || l === null) return json({ error: "Check the times" }, 400);
       if (!a && l) return json({ error: "Add a start time before a finish time." }, 400);
       if (a && l && Date.parse(l) <= Date.parse(a)) return json({ error: "Finish time has to be after the start time." }, 400);
-      if (a) L.arrived[who] = a; else delete L.arrived[who];
-      if (l) { L.left[who] = l; wrapCheck = true; } else delete L.left[who];
+      if (a) D.arrived[who] = a; else delete D.arrived[who];
+      if (l) { D.left[who] = l; wrapCheck = true; } else delete D.left[who];
       break;
     }
     case "assign": { // who's doing which area
       if (!admin) return json({ error: "Only Jack can assign areas" }, 401);
       if (!roomsOf(job).includes(b.room)) return json({ error: "Unknown room" }, 400);
-      const ids = [...new Set((Array.isArray(b.who) ? b.who : []).map(String))].filter(onJob);
+      const ids = [...new Set((Array.isArray(b.who) ? b.who : []).map(String))].filter(onBooking);
       L.assign = { ...(L.assign || {}) };
       if (ids.length) L.assign[b.room] = ids; else delete L.assign[b.room];
       break;
@@ -156,13 +158,12 @@ export default async (req) => {
     default:
       return json({ error: "Unknown action" }, 400);
   }
-  L.updated = now;
-  await s.set(`live/${job.id}`, L);
+  const out = await bk.save();
   if (wrapCheck) {
     try { await autoWrap(s, roster, job, new Date(Date.now() + 10 * 3600e3).toISOString().slice(0, 10), await loadConfirms(s)); }
     catch (e) { console.error("auto wrap failed", e); }
   }
-  return json({ ok: true, live: L });
+  return json({ ok: true, ...out });
 };
 
 export const config = { path: "/api/live" };
