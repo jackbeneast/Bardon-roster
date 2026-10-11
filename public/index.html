@@ -1153,6 +1153,39 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
         var er=document.getElementById('adErr'); if((!saving&&er&&!er.hidden)||Date.now()-t0>15000) clearInterval(w); },200);
     };
   }
+  // Find progress that isn't showing (old records, photos not on the job, hidden areas, notes) and put it back.
+  function recoverSheet(jobId, pid){
+    var s=openSheet('<h3>Check for lost <em>progress</em></h3><div id="recBox"><p class="sub">Checking everything saved for this job…</p></div>');
+    var box=s.querySelector('#recBox');
+    function back(){ closeSheet(); liveOpen={jobId:jobId,pid:pid||''}; liveSheet(jobId, pid||''); }
+    function num(n,w){ return n+' '+w+(n===1?'':'s'); }
+    function line(c){ return [num(c.done,'area')+' done', num(c.checks,'check'), num(c.photos,'photo'), num(c.notes,'note'), num(c.clockins,'clock-in')].join(' · '); }
+    function draw(r, msg){
+      var h=msg?'<div class="warn" style="margin:0 0 10px;background:#E4F1E6">'+esc(msg)+'</div>':'';
+      h+='<p class="sub" style="margin:0 0 6px;color:var(--dark)"><b>Showing on the job now:</b> '+esc(line(r.booking))+'</p>';
+      h+='<p class="sub" style="margin:0 0 10px">Saved by day: '+r.days.map(function(d,i){ return 'Day '+(i+1)+' ('+esc(fmtDay(parse(d.date)))+'): '+esc(line(d)); }).join('<br>')+'</p>';
+      var any=false, f='';
+      if(r.hidden.length){ any=true; f+='<label class="pick" style="display:block;margin:8px 0"><input type="checkbox" data-rk="areas" checked> <b>Progress on areas this job no longer lists:</b> '+esc(r.hidden.join(', '))+'. Puts these areas back on every day.</label>'; }
+      if(r.loose.length){ any=true; f+='<label class="pick" style="display:block;margin:8px 0"><input type="checkbox" data-rk="photos" checked> <b>'+num(r.loose.length,'photo')+'</b> saved for this job but not on it. They come back under "To sort".</label>'; }
+      if(r.notes.length){ any=true; f+='<label class="pick" style="display:block;margin:8px 0"><input type="checkbox" data-rk="flags" checked> <b>'+num(r.notes.length,'team note')+'</b> from your activity feed not on the job: '+esc(r.notes.map(function(n){return n.t;}).join('; '))+'</label>'; }
+      if(r.orphans.length){ any=true; f+='<p class="sub" style="margin:10px 0 4px;color:var(--dark)"><b>Progress saved under jobs no longer on the roster.</b> Tick any that belong to this job:</p>'+r.orphans.map(function(o){ return '<label class="pick" style="display:block;margin:6px 0"><input type="checkbox" data-ro="'+esc(o.id)+'"> Last updated '+esc(o.updated?new Date(o.updated).toLocaleString('en-AU',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'unknown')+': '+esc(line(o))+(o.rooms.length?'. Areas: '+esc(o.rooms.join(', ')):'')+(o.notesText.length?'. Notes: '+esc(o.notesText.join('; ')):'')+'</label>'; }).join(''); }
+      if(!any) h+='<div class="hint-card">Nothing lost was found. Everything saved for this job is already showing. If something you remember isn\'t in the numbers above, it never reached the server (for example, a phone that was offline).</div>';
+      h+=f+'<div class="err" id="recErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-recback>Back to job</button>'+(any?'<button type="button" class="btn primary" data-recgo>Put it back</button>':'')+'</div>';
+      box.innerHTML=h;
+    }
+    function load(){ api('/api/recover?job='+encodeURIComponent(jobId)).then(function(r){ draw(r); }).catch(function(e){ box.innerHTML='<div class="err">'+esc(e.message)+'</div><div class="actions"><button type="button" class="btn outline" data-recback>Back to job</button></div>'; }); }
+    box.addEventListener('click', function(e){
+      if(e.target.closest('[data-recback]')){ var bb=e.target.closest('[data-recback]'); bb.disabled=true; refresh().then(back,back); return; }
+      var go=e.target.closest('[data-recgo]'); if(!go) return;
+      var body={job:jobId, orphans:[]};
+      box.querySelectorAll('[data-rk]').forEach(function(c){ if(c.checked) body[c.dataset.rk]=true; });
+      box.querySelectorAll('[data-ro]').forEach(function(c){ if(c.checked) body.orphans.push(c.dataset.ro); });
+      go.disabled=true; go.textContent='Restoring…';
+      api('/api/recover',{method:'POST',body:body}).then(function(r){ draw(r, r.done.length?'Put back: '+r.done.join(', ')+'.':'Nothing was ticked.'); })
+        .catch(function(x){ go.disabled=false; go.textContent='Put it back'; var er=box.querySelector('#recErr'); er.textContent=x.message; er.hidden=false; });
+    });
+    load();
+  }
   function drawLive(){
     var box=document.getElementById('liveBox'); if(!box||!liveOpen) return;
     var j=state.jobs.find(function(x){return x.id===liveOpen.jobId;}); if(!j){ closeSheet(); return; }
@@ -1162,6 +1195,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var h='<h3>Job <em>updates</em></h3><p class="sub" style="margin:-6px 0 0">'+esc((j.address||j.client)+(j.suburb?', '+j.suburb:''))+' · '+(dn?'Day '+dn.n+' of '+dn.t+', ':'')+fmtDay(parse(j.date))+'</p>';
     if(sib.length>1) h+='<div class="kindsw" style="margin:10px 0 0;flex-wrap:wrap">'+sib.map(function(d,i){ return '<button type="button" data-lday="'+d.id+'" aria-pressed="'+(d.id===j.id)+'">Day '+(i+1)+' · '+DOW[parse(d.date).getDay()]+' '+parse(d.date).getDate()+'</button>'; }).join('')+'</div><p class="sub" style="margin:6px 0 0">Areas, checklists, photos and notes carry across every day. Clock in and off is per day.</p>';
     if(canEdit) h+='<button type="button" class="btn outline" data-addshift style="width:100%;margin-top:10px">+ Add another day to this job</button>';
+    if(canEdit) h+='<button type="button" class="ghost" data-recover style="margin:6px 0 0;padding:4px 0">Something missing? Check this job for lost progress</button>';
     var acc=(state.access||{})[j.group||j.id];
     if(acc) h+='<div class="lsec" style="background:#FCEFD0;border-radius:8px;padding:12px;border:0"><h4 style="margin-top:0">From the client: access</h4>'+[['Getting in',[acc.entry,acc.entryNote].filter(Boolean).join(', ')],['Parking',acc.parking],['Pets',acc.pets],['Notes',acc.notes]].filter(function(r){return r[1];}).map(function(r){ return '<p class="sub" style="margin:4px 0;color:var(--dark)"><b>'+r[0]+':</b> '+esc(r[1])+'</p>'; }).join('')+'</div>';
     h+='<p class="sub">'+(j.agentId?'The agent'+(ag&&canEdit?' ('+esc(ag.name)+')':'')+' sees these updates live, plus the photos and notes.':'No agent on this job. Updates still save to the job.')+'</p>';
@@ -1211,6 +1245,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
     if(b.closest('#phsec') && phClick(b)) return;
     if(b.dataset.lday){ liveOpen.jobId=b.dataset.lday; liveOpen.tEdit=null; liveOpen.room=null; drawLive(); return; }
+    if(b.hasAttribute('data-recover')){ var rj=liveOpen.jobId, rp=liveOpen.pid; closeSheet(); recoverSheet(rj, rp); return; }
     if(b.hasAttribute('data-addshift')){ var aj=state.jobs.find(function(x){return x.id===liveOpen.jobId;}); closeSheet(); addDaySheet(aj); return; }
     if(b.hasAttribute('data-editareas')){ var jid=liveOpen.jobId, pp=liveOpen.pid; closeSheet(); liveOpen={jobId:jid,pid:pp}; areasSheet(jid); return; }
     if(b.dataset.tedit){ liveOpen.tEdit=b.dataset.tedit; drawLive(); return; }
