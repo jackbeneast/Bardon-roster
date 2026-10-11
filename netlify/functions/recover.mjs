@@ -45,6 +45,28 @@ async function scan(s, roster, job) {
   }));
   orphans.sort((a, b) => (b.updated || "").localeCompare(a.updated || ""));
 
+  // Other jobs on the roster for the same client or street, not part of this booking.
+  const inB = new Set(days.map((d) => d.id));
+  const street = (x) => { const m = /(\d+[a-z]?)\s+([a-z]+)/i.exec(String(x || "")); return m ? (m[1] + " " + m[2]).toLowerCase() : ""; };
+  const sk = street(job.address), cl = String(job.client || "").trim().toLowerCase();
+  const related = [];
+  for (const j of roster.jobs) {
+    if (inB.has(j.id) || j.sample) continue;
+    if (!((sk && street(j.address) === sk) || (cl && String(j.client || "").trim().toLowerCase() === cl))) continue;
+    const [L, done] = await Promise.all([s.get(`live/${j.id}`), s.get(`recovered/${j.id}`)]);
+    if (done || !hasAny(L)) continue;
+    related.push({ id: j.id, date: j.date, service: j.service || "", address: j.address || j.suburb || "", ...count(L), rooms: Object.keys(L.rooms || {}), notesText: (L.flags || []).map((f) => f.t).slice(0, 8) });
+  }
+
+  // When the booking's progress happened, by Brisbane date.
+  const bne = (t) => { const n = Date.parse(t || ""); return isNaN(n) ? "?" : new Date(n + 10 * 3600e3).toISOString().slice(0, 10); };
+  const when = {};
+  const bump = (t, k) => { const d = bne(t); (when[d] ||= { date: d, areas: 0, checks: 0, photos: 0, notes: 0 })[k]++; };
+  for (const v of Object.values(P.rooms || {})) if (v && v.s === "d") bump(v.at, "areas");
+  for (const r of Object.values(P.items || {})) for (const v of Object.values(r || {})) bump(v && v.at, "checks");
+  for (const ph of P.photos || []) bump(ph.at, "photos");
+  for (const f of P.flags || []) bump(f.at, "notes");
+
   // Photo images stored for this booking that the job doesn't list.
   const have = new Set((P.photos || []).map((p) => p.id));
   const loose = [];
@@ -73,7 +95,8 @@ async function scan(s, roster, job) {
   return {
     job: job.id, address: where(job), rooms,
     days: days.map((d) => ({ id: d.id, date: d.date, ...count(raw[d.id]) })),
-    booking: { ...count(P), clockins: days.reduce((n, d) => n + Object.keys(raw[d.id].arrived || {}).length, 0) }, hidden, orphans: orphans.slice(0, 20), loose, notes,
+    booking: { ...count(P), clockins: days.reduce((n, d) => n + Object.keys(raw[d.id].arrived || {}).length, 0) }, hidden, orphans: orphans.slice(0, 20), related, loose, notes,
+    byDate: Object.values(when).sort((a, b) => a.date.localeCompare(b.date)),
   };
 }
 
@@ -98,7 +121,7 @@ export default async (req) => {
     const now = new Date().toISOString(), done = [];
 
     // Merge progress from orphan records Jack picked (never the other way round).
-    const pick = (Array.isArray(b.orphans) ? b.orphans : []).filter((id) => found.orphans.some((o) => o.id === id));
+    const pick = (Array.isArray(b.orphans) ? b.orphans : []).filter((id) => found.orphans.some((o) => o.id === id) || found.related.some((o) => o.id === id));
     if (pick.length) {
       const rec = { [bk.home.id]: H };
       for (const id of pick) rec[id] = { ...emptyLive(), ...((await s.get(`live/${id}`)) || {}) };
