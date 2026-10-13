@@ -82,6 +82,14 @@ function api(method,body,qs){
     .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok){ var e=new Error(d.error||'Something went wrong'); e.status=r.status; throw e; } return d; }); });
 }
 function save(msg){ return api('POST',{sel:D.sel}).then(function(d){ D.sel=d.sel; render(); toast(msg||'Saved'); }).catch(function(e){ toast(e.message); }); }
+// A photo the team sorted keeps its room and before/after. An unsorted one uses the hub's guess,
+// unless the guess was unsure or it looked private. Returns null if it can't go on the demo.
+function eff(x){
+  if(x.room&&x.kind) return x;
+  var g=D.guess&&D.guess[x.id]; if(!g||g.priv||!g.room||!g.kind) return null;
+  return {room:g.room,kind:g.kind,j:x.j,id:x.id,at:x.at,auto:true};
+}
+function photosOf(j){ return j.photos.map(eff).filter(Boolean); }
 function isPicked(x){ var s=D.sel[x.room]; return !!(s&&s[x.kind]&&s[x.kind].id===x.id); }
 function pickedAnywhere(x){ return D.rooms.some(function(r){ var s=D.sel[r]; return s&&((s.before&&s.before.id===x.id)||(s.after&&s.after.id===x.id)); }); }
 
@@ -93,10 +101,10 @@ function render(){
   var h='<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><a href="/demo" target="_blank" rel="noopener" style="color:var(--terracotta-dark)">Open demo</a></div>';
   h+='<h1>Website demo <em>photos</em></h1><p class="sub">Pick a before and after for each room. They show on the public demo your website links to. '+filled+' of '+(D.rooms.length*2)+' chosen.</p>';
   h+='<div class="auto">';
-  if(busy) h+='<p><b>Looking through '+busy.total+' photos…</b> Checking each pair for the same angle, a clear difference, brightness and sharpness.</p><div class="prog"><i style="width:'+Math.round(busy.done/Math.max(1,busy.total)*100)+'%"></i></div>';
-  else h+='<p><b>Let the hub choose.</b> It scores every before and after pair for the same angle, a clear difference, a bright after shot and sharpness, then fills every room and picks one standout pair for your website slider.</p><button type="button" class="go" data-auto'+(D.jobs.length?'':' disabled')+'>'+(filled?'Pick the best again':'Pick the best for me')+'</button>';
+  if(busy) h+='<p><b>'+(busy.phase==='sort'?'Sorting '+busy.total+' unsorted photos…</b> Working out the room and before or after for each, and leaving out anything private.':'Looking through '+busy.total+' photos…</b> Checking each pair for the same angle, a clear difference, brightness and sharpness.')+'</p><div class="prog"><i style="width:'+Math.round(busy.done/Math.max(1,busy.total)*100)+'%"></i></div>';
+  else h+='<p><b>Let the hub choose.</b> It looks through the photos from your last 30 jobs, sorting any the team didn\'t, then scores every before and after pair for the same angle, a clear difference, a bright after shot and sharpness. It fills every room, spreading picks across jobs, and picks one standout pair for your website slider.</p><button type="button" class="go" data-auto'+(D.jobs.length?'':' disabled')+'>'+(filled?'Pick the best again':'Pick the best for me')+'</button>';
   h+='</div>';
-  h+='<div class="note"><b>Give the picks a quick look.</b> Anyone can see these. The hub can judge angle and lighting, but not privacy, so swap out anything showing family photos, mail, the street number or number plates.</div>';
+  h+='<div class="note"><b>Give the picks a quick look.</b> Anyone can see these. When the hub sorts a photo itself it leaves out ones showing family photos, mail, the street number or number plates, but it can miss things, and it doesn\'t check photos the team already sorted.</div>';
   if(D.sel.hero){ var hr=D.sel.hero;
     h+='<h2>Website <em>slider</em></h2><div class="hero"><h3 style="margin:0 0 8px;font:600 15px var(--sans);color:var(--dark)">'+esc(hr.room)+' · the strongest pair</h3><div class="pair"><div class="slot filled"><img alt="" src="'+thumb(hr.before)+'"><span class="lb">Before</span></div><div class="slot filled"><img alt="" src="'+thumb(hr.after)+'"><span class="lb">After</span></div></div>'+(why.hero?'<p class="why">'+esc(why.hero)+'</p>':'')+'</div>'; }
 
@@ -109,15 +117,16 @@ function render(){
   h+='</div>';
 
   h+='<h2>Your job <em>photos</em></h2>';
-  if(!D.jobs.length) h+='<div class="empty">No sorted before and after photos on the roster yet. Photos show here once the team sorts them into rooms on a job.</div>';
+  if(!D.jobs.length) h+='<div class="empty">No job photos on the roster yet.</div>';
   D.jobs.forEach(function(j){
-    var rooms={}; j.photos.forEach(function(x){ (rooms[x.room]||(rooms[x.room]=[])).push(x); });
+    var rooms={}, ph=photosOf(j), left=j.photos.filter(function(x){ return !x.room&&!(D.guess&&D.guess[x.id]); }).length;
+    ph.forEach(function(x){ (rooms[x.room]||(rooms[x.room]=[])).push(x); });
     var useful=D.rooms.filter(function(r){ return rooms[r]; }).length;
-    h+='<div class="job"><div class="jh"><div><b>'+esc([j.suburb,j.service].filter(Boolean).join(' · ')||'Job')+'</b><span>'+fday(j.date)+(j.client?' · '+esc(j.client):'')+' · '+j.photos.length+' photos</span></div>'+(useful?'<button type="button" class="use" data-use="'+esc(j.key)+'">Use this job</button>':'')+'</div>';
+    h+='<div class="job"><div class="jh"><div><b>'+esc([j.suburb,j.service].filter(Boolean).join(' · ')||'Job')+'</b><span>'+fday(j.date)+(j.client?' · '+esc(j.client):'')+' · '+j.photos.length+' photos'+(left?' · '+left+' not sorted yet':'')+'</span></div>'+(useful?'<button type="button" class="use" data-use="'+esc(j.key)+'">Use this job</button>':'')+'</div>';
     Object.keys(rooms).sort(function(a,b){ return (D.rooms.indexOf(a)+99)%99-(D.rooms.indexOf(b)+99)%99; }).forEach(function(r){
       var list=rooms[r].slice().sort(function(a,b){ return a.kind===b.kind?0:a.kind==='before'?-1:1; });
       h+='<div class="jr"><h4>'+esc(r)+(D.rooms.indexOf(r)<0?' · not on the demo':'')+'</h4><div class="strip">'+list.map(function(x){
-        return '<button type="button" class="ph'+(pickedAnywhere(x)?' on':'')+'" data-ph="'+esc(j.key)+'|'+x.id+'" aria-label="'+esc(r)+' '+x.kind+'"><img alt="" loading="lazy" src="'+thumb(x)+'"><span class="k">'+(x.kind==='before'?'Before':'After')+'</span></button>'; }).join('')+'</div></div>'; });
+        return '<button type="button" class="ph'+(pickedAnywhere(x)?' on':'')+'" data-ph="'+esc(j.key)+'|'+x.id+'" aria-label="'+esc(r)+' '+x.kind+'"><img alt="" loading="lazy" src="'+thumb(x)+'"><span class="k">'+(x.kind==='before'?'Before':'After')+(x.auto?' · auto':'')+'</span></button>'; }).join('')+'</div></div>'; });
     h+='</div>';
   });
   if(active) h+='<div class="bar" role="status"><span>Choosing <b>'+esc(active.room)+' · '+(active.kind==='before'?'Before':'After')+'</b>. Tap a photo below.</span><button type="button" data-cancel>Cancel</button></div>';
@@ -153,13 +162,35 @@ function reason(p){
   if(p.a.lum>p.b.lum+0.04) bits.push('brighter after'); if(p.b.land&&p.a.land) bits.push('landscape');
   return bits.join(' · ').replace(/^./,function(c){return c.toUpperCase();});
 }
+var JOBS=30;
 function autoPick(){
   if(busy) return;
-  // most recent 20 jobs, up to 6 of each kind per room, demo rooms only
-  var list=[]; D.jobs.slice(0,20).forEach(function(j){ var per={};
-    j.photos.forEach(function(x){ if(D.rooms.indexOf(x.room)<0) return; var k=x.room+'|'+x.kind; per[k]=(per[k]||0)+1; if(per[k]<=6) list.push({job:j.key,x:x}); }); });
-  if(!list.length){ toast('No sorted before and after photos to choose from yet'); return; }
-  busy={done:0,total:list.length}; active=null; render();
+  var jobs=D.jobs.slice(0,JOBS);
+  // 1. Sort the unsorted photos first (a few at a time; guesses are kept, so each photo is only read once)
+  var todo=[]; if(D.ai) jobs.forEach(function(j){ var n=0;
+    j.photos.forEach(function(x){ if(!x.room&&!D.guess[x.id]&&n<40){ n++; todo.push({job:j.key,x:x}); } }); });
+  if(!todo.length) return score(jobs);
+  busy={phase:'sort',done:0,total:todo.length}; active=null; render();
+  var batches=[]; todo.forEach(function(it){ var last=batches[batches.length-1]; if(last&&last.job===it.job&&last.items.length<4) last.items.push(it.x); else batches.push({job:it.job,items:[it.x]}); });
+  var bi=0, failed='', running=0;
+  function hhmm(s){ var d=new Date(s); return isNaN(d)?'':d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',timeZone:'Australia/Brisbane'}); }
+  function pump(){
+    if(failed&&running===0){ busy=null; toast(failed); return score(jobs); }
+    while(!failed&&running<3&&bi<batches.length){ (function(bt){ running++;
+      api('POST',{job:bt.job,items:bt.items.map(function(x){ return {j:x.j,id:x.id,at:hhmm(x.at)}; })},'?sort=1')
+        .then(function(d){ Object.keys(d.guess||{}).forEach(function(k){ D.guess[k]=d.guess[k]; }); })
+        .catch(function(e){ failed=e.message||'Couldn\'t sort some photos'; if(e.status===503) D.ai=false; })
+        .then(function(){ running--; busy.done+=bt.items.length; render(); if(!failed&&bi>=batches.length&&running===0){ busy=null; score(jobs); } else pump(); });
+    })(batches[bi++]); }
+  }
+  pump();
+}
+function score(jobs){
+  // 2. Score pairs: most recent 30 jobs, up to 6 of each kind per room per job, demo rooms only
+  var list=[]; jobs.forEach(function(j){ var per={};
+    photosOf(j).forEach(function(x){ if(D.rooms.indexOf(x.room)<0) return; var k=x.room+'|'+x.kind; per[k]=(per[k]||0)+1; if(per[k]<=6) list.push({job:j.key,x:x}); }); });
+  if(!list.length){ render(); toast('No before and after photos to choose from yet'); return; }
+  busy={phase:'score',done:0,total:list.length}; active=null; render();
   var feats={}, i=0;
   function next(){
     if(i>=list.length) return finish();
@@ -170,26 +201,33 @@ function autoPick(){
     // sharpness as a rank among all photos, so it doesn't depend on the camera
     var ids=Object.keys(feats), sorted=ids.map(function(k){return feats[k].sharp;}).sort(function(a,b){return a-b;});
     ids.forEach(function(k){ feats[k].sharpR=sorted.indexOf(feats[k].sharp)/Math.max(1,sorted.length-1); });
-    var best={}, hero=null;
-    D.jobs.slice(0,20).forEach(function(j){ D.rooms.forEach(function(r){
-      var bs=j.photos.filter(function(x){return x.room===r&&x.kind==='before'&&feats[x.id];}), as=j.photos.filter(function(x){return x.room===r&&x.kind==='after'&&feats[x.id];});
+    var cands={}, hero=null;
+    jobs.forEach(function(j){ var ph=photosOf(j); D.rooms.forEach(function(r){
+      var bs=ph.filter(function(x){return x.room===r&&x.kind==='before'&&feats[x.id];}), as=ph.filter(function(x){return x.room===r&&x.kind==='after'&&feats[x.id];});
       bs.forEach(function(bx){ as.forEach(function(ax){ var b=feats[bx.id], a=feats[ax.id];
         var sim=Math.max(0,corr(b.fp,a.fp)), change=colourChange(b.col,a.col), brighter=Math.max(0,Math.min(1,(a.lum-b.lum)*4+0.5));
         var score=0.40*sim+0.15*Math.min(1,change/0.25)+0.10*brighter+0.15*(b.sharpR+a.sharpR)/2+0.10*(0.3*exposure(b.lum)+0.7*exposure(a.lum))+0.10*((b.land&&a.land)?1:0.3);
         if(sim<0.35) score*=0.5; // probably not the same view
-        var p={room:r,before:bx,after:ax,score:score,sim:sim,change:change,a:a,b:b};
-        if(!best[r]||score>best[r].score) best[r]=p;
+        var p={room:r,job:j.key,before:bx,after:ax,score:score,sim:sim,change:change,a:a,b:b};
+        (cands[r]||(cands[r]=[])).push(p);
         if(!hero||score+(r==='Kitchen'?0.03:0)>hero.score+(hero.room==='Kitchen'?0.03:0)) hero=p; }); }); }); });
-    var n=0; why={};
+    // Fill rooms strongest first, nudging away from jobs already used so the demo shows a few homes
+    var best={}, uses={};
+    D.rooms.slice().sort(function(x,y){ return top(y)-top(x); }).forEach(function(r){
+      var c=cands[r]; if(!c) return; var pick=null, ps=-1;
+      c.forEach(function(p){ var v=p.score-0.06*(uses[p.job]||0); if(v>ps){ ps=v; pick=p; } });
+      best[r]=pick; uses[pick.job]=(uses[pick.job]||0)+1; });
+    function top(r){ return (cands[r]||[]).reduce(function(m,p){ return Math.max(m,p.score); },-1); }
+    var n=0, nj=Object.keys(uses).length; why={};
     D.rooms.forEach(function(r){ var p=best[r]; if(!p) return; D.sel[r]={before:{j:p.before.j,id:p.before.id},after:{j:p.after.j,id:p.after.id}}; why[r]=reason(p); n++; });
     if(hero){ D.sel.hero={room:hero.room,before:{j:hero.before.j,id:hero.before.id},after:{j:hero.after.j,id:hero.after.id}}; why.hero=reason(hero); }
     busy=null;
     if(!n){ render(); toast('No room had both a before and an after on the same job'); return; }
-    save('Picked the best pair for '+n+' room'+(n===1?'':'s')); window.scrollTo({top:0,behavior:'smooth'});
+    save('Picked '+n+' room'+(n===1?'':'s')+' from '+nj+' job'+(nj===1?'':'s')); window.scrollTo({top:0,behavior:'smooth'});
   }
   next();
 }
-function findPhoto(jk,id){ var j=D.jobs.find(function(x){return x.key===jk;}); return j&&j.photos.find(function(x){return x.id===id;}); }
+function findPhoto(jk,id){ var j=D.jobs.find(function(x){return x.key===jk;}); return j&&photosOf(j).find(function(x){return x.id===id;}); }
 
 app.addEventListener('click',function(e){
   var t;
@@ -200,7 +238,7 @@ app.addEventListener('click',function(e){
   if(e.target.closest('[data-auto]')){ autoPick(); return; }
   if((t=e.target.closest('[data-use]'))){
     var j=D.jobs.find(function(x){return x.key===t.dataset.use;}), n=0;
-    D.rooms.forEach(function(r){ ['before','after'].forEach(function(k){ var x=j.photos.find(function(p){return p.room===r&&p.kind===k;}); if(x){ (D.sel[r]||(D.sel[r]={}))[k]={j:x.j,id:x.id}; n++; } }); });
+    D.rooms.forEach(function(r){ ['before','after'].forEach(function(k){ var x=photosOf(j).find(function(p){return p.room===r&&p.kind===k;}); if(x){ (D.sel[r]||(D.sel[r]={}))[k]={j:x.j,id:x.id}; n++; } }); });
     active=null; save(n+' photo'+(n===1?'':'s')+' added from this job'); window.scrollTo({top:0,behavior:'smooth'}); return; }
   if((t=e.target.closest('[data-ph]'))){
     var q=t.dataset.ph.split('|'), x=findPhoto(q[0],q[1]); if(!x) return;
@@ -211,7 +249,7 @@ app.addEventListener('click',function(e){
 });
 
 if(!key()){ err='login'; render(); }
-else api('GET',null,'?pick=1').then(function(d){ D=d; render(); var any=D.rooms.some(function(r){ return D.sel[r]; }); if(!any&&D.jobs.length) autoPick(); }).catch(function(e){ err=e.status===401?'login':e.message; render(); });
+else api('GET',null,'?pick=1').then(function(d){ D=d; D.guess=D.guess||{}; render(); var any=D.rooms.some(function(r){ return D.sel[r]; }); if(!any&&D.jobs.length) autoPick(); }).catch(function(e){ err=e.status===401?'login':e.message; render(); });
 })();
 </script>
 </body></html>
