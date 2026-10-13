@@ -22,6 +22,17 @@
   to = "/agent/index.html"
   status = 200
 
+# Public demo of the client link and agent portal (for the website): /demo, /demo/rent, /demo/agent
+[[redirects]]
+  from = "/demo"
+  to = "/agent/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/demo/*"
+  to = "/agent/index.html"
+  status = 200
+
 # Client quotes /q/<token> and invoices /i/<token>
 [[redirects]]
   from = "/q/*"

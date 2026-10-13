@@ -175,10 +175,14 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
 <main class="wrap" id="main"><div class="intro"><h1>Loading<em>…</em></h1></div></main>
 <div class="detail" id="detail" hidden></div>
 
+<script src="/lib/demo.js"></script>
 <script>
 (function(){
   var path=location.pathname, mode, cred='';
-  if(/^\/a\/[\w-]+/.test(path)){ mode='agent'; cred=path.split('/')[2]; }
+  // Public demo for the website (/demo, /demo/rent, /demo/agent): made-up data built in the browser, nothing saved.
+  var demoAud=window.BCDemo?BCDemo.match(path):null, demo={phase:'day',step:2,hold:0,saved:{}};
+  if(demoAud){ mode=demoAud==='agent'?'agent':'vendor'; cred='demo'; }
+  else if(/^\/a\/[\w-]+/.test(path)){ mode='agent'; cred=path.split('/')[2]; }
   else if(/^\/v\/[\w-]+/.test(path)){ mode='vendor'; cred=path.split('/')[2]; }
   else mode='admin';
   var gal=[], galKind='', accEdit=false, fbMode='', formDirty=false, data=null, tab='today', openId=null, photoMode='after', as='', err='';
@@ -202,7 +206,24 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
     return fetch('/api/agent'+(q||''),{method:opts.method||'GET',headers:h,body:opts.body?JSON.stringify(opts.body):undefined,cache:'no-store'})
       .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong'); return d; }); });
   }
+  function drawBar(){
+    var b=$('demobar');
+    if(!b){ var st=document.createElement('style'); st.textContent=BCDemo.css; document.head.appendChild(st);
+      b=document.createElement('div'); b.id='demobar'; b.className='wrap'; $('main').parentNode.insertBefore(b,$('main')); }
+    b.innerHTML=BCDemo.bar(demoAud,demo.phase,demo.phase==='day'&&demo.step<BCDemo.steps);
+  }
+  // On the day, the sample clean plays itself: a room finishes every few seconds, then lock-up.
+  // The agent portal loops so the live listing keeps moving.
+  function demoTick(){
+    if(document.visibilityState!=='visible' || lb || formDirty) return;
+    if(demoAud!=='agent' && demo.phase!=='day') return;
+    if(demo.step<BCDemo.steps){ demo.step++; load(); }
+    else if(demoAud==='agent' && ++demo.hold>3){ demo.hold=0; demo.step=1; load(); }
+  }
   function load(){
+    if(demoAud){ data=BCDemo.data(demoAud,demo.phase,demo.step,demo.saved); err=''; render(); drawBar();
+      if(mode==='vendor') document.title='Sample clean · Bardon Clean';
+      return Promise.resolve(); }
     var q = mode==='agent'?'?k='+encodeURIComponent(cred) : mode==='vendor'?'?v='+encodeURIComponent(cred) : (as?'?as='+encodeURIComponent(as):'');
     return api(q).then(function(d){ data=d; err=''; render(); }).catch(function(e){ if(!data){ err=e.message; render(); } });
   }
@@ -280,7 +301,7 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
       h+='<div class="intro"><h1>Handover <em>reports</em></h1><p>Photos, lock-up and anything worth knowing before buyers walk through.</p></div>';
       h+=L.reports.length?'<div class="list">'+L.reports.map(function(j){return card(j,'reports');}).join('')+'</div>':'<div class="empty">Finished cleans will appear here.</div>';
     } else if(tab==='book') h+=bookForm();
-    h+='<footer>Bardon Clean · Jack East · <b style="user-select:all">'+JACK+'</b><br>'+(mode==='admin'?'Preview only. Agents see just the jobs tagged to them.':'This link is private to you. Don\'t forward it. Use Copy vendor link on a job instead.')+'</footer>';
+    h+='<footer>Bardon Clean · Jack East · <b style="user-select:all">'+JACK+'</b><br>'+(demoAud?'A sample of the portal. Real agents see only their own listings.':mode==='admin'?'Preview only. Agents see just the jobs tagged to them.':'This link is private to you. Don\'t forward it. Use Copy vendor link on a job instead.')+'</footer>';
     main.innerHTML=h;
     if(openId) showDetail(false);
   }
@@ -377,7 +398,7 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
     var ph=L.photos.filter(function(x){return x.kind===photoMode;}); gal=[]; galKind=photoMode==='after'?'After':'Before';
     h+='<section class="blk"><h2>Photos</h2><div class="seg" role="group" aria-label="Show"><button type="button" data-pm="before" aria-pressed="'+(photoMode==='before')+'">Before <span class="n">'+L.photos.filter(function(x){return x.kind==='before';}).length+'</span></button><button type="button" data-pm="after" aria-pressed="'+(photoMode==='after')+'">After <span class="n">'+L.photos.filter(function(x){return x.kind==='after';}).length+'</span></button></div>';
     if(!ph.length) h+='<div class="empty" style="margin-top:0">'+(photoMode==='after'?'After photos appear as each room is finished.':'No before photos yet.')+'</div>';
-    j.rooms.forEach(function(r){ var rp=ph.filter(function(x){return x.room===r;}); if(!rp.length) return; h+='<div class="proom"><h4>'+esc(r)+'</h4><div class="photos">'+rp.map(function(x){ var src='/api/photo?j='+encodeURIComponent(x.j||j.id)+'&p='+x.id; gal.push({src:src,room:r}); return '<a href="'+src+'" data-gi="'+(gal.length-1)+'"><img loading="lazy" src="'+src+'&s=t" alt="'+esc(r+', '+photoMode)+'"></a>'; }).join('')+'</div></div>'; });
+    j.rooms.forEach(function(r){ var rp=ph.filter(function(x){return x.room===r;}); if(!rp.length) return; h+='<div class="proom"><h4>'+esc(r)+'</h4><div class="photos">'+rp.map(function(x){ var src=x.src||('/api/photo?j='+encodeURIComponent(x.j||j.id)+'&p='+x.id); gal.push({src:src,room:r}); return '<a href="'+src+'" data-gi="'+(gal.length-1)+'"><img loading="lazy" src="'+(x.src?src:src+'&s=t')+'" alt="'+esc(r+', '+photoMode)+'"></a>'; }).join('')+'</div></div>'; });
     h+='</section>';
 
     h+='<section class="blk"><h2>For your <em>attention</em></h2>'+(L.flags.length?L.flags.map(function(f){return '<div class="flag"><b>'+esc(f.t)+'</b>'+esc(f.d)+'</div>';}).join(''):'<div class="panel sub">Nothing flagged. The team notes anything you should know, such as damage or marks that won\'t come out.</div>')+'</section>';
@@ -422,6 +443,7 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
 
   document.addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b) return;
+    if(b.dataset.demoPhase){ demo.phase=b.dataset.demoPhase; demo.step=demo.phase==='day'?1:0; accEdit=false; fbMode=''; formDirty=false; load(); window.scrollTo(0,0); return; }
     if(b.dataset.tab){ tab=b.dataset.tab; render(); window.scrollTo(0,0); return; }
     if(b.dataset.open){ openId=b.dataset.open; showDetail(false); return; }
     if(b.hasAttribute('data-back')){ closeDetail(); return; }
@@ -437,10 +459,12 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
   document.addEventListener('submit',function(e){
     if(e.target.id==='accForm'){ e.preventDefault(); var f=e.target, er=$('accErr'), bt=f.querySelector('[type=submit]'), on=f.querySelector('[data-entry][aria-pressed="true"]');
       var body={action:'access',v:cred,entry:on?on.dataset.entry:'',entryNote:f.elements.entryNote.value,parking:f.elements.parking.value,pets:f.elements.pets.value,notes:f.elements.notes.value};
+      if(demoAud){ demo.saved.access={entry:body.entry,entryNote:body.entryNote,parking:body.parking,pets:body.pets,notes:body.notes}; accEdit=false; formDirty=false; load(); toast('Demo only. Nothing was sent.'); return; }
       bt.disabled=true; bt.textContent='Saving…';
       api('',{method:'POST',body:body}).then(function(d){ data.client.access=d.access; accEdit=false; formDirty=false; showDetail(true); toast('Saved. The team will see it.'); })
         .catch(function(x){ bt.disabled=false; bt.textContent='Save details for the team'; er.textContent=x.message; er.hidden=false; }); return; }
     if(e.target.id==='fbForm'){ e.preventDefault(); var g=e.target, ge=$('fbErr'), gb=g.querySelector('[type=submit]');
+      if(demoAud){ demo.saved.feedback={mood:fbMode}; formDirty=false; load(); toast('Demo only. Nothing was sent.'); return; }
       gb.disabled=true; gb.textContent='Sending…';
       api('',{method:'POST',body:{action:'feedback',v:cred,mood:fbMode,text:g.elements.text.value}}).then(function(d){ data.client.feedback=d.feedback; formDirty=false; showDetail(true); })
         .catch(function(x){ gb.disabled=false; gb.textContent='Send to Jack'; ge.textContent=x.message; ge.hidden=false; }); return; }
@@ -448,12 +472,15 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
     var f=e.target, er=$('bErr'), ok=$('bOk'), btn=f.querySelector('.primary'), body={action:'book',k:cred};
     ['address','suburb','service','readyDate','readyFor','access','beds','baths','invoice','notes'].forEach(function(n){ body[n]=f.elements[n].value; });
     if(!body.address.trim()||!body.readyDate){ er.textContent='Add the address and the date it needs to be ready.'; er.hidden=false; return; }
-    er.hidden=true; btn.disabled=true; btn.textContent='Sending…';
+    er.hidden=true;
+    if(demoAud){ f.reset(); ok.textContent='This is a demo, so nothing was sent. To book for real, text Jack on '+JACK_TXT+'.'; ok.hidden=false; return; }
+    btn.disabled=true; btn.textContent='Sending…';
     api('',{method:'POST',body:body}).then(function(){ f.reset(); btn.disabled=false; btn.textContent='Send booking request'; ok.textContent='Request sent for '+body.address+'. Jack will be in touch to confirm the details.'; ok.hidden=false; })
       .catch(function(x){ btn.disabled=false; btn.textContent='Send booking request'; er.textContent=x.message; er.hidden=false; });
   });
 
   if(mode==='admin' && !ls('roster_admin_key')){ err='Log in on the roster first, then open the agent portal preview from there.'; render(); }
+  else if(demoAud){ load(); setInterval(demoTick, 3000); document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') load(); }); }
   else { load(); setInterval(function(){ if(document.visibilityState==='visible' && !document.getElementById('bookForm') && !formDirty) load(); }, 30000); document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') load(); }); }
 })();
 </script>
