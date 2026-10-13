@@ -1,6 +1,6 @@
 // Photos for the public website demo (/demo). Jack picks them in the hub (/demo-photos/)
 // from real job photos; only the picked ones are ever listed publicly.
-//   GET              (public)  { photos: { "Kitchen": { before: url, after: url }, ... } }
+//   GET              (public)  { photos: { "Kitchen": { before: url, after: url }, ... }, hero: { room, before, after } }
 //   GET ?pick=1      (admin)   { sel, rooms, jobs: [{ key, date, suburb, service, client, photos: [{ room, kind, j, id }] }] }
 //   POST             (admin)   { sel } -> saves the picks
 import { store, json, checkAdmin, loadRoster, loadAllLive, bookingLive } from "../../lib/core.mjs";
@@ -16,6 +16,10 @@ function clean(sel) {
     const x = sel && sel[r] && sel[r][k];
     if (x && J.test(String(x.j || "")) && P.test(String(x.id || ""))) (out[r] ||= {})[k] = { j: String(x.j), id: String(x.id) };
   }
+  // The single best pair, for the website's drag slider.
+  const h = sel && sel.hero;
+  if (h && ROOMS.includes(h.room) && KINDS.every((k) => h[k] && J.test(String(h[k].j || "")) && P.test(String(h[k].id || ""))))
+    out.hero = { room: h.room, before: { j: String(h.before.j), id: String(h.before.id) }, after: { j: String(h.after.j), id: String(h.after.id) } };
   return out;
 }
 
@@ -26,8 +30,9 @@ export default async (req) => {
   if (req.method === "GET" && !u.searchParams.get("pick")) {
     const sel = clean((await s.get("demophotos")) || {});
     const photos = {};
-    for (const [r, v] of Object.entries(sel)) for (const [k, x] of Object.entries(v)) (photos[r] ||= {})[k] = url(x);
-    return new Response(JSON.stringify({ photos }), { headers: { "content-type": "application/json", "cache-control": "public, max-age=120" } });
+    for (const [r, v] of Object.entries(sel)) if (r !== "hero") for (const [k, x] of Object.entries(v)) (photos[r] ||= {})[k] = url(x);
+    const hero = sel.hero ? { room: sel.hero.room, before: url(sel.hero.before), after: url(sel.hero.after) } : null;
+    return new Response(JSON.stringify({ photos, hero }), { headers: { "content-type": "application/json", "cache-control": "public, max-age=120" } });
   }
 
   if (!(await checkAdmin(s, req))) return json({ error: "Log in first" }, 401);
