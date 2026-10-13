@@ -5,8 +5,8 @@
 // Everything here is made up and built in the browser. Nothing is read from or
 // saved to the hub, so strangers can tap every button safely.
 (function(){
-  // Swap in real job photos later: { "Kitchen": { before: "https://…", after: "https://…" }, … }
-  // Rooms without a photo show a labelled placeholder.
+  // Real job photos Jack picks in the hub (Tools › Website demo photos), loaded from /api/demo.
+  // Rooms without a pick show a labelled placeholder.
   var PHOTOS = {};
 
   var TEAM = [{ id: 'dj', name: 'Jack', owner: true }, { id: 'dm', name: 'Mariam' }];
@@ -115,6 +115,10 @@
 
   window.BCDemo = {
     match: function(path){ var m = /^\/demo(?:\/(sell|rent|agent))?\/?$/.exec(path); return m ? (m[1] || 'sell') : null; },
-    data: data, bar: bar, css: css, steps: ROOMS.length + 1
+    data: data, bar: bar, css: css, steps: ROOMS.length + 1,
+    loadPhotos: function(){
+      return fetch('/api/demo').then(function(r){ return r.ok ? r.json() : {}; })
+        .then(function(d){ PHOTOS = (d && d.photos) || {}; }).catch(function(){});
+    }
   };
 })();
