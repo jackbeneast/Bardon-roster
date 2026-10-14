@@ -5,9 +5,11 @@
 //   POST             (admin)   { sel } -> saves the picks
 //   POST ?sort=1     (admin)   { job, items: [{ j, id, at }] } -> Claude guesses room, before/after
 //                              and privacy for unsorted photos; cached in demoguess/<job>/<first id>
+//   POST ?match=1    (admin)   { job, room, before: [{ j, id }], after: [{ j, id }] } -> Claude checks which
+//                              pairs show the same spot; cached in demomatch/<job>/<first ids> as { "bid:aid": { s, r, p } }
 // Unsorted photos come back with room "" and kind ""; guess holds the hub's guesses for them.
 import { store, json, checkAdmin, loadRoster, loadAllLive, bookingLive } from "../../lib/core.mjs";
-import { sortPhotos, sortConfigured } from "../../lib/photosort.mjs";
+import { sortPhotos, sortConfigured, matchPairs } from "../../lib/photosort.mjs";
 
 const ROOMS = ["Kitchen", "Bathrooms", "Bedrooms", "Living & dining", "Laundry", "Windows & tracks"];
 const KINDS = ["before", "after"];
@@ -41,6 +43,28 @@ export default async (req) => {
 
   if (!(await checkAdmin(s, req))) return json({ error: "Log in first" }, 401);
 
+  if (req.method === "POST" && u.searchParams.get("match")) {
+    if (!sortConfigured()) return json({ error: "Photo matching needs the Claude key (ANTHROPIC_API_KEY) in Netlify", off: true }, 503);
+    let b; try { b = await req.json(); } catch { return json({ error: "Bad data" }, 400); }
+    const job = String(b.job || ""), room = String(b.room || "");
+    const ok = (x) => x && J.test(String(x.j || "")) && P.test(String(x.id || ""));
+    const bs = (Array.isArray(b.before) ? b.before : []).filter(ok).slice(0, 3), as = (Array.isArray(b.after) ? b.after : []).filter(ok).slice(0, 3);
+    if (!J.test(job) || !ROOMS.includes(room) || !bs.length || !as.length) return json({ error: "No photos" }, 400);
+    const load = (x) => s.getBin(`photo/${x.j}/${x.id}.t`).then((v) => v || s.getBin(`photo/${x.j}/${x.id}`));
+    const [bb, ab] = await Promise.all([Promise.all(bs.map(load)), Promise.all(as.map(load))]);
+    const B = bs.filter((_, i) => bb[i]), A = as.filter((_, i) => ab[i]);
+    const out = {};
+    if (B.length && A.length) {
+      let res;
+      try { res = await matchPairs(room, bb.filter(Boolean).map((v) => ({ b64: Buffer.from(v).toString("base64") })), ab.filter(Boolean).map((v) => ({ b64: Buffer.from(v).toString("base64") }))); }
+      catch (e) { return json({ error: e.message }, e.status || 502); }
+      for (const x of res) out[`${B[x.b].id}:${A[x.a].id}`] = { s: x.same ? 1 : 0, r: x.rating, p: x.priv ? 1 : 0 };
+    }
+    for (const x of bs) for (const y of as) if (!out[`${x.id}:${y.id}`]) out[`${x.id}:${y.id}`] = { s: 0, r: 1, p: 0 }; // missing image
+    await s.set(`demomatch/${job}/${bs[0].id}-${as[0].id}`, out);
+    return json({ ok: true, match: out });
+  }
+
   if (req.method === "POST" && u.searchParams.get("sort")) {
     if (!sortConfigured()) return json({ error: "Photo sorting needs the Claude key (ANTHROPIC_API_KEY) in Netlify", off: true }, 503);
     let b; try { b = await req.json(); } catch { return json({ error: "Bad data" }, 400); }
@@ -72,9 +96,11 @@ export default async (req) => {
   }
 
   if (req.method !== "GET") return json({ error: "Method not allowed" }, 405);
-  const [roster, raw, saved, gkeys] = await Promise.all([loadRoster(s), loadAllLive(s), s.get("demophotos"), s.list("demoguess/")]);
+  const [roster, raw, saved, gkeys, mkeys] = await Promise.all([loadRoster(s), loadAllLive(s), s.get("demophotos"), s.list("demoguess/"), s.list("demomatch/")]);
   const guess = {};
   for (const g of await Promise.all(gkeys.map((k) => s.get(k)))) Object.assign(guess, g || {});
+  const match = {};
+  for (const m of await Promise.all(mkeys.map((k) => s.get(k)))) Object.assign(match, m || {});
   const live = bookingLive(roster, raw);
   const seen = new Set(), jobs = [];
   for (const j of roster.jobs) {
@@ -93,7 +119,7 @@ export default async (req) => {
     jobs.push({ key, date: dates[0], suburb: j.suburb || "", service: j.service || "", client: j.client || "", photos });
   }
   jobs.sort((a, b) => b.date.localeCompare(a.date));
-  return json({ sel: clean(saved || {}), rooms: ROOMS, jobs, guess, ai: sortConfigured() });
+  return json({ sel: clean(saved || {}), rooms: ROOMS, jobs, guess, match, ai: sortConfigured() });
 };
 
 export const config = { path: "/api/demo" };
