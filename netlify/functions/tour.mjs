@@ -11,9 +11,14 @@ import { GUID, TOUR_LIMIT, refreshTours } from "../../lib/tour.mjs";
 //   DELETE ?id=                         -> remove from the job and from Bunny (Jack only)
 // Every call: ?job=<job id>&person=<team id>. Jack (admin key) or the team on that job.
 export default async (req) => {
-  if (!bunnyOn()) return json({ error: "Video isn't set up yet. Add BUNNY_STREAM_KEY in Netlify, then redeploy." }, 503);
   const u = new URL(req.url);
   const s = await store();
+  if (!bunnyOn()) {
+    // Tell Jack what the function can see, so a typo or wrong scope in Netlify is obvious. Names only, never values.
+    const near = (await checkAdmin(s, req)) ? Object.keys(process.env).filter((k) => /bunny|stream/i.test(k)) : [];
+    const hint = near.length ? ` The hub can see ${near.join(", ")}, but needs it named exactly BUNNY_STREAM_KEY.` : " The hub can't see any Bunny key yet. In Netlify, check its scope includes Functions, then redeploy.";
+    return json({ error: "Video isn't set up yet." + hint }, 503);
+  }
   const roster = await loadRoster(s);
   const job = roster.jobs.find((x) => x.id === u.searchParams.get("job"));
   if (!job) return json({ error: "That job isn't on the roster any more." }, 404);
