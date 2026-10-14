@@ -3,6 +3,8 @@ import { store, json, loadRoster, loadAllLive, bookingLive, checkAdmin, roomsOf,
 import { notify, fmtDay, where } from "../../lib/notify.mjs";
 import { loadTemplates } from "../../lib/templates.mjs";
 import { loadTeamPhotos } from "./teamphoto.mjs";
+import { embedUrl } from "../../lib/bunny.mjs";
+import { refreshTours } from "../../lib/tour.mjs";
 
 // ---- sample jobs, so a new agent's link isn't empty on first open ----
 // Three clearly labelled jobs: finished yesterday (report), on site today, booked later this week.
@@ -64,6 +66,7 @@ function view(job, roster, L, withShare, photos = {}) {
     live: {
       arrived: live.arrived || {}, rooms: live.rooms || {}, flags: (live.flags || []).map(({ id, t, d, at }) => ({ id, t, d, at })),
       photos: (live.photos || []).filter((p) => p.room && p.kind).map(({ id, room, kind, at, j }) => ({ id, room, kind, at, j: j || job.id })),
+      tour: (live.tour || []).filter((v) => v.ready).map(({ id, title, secs }) => ({ id, title, secs: secs || 0, src: embedUrl(id) })),
       lock: live.lock || {}, eta: live.eta || "", done: live.done || "", updated: live.updated || "",
       checks: Object.fromEntries(Object.entries(live.items || {}).map(([r, v]) => [r, Object.keys(v || {}).length])),
     },
@@ -84,6 +87,9 @@ export default async (req) => {
 
   if (req.method === "GET") {
     const k = u.searchParams.get("k") || "", v = u.searchParams.get("v") || "";
+    // Videos still processing in Bunny: check on them so they appear as soon as they're ready
+    const watch = v.length >= 16 ? roster.jobs.filter((j) => j.share === v) : k.length >= 16 ? roster.jobs.filter((j) => { const a = agents.find((x) => x.token === k); return a && j.agentId === a.id; }) : [];
+    if (watch.length) await refreshTours(s, roster, watch).catch(() => {});
     const live = bookingLive(roster, await loadAllLive(s));
     const photos = await loadTeamPhotos(s);
     const base = { lock: LOCK, phone: "0406 216 212" };

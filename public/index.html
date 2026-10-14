@@ -357,6 +357,7 @@ body.has-nav #app{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .kindsw button{flex:1;min-height:44px;border-radius:6px;border:1px solid var(--line);background:var(--white);font:600 14px var(--sans);color:var(--dark);cursor:pointer}
 .kindsw button[aria-pressed="true"]{background:var(--dark);border-color:var(--dark);color:var(--cream)}
 .uppill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:31;background:var(--dark);color:var(--cream);border-radius:999px;padding:10px 16px;font:500 14px var(--sans);display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(26,26,26,.2);white-space:nowrap}
+.tvup{background:var(--cream);border-radius:8px;padding:12px;display:grid;gap:8px}.tvup b{color:var(--dark);font-weight:600;font-size:14px}.tvup .bar{height:6px;border-radius:3px;background:var(--cream-dark);overflow:hidden}.tvup .bar i{display:block;height:100%;background:var(--terracotta);transition:width .3s}
 .uppill i{width:14px;height:14px;border:2px solid rgba(245,240,235,.35);border-top-color:var(--cream);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.uppill i{animation:none}}
@@ -1063,6 +1064,89 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       if(!fl.length) return; if(!ctx){ toast('Open the job and try again'); inp.value=''; return; }
       uploadPhotos(fl,'','',ctx,function(){ inp.value=''; }); });
   })();
+  // ---------- Walkthrough videos (the property tour on client and agent links) ----------
+  // The phone uploads straight to Bunny Stream (resumable), so long videos never pass through
+  // Netlify. The hub only gets a signed slot from /api/tour, then adds the finished video to the job.
+  var tvBusy=null, tvPick=null, tvTimer=null, tvLib=null;
+  (function(){ var inp=document.createElement('input'); inp.type='file'; inp.accept='video/*'; inp.multiple=true; inp.id='tv_file'; inp.hidden=true; document.body.appendChild(inp);
+    inp.addEventListener('click',function(){ tvPick=liveOpen?{jobId:liveOpen.jobId,pid:liveOpen.pid}:null; });
+    inp.addEventListener('change',function(){ var fl=Array.prototype.slice.call(inp.files||[]), ctx=tvPick||(liveOpen?{jobId:liveOpen.jobId,pid:liveOpen.pid}:null); tvPick=null; inp.value='';
+      if(!fl.length) return; if(!ctx){ toast('Open the job and try again'); return; } if(tvBusy){ toast('A video is still uploading. Add more when it\'s done.'); return; }
+      uploadVideos(fl,ctx); });
+  })();
+  function tvLen(n){ var m=Math.floor(n/60), x=n%60; return m+':'+(x<10?'0':'')+x; }
+  function tvSize(b){ return b>=1073741824?(b/1073741824).toFixed(1)+' GB':Math.max(1,Math.round(b/1048576))+' MB'; }
+  function tourSec(j,L){
+    var tv=L.tour||[], h='<div class="lsec" id="tvsec"><h4>Walkthrough videos</h4><p class="sub" style="margin:0 0 8px">Film the final walkthrough and add it here. Clients and agents see it on their link as a property tour once it\'s processed. Long videos are fine. Add several clips and they play in order.</p>';
+    if(tvBusy) h+='<div class="tvup"><b>'+esc(tvBusy.label)+'</b><div class="bar"><i style="width:'+tvBusy.pct+'%"></i></div><span class="sub">Keep Claude open on this screen until it finishes. If the signal drops it carries on where it left off.</span></div>';
+    else h+='<label class="btn primary" style="display:flex;align-items:center;justify-content:center;cursor:pointer" for="tv_file">Add walkthrough video</label>';
+    tv.forEach(function(v,i){
+      var st=v.failed?'<span class="cs" style="color:var(--terracotta-dark)">Didn\'t process. Delete and upload again.</span>':v.ready?'<span class="cs ok">✓ Live on the link'+(v.secs?' · '+tvLen(v.secs):'')+'</span>':'<span class="cs">Processing'+(v.pct?' '+v.pct+'%':'')+'… usually a few minutes</span>';
+      h+='<div class="lrow wrap"><span style="flex:1;min-width:0"><span class="nm">'+(i+1)+'. '+esc(v.title)+'</span><br>'+st+'</span>'+(canEdit?'<span style="display:flex;gap:6px;flex:none"><button type="button" class="btn outline" data-tvname="'+v.id+'" style="min-height:0">Rename</button><button type="button" class="btn danger" data-tvdel="'+v.id+'" style="min-height:0">Delete</button></span>':'')+'</div>';
+    });
+    h+='</div>';
+    clearTimeout(tvTimer);
+    if(tv.some(function(v){return !v.ready&&!v.failed;})) tvTimer=setTimeout(tvPoll,15000);
+    return h;
+  }
+  function tvReq(method,stage,body,ctx){
+    var lo=ctx||liveOpen, k=key(), hd={'content-type':'application/json'}; if(k) hd['x-admin-key']=k;
+    var q='/api/tour?job='+encodeURIComponent(lo.jobId)+'&person='+encodeURIComponent(lo.pid||'')+(stage?'&stage='+stage:'')+(method==='DELETE'?'&id='+encodeURIComponent(body.id):'');
+    return fetch(q,{method:method,headers:hd,body:method==='DELETE'?undefined:JSON.stringify(body||{})})
+      .then(function(r){ return r.json().catch(function(){ return {error:'Something went wrong ('+r.status+')'}; }).then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong'); if(d.live||d.days) takeLive(d,lo.jobId); return d; }); });
+  }
+  function tvPoll(){ if(!liveOpen||liveOpen.room||!document.getElementById('tvsec')) return; tvReq('POST','status',{}).then(function(){ if(liveOpen) drawLive(); }).catch(function(){}); }
+  function tvClick(b){
+    if(b.dataset.tvdel){ if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent='Tap again'; return true; } b.disabled=true;
+      tvReq('DELETE','',{id:b.dataset.tvdel}).then(function(){ drawLive(); toast('Video deleted'); }).catch(function(e){ b.disabled=false; toast(e.message); }); return true; }
+    if(b.dataset.tvname){ var j=state.jobs.find(function(x){return x.id===liveOpen.jobId;}), v=(liveOf(j).tour||[]).find(function(x){return x.id===b.dataset.tvname;}); if(!v) return true;
+      var t=prompt('Name this video (clients see it)', v.title); if(t==null||!t.trim()) return true;
+      tvReq('POST','title',{id:v.id,title:t.trim()}).then(function(){ drawLive(); toast('Renamed'); }).catch(function(e){ toast(e.message); }); return true; }
+    return false;
+  }
+  function tvLoadLib(){
+    if(window.tus) return Promise.resolve(window.tus);
+    if(tvLib) return tvLib;
+    tvLib=new Promise(function(ok,no){ var sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/tus-js-client@4/dist/tus.min.js'; sc.onload=function(){ window.tus?ok(window.tus):no(new Error('Uploader didn\'t load')); }; sc.onerror=function(){ tvLib=null; no(new Error('Uploader didn\'t load. Check your signal.')); }; document.head.appendChild(sc); });
+    return tvLib;
+  }
+  function tvShow(){ upState=tvBusy?tvBusy.label:null; showUp(); var sec=document.getElementById('tvsec'); if(!sec) return; var bar=sec.querySelector('.tvup .bar i'), lb=sec.querySelector('.tvup b'); if(bar&&tvBusy){ bar.style.width=tvBusy.pct+'%'; lb.textContent=tvBusy.label; } else if(liveOpen&&!liveOpen.room) drawLive(); }
+  // One video at a time, so a phone on mobile data puts all its bandwidth into the current one.
+  function uploadVideos(files,ctx){
+    var j=state.jobs.find(function(x){return x.id===ctx.jobId;}), have=j?(liveOf(j).tour||[]).length:0, total=files.length, done=0, failed=0, lastErr='', lock=null;
+    try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(l){ lock=l; }).catch(function(){}); }catch(e){}
+    tvBusy={label:'Getting the uploader ready…',pct:0}; tvShow();
+    function one(i){
+      if(i>=total) return Promise.resolve();
+      var f=files[i], n=have+i+1, title=(have+total===1)?'Full walkthrough':'Walkthrough part '+n, tag=total>1?'Video '+(i+1)+' of '+total:'Video';
+      var slot=null;
+      return tvLoadLib().then(function(){ return tvReq('POST','start',{title:title},ctx); }).then(function(d){ slot=d;
+        return new Promise(function(ok,no){
+          var up=new window.tus.Upload(f,{
+            endpoint:d.endpoint, chunkSize:20*1024*1024, retryDelays:[0,2000,5000,10000,20000,30000,60000,60000],
+            storeFingerprintForResuming:false, removeFingerprintOnSuccess:true,
+            headers:{AuthorizationSignature:d.signature,AuthorizationExpire:String(d.expire),VideoId:d.guid,LibraryId:String(d.library)},
+            metadata:{filetype:f.type||'video/mp4',title:title},
+            onProgress:function(sent,all){ var p=all?Math.floor(sent/all*100):0; tvBusy={label:'Uploading '+tag.toLowerCase()+' · '+p+'% of '+tvSize(all),pct:p}; tvShow(); },
+            onError:function(e){ no(new Error('Upload stopped. Check your signal and try again.')); },
+            onSuccess:function(){ ok(); }
+          });
+          tvBusy={label:'Uploading '+tag.toLowerCase()+' · 0% of '+tvSize(f.size),pct:0}; tvShow();
+          up.start();
+        });
+      }).then(function(){ tvBusy={label:'Adding '+tag.toLowerCase()+' to the job…',pct:100}; tvShow();
+        var add=function(){ return tvReq('POST','add',{id:slot.guid,title:title},ctx); };
+        return add().catch(function(){ return new Promise(function(ok){setTimeout(ok,2000);}).then(add); });
+      }).then(function(){ done++; }, function(e){ failed++; lastErr=e.message; if(slot) tvReq('POST','abort',{id:slot.guid},ctx).catch(function(){}); })
+        .then(function(){ return one(i+1); });
+    }
+    one(0).then(function(){
+      tvBusy=null; tvShow(); try{ if(lock) lock.release(); }catch(e){}
+      if(liveOpen) drawLive(); else if(!document.getElementById('scrim')) render();
+      if(!done) toast('Video didn\'t upload'+(lastErr?': '+lastErr:''));
+      else toast((failed?done+' uploaded, '+failed+' didn\'t. Add that one again.':done+' video'+(done>1?'s':'')+' uploaded')+'. Processing now, then it shows on the client\'s link.');
+    });
+  }
   // Photos: add a batch, then sort into rooms and before/after
   var phSel={}, phTab=null, phKind='before';
   function phUnsorted(L){ return L.photos.filter(function(p){return !p.room||!p.kind;}); }
@@ -1305,7 +1389,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       var who=canEdit&&(j.staff||[]).length?'<span class="asg">'+(j.staff||[]).map(function(x){ var mm=member(x); return mm?'<button type="button" class="chip" data-asg="'+esc(r)+'" data-who="'+x+'" aria-pressed="'+asg.includes(x)+'">'+esc(mm.name.split(' ')[0])+'</button>':''; }).join('')+'</span>'
         :asg.length?'<br><span class="ds"'+(mine?' style="color:var(--terracotta-dark);font-weight:600"':'')+'>'+(mine?'Yours':'')+(mine&&asg.length>1?' with ':'')+esc(asg.filter(function(x){return !mine||x!==pid;}).map(function(x){var mm=member(x);return mm?mm.name.split(' ')[0]:'';}).filter(Boolean).join(' & '))+'</span>':'';
       h+='<div class="lrow'+(canEdit?' wrap':'')+'"><span><span class="nm">'+esc(r)+'</span>'+(canEdit?'':who)+(by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+(ci.length?'<br><button type="button" class="clk'+(cd===ci.length?' ok':'')+'" data-cl="'+esc(r)+'">Checklist '+cd+'/'+ci.length+' ›</button>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span>'+(canEdit?who:'')+'</div>'; });
-    h+='</div>'+photoSec(j,L);
+    h+='</div>'+photoSec(j,L)+tourSec(j,L);
     h+='<div class="lsec"><h4>Notes for the agent</h4><p class="sub" style="margin:0 0 8px">Anything they should know before photos or buyers: damage, mould, broken fittings, stains that won\'t shift.</p>';
     L.flags.forEach(function(f){ h+='<div class="flagi"><span><b>'+esc(f.t)+'</b>'+esc(f.d)+'</span><button type="button" class="btn danger" data-unflag="'+f.id+'" style="min-height:0">Remove</button></div>'; });
     h+='<input id="fl_t" placeholder="Short title, e.g. Oven seal cracked" style="width:100%;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px;margin-top:4px"><textarea id="fl_d" placeholder="Details (optional)" style="width:100%;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px;margin-top:8px;min-height:64px"></textarea><button type="button" class="btn outline" data-addflag style="margin-top:8px;width:100%">Add note</button>';
@@ -1334,6 +1418,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var b=e.target.closest('button'); if(!b||!liveOpen) return;
     if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
     if(b.closest('#phsec') && phClick(b)) return;
+    if(b.closest('#tvsec') && tvClick(b)) return;
     if(b.dataset.lday){ liveOpen.jobId=b.dataset.lday; liveOpen.tEdit=null; liveOpen.room=null; drawLive(); return; }
     if(b.hasAttribute('data-recover')){ var rj=liveOpen.jobId, rp=liveOpen.pid; closeSheet(); recoverSheet(rj, rp); return; }
     if(b.hasAttribute('data-addshift')){ var aj=state.jobs.find(function(x){return x.id===liveOpen.jobId;}); closeSheet(); addDaySheet(aj); return; }
