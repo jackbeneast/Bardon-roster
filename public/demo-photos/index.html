@@ -90,7 +90,7 @@ function render(){
   if(!D) return;
   var total=D.jobs.reduce(function(n,j){ return n+aftersOf(j).length; },0), unsorted=D.jobs.reduce(function(n,j){ return n+j.photos.filter(function(x){ return !x.room&&!D.guess[x.id]; }).length; },0);
   var h='<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><a href="/demo" target="_blank" rel="noopener" style="color:var(--terracotta-dark)">Open demo</a></div>';
-  h+='<h1>Website <em>photos</em></h1><p class="sub">Your best after photos, for the website gallery and the demo job link.</p>';
+  h+='<h1>Website <em>photos</em></h1><p class="sub">Your best after photos from pre-sale, bond and deep cleans, for the website gallery and the demo job link.</p>';
   h+='<div class="auto">';
   if(busy) h+='<p><b>'+(busy.phase==='sort'?'Sorting '+busy.total+' photos the team didn\'t sort…':busy.phase==='rate'?'Claude is rating '+busy.total+' after photos…':'Looking through '+busy.total+' after photos…')+'</b> '+(busy.phase==='rate'?'Judging how well each shows off the clean, and leaving out anything private.':busy.phase==='sort'?'Finding the after shots among them.':'Checking sharpness, light and framing.')+'</p><div class="prog"><i style="width:'+Math.round(busy.done/Math.max(1,busy.total)*100)+'%"></i></div>';
   else h+='<p><b>Let the hub choose.</b> '+(D.ai?'It finds the after shots across your recent jobs (sorting any the team didn\'t), checks sharpness and light, then has Claude rate the strongest for how well they show off the clean and leave out anything private.':'It scores every after photo for sharpness, good light and landscape framing.')+' It skips near-duplicates, mixes rooms and jobs, and keeps the best '+TARGET+'.</p><button type="button" class="go" data-auto'+(total||unsorted?'':' disabled')+'>'+(D.afters.length?'Pick my best afters again':'Pick my best afters')+'</button>';
@@ -216,7 +216,10 @@ app.addEventListener('click',function(e){
 });
 
 if(!key()){ err='login'; render(); }
-else api('GET',null,'?pick=1').then(function(d){ D=d; D.guess=D.guess||{}; D.rate=D.rate||{}; render(); if(!D.afters.length&&D.jobs.length) autoPick(); })
+else api('GET',null,'?pick=1').then(function(d){ D=d; D.guess=D.guess||{}; D.rate=D.rate||{}; render(); // Re-pick when nothing is chosen yet, or a chosen photo is from a job the website doesn't show (e.g. a regular clean)
+  var keys={}; D.jobs.forEach(function(j){ j.photos.forEach(function(x){ keys[x.id]=1; }); });
+  var stale=D.afters.some(function(a){ return !keys[a.id]; });
+  if((!D.afters.length||stale)&&D.jobs.length) autoPick(); })
   .catch(function(e){ err=e.status===401?'login':e.message; render(); });
 })();
 </script>

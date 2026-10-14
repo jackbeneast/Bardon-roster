@@ -16,6 +16,9 @@ const ROOMS = ["Kitchen", "Bathrooms", "Bedrooms", "Living & dining", "Laundry",
 const KINDS = ["before", "after"];
 const J = /^[\w-]{1,40}$/, P = /^[a-f0-9]{24}$/;
 const MAX = 12;
+// The website sells pre-sale, bond (end of lease) and deep cleans, so only those jobs' photos are used.
+const SITE = /pre.?sale|bond|lease|deep|move/i;
+const onSite = (service) => SITE.test(String(service || ""));
 const url = (x) => `/api/photo?j=${encodeURIComponent(x.j)}&p=${x.id}`;
 const str = (v, n) => String(v ?? "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, n);
 const okItem = (x) => x && J.test(String(x.j || "")) && P.test(String(x.id || ""));
@@ -46,7 +49,7 @@ export default async (req) => {
   const u = new URL(req.url);
 
   if (req.method === "GET" && !u.searchParams.get("pick")) {
-    const afters = (await loadAfters(s)).map((x) => ({ url: url(x), room: x.room, service: x.service }));
+    const afters = (await loadAfters(s)).filter((x) => onSite(x.service)).map((x) => ({ url: url(x), room: x.room, service: x.service }));
     return new Response(JSON.stringify({ afters }), {
       headers: { "content-type": "application/json", "cache-control": "public, max-age=120", "access-control-allow-origin": "*" },
     });
@@ -90,7 +93,7 @@ export default async (req) => {
   const live = bookingLive(roster, raw);
   const seen = new Set(), jobs = [];
   for (const j of roster.jobs) {
-    if (j.sample) continue;
+    if (j.sample || !onSite(j.service)) continue;
     const key = j.group || j.id;
     if (seen.has(key)) continue;
     seen.add(key);
