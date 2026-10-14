@@ -5,8 +5,8 @@
 // Everything here is made up and built in the browser. Nothing is read from or
 // saved to the hub, so strangers can tap every button safely.
 (function(){
-  // Real job photos Jack picks in the hub (Tools › Website demo photos), loaded from /api/demo.
-  // Rooms without a pick show a labelled placeholder.
+  // Jack's best after photos (Tools › Website photos), loaded from /api/demo: { room: url }.
+  // The demo shows afters only; rooms without one show a labelled placeholder.
   var PHOTOS = {};
 
   var TEAM = [{ id: 'dj', name: 'Jack', owner: true }, { id: 'dm', name: 'Mariam' }];
@@ -27,7 +27,7 @@
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
   function photo(room, kind, date, hm){
-    var real = PHOTOS[room] && PHOTOS[room][kind];
+    var real = kind === 'after' && PHOTOS[room];
     return { id: 'p-' + kind + '-' + room, room: room, kind: kind, at: at(date, hm), src: real || placeholder(room, kind) };
   }
 
@@ -52,7 +52,6 @@
     var L = j.live, n = phase === 'done' ? ROOMS.length : Math.min(step, ROOMS.length);
     L.arrived = { dj: at(date, '07:56'), dm: at(date, '08:02') };
     L.eta = '14:30';
-    ROOMS.forEach(function(r){ L.photos.push(photo(r, 'before', date, '08:15')); });
     for (var i = 0; i < n; i++) {
       L.rooms[ROOMS[i]] = { s: 'd', at: at(date, DONE_AT[i]) };
       L.checks[ROOMS[i]] = CHECKS[i];
@@ -118,7 +117,13 @@
     data: data, bar: bar, css: css, steps: ROOMS.length + 1,
     loadPhotos: function(){
       return fetch('/api/demo').then(function(r){ return r.ok ? r.json() : {}; })
-        .then(function(d){ PHOTOS = (d && d.photos) || {}; }).catch(function(){});
+        .then(function(d){
+          // Jack's best afters: each demo room gets an after from that room, then any left over fill the gaps.
+          var list = (d && d.afters) || [], used = {}, map = {};
+          ROOMS.forEach(function(r){ for (var i = 0; i < list.length; i++) if (!used[i] && list[i].room === r) { map[r] = list[i].url; used[i] = 1; return; } });
+          ROOMS.forEach(function(r){ if (map[r]) return; for (var i = 0; i < list.length; i++) if (!used[i]) { map[r] = list[i].url; used[i] = 1; return; } });
+          PHOTOS = map;
+        }).catch(function(){});
     }
   };
 })();

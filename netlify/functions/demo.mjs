@@ -1,31 +1,43 @@
-// Photos for the public website demo (/demo). Jack picks them in the hub (/demo-photos/)
-// from real job photos; only the picked ones are ever listed publicly.
-//   GET              (public)  { photos: { "Kitchen": { before: url, after: url }, ... }, hero: { room, before, after } }
-//   GET ?pick=1      (admin)   { sel, rooms, jobs: [{ key, date, suburb, service, client, photos: [{ room, kind, j, id }] }] }
-//   POST             (admin)   { sel } -> saves the picks
-//   POST ?sort=1     (admin)   { job, items: [{ j, id, at }] } -> Claude guesses room, before/after
-//                              and privacy for unsorted photos; cached in demoguess/<job>/<first id>
-//   POST ?match=1    (admin)   { job, room, before: [{ j, id }], after: [{ j, id }] } -> Claude checks which
-//                              pairs show the same spot; cached in demomatch/<job>/<first ids> as { "bid:aid": { s, r, p } }
-// Unsorted photos come back with room "" and kind ""; guess holds the hub's guesses for them.
+// Photos for the website: a short set of the best AFTER photos from real jobs.
+// Jack's hub picks them (/demo-photos/); only the picked ones are ever listed publicly.
+//   GET            (public)  { afters: [{ url, room, service }] }   used by /demo and the website gallery
+//   GET ?pick=1    (admin)   { afters, rooms, jobs, guess, rate, ai }
+//                            jobs: [{ key, date, suburb, service, client, photos: [{ room, kind, j, id, at }] }]
+//                            (unsorted photos have room "" and kind "")
+//   POST           (admin)   { afters: [{ j, id, room, service }] } -> saves the set (max 12, in order)
+//   POST ?sort=1   (admin)   { job, items: [{ j, id, at }] } -> Claude guesses room, before/after and privacy
+//                            for unsorted photos; cached in demoguess/<job>/<first id>
+//   POST ?rate=1   (admin)   { job, items: [{ j, id }] } -> Claude rates after photos 1-5 for the website and
+//                            flags private ones; cached in demorate/<job>/<first id> as { id: { r, p, w } }
 import { store, json, checkAdmin, loadRoster, loadAllLive, bookingLive } from "../../lib/core.mjs";
-import { sortPhotos, sortConfigured, matchPairs } from "../../lib/photosort.mjs";
+import { sortPhotos, rateAfters, sortConfigured } from "../../lib/photosort.mjs";
 
-const ROOMS = ["Kitchen", "Bathrooms", "Bedrooms", "Living & dining", "Laundry", "Windows & tracks"];
+const ROOMS = ["Kitchen", "Bathrooms", "Bedrooms", "Living & dining", "Laundry", "Windows & tracks", "Outdoor & garage"];
 const KINDS = ["before", "after"];
 const J = /^[\w-]{1,40}$/, P = /^[a-f0-9]{24}$/;
+const MAX = 12;
 const url = (x) => `/api/photo?j=${encodeURIComponent(x.j)}&p=${x.id}`;
+const str = (v, n) => String(v ?? "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, n);
+const okItem = (x) => x && J.test(String(x.j || "")) && P.test(String(x.id || ""));
+const thumbOf = async (s, x) => (await s.getBin(`photo/${x.j}/${x.id}.t`)) || (await s.getBin(`photo/${x.j}/${x.id}`));
 
-function clean(sel) {
-  const out = {};
-  for (const r of ROOMS) for (const k of KINDS) {
-    const x = sel && sel[r] && sel[r][k];
-    if (x && J.test(String(x.j || "")) && P.test(String(x.id || ""))) (out[r] ||= {})[k] = { j: String(x.j), id: String(x.id) };
+function clean(list) {
+  const out = [], seen = new Set();
+  for (const x of Array.isArray(list) ? list : []) {
+    if (!okItem(x) || seen.has(x.id)) continue;
+    seen.add(x.id);
+    out.push({ j: String(x.j), id: String(x.id), room: ROOMS.includes(x.room) ? x.room : "", service: str(x.service, 40) });
+    if (out.length >= MAX) break;
   }
-  // The single best pair, for the website's drag slider.
-  const h = sel && sel.hero;
-  if (h && ROOMS.includes(h.room) && KINDS.every((k) => h[k] && J.test(String(h[k].j || "")) && P.test(String(h[k].id || ""))))
-    out.hero = { room: h.room, before: { j: String(h.before.j), id: String(h.before.id) }, after: { j: String(h.after.j), id: String(h.after.id) } };
+  return out;
+}
+async function loadAfters(s) {
+  const raw = await s.get("demophotos");
+  return clean(Array.isArray(raw) ? raw : raw && raw.afters); // older before/after picks are simply ignored
+}
+async function merged(s, prefix) {
+  const out = {};
+  for (const v of await Promise.all((await s.list(prefix)).map((k) => s.get(k)))) Object.assign(out, v || {});
   return out;
 }
 
@@ -34,73 +46,47 @@ export default async (req) => {
   const u = new URL(req.url);
 
   if (req.method === "GET" && !u.searchParams.get("pick")) {
-    const sel = clean((await s.get("demophotos")) || {});
-    const photos = {};
-    for (const [r, v] of Object.entries(sel)) if (r !== "hero") for (const [k, x] of Object.entries(v)) (photos[r] ||= {})[k] = url(x);
-    const hero = sel.hero ? { room: sel.hero.room, before: url(sel.hero.before), after: url(sel.hero.after) } : null;
-    return new Response(JSON.stringify({ photos, hero }), { headers: { "content-type": "application/json", "cache-control": "public, max-age=120" } });
+    const afters = (await loadAfters(s)).map((x) => ({ url: url(x), room: x.room, service: x.service }));
+    return new Response(JSON.stringify({ afters }), {
+      headers: { "content-type": "application/json", "cache-control": "public, max-age=120", "access-control-allow-origin": "*" },
+    });
   }
 
   if (!(await checkAdmin(s, req))) return json({ error: "Log in first" }, 401);
 
-  if (req.method === "POST" && u.searchParams.get("match")) {
-    if (!sortConfigured()) return json({ error: "Photo matching needs the Claude key (ANTHROPIC_API_KEY) in Netlify", off: true }, 503);
-    let b; try { b = await req.json(); } catch { return json({ error: "Bad data" }, 400); }
-    const job = String(b.job || ""), room = String(b.room || "");
-    const ok = (x) => x && J.test(String(x.j || "")) && P.test(String(x.id || ""));
-    const bs = (Array.isArray(b.before) ? b.before : []).filter(ok).slice(0, 3), as = (Array.isArray(b.after) ? b.after : []).filter(ok).slice(0, 3);
-    if (!J.test(job) || !ROOMS.includes(room) || !bs.length || !as.length) return json({ error: "No photos" }, 400);
-    const load = (x) => s.getBin(`photo/${x.j}/${x.id}.t`).then((v) => v || s.getBin(`photo/${x.j}/${x.id}`));
-    const [bb, ab] = await Promise.all([Promise.all(bs.map(load)), Promise.all(as.map(load))]);
-    const B = bs.filter((_, i) => bb[i]), A = as.filter((_, i) => ab[i]);
-    const out = {};
-    if (B.length && A.length) {
-      let res;
-      try { res = await matchPairs(room, bb.filter(Boolean).map((v) => ({ b64: Buffer.from(v).toString("base64") })), ab.filter(Boolean).map((v) => ({ b64: Buffer.from(v).toString("base64") }))); }
-      catch (e) { return json({ error: e.message }, e.status || 502); }
-      for (const x of res) out[`${B[x.b].id}:${A[x.a].id}`] = { s: x.same ? 1 : 0, r: x.rating, p: x.priv ? 1 : 0 };
-    }
-    for (const x of bs) for (const y of as) if (!out[`${x.id}:${y.id}`]) out[`${x.id}:${y.id}`] = { s: 0, r: 1, p: 0 }; // missing image
-    await s.set(`demomatch/${job}/${bs[0].id}-${as[0].id}`, out);
-    return json({ ok: true, match: out });
-  }
-
-  if (req.method === "POST" && u.searchParams.get("sort")) {
-    if (!sortConfigured()) return json({ error: "Photo sorting needs the Claude key (ANTHROPIC_API_KEY) in Netlify", off: true }, 503);
+  if (req.method === "POST" && (u.searchParams.get("sort") || u.searchParams.get("rate"))) {
+    const rate = !!u.searchParams.get("rate");
+    if (!sortConfigured()) return json({ error: "Photo checking needs the Claude key (ANTHROPIC_API_KEY) in Netlify", off: true }, 503);
     let b; try { b = await req.json(); } catch { return json({ error: "Bad data" }, 400); }
     const job = String(b.job || "");
-    const items = (Array.isArray(b.items) ? b.items : []).slice(0, 4)
-      .filter((x) => x && J.test(String(x.j || "")) && P.test(String(x.id || "")))
+    const items = (Array.isArray(b.items) ? b.items : []).slice(0, rate ? 5 : 4).filter(okItem)
       .map((x) => ({ j: String(x.j), id: String(x.id), at: String(x.at || "").slice(0, 40) }));
     if (!J.test(job) || !items.length) return json({ error: "No photos" }, 400);
-    const bins = await Promise.all(items.map(async (x) => (await s.getBin(`photo/${x.j}/${x.id}.t`)) || (await s.getBin(`photo/${x.j}/${x.id}`))));
+    const bins = await Promise.all(items.map((x) => thumbOf(s, x)));
     const have = items.map((x, i) => ({ ...x, buf: bins[i] })).filter((x) => x.buf);
     const out = {};
-    for (const x of items) if (!have.includes(x)) out[x.id] = { room: "", kind: "", priv: true, gone: true };
+    for (const x of items) if (!have.includes(x)) out[x.id] = rate ? { r: 1, p: 1, w: "Photo missing" } : { room: "", kind: "", priv: true, gone: true };
     if (have.length) {
+      const imgs = have.map((x) => ({ b64: Buffer.from(x.buf).toString("base64"), at: x.at }));
       let res;
-      try { res = await sortPhotos(have.map((x) => ({ b64: Buffer.from(x.buf).toString("base64"), at: x.at }))); }
+      try { res = rate ? await rateAfters(imgs) : await sortPhotos(imgs); }
       catch (e) { return json({ error: e.message }, e.status || 502); }
-      have.forEach((x, i) => { out[x.id] = res[i]; });
+      have.forEach((x, i) => { out[x.id] = rate ? { r: res[i].rating, p: res[i].priv ? 1 : 0, w: res[i].why } : res[i]; });
     }
-    // one key per batch, so batches sorted in parallel can't overwrite each other
-    await s.set(`demoguess/${job}/${items[0].id}`, out);
-    return json({ ok: true, guess: out });
+    // one key per batch, so batches checked in parallel can't overwrite each other
+    await s.set(`${rate ? "demorate" : "demoguess"}/${job}/${items[0].id}`, out);
+    return json({ ok: true, [rate ? "rate" : "guess"]: out });
   }
 
   if (req.method === "POST") {
     let b; try { b = await req.json(); } catch { return json({ error: "Bad data" }, 400); }
-    const sel = clean(b.sel);
-    await s.set("demophotos", sel);
-    return json({ ok: true, sel });
+    const afters = clean(b.afters);
+    await s.set("demophotos", { afters });
+    return json({ ok: true, afters });
   }
 
   if (req.method !== "GET") return json({ error: "Method not allowed" }, 405);
-  const [roster, raw, saved, gkeys, mkeys] = await Promise.all([loadRoster(s), loadAllLive(s), s.get("demophotos"), s.list("demoguess/"), s.list("demomatch/")]);
-  const guess = {};
-  for (const g of await Promise.all(gkeys.map((k) => s.get(k)))) Object.assign(guess, g || {});
-  const match = {};
-  for (const m of await Promise.all(mkeys.map((k) => s.get(k)))) Object.assign(match, m || {});
+  const [roster, raw, afters, guess, rate] = await Promise.all([loadRoster(s), loadAllLive(s), loadAfters(s), merged(s, "demoguess/"), merged(s, "demorate/")]);
   const live = bookingLive(roster, raw);
   const seen = new Set(), jobs = [];
   for (const j of roster.jobs) {
@@ -119,7 +105,7 @@ export default async (req) => {
     jobs.push({ key, date: dates[0], suburb: j.suburb || "", service: j.service || "", client: j.client || "", photos });
   }
   jobs.sort((a, b) => b.date.localeCompare(a.date));
-  return json({ sel: clean(saved || {}), rooms: ROOMS, jobs, guess, match, ai: sortConfigured() });
+  return json({ afters, rooms: ROOMS, jobs, guess, rate, ai: sortConfigured() });
 };
 
 export const config = { path: "/api/demo" };

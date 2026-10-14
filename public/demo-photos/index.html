@@ -1,17 +1,17 @@
 <!doctype html>
 <html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#F5F0EB">
-<title>Website demo photos</title>
+<title>Website photos</title>
 <link rel="icon" type="image/png" href="/icons/favicon.png?v=2"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@400;500;600&display=swap">
 <style>
-:root{--terracotta:#C06B3C;--terracotta-dark:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cream-dark:#EDE6DE;--body:#4A4A4A;--meta:#7A7A7A;--gold:#F4B942;--white:#FFFFFF;--line:#DDD3C8;--tint:#FBF3EE;--ok:#2F5A35;--ok-bg:#E6EFE3;
+:root{--terracotta:#C06B3C;--terracotta-dark:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cream-dark:#EDE6DE;--body:#4A4A4A;--meta:#7A7A7A;--gold:#F4B942;--white:#FFFFFF;--line:#DDD3C8;--ok:#2F5A35;
   --serif:"Playfair Display",Georgia,serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color-scheme:light}
 *{box-sizing:border-box}
 body{margin:0;background:var(--cream);color:var(--body);font:400 15px/1.5 var(--sans);-webkit-text-size-adjust:100%}
-#app{max-width:760px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(90px + env(safe-area-inset-bottom,0px))}
+#app{max-width:760px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(60px + env(safe-area-inset-bottom,0px))}
 a{color:var(--terracotta-dark)}
 button{font-family:var(--sans);cursor:pointer}
 button:focus-visible,a:focus-visible{outline:2px solid var(--terracotta);outline-offset:2px}
@@ -23,145 +23,120 @@ h1{font:700 28px/1.15 var(--serif);color:var(--dark);margin:6px 0 0}
 h1 em,h2 em{font-style:italic;font-weight:500}
 h2{font:700 20px/1.2 var(--serif);color:var(--dark);margin:28px 0 10px}
 .sub{color:var(--meta);font-size:14px;margin:4px 0 0}
-.note{margin-top:14px;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--dark)}
-.note b{font-weight:600}
-.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
-.room{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px}
-.room h3{margin:0 0 8px;font:600 15px/1.2 var(--sans);color:var(--dark)}
-.pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.slot{position:relative;aspect-ratio:4/3;border-radius:8px;border:1.5px dashed #C9BEB2;background:var(--cream);padding:0;overflow:hidden;display:flex;align-items:flex-end;justify-content:flex-start;color:var(--meta);font:500 12px var(--sans);min-height:44px}
-.slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.slot .lb{position:relative;z-index:1;margin:6px;background:rgba(26,26,26,.78);color:#fff;border-radius:999px;padding:4px 8px;font:600 10.5px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase}
-.slot.empty .lb{background:transparent;color:var(--meta);letter-spacing:0;text-transform:none;font:500 12px var(--sans);padding:0}
-.slot.filled{border-style:solid;border-color:transparent}
-.slot[aria-pressed="true"]{outline:3px solid var(--terracotta);outline-offset:1px}
-.clear{margin-top:6px;background:none;border:0;color:var(--meta);font:500 12.5px var(--sans);padding:6px 0;min-height:32px;text-decoration:underline}
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--dark);color:var(--cream);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14.5px}
-.bar button{background:none;border:1px solid #5A5550;color:var(--cream);border-radius:8px;min-height:40px;padding:0 14px;font:500 14px var(--sans)}
-.job{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
-.jh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
-.jh b{display:block;font:600 15.5px/1.3 var(--sans);color:var(--dark)}
-.jh span{font-size:13px;color:var(--meta)}
-.use{background:var(--terracotta);color:#fff;border:0;border-radius:8px;min-height:40px;padding:0 14px;font:600 14px var(--sans)}
-.jr{margin-top:12px}
-.jr h4{margin:0 0 6px;font:600 12px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--meta)}
-.strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
-.ph{flex:none;position:relative;width:96px;height:72px;border-radius:8px;overflow:hidden;border:0;padding:0;background:var(--cream-dark)}
-.ph img{width:100%;height:100%;object-fit:cover;display:block}
-.ph .k{position:absolute;left:4px;bottom:4px;background:rgba(26,26,26,.78);color:#fff;border-radius:999px;padding:3px 6px;font:600 9.5px/1 var(--sans);letter-spacing:.05em;text-transform:uppercase}
-.ph.on{outline:3px solid var(--ok);outline-offset:-3px}
-.empty{background:var(--white);border:1px dashed var(--line);border-radius:12px;padding:24px 16px;text-align:center;color:var(--meta);margin-top:10px}
-.center{text-align:center;padding:60px 20px;color:var(--dark)}
 .auto{margin-top:14px;background:var(--dark);color:var(--cream);border-radius:12px;padding:16px;display:grid;gap:10px}
 .auto p{margin:0;font-size:14px;color:#CFC6BC}
 .auto b{color:var(--cream);font-weight:600}
 .auto .go{background:var(--terracotta);color:#fff;border:0;border-radius:8px;min-height:48px;font:600 15.5px var(--sans)}
-.auto .go:disabled{opacity:.7}
+.auto .go:disabled{opacity:.6}
 .prog{height:6px;border-radius:3px;background:#3A3A3A;overflow:hidden}.prog i{display:block;height:100%;background:var(--gold);transition:width .2s}
-.why{margin:6px 0 0;font-size:12.5px;color:var(--ok)}
-.hero{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px}
-.hero .pair .slot{aspect-ratio:16/10}
+.note{margin-top:12px;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--dark)}
+.note b{font-weight:600}
+.picked{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:600px){.picked{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.card{background:var(--white);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card .im{position:relative;aspect-ratio:4/3;background:var(--cream-dark)}
+.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.card .n{position:absolute;left:8px;top:8px;background:var(--dark);color:var(--cream);border-radius:999px;min-width:24px;height:24px;display:grid;place-items:center;font:600 12px var(--sans);padding:0 7px}
+.card .x{position:absolute;right:6px;top:6px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(26,26,26,.8);color:#fff;font:500 20px/1 var(--sans)}
+.card .meta{padding:8px 10px 10px}
+.card .meta b{display:block;font:600 13.5px/1.3 var(--sans);color:var(--dark)}
+.card .meta span{font-size:12px;color:var(--ok)}
+.job{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.job b{display:block;font:600 15px/1.3 var(--sans);color:var(--dark)}
+.job .d{font-size:13px;color:var(--meta)}
+.strip{display:flex;gap:6px;overflow-x:auto;padding:10px 0 2px;-webkit-overflow-scrolling:touch}
+.ph{flex:none;position:relative;width:104px;height:78px;border-radius:8px;overflow:hidden;border:0;padding:0;background:var(--cream-dark)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .k{position:absolute;left:4px;bottom:4px;background:rgba(26,26,26,.78);color:#fff;border-radius:999px;padding:3px 6px;font:600 9.5px/1 var(--sans)}
+.ph.on{outline:3px solid var(--ok);outline-offset:-3px}
+.ph.on:after{content:"✓";position:absolute;right:4px;top:4px;width:20px;height:20px;border-radius:50%;background:var(--ok);color:#fff;font:600 12px/20px var(--sans);text-align:center}
+.empty{background:var(--white);border:1px dashed var(--line);border-radius:12px;padding:24px 16px;text-align:center;color:var(--meta);margin-top:10px}
+.center{text-align:center;padding:60px 20px;color:var(--dark)}
 .btn{font:600 15px/1 var(--sans);border-radius:8px;min-height:46px;padding:0 18px;border:0;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
 .btn.primary{background:var(--terracotta);color:#fff}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:30;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:30;box-shadow:0 6px 18px rgba(0,0,0,.2)}
 </style></head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <script>
 (function(){
 var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-var app=document.getElementById('app'), D=null, err='', active=null; // active = {room, kind}
-var busy=null, why={}; // busy = {done, total} while auto-picking; why[room] = reason text
+var TARGET=8;
+var app=document.getElementById('app'), D=null, err='', busy=null, why={};
 function key(){ try{ return localStorage.getItem('roster_admin_key')||''; }catch(e){ return ''; } }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
-function toast(m){ var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2000); }
+function toast(m){ var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2200); }
 function thumb(x){ return '/api/photo?j='+encodeURIComponent(x.j)+'&p='+x.id+'&s=t'; }
 function fday(s){ var p=s.split('-'); return +p[2]+' '+MON[+p[1]-1]+' '+p[0]; }
 function api(method,body,qs){
   return fetch('/api/demo'+(qs||''),{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
     .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok){ var e=new Error(d.error||'Something went wrong'); e.status=r.status; throw e; } return d; }); });
 }
-function save(msg){ return api('POST',{sel:D.sel}).then(function(d){ D.sel=d.sel; render(); toast(msg||'Saved'); }).catch(function(e){ toast(e.message); }); }
-// A photo the team sorted keeps its room and before/after. An unsorted one uses the hub's guess,
-// unless the guess was unsure or it looked private. Returns null if it can't go on the demo.
+function save(msg){ return api('POST',{afters:D.afters}).then(function(d){ D.afters=d.afters; render(); if(msg) toast(msg); }).catch(function(e){ toast(e.message); }); }
+function isOn(id){ return D.afters.some(function(a){ return a.id===id; }); }
+// A photo the team sorted keeps its room and before/after. An unsorted one uses Claude's guess,
+// unless it was unsure or the photo looked private.
 function eff(x){
   if(x.room&&x.kind) return x;
-  var g=D.guess&&D.guess[x.id]; if(!g||g.priv||!g.room||!g.kind) return null;
-  return {room:g.room,kind:g.kind,j:x.j,id:x.id,at:x.at,auto:true};
+  var g=D.guess[x.id]; if(!g||g.priv||g.kind!=='after') return null;
+  return {room:g.room||'',kind:'after',j:x.j,id:x.id,at:x.at,auto:true};
 }
-function photosOf(j){ return j.photos.map(eff).filter(Boolean); }
-function isPicked(x){ var s=D.sel[x.room]; return !!(s&&s[x.kind]&&s[x.kind].id===x.id); }
-function pickedAnywhere(x){ return D.rooms.some(function(r){ var s=D.sel[r]; return s&&((s.before&&s.before.id===x.id)||(s.after&&s.after.id===x.id)); }); }
+function aftersOf(j){ return j.photos.map(eff).filter(function(x){ return x&&x.kind==='after'; }); }
+function rated(x){ return D.rate[x.id]; }
 
 function render(){
   if(err==='login'){ app.innerHTML='<div class="center">'+LOGO.replace('<svg','<svg style="width:48px;height:48px"')+'<h1 style="margin-top:12px">Log in <em>first</em></h1><p class="sub">Open the hub, log in with your password, then come back here.</p><p><a class="btn primary" href="/">Go to the hub</a></p></div>'; return; }
   if(err){ app.innerHTML='<div class="center">'+esc(err)+'</div>'; return; }
-  if(!D){ return; }
-  var filled=0; D.rooms.forEach(function(r){ var s=D.sel[r]||{}; if(s.before) filled++; if(s.after) filled++; });
+  if(!D) return;
+  var total=D.jobs.reduce(function(n,j){ return n+aftersOf(j).length; },0), unsorted=D.jobs.reduce(function(n,j){ return n+j.photos.filter(function(x){ return !x.room&&!D.guess[x.id]; }).length; },0);
   var h='<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><a href="/demo" target="_blank" rel="noopener" style="color:var(--terracotta-dark)">Open demo</a></div>';
-  h+='<h1>Website demo <em>photos</em></h1><p class="sub">Pick a before and after for each room. They show on the public demo your website links to. '+filled+' of '+(D.rooms.length*2)+' chosen.</p>';
+  h+='<h1>Website <em>photos</em></h1><p class="sub">Your best after photos, for the website gallery and the demo job link.</p>';
   h+='<div class="auto">';
-  if(busy) h+='<p><b>'+(busy.phase==='sort'?'Sorting '+busy.total+' unsorted photos…</b> Working out the room and before or after for each, and leaving out anything private.':busy.phase==='match'?'Checking '+busy.total+' before and after pairs…</b> Keeping only pairs that show the same spot, and rating how well each shows off the clean.':'Looking through '+busy.total+' photos…</b> Checking each pair for the same angle, a clear difference, brightness and sharpness.')+'</p><div class="prog"><i style="width:'+Math.round(busy.done/Math.max(1,busy.total)*100)+'%"></i></div>';
-  else h+='<p><b>Let the hub choose.</b> It looks through the photos from your last 30 jobs, sorting any the team didn\'t, then has Claude check which befores and afters show the same spot and rate how well each pair shows off the clean. It fills every room, spreading picks across jobs, and picks one standout pair for your website slider.</p><button type="button" class="go" data-auto'+(D.jobs.length?'':' disabled')+'>'+(filled?'Pick the best again':'Pick the best for me')+'</button>';
+  if(busy) h+='<p><b>'+(busy.phase==='sort'?'Sorting '+busy.total+' photos the team didn\'t sort…':busy.phase==='rate'?'Claude is rating '+busy.total+' after photos…':'Looking through '+busy.total+' after photos…')+'</b> '+(busy.phase==='rate'?'Judging how well each shows off the clean, and leaving out anything private.':busy.phase==='sort'?'Finding the after shots among them.':'Checking sharpness, light and framing.')+'</p><div class="prog"><i style="width:'+Math.round(busy.done/Math.max(1,busy.total)*100)+'%"></i></div>';
+  else h+='<p><b>Let the hub choose.</b> '+(D.ai?'It finds the after shots across your recent jobs (sorting any the team didn\'t), checks sharpness and light, then has Claude rate the strongest for how well they show off the clean and leave out anything private.':'It scores every after photo for sharpness, good light and landscape framing.')+' It skips near-duplicates, mixes rooms and jobs, and keeps the best '+TARGET+'.</p><button type="button" class="go" data-auto'+(total||unsorted?'':' disabled')+'>'+(D.afters.length?'Pick my best afters again':'Pick my best afters')+'</button>';
   h+='</div>';
-  h+='<div class="note"><b>Give the picks a quick look.</b> Anyone can see these. When the hub sorts a photo itself it leaves out ones showing family photos, mail, the street number or number plates, but it can miss things, and it doesn\'t check photos the team already sorted.</div>';
-  if(D.sel.hero){ var hr=D.sel.hero;
-    h+='<h2>Website <em>slider</em></h2><div class="hero"><h3 style="margin:0 0 8px;font:600 15px var(--sans);color:var(--dark)">'+esc(hr.room)+' · the strongest pair</h3><div class="pair"><div class="slot filled"><img alt="" src="'+thumb(hr.before)+'"><span class="lb">Before</span></div><div class="slot filled"><img alt="" src="'+thumb(hr.after)+'"><span class="lb">After</span></div></div>'+(why.hero?'<p class="why">'+esc(why.hero)+'</p>':'')+'</div>'; }
+  h+='<div class="note"><b>Give them a quick look.</b> These are public. '+(D.ai?'Claude leaves out photos showing family photos, faces, mail, the street number or number plates, but it can miss things.':'The hub judges light and sharpness, not privacy, so remove anything showing family photos, mail, the street number or number plates.')+'</div>';
 
-  h+='<h2>On the <em>demo</em></h2><div class="slots">';
-  D.rooms.forEach(function(r){ var s=D.sel[r]||{};
-    h+='<div class="room"><h3>'+esc(r)+'</h3><div class="pair">';
-    ['before','after'].forEach(function(k){ var x=s[k], on=active&&active.room===r&&active.kind===k;
-      h+='<button type="button" class="slot '+(x?'filled':'empty')+'" data-slot="'+esc(r)+'|'+k+'" aria-pressed="'+on+'" aria-label="'+esc(r)+' '+k+(x?', chosen. Tap to change':', tap to choose')+'">'+(x?'<img alt="" loading="lazy" src="'+thumb(x)+'"><span class="lb">'+(k==='before'?'Before':'After')+'</span>':'<span class="lb">'+(k==='before'?'Before':'After')+(on?' · now pick':' · tap to choose')+'</span>')+'</button>'; });
-    h+='</div>'+(!s.before&&!s.after&&why.none&&why.none.indexOf(r)>=0?'<p class="why" style="color:var(--muted,#777)">No job has a matching before and after here yet. Ask the team to take the after from the same spot as the before.</p>':'')+(why[r]?'<p class="why">'+esc(why[r])+'</p>':'')+((s.before||s.after)?'<button type="button" class="clear" data-clear="'+esc(r)+'">Clear '+esc(r.toLowerCase())+'</button>':'')+'</div>'; });
-  h+='</div>';
+  h+='<h2>On your <em>website</em> <span style="font:500 14px var(--sans);color:var(--meta)">'+D.afters.length+'</span></h2>';
+  if(!D.afters.length) h+='<div class="empty">'+(total?'Nothing chosen yet. Tap the button above, or tap photos below to add them.':'No after photos on the roster yet. They appear here once the team adds after photos to a job.')+'</div>';
+  else { h+='<div class="picked">'; D.afters.forEach(function(a,i){
+    h+='<div class="card"><div class="im"><img alt="" loading="lazy" src="'+thumb(a)+'"><span class="n">'+(i+1)+'</span><button type="button" class="x" data-rm="'+a.id+'" aria-label="Remove photo '+(i+1)+'">×</button></div><div class="meta"><b>'+esc(a.room||'After')+(a.service?' · '+esc(a.service.replace(/ clean$/i,'')):'')+'</b>'+(rated(a)?'<span>Claude '+rated(a).r+'/5'+(rated(a).w?' · '+esc(rated(a).w):'')+'</span>':why[a.id]?'<span>'+esc(why[a.id])+'</span>':'')+'</div></div>'; });
+    h+='</div><p class="sub" style="margin-top:8px">Number 1 leads the gallery. Tap × to remove one.</p>'; }
 
-  h+='<h2>Your job <em>photos</em></h2>';
-  if(!D.jobs.length) h+='<div class="empty">No job photos on the roster yet.</div>';
-  D.jobs.forEach(function(j){
-    var rooms={}, ph=photosOf(j), left=j.photos.filter(function(x){ return !x.room&&!(D.guess&&D.guess[x.id]); }).length;
-    ph.forEach(function(x){ (rooms[x.room]||(rooms[x.room]=[])).push(x); });
-    var useful=D.rooms.filter(function(r){ return rooms[r]; }).length;
-    h+='<div class="job"><div class="jh"><div><b>'+esc([j.suburb,j.service].filter(Boolean).join(' · ')||'Job')+'</b><span>'+fday(j.date)+(j.client?' · '+esc(j.client):'')+' · '+j.photos.length+' photos'+(left?' · '+left+' not sorted yet':'')+'</span></div>'+(useful?'<button type="button" class="use" data-use="'+esc(j.key)+'">Use this job</button>':'')+'</div>';
-    Object.keys(rooms).sort(function(a,b){ return (D.rooms.indexOf(a)+99)%99-(D.rooms.indexOf(b)+99)%99; }).forEach(function(r){
-      var list=rooms[r].slice().sort(function(a,b){ return a.kind===b.kind?0:a.kind==='before'?-1:1; });
-      h+='<div class="jr"><h4>'+esc(r)+(D.rooms.indexOf(r)<0?' · not on the demo':'')+'</h4><div class="strip">'+list.map(function(x){
-        return '<button type="button" class="ph'+(pickedAnywhere(x)?' on':'')+'" data-ph="'+esc(j.key)+'|'+x.id+'" aria-label="'+esc(r)+' '+x.kind+'"><img alt="" loading="lazy" src="'+thumb(x)+'"><span class="k">'+(x.kind==='before'?'Before':'After')+(x.auto?' · auto':'')+'</span></button>'; }).join('')+'</div></div>'; });
-    h+='</div>';
+  h+='<h2>All your <em>afters</em></h2>';
+  D.jobs.forEach(function(j){ var af=aftersOf(j); if(!af.length) return;
+    h+='<div class="job"><b>'+esc([j.suburb,j.service].filter(Boolean).join(' · ')||'Job')+'</b><span class="d">'+fday(j.date)+(j.client?' · '+esc(j.client):'')+' · '+af.length+' after'+(af.length===1?'':'s')+'</span><div class="strip">'+
+      af.map(function(x){ return '<button type="button" class="ph'+(isOn(x.id)?' on':'')+'" data-ph="'+esc(j.key)+'|'+x.id+'" aria-pressed="'+isOn(x.id)+'" aria-label="'+esc(x.room||'After photo')+'"><img alt="" loading="lazy" src="'+thumb(x)+'">'+(x.room||rated(x)?'<span class="k">'+esc(x.room||'After')+(rated(x)?' · '+rated(x).r+'/5':'')+'</span>':'')+'</button>'; }).join('')+'</div></div>';
   });
-  if(active) h+='<div class="bar" role="status"><span>Choosing <b>'+esc(active.room)+' · '+(active.kind==='before'?'Before':'After')+'</b>. Tap a photo below.</span><button type="button" data-cancel>Cancel</button></div>';
   app.innerHTML=h;
 }
+
 // ---- automatic picking ----
-// Each thumbnail is shrunk on a canvas and measured: brightness, contrast, sharpness and a small
-// "fingerprint" of its layout. A before and after of the same room are compared on how alike the
-// layout is (same angle), how much the colours changed (visible difference) and how bright the after is.
+// Each thumbnail is shrunk on a canvas and measured for brightness, contrast, colour,
+// sharpness and a small layout fingerprint (to spot near-identical shots).
 function loadImg(src){ return new Promise(function(res){ var im=new Image(); im.onload=function(){ res(im); }; im.onerror=function(){ res(null); }; im.src=src; }); }
 function measure(im){
   var W=160, H=120, c=document.createElement('canvas'); c.width=W; c.height=H;
   var cx=c.getContext('2d',{willReadFrequently:true}); cx.drawImage(im,0,0,W,H);
-  var d=cx.getImageData(0,0,W,H).data, g=new Float32Array(W*H), sum=0, sq=0, i;
-  for(i=0;i<W*H;i++){ var v=(0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2])/255; g[i]=v; sum+=v; sq+=v*v; }
+  var d=cx.getImageData(0,0,W,H).data, g=new Float32Array(W*H), sum=0, sq=0, sat=0, i;
+  for(i=0;i<W*H;i++){ var r=d[i*4], gg=d[i*4+1], b=d[i*4+2], v=(0.299*r+0.587*gg+0.114*b)/255; g[i]=v; sum+=v; sq+=v*v; sat+=(Math.max(r,gg,b)-Math.min(r,gg,b))/255; }
   var lum=sum/(W*H), std=Math.sqrt(Math.max(0,sq/(W*H)-lum*lum)), lap=0;
   for(var y=1;y<H-1;y++) for(var x=1;x<W-1;x++){ i=y*W+x; lap+=Math.abs(4*g[i]-g[i-1]-g[i+1]-g[i-W]-g[i+W]); }
-  // layout fingerprint: 32x24 brightness, normalised
   var fp=new Float32Array(32*24), m=0, s2=0;
-  for(var by=0;by<24;by++) for(var bx=0;bx<32;bx++){ var a=0; for(var yy=0;yy<5;yy++) for(var xx=0;xx<5;xx++) a+=g[(by*5+yy)*W+bx*5+xx]; a/=25; fp[by*32+bx]=a; m+=a; }
+  for(var by=0;by<24;by++) for(var bx=0;bx<32;bx++){ var a=0; for(var yy=0;yy<5;yy++) for(var xx=0;xx<5;xx++) a+=g[(by*5+yy)*W+bx*5+xx]; fp[by*32+bx]=a/25; m+=a/25; }
   m/=fp.length; for(i=0;i<fp.length;i++){ fp[i]-=m; s2+=fp[i]*fp[i]; } s2=Math.sqrt(s2)||1; for(i=0;i<fp.length;i++) fp[i]/=s2;
-  // colour grid 16x12 for "how much changed"
-  var col=new Float32Array(16*12*3);
-  for(by=0;by<12;by++) for(bx=0;bx<16;bx++){ var r=0,gg=0,b=0; for(yy=0;yy<10;yy++) for(xx=0;xx<10;xx++){ var k=((by*10+yy)*W+bx*10+xx)*4; r+=d[k]; gg+=d[k+1]; b+=d[k+2]; } var o=(by*16+bx)*3; col[o]=r/100; col[o+1]=gg/100; col[o+2]=b/100; }
-  return { lum:lum, std:std, sharp:lap/((W-2)*(H-2)), fp:fp, col:col, land:im.naturalWidth>=im.naturalHeight };
+  return { lum:lum, std:std, sat:sat/(W*H), sharp:lap/((W-2)*(H-2)), fp:fp, land:im.naturalWidth>=im.naturalHeight };
 }
 function corr(a,b){ var s=0; for(var i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
-function colourChange(a,b){ var s=0, n=a.length/3; for(var i=0;i<a.length;i+=3){ var dr=a[i]-b[i], dg=a[i+1]-b[i+1], db=a[i+2]-b[i+2]; s+=Math.sqrt(dr*dr+dg*dg+db*db); } return s/n/441; }
-function exposure(l){ return Math.max(0,1-Math.abs(l-0.58)/0.38); }
-function reason(p){ return p.m?'Same spot · rated '+p.m.r+'/5 for the website':'Near-identical framing (not checked by Claude)'; }
+function exposure(l){ return Math.max(0,1-Math.abs(l-0.6)/0.38); }
+function rank(list,key){ var v=list.map(function(x){return x.f[key];}).sort(function(a,b){return a-b;}); list.forEach(function(x){ x[key+'R']=v.indexOf(x.f[key])/Math.max(1,v.length-1); }); }
+function reason(x){ var b=[]; if(x.sharpR>0.66) b.push('sharp'); if(exposure(x.f.lum)>0.75) b.push('well lit'); if(x.f.land) b.push('landscape'); if(x.stdR>0.66) b.push('strong contrast');
+  return b.length?b.join(' · ').replace(/^./,function(c){return c.toUpperCase();}):'Good all-round'; }
 var JOBS=30;
 // Runs calls three at a time with a progress bar; stops queueing new ones after an error.
 function runCalls(phase,calls,total,done){
   if(!calls.length) return done('');
-  busy={phase:phase,done:0,total:total}; active=null; render();
+  busy={phase:phase,done:0,total:total}; render();
   var i=0, running=0, failed='';
   function pump(){
     if(running===0&&(failed||i>=calls.length)) return done(failed);
@@ -171,98 +146,78 @@ function runCalls(phase,calls,total,done){
   }
   pump();
 }
+function batch(items,size){ var out=[]; items.forEach(function(it){ var last=out[out.length-1]; if(last&&last.job===it.job&&last.items.length<size) last.items.push(it.x); else out.push({job:it.job,items:[it.x]}); }); return out; }
 function hhmm(s){ var d=new Date(s); return isNaN(d)?'':d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',timeZone:'Australia/Brisbane'}); }
 function autoPick(){
   if(busy) return;
   var jobs=D.jobs.slice(0,JOBS), warn='';
-  // 1. Sort the unsorted photos (a few at a time; guesses are kept, so each photo is only read once)
-  var todo=[]; if(D.ai) jobs.forEach(function(j){ var n=0;
-    j.photos.forEach(function(x){ if(!x.room&&!D.guess[x.id]&&n<40){ n++; todo.push({job:j.key,x:x}); } }); });
-  var batches=[]; todo.forEach(function(it){ var last=batches[batches.length-1]; if(last&&last.job===it.job&&last.items.length<4) last.items.push(it.x); else batches.push({job:it.job,items:[it.x]}); });
-  runCalls('sort',batches.map(function(bt){ return {n:bt.items.length,run:function(){
+  // 1. Sort photos the team didn't (each photo is only ever sent once; the guesses are kept)
+  var todo=[]; if(D.ai) jobs.forEach(function(j){ var n=0; j.photos.forEach(function(x){ if(!x.room&&!D.guess[x.id]&&n<40){ n++; todo.push({job:j.key,x:x}); } }); });
+  runCalls('sort',batch(todo,4).map(function(bt){ return {n:bt.items.length,run:function(){
     return api('POST',{job:bt.job,items:bt.items.map(function(x){ return {j:x.j,id:x.id,at:hhmm(x.at)}; })},'?sort=1').then(function(d){ Object.keys(d.guess||{}).forEach(function(k){ D.guess[k]=d.guess[k]; }); }); }}; }),todo.length,function(e){
     if(e) warn=e;
-    // 2. Have Claude check which befores and afters show the same spot (each pair checked once, then remembered)
-    var calls=[], n=0;
-    if(D.ai) jobs.forEach(function(j){ var ph=photosOf(j); D.rooms.forEach(function(r){
-      var bs=ph.filter(function(x){return x.room===r&&x.kind==='before';}).slice(0,3), as=ph.filter(function(x){return x.room===r&&x.kind==='after';}).slice(0,3);
-      if(!bs.length||!as.length) return;
-      var need=bs.some(function(b){ return as.some(function(a){ return !D.match[b.id+':'+a.id]; }); }); if(!need) return;
-      n+=bs.length*as.length;
-      calls.push({n:bs.length*as.length,run:function(){ return api('POST',{job:j.key,room:r,before:bs.map(function(x){return {j:x.j,id:x.id};}),after:as.map(function(x){return {j:x.j,id:x.id};})},'?match=1')
-        .then(function(d){ Object.keys(d.match||{}).forEach(function(k){ D.match[k]=d.match[k]; }); }); }}); }); });
-    runCalls('match',calls,n,function(e2){ if(e2) warn=e2; busy=null; if(warn) toast(warn); score(jobs); });
+    // 2. Measure every after photo on the phone
+    var list=[]; jobs.forEach(function(j){ aftersOf(j).slice(0,40).forEach(function(x){ list.push({job:j,x:x}); }); });
+    if(!list.length){ busy=null; render(); toast(warn||'No after photos to choose from yet'); return; }
+    busy={phase:'measure',done:0,total:list.length}; render();
+    var i=0, ok=[];
+    (function next(){
+      if(i>=list.length) return measured();
+      var it=list[i++];
+      loadImg(thumb(it.x)).then(function(im){ if(im){ try{ it.f=measure(im); ok.push(it); }catch(e){} } busy.done++; if(busy.done%5===0||busy.done===busy.total) render(); next(); });
+    })();
+    function measured(){
+      rank(ok,'sharp'); rank(ok,'std'); rank(ok,'sat');
+      ok.forEach(function(x){ x.local=(0.40*x.sharpR+0.30*exposure(x.f.lum)+0.18*x.stdR+0.12*x.satR)*(x.f.land?1:0.6); });
+      // 3. Claude rates the strongest-looking afters (up to 8 per job, never the same photo twice)
+      var cand=[]; if(D.ai) jobs.forEach(function(j){ ok.filter(function(x){ return x.job===j; }).sort(function(a,b){ return b.local-a.local; }).slice(0,8)
+        .forEach(function(x){ if(!D.rate[x.x.id]) cand.push({job:j.key,x:x.x}); }); });
+      runCalls('rate',batch(cand,5).map(function(bt){ return {n:bt.items.length,run:function(){
+        return api('POST',{job:bt.job,items:bt.items.map(function(x){ return {j:x.j,id:x.id}; })},'?rate=1').then(function(d){ Object.keys(d.rate||{}).forEach(function(k){ D.rate[k]=d.rate[k]; }); }); }}; }),cand.length,function(e2){
+        if(e2) warn=e2; choose(ok,warn); });
+    }
   });
 }
-function score(jobs){
-  // 2. Score pairs: most recent 30 jobs, up to 6 of each kind per room per job, demo rooms only
-  var list=[]; jobs.forEach(function(j){ var per={};
-    photosOf(j).forEach(function(x){ if(D.rooms.indexOf(x.room)<0) return; var k=x.room+'|'+x.kind; per[k]=(per[k]||0)+1; if(per[k]<=6) list.push({job:j.key,x:x}); }); });
-  if(!list.length){ render(); toast('No before and after photos to choose from yet'); return; }
-  busy={phase:'score',done:0,total:list.length}; active=null; render();
-  var feats={}, i=0;
-  function next(){
-    if(i>=list.length) return finish();
-    var it=list[i++];
-    loadImg(thumb(it.x)).then(function(im){ if(im){ try{ feats[it.x.id]=measure(im); }catch(e){} } busy.done++; if(busy.done%4===0||busy.done===busy.total) render(); next(); });
+function choose(ok,warn){
+  // Claude's rating leads when there is one; private or weak (under 3) photos are left out.
+  var pool=ok.filter(function(x){ var r=D.rate[x.x.id]; return !r||(!r.p&&r.r>=3); });
+  pool.forEach(function(x){ var r=D.rate[x.x.id]; x.score=r?r.r+x.local:(D.ai?x.local-1:x.local); });
+  pool.sort(function(a,b){ return b.score-a.score; });
+  var pick=[], perRoom={}, perJob={};
+  function tryAdd(x,roomCap,jobCap){
+    if(pick.length>=TARGET||pick.indexOf(x)>=0) return;
+    var r=x.x.room||'?';
+    if((perRoom[r]||0)>=roomCap||(perJob[x.job.key]||0)>=jobCap) return;
+    if(pick.some(function(p){ return corr(p.f.fp,x.f.fp)>0.85; })) return; // near-duplicate
+    pick.push(x); perRoom[r]=(perRoom[r]||0)+1; perJob[x.job.key]=(perJob[x.job.key]||0)+1;
   }
-  function finish(){
-    // sharpness as a rank among all photos, so it doesn't depend on the camera
-    var ids=Object.keys(feats), sorted=ids.map(function(k){return feats[k].sharp;}).sort(function(a,b){return a-b;});
-    ids.forEach(function(k){ feats[k].sharpR=sorted.indexOf(feats[k].sharp)/Math.max(1,sorted.length-1); });
-    var cands={}, hero=null;
-    jobs.forEach(function(j){ var ph=photosOf(j); D.rooms.forEach(function(r){
-      var bs=ph.filter(function(x){return x.room===r&&x.kind==='before'&&feats[x.id];}), as=ph.filter(function(x){return x.room===r&&x.kind==='after'&&feats[x.id];});
-      bs.forEach(function(bx){ as.forEach(function(ax){ var b=feats[bx.id], a=feats[ax.id];
-        var sim=Math.max(0,corr(b.fp,a.fp)), change=colourChange(b.col,a.col), brighter=Math.max(0,Math.min(1,(a.lum-b.lum)*4+0.5));
-        var score=0.40*sim+0.15*Math.min(1,change/0.25)+0.10*brighter+0.15*(b.sharpR+a.sharpR)/2+0.10*(0.3*exposure(b.lum)+0.7*exposure(a.lum))+0.10*((b.land&&a.land)?1:0.3);
-        var m=D.match[bx.id+':'+ax.id];
-        if(m){ if(!m.s||m.p) return; score=m.r+score*0.5; } // Claude checked it: same spot only, its rating leads
-        else if(D.ai||sim<0.8) return; // unchecked: only trust a near-identical layout, and only without Claude
-        var p={room:r,job:j.key,m:m,before:bx,after:ax,score:score,sim:sim,change:change,a:a,b:b};
-        (cands[r]||(cands[r]=[])).push(p);
-        if(!hero||score+(r==='Kitchen'?0.03:0)>hero.score+(hero.room==='Kitchen'?0.03:0)) hero=p; }); }); }); });
-    // Fill rooms strongest first, nudging away from jobs already used so the demo shows a few homes
-    var best={}, uses={};
-    D.rooms.slice().sort(function(x,y){ return top(y)-top(x); }).forEach(function(r){
-      var c=cands[r]; if(!c) return; var pick=null, ps=-1;
-      c.forEach(function(p){ var v=p.score-0.3*(uses[p.job]||0); if(v>ps){ ps=v; pick=p; } });
-      best[r]=pick; uses[pick.job]=(uses[pick.job]||0)+1; });
-    function top(r){ return (cands[r]||[]).reduce(function(m,p){ return Math.max(m,p.score); },-1); }
-    var n=0, nj=Object.keys(uses).length; why={};
-    var none=[];
-    D.rooms.forEach(function(r){ var p=best[r]; if(!p){ if(D.sel[r]){ delete D.sel[r]; } none.push(r); if(D.sel.hero&&D.sel.hero.room===r) delete D.sel.hero; return; } D.sel[r]={before:{j:p.before.j,id:p.before.id},after:{j:p.after.j,id:p.after.id}}; why[r]=reason(p); n++; });
-    if(hero){ D.sel.hero={room:hero.room,before:{j:hero.before.j,id:hero.before.id},after:{j:hero.after.j,id:hero.after.id}}; why.hero=reason(hero); }
-    busy=null;
-    why.none=none;
-    if(!n){ delete D.sel.hero; save('No matching before and after pairs yet'); return; }
-    save('Picked '+n+' room'+(n===1?'':'s')+' from '+nj+' job'+(nj===1?'':'s')+(none.length?' · '+none.length+' had no match':'')); window.scrollTo({top:0,behavior:'smooth'});
-  }
-  next();
+  pool.forEach(function(x){ tryAdd(x,1,3); });       // one per room, spread across jobs
+  pool.forEach(function(x){ tryAdd(x,1,8); });       // one per room, any job
+  pool.forEach(function(x){ tryAdd(x,2,8); });       // then a second shot of the strongest rooms
+  pool.forEach(function(x){ tryAdd(x,4,12); });      // fill up if photos are scarce
+  why={}; pick.forEach(function(p){ why[p.x.id]=reason(p); });
+  D.afters=pick.map(function(p){ return { j:p.x.j, id:p.x.id, room:p.x.room, service:p.job.service }; });
+  busy=null;
+  save((pick.length?'Picked your best '+pick.length+' after'+(pick.length===1?'':'s'):'No after photos good enough yet')+(warn?' · '+warn:''));
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-function findPhoto(jk,id){ var j=D.jobs.find(function(x){return x.key===jk;}); return j&&photosOf(j).find(function(x){return x.id===id;}); }
+function findPhoto(jk,id){ var j=D.jobs.find(function(x){return x.key===jk;}); var x=j&&aftersOf(j).find(function(p){return p.id===id;}); return x?{job:j,x:x}:null; }
 
 app.addEventListener('click',function(e){
   var t;
-  if((t=e.target.closest('[data-slot]'))){ var p=t.dataset.slot.split('|'); active=(active&&active.room===p[0]&&active.kind===p[1])?null:{room:p[0],kind:p[1]}; render();
-    if(active){ var jl=app.querySelector('.job'); if(jl) jl.scrollIntoView({behavior:'smooth',block:'start'}); } return; }
-  if(e.target.closest('[data-cancel]')){ active=null; render(); return; }
-  if((t=e.target.closest('[data-clear]'))){ var cr=t.dataset.clear; delete D.sel[cr]; delete why[cr]; if(D.sel.hero&&D.sel.hero.room===cr){ delete D.sel.hero; delete why.hero; } save('Cleared'); return; }
   if(e.target.closest('[data-auto]')){ autoPick(); return; }
-  if((t=e.target.closest('[data-use]'))){
-    var j=D.jobs.find(function(x){return x.key===t.dataset.use;}), n=0;
-    D.rooms.forEach(function(r){ ['before','after'].forEach(function(k){ var x=photosOf(j).find(function(p){return p.room===r&&p.kind===k;}); if(x){ (D.sel[r]||(D.sel[r]={}))[k]={j:x.j,id:x.id}; n++; } }); });
-    active=null; save(n+' photo'+(n===1?'':'s')+' added from this job'); window.scrollTo({top:0,behavior:'smooth'}); return; }
+  if((t=e.target.closest('[data-rm]'))){ var id=t.dataset.rm; D.afters=D.afters.filter(function(a){ return a.id!==id; }); save('Removed'); return; }
   if((t=e.target.closest('[data-ph]'))){
-    var q=t.dataset.ph.split('|'), x=findPhoto(q[0],q[1]); if(!x) return;
-    var room=active?active.room:x.room, kind=active?active.kind:x.kind;
-    if(D.rooms.indexOf(room)<0){ toast('Tap a slot up top first, then this photo'); return; }
-    (D.sel[room]||(D.sel[room]={}))[kind]={j:x.j,id:x.id}; delete why[room];
-    active=null; save(room+' · '+(kind==='before'?'Before':'After')+' set'); return; }
+    var q=t.dataset.ph.split('|'), f=findPhoto(q[0],q[1]); if(!f) return;
+    if(isOn(f.x.id)){ D.afters=D.afters.filter(function(a){ return a.id!==f.x.id; }); save('Removed'); }
+    else if(D.afters.length>=12) toast('That\'s 12 already. Remove one first.');
+    else { D.afters.push({ j:f.x.j, id:f.x.id, room:f.x.room, service:f.job.service }); save('Added'); }
+  }
 });
 
 if(!key()){ err='login'; render(); }
-else api('GET',null,'?pick=1').then(function(d){ D=d; D.guess=D.guess||{}; D.match=D.match||{}; render(); var any=D.rooms.some(function(r){ return D.sel[r]; }); if(!any&&D.jobs.length) autoPick(); }).catch(function(e){ err=e.status===401?'login':e.message; render(); });
+else api('GET',null,'?pick=1').then(function(d){ D=d; D.guess=D.guess||{}; D.rate=D.rate||{}; render(); if(!D.afters.length&&D.jobs.length) autoPick(); })
+  .catch(function(e){ err=e.status===401?'login':e.message; render(); });
 })();
 </script>
 </body></html>
