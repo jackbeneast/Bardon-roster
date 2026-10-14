@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><title>Website preview · The Bardon Way</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@400;500;600&display=swap">
+<style>body{margin:0;background:#F5F0EB}.pv{font:500 13px/1.4 Inter,Arial,sans-serif;background:#F4B942;color:#1A1A1A;padding:10px 16px;text-align:center}</style>
+</head><body>
+<div class="pv">Preview of the new homepage section for bardonclean.au, with your real after photos. Not live on the website yet.</div>
+<!-- ===================================================================
+     THE BARDON WAY — homepage section for bardonclean.au
+     Paste this whole block into the homepage, straight after the
+     "Every item on the list" section and before the reviews.
+     It needs nothing else: styles and script are inside, every class
+     starts with "bw-" so it can't clash with the rest of the site.
+     The afters gallery loads Jack's picked photos from the hub
+     (Tools › Website photos) and hides itself until there are 3+.
+     =================================================================== -->
+<section class="bw" id="the-bardon-way" aria-label="The Bardon Way">
+<style>
+.bw{--t:#C06B3C;--td:#A55830;--d:#1A1A1A;--c:#F5F0EB;--cd:#EDE6DE;--b:#4A4A4A;--m:#7A7A7A;--g:#F4B942;--ok:#2F5A35;--okb:#E6EFE3;--l:#E4DBD1;
+  --serif:"Playfair Display",Georgia,serif;--sans:"Inter",-apple-system,"Segoe UI",Arial,sans-serif;font-family:var(--sans);color:var(--b);background:var(--c);font-size:16px;line-height:1.7}
+.bw *{box-sizing:border-box}
+.bw h2,.bw h3{font-family:var(--serif);font-weight:700;color:var(--d);margin:0}
+.bw em{font-style:italic;font-weight:500}
+.bw a:focus-visible,.bw button:focus-visible{outline:3px solid var(--g);outline-offset:3px}
+.bw-in{max-width:1200px;margin:0 auto;padding:0 20px}
+.bw-eyebrow{font:600 13px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase}
+/* hero band */
+.bw-hero{background:var(--d);padding:clamp(64px,9vw,112px) 0}
+.bw-hero .bw-in{display:flex;flex-wrap:wrap;gap:clamp(40px,6vw,80px);align-items:center;justify-content:center}
+.bw-copy{flex:1 1 460px;min-width:0;max-width:580px;display:flex;flex-direction:column;gap:22px}
+.bw-hero h2{font-size:clamp(40px,5.4vw,64px);line-height:1.06;color:var(--c)}
+.bw-hero h2 em{color:#E09A72}
+.bw-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.bw-tabs button{min-height:44px;padding:0 18px;border-radius:999px;border:1.5px solid #5A5550;background:transparent;color:var(--c);font:500 15px var(--sans);cursor:pointer}
+.bw-tabs button[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:var(--d)}
+.bw-lead{margin:0;font-size:18.5px;line-height:1.65;color:#CFC6BC;min-height:92px}
+.bw-ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.bw-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:0 26px;border-radius:6px;background:var(--t);color:#fff;font:600 16px/1 var(--sans);text-decoration:none}
+.bw-btn:hover{background:var(--td);color:#fff}
+.bw-link{display:inline-flex;align-items:center;min-height:54px;padding:0 8px;color:var(--c);font:500 16px/1 var(--sans);text-decoration:underline;text-underline-offset:5px}
+.bw-note{font-size:14px;color:#9A928A}
+.bw-phonecol{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:16px}
+.bw-bezel{width:414px;height:868px;padding:12px;border-radius:56px;background:#0E0E0E;border:1px solid #3A3A3A;box-shadow:0 40px 90px rgba(0,0,0,.5)}
+@media (max-width:600px){.bw-bezel{zoom:.8}}
+@media (max-width:380px){.bw-bezel{zoom:.72}}
+/* the phone screen */
+.bw-ph{position:relative;width:390px;height:844px;border-radius:44px;overflow:hidden;background:var(--c);font-size:14px;line-height:1.45;padding:52px 18px 18px;display:flex;flex-direction:column;gap:12px}
+.bw-toast{position:absolute;top:14px;left:12px;right:12px;z-index:5;background:var(--d);color:var(--c);border-radius:16px;padding:12px 14px;display:flex;gap:12px;align-items:center;box-shadow:0 12px 30px rgba(0,0,0,.3);animation:bwIn .35s ease-out both}
+.bw-toast i{flex:none;width:34px;height:34px;border-radius:9px;background:var(--t);display:grid;place-items:center}
+.bw-toast b{display:block;font:600 14px/1.3 var(--sans)}.bw-toast span{font-size:13px;color:#CFC6BC}
+@keyframes bwIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+@keyframes bwPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.bw-pulse{animation:bwPulse 1.4s ease-in-out infinite}
+.bw-top{display:flex;align-items:center;justify-content:space-between}
+.bw-brand{display:flex;align-items:center;gap:8px;font:700 17px/1 var(--serif);color:var(--d)}
+.bw-pill{display:inline-flex;align-items:center;gap:6px;font:600 11px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:7px 10px;border-radius:999px}
+.bw-pill s{width:7px;height:7px;border-radius:50%;text-decoration:none}
+.bw-card{background:#fff;border:1px solid var(--l);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.bw-svc{font:700 22px/1.2 var(--serif);color:var(--d)}
+.bw-where{font-size:13px;color:var(--m);margin-top:2px}
+.bw-row{display:flex;justify-content:space-between;align-items:baseline}
+.bw-bar{height:8px;border-radius:4px;background:var(--cd);overflow:hidden}.bw-bar i{display:block;height:100%;border-radius:4px;transition:width .6s ease}
+.bw-team{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px solid var(--cd)}
+.bw-av{display:flex}.bw-av span{width:34px;height:34px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;font:600 13px/1 var(--sans)}
+.bw-rooms{background:#fff;border:1px solid var(--l);border-radius:14px;padding:4px 16px}
+.bw-room{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #F0EAE3}
+.bw-room:last-child{border-bottom:0}
+.bw-room>span:first-child{display:flex;align-items:center;gap:10px;font-weight:500}
+.bw-dot{width:22px;height:22px;border-radius:50%;box-sizing:border-box;display:grid;place-items:center;flex:none}
+.bw-ready{background:var(--okb);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;color:var(--ok);animation:bwIn .35s ease-out both}
+.bw-ready div{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:12.5px}
+.bw-thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.bw-thumbs span{aspect-ratio:4/3;border-radius:8px;display:flex;align-items:flex-end;padding:6px;font-size:11px;line-height:1.2;color:#5E554C;background-size:cover;background-position:center}
+.bw-chips{display:flex;gap:6px}.bw-chips span{flex:1;min-height:36px;border-radius:10px;display:flex;flex-direction:column;justify-content:center;padding:4px 10px;font:600 12.5px/1.25 var(--sans)}
+.bw-chips small{font-weight:400;font-size:11px}
+.bw-phbtns{display:flex;gap:8px;margin-top:auto}
+.bw-phbtns span{flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;border-radius:8px;font:600 15px/1 var(--sans)}
+/* three questions */
+.bw-qs{padding:clamp(72px,9vw,120px) 0 clamp(56px,7vw,96px)}
+.bw-qs header{text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center;margin-bottom:48px}
+.bw-qs h2{font-size:clamp(34px,4.2vw,50px);line-height:1.12;max-width:760px}
+.bw-qs header p{margin:0;font-size:18px;max-width:600px}
+.bw-qgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+.bw-q{background:#fff;border:1px solid var(--l);border-radius:16px;padding:36px 32px;display:flex;flex-direction:column;gap:14px}
+.bw-q i{width:52px;height:52px;border-radius:50%;background:var(--c);display:grid;place-items:center}
+.bw-q h3{font-size:26px;line-height:1.2}
+.bw-q p{margin:0;font-size:16.5px}
+/* afters gallery (option A, mosaic) */
+.bw-gal{padding:0 0 clamp(72px,9vw,120px)}
+.bw-gal header{display:flex;flex-wrap:wrap;gap:16px 40px;justify-content:space-between;align-items:flex-end;margin-bottom:36px}
+.bw-gal header div{display:flex;flex-direction:column;gap:12px;max-width:640px}
+.bw-gal h2{font-size:clamp(34px,4.2vw,52px);line-height:1.1}
+.bw-gal header p{margin:0;font-size:17.5px}
+.bw-gal header a{font:500 16px/1.4 var(--sans);color:var(--t);text-decoration:underline;text-underline-offset:4px}
+.bw-mosaic{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:250px;gap:12px}
+.bw-mosaic figure{margin:0;position:relative;border-radius:16px;overflow:hidden;background:var(--cd)}
+.bw-mosaic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bw-mosaic figcaption{position:absolute;left:12px;bottom:12px;background:rgba(26,26,26,.82);color:var(--c);font:500 13px/1 var(--sans);padding:8px 12px;border-radius:999px}
+.bw-mosaic .bw-big{grid-column:span 2;grid-row:span 2}
+.bw-mosaic .bw-wide{grid-column:span 2}
+@media (max-width:760px){.bw-mosaic{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:150px;gap:8px}.bw-mosaic figcaption{font-size:11.5px;padding:6px 9px;left:8px;bottom:8px}}
+/* closing */
+.bw-close{padding:0 0 clamp(72px,9vw,120px)}
+.bw-band{background:var(--d);border-radius:20px;padding:clamp(40px,6vw,72px) clamp(24px,5vw,72px);display:flex;flex-wrap:wrap;gap:32px 48px;align-items:center;justify-content:space-between}
+.bw-band h2{font-size:clamp(32px,3.8vw,46px);line-height:1.12;color:var(--c)}.bw-band h2 em{color:#E09A72}
+.bw-band p{margin:12px 0 0;font-size:17.5px;color:#CFC6BC;max-width:520px}
+.bw-band .bw-col{display:flex;flex-direction:column;gap:12px;min-width:240px}
+.bw-btn2{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 30px;border-radius:6px;border:2px solid var(--c);color:var(--c);font:600 16px/1 var(--sans);text-decoration:none}
+.bw-agents{margin-top:20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;background:var(--cd);border-radius:14px;padding:22px 28px;text-decoration:none;color:var(--d)}
+.bw-agents b{font-weight:600}.bw-agents span:last-child{font:600 16px/1 var(--sans);color:var(--td)}
+@media (prefers-reduced-motion:reduce){.bw-toast,.bw-ready,.bw-pulse{animation:none}.bw-bar i{transition:none}}
+</style>
+
+<!-- A. promise + live phone -->
+<div class="bw-hero"><div class="bw-in">
+  <div class="bw-copy">
+    <span class="bw-eyebrow" style="color:var(--g)">Your live job link</span>
+    <h2>You don't have to be there to know it's <em>done</em>.</h2>
+    <div class="bw-tabs" role="group" aria-label="I'm">
+      <button type="button" data-bw-aud="sell" aria-pressed="true">I'm selling</button>
+      <button type="button" data-bw-aud="rent" aria-pressed="false">I'm leaving a rental</button>
+      <button type="button" data-bw-aud="agent" aria-pressed="false">I'm an agent</button>
+    </div>
+    <p class="bw-lead" id="bw-lead" aria-live="polite"></p>
+    <div class="bw-ctas">
+      <a class="bw-btn" id="bw-cta" href="https://bardon-roster.netlify.app/demo" target="_blank" rel="noopener"><span id="bw-cta-t">Try a live sample</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a class="bw-link" href="https://bardon-roster.netlify.app/quote?src=website">Get my free quote</a>
+    </div>
+    <span class="bw-note" id="bw-note"></span>
+  </div>
+  <div class="bw-phonecol">
+    <div class="bw-bezel"><div class="bw-ph" id="bw-ph" role="img" aria-label="Animated example of a Bardon Clean job link: the team arrives, each room is ticked off, and the clean is marked ready."></div></div>
+    <span class="bw-note" id="bw-cap"></span>
+  </div>
+</div></div>
+
+<!-- B. three questions -->
+<div class="bw-qs"><div class="bw-in">
+  <header><h2>Three questions you'll never have to <em>ask</em>.</h2><p>The answers are already on your link, from the moment the team arrives.</p></header>
+  <div class="bw-qgrid">
+    <div class="bw-q"><i><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C06B3C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.8-3 3-4.6 5.5-4.6s4.7 1.6 5.5 4.6"/><path d="M15.5 11.5l2 2 4-4"/></svg></i><h3 id="bw-q1"></h3><p id="bw-a1"></p></div>
+    <div class="bw-q"><i><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C06B3C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h9M4 12h9M4 17.5h9"/><path d="M16 6.5l1.5 1.5 3-3M16 12l1.5 1.5 3-3"/><circle cx="18" cy="17.5" r="1.6"/></svg></i><h3 id="bw-q2"></h3><p id="bw-a2"></p></div>
+    <div class="bw-q"><i><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C06B3C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M20.5 15.5l-5-4.5-8 8"/></svg></i><h3 id="bw-q3"></h3><p id="bw-a3"></p></div>
+  </div>
+</div></div>
+
+<!-- C. afters gallery: filled from the hub, hidden until there are at least 3 photos -->
+<div class="bw-gal" id="bw-gal" hidden><div class="bw-in">
+  <header><div><span class="bw-eyebrow" style="color:var(--td)">The finish</span><h2>Handed back <em>like this</em>.</h2><p>Every photo here is from a real Bardon Clean job, taken by the team on the day they finished.</p></div>
+  <a href="https://bardon-roster.netlify.app/demo" target="_blank" rel="noopener">See a job link, live →</a></header>
+  <div class="bw-mosaic" id="bw-mosaic"></div>
+</div></div>
+
+<!-- D. closing ask -->
+<div class="bw-close"><div class="bw-in">
+  <div class="bw-band">
+    <div style="flex:1 1 420px;min-width:0"><h2>See it for <em>yourself</em>.</h2><p>Open a real job link on your phone, with sample details. No sign-up. Questions after that? Text Jack directly on 0468 193 772.</p></div>
+    <div class="bw-col"><a class="bw-btn" href="https://bardon-roster.netlify.app/demo" target="_blank" rel="noopener">Try a live sample</a><a class="bw-btn2" href="https://bardon-roster.netlify.app/quote?src=website">Get my free quote</a></div>
+  </div>
+  <a class="bw-agents" href="https://bardon-roster.netlify.app/demo/agent" target="_blank" rel="noopener"><span><b>Real estate agent?</b> Every listing we clean for you, live, in your own portal.</span><span>See the agent portal →</span></a>
+</div></div>
+
+<script>
+(function(){
+  var HUB='https://bardon-roster.netlify.app';
+  var $=function(id){ return document.getElementById(id); };
+  var CHECK='<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2F5A35" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var LOGO='<svg aria-hidden="true" width="28" height="28" viewBox="0 0 48 48"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
+  var PIN='<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>';
+
+  var COPY={
+    sell:{lead:"Moved out already? Your private link shows who's on site, each room as it's finished and the after photos, so you know the house is ready for the photographer and the first open home.",
+      cta:'Try a live sample',href:'/demo',note:'Opens a real job link with sample details. No sign-up.',cap:'A real pre-sale clean link, playing with sample details',
+      q:[['Did they turn up?',"You'll see the arrival time and who's on site, by first name, without calling anyone."],['Is it ready for the photos?','Each room ticks off as it is finished, with a finish time to plan the photographer and open home around.'],['Can I see it for myself?','Photos of every finished room, plus the lock-up check, on the same link. No drive over to check.']]},
+    rent:{lead:'Handed the keys back? Follow your bond clean from anywhere, then forward the job report and photos to your property manager as a record of the clean.',
+      cta:'Try a live sample',href:'/demo/rent',note:'Opens a real job link with sample details. No sign-up.',cap:'A real bond clean link, playing with sample details',
+      q:[['Did they turn up?',"You'll see the arrival time and who's on site, by first name, without calling anyone."],['Is it actually done?','Every area on the bond checklist ticks off as it is finished, room by room.'],['Can I prove it?','A job report with photos of every finished room. Forward it to your property manager as a record of the clean.']]},
+    agent:{lead:"Every listing we clean for you appears in your own portal: who's on site, progress room by room, the finish time and after photos ready for the campaign. No chasing for updates.",
+      cta:'Try the agent portal',href:'/demo/agent',note:'Opens a sample portal with made-up listings. No sign-up.',cap:'The agent portal, playing with sample details',
+      q:[['Is the team on site?',"Arrival times for every listing, with the names of who's there."],['Will it be ready for the shoot?','Live progress and a finish time, so you can line up the photographer and stylist with confidence.'],['Can I show the vendor?','After photos ready to share with your vendor, and a record of the clean for every property.']]}
+  };
+  var PHONE={
+    sell:{brand:'Bardon Clean',svc:'Pre-sale',where:'Sample job · Latrobe Tce, Paddington',rooms:['Kitchen','Bathrooms','Bedrooms','Living and dining','Laundry','Windows and tracks'],times:['9:41am','10:20am','11:05am','11:48am','12:30pm','1:52pm'],toast:'Your team has arrived',team:'Your team today',ph:'After photos',ready:'Locked up and ready · 1:58pm',lock:['Windows and doors locked','Lights and fans off','Air-con off','Keys in the lockbox'],btn:'Access details',btnR:'View job report'},
+    rent:{brand:'Bardon Clean',svc:'Bond',where:'Sample job · Unit 4, Milton',rooms:['Oven and cooktop','Kitchen and cupboards','Bathroom','Bedrooms and robes','Walls and skirting','Windows and tracks'],times:['9:35am','10:24am','11:02am','11:40am','12:36pm','1:50pm'],toast:'Your team has arrived',team:'Your team today',ph:'After photos',ready:'Ready for your inspection · 1:58pm',lock:['Windows and doors locked','Lights and fans off','Keys back to the agent','Job report ready to send'],btn:'Access details',btnR:'Job report for your PM'},
+    agent:{brand:'Agent portal',svc:'Pre-sale',where:'Latrobe Tce, Paddington · Photos 9am tomorrow',rooms:['Kitchen','Bathrooms','Bedrooms','Living and dining','Windows and tracks'],times:['9:41am','10:20am','11:05am','11:48am','1:52pm'],toast:'Team on site · Paddington',team:'On site',ph:'After photos for the campaign',ready:'Ready for tomorrow’s photos · 1:58pm',lock:['Windows and doors locked','Lights and fans off','Keys in the lockbox','After photos uploaded'],btn:'View the listing',btnR:'View after photos'}
+  };
+  var aud='sell', t=0, timer=null, afters=[];
+  var reduce=false; try{ reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+
+  function phone(){
+    var v=PHONE[aud], n=v.rooms.length, tt=reduce?n+2:t, arrived=tt>=1, done=Math.max(0,Math.min(n,tt-1)), ready=tt>=n+2;
+    var h='';
+    if(tt===1||tt===2) h+='<div class="bw-toast" role="status"><i>'+PIN+'</i><span style="min-width:0"><b>'+v.toast+'</b><span>Your team · 8:02am</span></span></div>';
+    var pill=ready?['Ready','#E6EFE3','#2F5A35']:arrived?['Live','#FBF3EE','#A55830']:['On the way','#FBF3EE','#A55830'];
+    h+='<div class="bw-top"><span class="bw-brand">'+LOGO+v.brand+'</span><span class="bw-pill" style="background:'+pill[1]+';color:'+pill[2]+'"><s class="bw-pulse" style="background:'+pill[2]+'"></s>'+pill[0]+'</span></div>';
+    if(aud==='agent') h+='<div class="bw-chips"><span style="background:#1A1A1A;color:#F5F0EB">Paddington<small style="color:#CFC6BC">'+(ready?'Ready':arrived?'In progress':'Starting 8am')+'</small></span><span style="background:#fff;border:1px solid #E4DBD1;color:#1A1A1A">Bardon<small style="color:#2F5A35">Ready</small></span><span style="background:#fff;border:1px solid #E4DBD1;color:#1A1A1A">Ashgrove<small style="color:#7A7A7A">Tomorrow</small></span></div>';
+    h+='<div class="bw-card"><div><div class="bw-svc">'+v.svc+' <em>clean</em></div><div class="bw-where">'+v.where+'</div></div>'+
+      '<div class="bw-row"><span style="font:600 15px/1 var(--sans);color:#1A1A1A">'+(ready?'All '+n+' areas done':done+' of '+n+' areas done')+'</span><span style="font-size:13px;color:#7A7A7A">'+(ready?'Finished 1:58pm':'Ready about 2:00pm')+'</span></div>'+
+      '<div class="bw-bar"><i style="width:'+Math.round(done/n*100)+'%;background:'+(ready?'#2F5A35':'#C06B3C')+'"></i></div>'+
+      '<div class="bw-team"><div style="display:flex;align-items:center;gap:10px"><div class="bw-av"><span style="background:#D9CFC4;color:#1A1A1A">J</span><span style="background:#1A1A1A;color:#F5F0EB;margin-left:-8px">M</span></div><div><div style="font:600 14px/1.2 var(--sans);color:#1A1A1A">Jack and Mariam</div><div style="font-size:12.5px;color:#7A7A7A">'+v.team+'</div></div></div><span style="font-size:12.5px;font-weight:600;color:'+(arrived?'#2F5A35':'#7A7A7A')+'">'+(arrived?'Arrived 8:02am':'Due 8:00am')+'</span></div></div>';
+    h+='<div class="bw-rooms">'+v.rooms.map(function(r,i){ var d=i<done, cur=arrived&&!ready&&i===done;
+      var dot=d?'<span class="bw-dot" style="background:#E6EFE3">'+CHECK+'</span>':cur?'<span class="bw-dot" style="border:2px solid #C06B3C"><s class="bw-pulse" style="width:8px;height:8px;border-radius:50%;background:#C06B3C;text-decoration:none"></s></span>':'<span class="bw-dot" style="border:2px solid #D9CFC4"></span>';
+      return '<div class="bw-room"><span style="color:'+(d||cur?'#1A1A1A':'#7A7A7A')+'">'+dot+r+'</span><span style="font-size:12.5px;color:'+(cur?'#A55830':'#7A7A7A')+';font-weight:'+(cur?600:400)+'">'+(d?v.times[i]:cur?'In progress':'To do')+'</span></div>'; }).join('')+'</div>';
+    if(ready) h+='<div class="bw-ready"><span style="font:600 14px/1.2 var(--sans)">'+v.ready+'</span><div>'+v.lock.map(function(l){ return '<span>✓ '+l+'</span>'; }).join('')+'</div></div>';
+    else { var shown=v.rooms.slice(0,done).slice(-3).reverse();
+      h+='<div class="bw-card" style="padding:14px 16px;gap:10px"><div class="bw-row"><span style="font:600 14px/1 var(--sans);color:#1A1A1A">'+v.ph+'</span><span style="font-size:12.5px;color:#7A7A7A">'+(done?done*2+' so far':'As each area is finished')+'</span></div><div class="bw-thumbs">'+
+        [0,1,2].map(function(i){ var r=shown[i]; if(!r) return '<span style="background:#fff;border:1.5px dashed #D9CFC4"></span>';
+          var img=afters.length?afters[(v.rooms.indexOf(r))%afters.length].src:''; // real afters from the hub when available
+          return '<span style="'+(img?'background-image:url('+img+');color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)':'background:'+['#EDE6DE','#E4DBD1','#D9CFC4'][i])+'">'+r+'</span>'; }).join('')+'</div></div>'; }
+    h+='<div class="bw-phbtns"><span style="background:#1A1A1A;color:#F5F0EB">Text Jack</span><span style="border:2px solid #C06B3C;color:#C06B3C">'+(ready?v.btnR:v.btn)+'</span></div>';
+    $('bw-ph').innerHTML=h;
+  }
+  function copy(){
+    var c=COPY[aud];
+    $('bw-lead').textContent=c.lead; $('bw-cta-t').textContent=c.cta; $('bw-cta').href=HUB+c.href; $('bw-note').textContent=c.note; $('bw-cap').textContent=c.cap;
+    c.q.forEach(function(q,i){ $('bw-q'+(i+1)).textContent=q[0]; $('bw-a'+(i+1)).textContent=q[1]; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-bw-aud]'),function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-bw-aud')===aud); });
+  }
+  function start(){
+    clearInterval(timer); t=0; phone();
+    if(!reduce) timer=setInterval(function(){ if(document.hidden) return; t=(t+1)%(PHONE[aud].rooms.length+7); phone(); },1500);
+  }
+  document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-bw-aud]'); if(!b) return; aud=b.getAttribute('data-bw-aud'); copy(); start(); });
+
+  // Afters gallery from the hub (Tools › Website photos)
+  function cap(a){ var r=(a.room||'').replace(' & ',' and '), s=(a.service||'').replace(/ clean$/i,''); return [r||'After',s].filter(Boolean).join(' · '); }
+  function gallery(){
+    var n=afters.length>=7?7:afters.length>=5?5:afters.length>=3?3:0;
+    if(!n) return;
+    $('bw-mosaic').innerHTML=afters.slice(0,n).map(function(a,i){
+      var cls=i===0?'bw-big':(n===7&&i>=5)?'bw-wide':'';
+      return '<figure class="'+cls+'"><img src="'+a.src+'" alt="'+cap(a).replace(/"/g,'')+', after a Bardon Clean" loading="lazy" decoding="async"><figcaption>'+cap(a)+'</figcaption></figure>'; }).join('');
+    $('bw-gal').hidden=false;
+  }
+  try{
+    fetch(HUB+'/api/demo').then(function(r){ return r.ok?r.json():{}; }).then(function(d){
+      afters=((d&&d.afters)||[]).map(function(a){ return {src:HUB+a.url, room:a.room, service:a.service}; });
+      gallery(); phone();
+    }).catch(function(){});
+  }catch(e){}
+
+  copy(); start();
+})();
+</script>
+</section>
+<!-- =================== END THE BARDON WAY =================== -->
+</body></html>
