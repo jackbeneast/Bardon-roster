@@ -7,6 +7,7 @@ import {
 } from "../../lib/docs.mjs";
 import { notify, money, fmtDay } from "../../lib/notify.mjs";
 import { planImport } from "../../lib/jobberImport.mjs";
+import { jobInvoicePlan, createJobInvoice } from "../../lib/jobinv.mjs";
 
 // "Quote #172 for Hughes" style label.
 const label = (d) => `${d.kind === "quote" ? "Quote" : "Invoice"} #${d.num}${d.client?.name ? " for " + d.client.name : ""}`;
@@ -58,6 +59,11 @@ export default async (req) => {
       return json(out);
     }
     if (!admin) return json({ error: "Log in first" }, 401);
+    // Invoice now for a regular clean: hours, saved rate, client details, any invoice already made.
+    if (u.searchParams.get("jobinv")) {
+      const p = await jobInvoicePlan(s, u.searchParams.get("jobinv"));
+      return p ? json(p) : json({ error: "That job isn't on the roster any more." }, 404);
+    }
     let [docs, settings] = await Promise.all([loadDocs(s), loadSettings(s)]);
     // Top up open Jobber quotes (scope + policies) the first time the hub lists them.
     const thin = [];
@@ -143,6 +149,11 @@ export default async (req) => {
     }
     await s.set("jobber-import", { at: new Date().toISOString(), summary: { ...p.summary, openInvoices: undefined, openQuotes: undefined } });
     return json({ ok: true, summary: p.summary, report: p.report });
+  }
+  if (b.action === "jobinv") {
+    const r = await createJobInvoice(s, b);
+    if (r.error) return json({ error: r.error }, r.status || 400);
+    return json({ ok: true, ...r });
   }
   if (b.action === "settings") {
     const clean = cleanSettings(b.settings || {});

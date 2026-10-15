@@ -115,6 +115,10 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .sheet h3{font:700 22px/1.2 var(--serif);color:var(--dark);margin:0 0 12px}
 .sheet h3 em{font-style:italic;font-weight:500}
 .sheet .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.sheet.pv{max-height:94vh;display:flex;flex-direction:column;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.sheet.pv iframe{flex:1;width:100%;min-height:55vh;border:1px solid var(--line);border-radius:8px;background:var(--cream)}
+.sheet.pv .pvh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 10px}
+.sheet.pv .pvh h3{margin:0}
 .err{color:var(--terracotta-dark);font:500 13px/1.4 var(--sans);margin-top:10px}
 .toast{pointer-events:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:40;max-width:90vw;text-align:center}
 .center{text-align:center;padding:60px 16px;color:var(--dark)}
@@ -194,7 +198,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   }
 
   // ---------- Routing ----------
-  function route(){ var h=location.hash.replace(/^#\/?/,'').split('/'); return {v:h[0]||'list', id:h[1]||''}; }
+  function route(){ var h=location.hash.replace(/^#\/?/,'').split('/'); return {v:h[0]||'list', id:h[1]||'', sub:h[2]||''}; }
   function go(h){ if(location.hash==='#/'+h) render(); else location.hash='#/'+h; }
   var curHash=location.hash, bounce=false;
   window.addEventListener('hashchange',function(){
@@ -211,7 +215,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(!loaded){ app.innerHTML='<div class="center">Loading…</div>'; return; }
     var r=route();
     if(r.v==='edit') return renderEdit(r.id);
-    if(r.v==='doc') return renderDoc(r.id);
+    if(r.v==='doc'){ renderDoc(r.id); if(r.sub==='preview'&&!document.getElementById('scrim')){ var pd=docById(r.id); if(pd) previewSheet(pd); } return; }
     if(r.v==='library') return renderLibrary();
     if(r.v==='settings') return renderSettings();
     if(r.v==='import') return renderImport();
@@ -488,9 +492,9 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     h+='<div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi dark"><b>'+money(t.total)+'</b><span>Total'+(d.gst?' incl. GST':'')+'</span></div><div class="kpi"><b>'+(isQ?(t.deposit?money(t.deposit):'None'):money(t.due))+'</b><span>'+(isQ?'Deposit':'Still owing')+'</span></div></div>';
 
     h+='<div class="acts"><button class="btn primary wide" data-act="send">'+(d.state==='draft'?'Send to client':'Send again')+'</button>';
-    if(!isQ&&t.due>0.005) h+='<button class="btn dark" data-act="paid">Record payment</button>'+(d.state!=='draft'?'<button class="btn outline" data-act="remind">Text a reminder</button>':'<a class="btn outline" href="'+link(d)+'?preview" target="_blank" rel="noopener">Preview</a>');
-    else h+='<a class="btn plain" href="'+link(d)+'?preview" target="_blank" rel="noopener">Preview</a><button class="btn plain" data-go="edit/'+d.id+'">Edit</button>';
-    if(!isQ&&t.due>0.005) h+='<a class="btn plain" href="'+link(d)+'?preview" target="_blank" rel="noopener">Preview</a><button class="btn plain" data-go="edit/'+d.id+'">Edit</button>';
+    if(!isQ&&t.due>0.005) h+='<button class="btn dark" data-act="paid">Record payment</button>'+(d.state!=='draft'?'<button class="btn outline" data-act="remind">Text a reminder</button>':'<button class="btn outline" data-act="preview">Preview</button>');
+    else h+='<button class="btn plain" data-act="preview">Preview</button><button class="btn plain" data-go="edit/'+d.id+'">Edit</button>';
+    if(!isQ&&t.due>0.005) h+='<button class="btn plain" data-act="preview">Preview</button><button class="btn plain" data-go="edit/'+d.id+'">Edit</button>';
     h+='</div>';
 
     // Timeline
@@ -578,12 +582,30 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     return h+'</select></label>';
   }
   function wirePicker(s, d, extra, boxSel){ var p=s.querySelector('[data-tplpick]'); if(!p) return; p.addEventListener('change',function(){ var v=tplText(p.value,d,extra); if(v) s.querySelector(boxSel).value=v; }); }
+  // Full-screen look at the invoice or quote exactly as the client will see it, then send.
+  function previewSheet(d){
+    var s=sheet('<div class="pvh"><h3>'+title(d)+' <em>preview</em></h3><span class="pill '+d.state+'">'+(LABEL[d.state]||d.state)+'</span></div>'+
+      '<p class="sub" style="margin:-4px 0 10px">'+esc(d.client.name||'')+' · '+money(d.totals.total)+(d.gst?' incl. GST':'')+'. This is what the client will see.</p>'+
+      '<iframe src="'+esc(link(d))+'?preview" title="Invoice preview"></iframe>'+
+      '<div class="actions"><button class="btn primary grow" data-pv="send" style="min-height:52px">'+(d.state==='draft'?'Send to client':'Send again')+'</button></div>'+
+      '<div class="actions" style="margin-top:8px"><button class="btn plain grow" data-pv="edit">Edit</button><button class="btn plain grow" data-close>Close</button></div>');
+    s.querySelector('.sheet').classList.add('pv');
+    function unroute(){ if(route().sub){ history.replaceState(null,'','#/doc/'+d.id); curHash=location.hash; } }
+    s.addEventListener('click',function(e){
+      if(e.target===s||e.target.closest('[data-close]')){ unroute(); return; }
+      var b=e.target.closest('[data-pv]'); if(!b) return;
+      unroute();
+      if(b.dataset.pv==='send'){ closeSheet(); sendSheet(docById(d.id)||d,false); }
+      if(b.dataset.pv==='edit'){ closeSheet(); go('edit/'+d.id); }
+    });
+  }
   function sendSheet(d, reminder){
     var t=d.totals, l=link(d), fn=first(d.client.contact||d.client.name), what=d.site?d.site:(d.service||'your clean').toLowerCase();
     var msg=reminder?'Hi '+fn+', a friendly reminder that invoice #'+d.num+' for '+money(t.due)+' was due '+fdate(d.dueDate)+'. You can view and pay it here: '+l+' Thanks, Jack, Bardon Clean'
       :d.kind==='quote'?'Hi '+fn+', here\'s your quote from Bardon Clean for '+what+': '+l+' You can accept it online. Any questions, text me on '+S.settings.biz.sms+'. Jack'
       :(d.isDeposit?'Hi '+fn+', here\'s your deposit invoice #'+d.num+' from Bardon Clean for '+money(t.due)+', due today: '+l+' Your booking is tentative until the deposit is paid. Thanks, Jack':(reportLink(d)?'Hi '+fn+', your clean'+(d.site?' at '+d.site:'')+' is complete. Your job report, with before and after photos and the room-by-room sign-off, is here: '+reportLink(d)+'\n\nHere\'s the balance invoice #'+d.num+' for '+money(t.due)+': '+l+'\n\nThanks for choosing Bardon Clean. Jack':'Hi '+fn+', here\'s invoice #'+d.num+' from Bardon Clean for '+money(t.due)+': '+l+' Thanks, Jack'));
-    var tid=reminder?(d.isDeposit?'deposit_reminder':'invoice_overdue'):d.kind==='quote'?'quote_send':d.isDeposit?'deposit_invoice':reportLink(d)?'clean_done_balance':'invoice_send';
+    if(d.regular&&!reminder) msg='Hi '+fn+', thanks for having us'+(d.site?' at '+d.site:'')+(d.serviceDate===today()?' today':'')+'. Here\'s invoice #'+d.num+' for '+money(t.due)+': '+l+(reportLink(d)?'\n\nYour job report with photos is here: '+reportLink(d):'')+'\n\nThanks, Jack, Bardon Clean';
+    var tid=reminder?(d.isDeposit?'deposit_reminder':'invoice_overdue'):d.kind==='quote'?'quote_send':d.isDeposit?'deposit_invoice':d.regular?'regular_invoice':reportLink(d)?'clean_done_balance':'invoice_send';
     msg=tplText(tid,d)||msg;
     var subj=reminder?'Reminder: invoice #'+d.num+' from Bardon Clean':(d.kind==='quote'?'Your quote from Bardon Clean':'Invoice #'+d.num+' from Bardon Clean')+(d.site?' · '+d.site:'');
     var h='<h3>'+(reminder?'Send a <em>reminder</em>':'Send '+(d.kind==='quote'?'the <em>quote</em>':'the <em>invoice</em>'))+'</h3>'+tplPicker(tid,d)+'<label class="l">Message<textarea id="smsg" style="min-height:180px">'+esc(msg)+'</textarea></label><div class="sendopt" style="margin-top:12px">';
@@ -821,6 +843,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(a==='additem'){ draft.items.push({title:'',desc:'',qty:1,price:''}); dirty=true; redrawItems(); var all=app.querySelectorAll('.item'); var last=all[all.length-1]; if(last){ last.scrollIntoView({behavior:'smooth',block:'center'}); last.querySelector('input').focus(); } return; }
     if(a==='save'){ saveDraft(el); return; }
     if(a==='send'&&d){ sendSheet(d,false); return; }
+    if(a==='preview'&&d){ previewSheet(d); return; }
     if(a==='remind'&&d){ sendSheet(d,true); return; }
     if(a==='paid'&&d){ paySheet(d); return; }
     if(a==='tojob'&&d){ jobSheetQ(d); return; }

@@ -342,6 +342,12 @@ body.has-nav #app{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .qa button.done{background:#E6EFE3;border-color:#CFE0CA;color:#2F5A35}
 .qa button small{font-weight:400;font-size:11px;opacity:.8}
 .qlinks{display:flex;justify-content:space-between;gap:10px;margin-top:10px;flex-wrap:wrap}
+.ivc{background:var(--tint);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:4px;font-variant-numeric:tabular-nums}
+.ivc div{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:15px;color:var(--dark)}
+.ivc .m{color:var(--meta);font-size:14px}
+.ivc .g{border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font:700 20px/1.2 var(--serif)}
+.ivask{border-left:4px solid var(--terracotta);background:var(--white);border-radius:6px;padding:10px 12px;font-size:14px;color:var(--dark);margin:0}
+.ivbig{width:100%;min-height:56px;font-size:17px}
 .qlinks button,.qlinks a{background:none;border:0;color:var(--terracotta-dark);font:500 14px var(--sans);text-decoration:underline;cursor:pointer;padding:8px 0}
 .mini{display:grid;gap:8px}
 .mini button,.mini a.wr{display:grid;text-decoration:none;grid-template-columns:62px 1fr;gap:10px;text-align:left;background:var(--white);border:1px solid var(--line);border-radius:8px;padding:12px;font:inherit;color:inherit;cursor:pointer;width:100%}
@@ -849,6 +855,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<div class="err" id="jobErr" hidden></div>';
     h+='<div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save job</button></div>';
     if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Copy client link</button>':'')+'</div>'+(job.share?'<div class="actions" style="margin-top:8px"><button type="button" class="btn primary" data-confirmj style="flex:1">'+(tmrJob(sib)?'Send day-before reminder':'Send booking confirmation')+'</button></div>':'');
+    if(!isNew&&isRegular(job)) h+='<div class="actions"><button type="button" class="btn primary" data-jinvs style="flex:1">'+(invOf(job)?'Invoice #'+esc(invOf(job).num)+' made · open it':'Create invoice')+'</button></div>';
     if(!isNew&&clientMob(job)) h+='<div class="actions"><a class="btn outline" href="'+textClientHref(job)+'" style="flex:1;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">Text client</a></div>';
     if(!isNew&&teamOn(job).length) h+='<div class="actions"><button type="button" class="btn primary" data-textteam style="flex:1">Text team</button></div>';
     if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-dup>Duplicate</button><button type="button" class="btn danger" data-del>'+(sib.length>1?'Delete all '+sib.length+' days':'Delete job')+'</button></div>';
@@ -958,6 +965,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       else { del.dataset.sure='1'; del.textContent='Tap again to delete'; }
     };
     var tt=s.querySelector('[data-textteam]'); if(tt) tt.onclick=function(){ teamTextSheet(job); };
+    var ji=s.querySelector('[data-jinvs]'); if(ji) ji.onclick=function(){ var x=invOf(job); if(x){ location.href='/money/#/doc/'+x.id+'/preview'; return; } invoiceSheet(job.id); };
     var lj=s.querySelector('[data-livej]'); if(lj) lj.onclick=function(){ liveSheet(job.id,''); };
     var cj=s.querySelector('[data-confirmj]'); if(cj) cj.onclick=function(){ cj.disabled=true; cj.textContent='Loading…';
       var ids=sib.map(function(j){return j.id;}), first=BCConfirm.withDays(sib[0], state.jobs), tj=tmrJob(sib);
@@ -1601,6 +1609,56 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     return '/messages/#/t/'+clientMob(j)+'?name='+encodeURIComponent(j.client||'')+'&job='+encodeURIComponent(j.id)+(tpl?'&tpl='+tpl:''); }
   function jobsFor(dateIso){ return state.jobs.filter(function(j){return j.date===dateIso && !j.sample;}).sort(function(a,b){return (a.start||'').localeCompare(b.start||'');}); }
 
+  // ---------- Invoice now (regular cleans): hours × hourly rate + GST ----------
+  function isRegular(j){ return !!(j && (j.ser || j.rec || /regular/i.test(j.service||''))); }
+  function invoicedMap(docs){ var m={}; docs.forEach(function(d){ if(d.kind==='invoice'&&d.jobId&&!d.archived) m[d.jobId]={id:d.id,num:d.num,state:d.state}; }); return m; }
+  function invOf(j){ var m=state.invoiced; if(!m||!j) return null; var g=groupOf(j); for(var i=0;i<g.length;i++) if(m[g[i].id]) return m[g[i].id]; return null; }
+  // Finished regular cleans from today and yesterday that haven't been invoiced.
+  function toInvoice(){
+    if(!canEdit||!state.invoiced) return [];
+    var t=iso(today), y=iso(addDays(today,-1)), now=pad(new Date().getHours())+':'+pad(new Date().getMinutes());
+    return state.jobs.filter(function(j){
+      if(j.sample||!isRegular(j)||(j.date!==t&&j.date!==y)) return false;
+      var g=groupOf(j); if(g[g.length-1]!==j||invOf(j)) return false;
+      var L=liveOf(j); return j.date===y || !!L.done || (j.end&&j.end<=now);
+    });
+  }
+  function m2(v){ return '$'+(+v||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function invoiceSheet(jobId){
+    var s=openSheet('<h3>Invoice <em>now</em></h3><p class="sub">Loading the hours…</p>');
+    api('/api/docs?jobinv='+encodeURIComponent(jobId)).then(function(p){
+      if(!document.getElementById('scrim')) return;
+      var from={logged:'From the hours you logged',clock:'From clock-in and clock-off',partclock:'Rostered hours. Not everyone clocked off',roster:'Rostered hours. Nobody clocked in'}[p.hoursFrom]||'';
+      var hh=String(p.hours||''), noRate=p.rate==null;
+      var h='<h3>Invoice <em>'+esc(p.client||'client')+'</em></h3><p class="sub" style="margin:-6px 0 12px">'+esc([fmtDay(parse(p.date)),p.address||p.suburb].filter(Boolean).join(' · '))+'</p>';
+      if(p.existing&&p.existing.length) h+='<div class="warn" style="margin:0 0 12px">Invoice #'+esc(p.existing[0].num)+' ('+m2(p.existing[0].total)+') was already made for this clean. <a href="/money/#/doc/'+p.existing[0].id+'/preview">Open it</a> or make another below.</div>';
+      h+='<form id="ivf" class="fgrid" novalidate>';
+      if(noRate) h+='<p class="ivask"><strong>What\'s your hourly rate for '+esc(p.client||'this client')+'?</strong> Enter it before GST. It\'s saved for next time.</p>';
+      h+='<div class="two"><label class="l" for="iv_h">Hours to bill<input id="iv_h" name="hours" type="number" inputmode="decimal" step="0.25" min="0" value="'+esc(hh)+'"></label>';
+      h+='<label class="l" for="iv_r">Hourly rate'+(p.gst?' (ex GST)':'')+'<input id="iv_r" name="rate" type="number" inputmode="decimal" step="0.5" min="0" value="'+(noRate?'':esc(p.rate))+'" placeholder="e.g. 60"></label></div>';
+      h+='<p class="sub" style="margin:-4px 0 0;font-size:12.5px">'+esc(from)+(p.hoursDetail?': '+esc(p.hoursDetail):'')+'. All cleaners\' hours added up. Change it if needed.</p>';
+      h+='<div class="ivc" id="ivc"></div>';
+      if(!noRate) h+='<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--dark)"><input type="checkbox" name="remember" checked style="width:20px;height:20px;min-height:0;margin:0">Save this rate for '+esc(p.client||'this client')+'</label>';
+      h+='<p class="sub" style="margin:0;font-size:12.5px">To '+esc([p.contact.contact||p.contact.name, p.contact.phone, p.contact.email].filter(Boolean).join(' · ')||'the client')+'. You\'ll see a preview before anything is sent.</p>';
+      h+='<div class="err" id="ivErr" hidden></div><button type="submit" class="btn primary ivbig">Create invoice</button><div class="actions" style="margin-top:0"><button type="button" class="btn outline" data-close style="flex:1">Cancel</button></div></form>';
+      s.querySelector('.sheet').innerHTML=h;
+      var f=s.querySelector('#ivf'), out=s.querySelector('#ivc'), er=s.querySelector('#ivErr');
+      s.querySelector('[data-close]').onclick=closeSheet;
+      function calc(){ var hr=+f.elements.hours.value||0, rt=+f.elements.rate.value||0, sub=Math.round(hr*rt*100)/100, g=p.gst?Math.round(sub*10)/100:0;
+        out.innerHTML='<div class="m"><span>'+(hr||0)+' h × '+m2(rt)+'</span><span>'+m2(sub)+'</span></div>'+(p.gst?'<div class="m"><span>GST 10%</span><span>'+m2(g)+'</span></div>':'')+'<div class="g"><span>Total</span><span>'+m2(sub+g)+'</span></div>'; }
+      calc(); f.addEventListener('input',calc);
+      if(noRate) setTimeout(function(){ f.elements.rate.focus(); },150);
+      f.onsubmit=function(e){ e.preventDefault(); er.hidden=true;
+        var hr=+f.elements.hours.value, rt=+f.elements.rate.value;
+        if(!(hr>0)){ er.textContent='Enter the hours to bill.'; er.hidden=false; return; }
+        if(!(rt>0)){ er.textContent='Enter your hourly rate.'; er.hidden=false; f.elements.rate.focus(); return; }
+        var b=f.querySelector('.ivbig'); b.disabled=true; b.textContent='Creating…';
+        api('/api/docs',{method:'POST',body:{action:'jobinv',jobId:p.jobId,hours:hr,rate:rt,remember:f.elements.remember?f.elements.remember.checked:true}})
+          .then(function(r){ location.href='/money/#/doc/'+r.id+'/preview'; })
+          .catch(function(x){ b.disabled=false; b.textContent='Create invoice'; er.textContent=x.message; er.hidden=false; });
+      };
+    }).catch(function(x){ var sh=s.querySelector('.sheet'); if(sh) sh.innerHTML='<h3>Invoice <em>now</em></h3><div class="err">'+esc(x.message)+'</div><div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Close</button></div>'; var c=s.querySelector('[data-close]'); if(c) c.onclick=closeSheet; });
+  }
   function quickCard(j, pid){
     var L=liveOf(j), rs=roomsOf(j), done=rs.filter(function(r){return L.rooms[r]&&L.rooms[r].s==='d';}).length, sum=liveSum(j), ag=agentOf(j.agentId);
     var mineArr = pid ? L.arrived[pid] : null, arrN=Object.keys(L.arrived||{}).length, staffN=(j.staff||[]).length;
@@ -1622,7 +1680,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     else h+='<button type="button" class="'+(arrN&&arrN>=staffN?'done':'')+'" data-qa="rooms"'+ctx+'>'+(arrN?IC.check:IC.pin)+'On site<small>'+arrN+' of '+staffN+' in'+(Object.keys(L.left||{}).length?' · '+Object.keys(L.left).length+' off':'')+'</small></button>';
     h+='<button type="button" data-qa="note"'+ctx+'>'+IC.flag+'Note for agent<small>'+(L.flags.length?L.flags.length+' added':'Damage, marks')+'</small></button>';
     h+='<button type="button" class="'+(L.done?'done':'')+'" data-qa="finish"'+ctx+'>'+(L.done?IC.check:IC.tick)+(L.done?'Ready<small>'+fmtClock(L.done)+'</small>':'Lock-up &amp; finish')+'</button>';
-    h+='</div><div class="qlinks"><button type="button" data-live="'+j.id+'" data-p="'+esc(pid||'')+'">All updates</button>'+(canEdit?'<button type="button" data-edit="'+j.id+'">Edit job</button>':'')+(canEdit&&j.share?'<button type="button" data-vcopy="'+esc(j.share)+'">Client link</button>':'')+(canEdit&&clientMob(j)?'<a href="'+textClientHref(j)+'">Text client</a>':'')+'</div></section>';
+    h+='</div><div class="qlinks"><button type="button" data-live="'+j.id+'" data-p="'+esc(pid||'')+'">All updates</button>'+(canEdit?'<button type="button" data-edit="'+j.id+'">Edit job</button>':'')+(canEdit&&j.share?'<button type="button" data-vcopy="'+esc(j.share)+'">Client link</button>':'')+(canEdit&&clientMob(j)?'<a href="'+textClientHref(j)+'">Text client</a>':'')+(canEdit&&isRegular(j)&&j.date<=iso(today)?'<button type="button" data-jinv="'+j.id+'">'+(invOf(j)?'Invoice #'+esc(invOf(j).num):'Invoice now')+'</button>':'')+'</div></section>';
     return h;
   }
   function miniList(list){
@@ -1690,6 +1748,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var h='', nc=needsConfirm(), waitN=nc.filter(function(x){return x.c.v==='wait';}).length;
     if(waitN) h+=aCard({key:'unconf',title:waitN+' shift'+(waitN>1?'s':'')+' not confirmed',sub:'In the next two weeks',btns:['<button type="button" class="go" data-act="confirms">Review</button>']});
     state.team.forEach(function(m){ var j=firstDayDue(m.id); if(j && j.date<=iso(addDays(today,1)) && !(state.acks&&state.acks[m.id])) h+=aCard({key:'ack_'+m.id,title:esc(m.name.split(' ')[0])+' hasn\'t read their first-day info',sub:'Starts '+fmtDay(parse(j.date)),btns:[tx(mobOf(m.phone),m.name,'','Text them','go')]}); });
+    toInvoice().forEach(function(j){ h+=aCard({key:'jinv_'+j.id,title:'Invoice '+esc(j.client||j.suburb||'regular clean'),sub:esc([j.date===iso(today)?'Today':fmtDay(parse(j.date)),j.address||j.suburb,'Regular clean'].filter(Boolean).join(' · ')),btns:['<button type="button" class="go" data-jinv="'+j.id+'">Invoice now</button>']}); });
     var w=state.books&&state.books.wrap;
     if(w&&w.length) h+=aCard({key:'wrap_'+w.length,title:w.length+' finished job'+(w.length===1?'':'s')+' missing hours',sub:'Usually means someone forgot to clock off. '+esc(w.slice(0,3).map(function(b){return b.client||b.suburb||'Job';}).join(', '))+(w.length>3?' and '+(w.length-3)+' more':''),btns:['<a class="go" href="/books/#/wrap/'+encodeURIComponent(w[0].key)+'">Log hours</a>']});
     if(pipe){ var f=pipe.stages.done.filter(function(c){return !c.dismissed;}); if(f.length) h+=aCard({key:'follow_'+f.length,title:f.length+' finished client'+(f.length===1?'':'s')+' to follow up',sub:'Reviews, move-in cleans and regular-clean offers',btns:['<button type="button" class="go" data-pgo="done">Follow up</button>']}); }
@@ -2217,12 +2276,12 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   function refresh(){
     return api('/api/roster').then(function(d){
-      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},access:d.access||{},kudos:d.kudos||[],requests:d.requests||[],pay:d.pay||null,money:state.money||[],books:state.books||null,savedAt:d.savedAt||'',actUnread:d.actUnread||0,msgUnread:d.msgUnread||0,notifyOn:!!d.notifyOn}; adminSet=d.adminSet; loaded=true; loadErr='';
+      state={team:d.team||[],jobs:d.jobs||[],confirms:d.confirms||{},info:d.info||{},acks:d.acks||{},agents:d.agents||[],live:d.live||{},access:d.access||{},kudos:d.kudos||[],requests:d.requests||[],pay:d.pay||null,money:state.money||[],invoiced:state.invoiced||null,books:state.books||null,savedAt:d.savedAt||'',actUnread:d.actUnread||0,msgUnread:d.msgUnread||0,notifyOn:!!d.notifyOn}; adminSet=d.adminSet; loaded=true; loadErr='';
       if(key() && !d.admin){ key(null); }
       if(d.admin&&window.BCTpl) BCTpl.load(key()).catch(function(){});
       if(d.admin) api('/api/books?sum=1').then(function(b){ state.books=b; if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
       if(d.admin){ loadPipe(); loadCands(); }
-      if(d.admin) api('/api/docs').then(function(m){ state.money=(m.docs||[]).filter(function(x){ return x.flag||x.state==='overdue'; }).slice(0,8); if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
+      if(d.admin) api('/api/docs').then(function(m){ state.money=(m.docs||[]).filter(function(x){ return x.flag||x.state==='overdue'; }).slice(0,8); state.invoiced=invoicedMap(m.docs||[]); if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
       canEdit=!!d.admin;
       var hj=/^#job=([\w-]+)/.exec(location.hash); if(hj && canEdit){ history.replaceState(null,'',location.pathname); var jj=(d.jobs||[]).filter(function(x){return x.id===hj[1];})[0]; if(jj) setTimeout(function(){ view='roster'; render(); jobSheet(state.jobs.filter(function(x){return x.id===hj[1];})[0]); },0); }
       if (filter!=='all' && filter!=='open' && !member(filter)) filter='all';
@@ -2285,6 +2344,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var wn=e.target.closest('[data-wnav]'); if(wn){ wageOff = wn.dataset.wnav==='0'?0:wageOff+(+wn.dataset.wnav); render(); return; }
     var cl=e.target.closest('[data-copylink2]'); if(cl){ copyText(cl.dataset.copylink2); return; }
     var vc=e.target.closest('[data-vcopy]'); if(vc){ copyText(location.origin+'/v/'+vc.dataset.vcopy); return; }
+    var jv=e.target.closest('[data-jinv]'); if(jv){ var jx=state.jobs.find(function(q){return q.id===jv.dataset.jinv;}), ix=jx&&invOf(jx); if(ix){ location.href='/money/#/doc/'+ix.id+'/preview'; return; } invoiceSheet(jv.dataset.jinv); return; }
     var lv=e.target.closest('[data-live]'); if(lv){ liveSheet(lv.dataset.live, lv.dataset.p||''); return; }
     var rq=e.target.closest('[data-req]'); if(rq){ var r=(state.requests||[]).find(function(x){return x.id===rq.dataset.req;}); if(r){ pendingReq=r.id; jobSheet(null, {client:'',suburb:r.suburb,address:r.address,date:r.readyDate,start:'08:00',end:'16:00',service:SERVICES.indexOf(r.service)>=0?r.service:'Pre-sale clean',staff:[],agentId:r.agentId,readyBy:r.readyFor+' '+fmtDay(parse(r.readyDate)),notes:[r.beds?r.beds+' bed':'',r.baths?r.baths+' bath':'','Access: '+r.access,'Invoice: '+r.invoice,r.notes].filter(Boolean).join('. ')}); } return; }
     var rx=e.target.closest('[data-reqx]'); if(rx){ if(!rx.dataset.sure){ rx.dataset.sure='1'; rx.textContent='Tap again'; return; } api('/api/agent',{method:'POST',body:{action:'dismiss',id:rx.dataset.reqx}}).then(refresh).then(function(){toast('Request dismissed');}).catch(function(er){toast(er.message);}); return; }
