@@ -489,7 +489,9 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(d.flag){ api('POST','/api/docs',{action:'seen',id:d.id}).catch(function(){}); d.flag=null; }
     var t=d.totals, isQ=d.kind==='quote';
     var h=topbar('#/list')+'<h1>'+title(d)+'</h1><p class="sub"><span class="pill '+d.state+'">'+(LABEL[d.state]||d.state)+'</span> &nbsp;'+esc(d.client.name)+(d.site?' · '+esc(d.site):'')+'</p>';
-    h+='<div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi dark"><b>'+money(t.total)+'</b><span>Total'+(d.gst?' incl. GST':'')+'</span></div><div class="kpi"><b>'+(isQ?(t.deposit?money(t.deposit):'None'):money(t.due))+'</b><span>'+(isQ?'Deposit':'Still owing')+'</span></div></div>';
+    var spL=isQ&&t.off>0&&d.special&&!d.special.baked;
+    if(spL) h+='<div style="background:#1A1A1A;color:#F5F0EB;border-radius:10px;padding:12px 14px;margin:0 0 12px;font-size:14px;box-shadow:inset 0 3px 0 #F4B942"><b style="color:#F4B942">Today-only '+d.special.pct+'% special is live.</b> '+money(t.total)+' instead of '+money(t.was)+' if they accept before midnight. End it from the pipeline.</div>';
+    h+='<div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi dark"><b>'+money(t.total)+'</b><span>Total'+(d.gst?' incl. GST':'')+(spL?' · special':'')+'</span></div><div class="kpi"><b>'+(isQ?(t.deposit?money(t.deposit):'None'):money(t.due))+'</b><span>'+(isQ?'Deposit':'Still owing')+'</span></div></div>';
 
     h+='<div class="acts"><button class="btn primary wide" data-act="send">'+(d.state==='draft'?'Send to client':'Send again')+'</button>';
     if(!isQ&&t.due>0.005) h+='<button class="btn dark" data-act="paid">Record payment</button>'+(d.state!=='draft'?'<button class="btn outline" data-act="remind">Text a reminder</button>':'<button class="btn outline" data-act="preview">Preview</button>');
@@ -719,7 +721,9 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var t=d.totals, isQ=d.kind==='quote';
     var h=topbar('#/list')+'<h1>'+title(d)+'</h1><p class="sub"><span class="pill '+d.state+'">'+(LABEL[d.state]||d.state)+'</span> &nbsp;'+esc(d.client.name)+(d.site?' · '+esc(d.site):'')+'</p>';
     h+='<div class="hint-card" style="margin-bottom:14px">From Jobber. Kept here for your records, so it can\'t be edited or sent from the hub.</div>';
-    h+='<div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi dark"><b>'+money(t.total)+'</b><span>Total'+(d.gst?' incl. GST':'')+'</span></div><div class="kpi"><b>'+(isQ?fdate(d.issued):money(t.paid))+'</b><span>'+(isQ?'Sent':'Paid')+'</span></div></div>';
+    var spL=isQ&&t.off>0&&d.special&&!d.special.baked;
+    if(spL) h+='<div style="background:#1A1A1A;color:#F5F0EB;border-radius:10px;padding:12px 14px;margin:0 0 12px;font-size:14px;box-shadow:inset 0 3px 0 #F4B942"><b style="color:#F4B942">Today-only '+d.special.pct+'% special is live.</b> '+money(t.total)+' instead of '+money(t.was)+' if they accept before midnight. End it from the pipeline.</div>';
+    h+='<div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi dark"><b>'+money(t.total)+'</b><span>Total'+(d.gst?' incl. GST':'')+(spL?' · special':'')+'</span></div><div class="kpi"><b>'+(isQ?fdate(d.issued):money(t.paid))+'</b><span>'+(isQ?'Sent':'Paid')+'</span></div></div>';
     h+='<div class="card">'+(d.jobberTitle?'<h2>'+esc(d.jobberTitle)+'</h2>':'')+(d.items||[]).map(function(i){ return '<div class="pay"><span>'+esc(i.title)+(i.qty!==1?' × '+i.qty:'')+'</span><span>'+money(i.qty*i.price)+'</span></div>'; }).join('')+'</div>';
     if(!isQ){ h+='<div class="card"><h2>Payments</h2>'+((d.payments||[]).length?d.payments.map(function(p){ return '<div class="pay"><span>'+fdate(p.date)+' · '+esc(p.method)+'</span><span><b>'+money(p.amt)+'</b></span></div>'; }).join(''):'<p class="sub" style="margin:0">None recorded in Jobber.</p>')+'</div>'; }
     else if(d.state==='accepted') h+='<p class="hint">Approved in Jobber '+fdate((d.acceptedAt||'').slice(0,10))+'.</p>';

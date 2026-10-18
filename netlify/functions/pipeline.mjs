@@ -40,9 +40,13 @@ export async function buildPipeline(s) {
   const deposits = docs.filter((d) => d.kind === "invoice" && isDepositInv(d));
   for (const q of quotes) {
     const base = { key: "q:" + q.id, name: q.client?.name || "Client", phone: mob(q.client?.phone), service: q.service || "", where: q.suburb || "", total: q.totals.total, num: q.num, doc: q.id };
-    if (q.state === "declined" || q.state === "expired") { if (daysSince(q.created, t) <= 60) lost.push({ ...base, why: q.state }); continue; }
+    if (q.state === "declined" || q.state === "expired") { if (daysSince(q.created, t) <= 60) lost.push({ ...base, why: q.state, total: q.totals.was }); continue; }
     if (q.state !== "accepted") {
-      out.quoted.push({ ...base, draft: q.state === "draft", views: q.views || 0, opened: q.viewedAt ? daysSince(q.viewedAt, t) : null, sent: daysSince(q.sentAt || q.created, t), validUntil: q.validUntil || "" });
+      const sp = q.special && !q.special.baked ? q.special : null;
+      out.quoted.push({
+        ...base, draft: q.state === "draft", views: q.views || 0, opened: q.viewedAt ? daysSince(q.viewedAt, t) : null, sent: daysSince(q.sentAt || q.created, t), validUntil: q.validUntil || "",
+        was: q.totals.was, special: sp ? { pct: sp.pct, live: sp.date === t, ago: daysSince(sp.date, t), texted: !!sp.texted } : null,
+      });
       continue;
     }
     // 3. Booked: accepted quote whose clean hasn't happened yet.

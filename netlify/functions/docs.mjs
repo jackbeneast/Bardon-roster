@@ -4,7 +4,10 @@ import { store, json, checkAdmin } from "../../lib/core.mjs";
 import {
   loadSettings, cleanSettings, cleanDoc, loadDocs, findByToken, saveDoc, newDoc,
   recordPayment, addJobFromQuote, publicView, fillJobberQuote, totals, statusOf, today, addDays, depositDesc, reportFor, freeDates,
+  specialLive, bakeSpecial,
 } from "../../lib/docs.mjs";
+import { loadTemplates, fill } from "../../lib/templates.mjs";
+import { sendSms, auMobile, mmReady } from "../../lib/mm.mjs";
 import { notify, money, fmtDay } from "../../lib/notify.mjs";
 import { planImport } from "../../lib/jobberImport.mjs";
 import { jobInvoicePlan, createJobInvoice } from "../../lib/jobinv.mjs";
@@ -92,6 +95,7 @@ export default async (req) => {
       if (!free.includes(b.date)) return json({ error: "That day has just been booked. Please pick another." }, 409);
       q.serviceDate = b.date; q.datePicked = true;
     }
+    const special = bakeSpecial(q);
     q.status = "accepted"; q.acceptedAt = new Date().toISOString(); q.acceptedName = name;
     q.flag = "accepted"; q.flagAt = q.acceptedAt;
     const set = await loadSettings(s);
@@ -113,7 +117,7 @@ export default async (req) => {
     const tq = totals(q);
     await notify(s, {
       type: "quote_accept", title: `${label(q)} accepted`,
-      body: `${money(tq.total)}${q.site ? " · " + q.site : ""}${q.serviceDate ? `\nClean ${fmtDay(q.serviceDate)}${q.datePicked ? " (they picked it)" : ""}${q.jobId ? ", added to the roster" : ""}` : "\nNo date yet, add it to the roster"}${q.depositInvoice ? `\n${q.depositPct}% deposit invoice sent to them` : ""}`,
+      body: `${money(tq.total)}${q.site ? " · " + q.site : ""}${q.serviceDate ? `\nClean ${fmtDay(q.serviceDate)}${q.datePicked ? " (they picked it)" : ""}${q.jobId ? ", added to the roster" : ""}` : "\nNo date yet, add it to the roster"}${special ? `\nBooked on the today-only ${q.special.pct}% special` : ""}${q.depositInvoice ? `\n${q.depositPct}% deposit invoice sent to them` : ""}`,
       tags: "tada", priority: 5, url: `/money/#/doc/${q.id}`,
     });
     return json({ ok: true });
@@ -181,7 +185,7 @@ export default async (req) => {
       if (roster.jobs.some((j) => j.id === d.jobId)) return json({ ok: true, jobId: d.jobId });
       d.jobId = ""; // the job was deleted from the roster, so make a new one
     }
-    if (d.status !== "accepted") { d.status = "accepted"; d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; }
+    if (d.status !== "accepted") { bakeSpecial(d); d.status = "accepted"; d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; }
     d.jobId = await addJobFromQuote(s, d, { date: b.date, start: b.start, end: b.end });
     for (const iid of [d.depositInvoice, ...(d.invoices || [])].filter(Boolean)) { const x = await s.get(`doc/${iid}`); if (x && !x.serviceDate) { x.serviceDate = d.serviceDate; await saveDoc(s, x); } }
     await saveDoc(s, d);
@@ -192,8 +196,36 @@ export default async (req) => {
   if (b.action === "seen") { delete d.flag; delete d.flagAt; await saveDoc(s, d); return json({ ok: true }); }
   if (b.action === "status" && d.kind === "quote" && ["accepted", "declined", "sent"].includes(b.status)) {
     d.status = b.status;
-    if (b.status === "accepted") { d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; try { d.jobId = (await addJobFromQuote(s, d)) || d.jobId; } catch {} }
+    if (b.status === "accepted") { bakeSpecial(d); d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; try { d.jobId = (await addJobFromQuote(s, d)) || d.jobId; } catch {} }
     await saveDoc(s, d); return json({ ok: true });
+  }
+  if (b.action === "special" && d.kind === "quote") {
+    // Today-only special: preview → send (texts the client and turns the price on) or end.
+    if (["accepted", "declined"].includes(d.status)) return json({ error: "This quote is already " + d.status + "." }, 409);
+    if (d.status === "draft") return json({ error: "Send the quote first, then offer the special." }, 409);
+    if (b.end) { if (d.special && !d.special.baked) delete d.special; await saveDoc(s, d); return json({ ok: true }); }
+    const pct = Math.min(50, Math.max(1, Math.round(Number(b.pct) || 15)));
+    const was = totals({ ...d, special: null }), now = totals({ ...d, special: { pct, date: today() } });
+    const phone = auMobile(d.client?.phone);
+    const site = (process.env.URL || "https://bardon-roster.netlify.app").replace(/\/$/, "");
+    const tpl = (await loadTemplates(s)).list.find((x) => x.id === "quote_special");
+    const vars = {
+      first: (d.client?.contact || d.client?.name || "").trim().split(/\s+/)[0], name: d.client?.name || "",
+      service: (d.service || "clean").toLowerCase(), address: d.site || "", suburb: d.suburb || "", quote_no: String(d.num),
+      quote_link: `${site}/q/${d.token}`, quote_total: money(was.total), special_total: money(now.total),
+      special_pct: pct + "%", saving: money(r2(was.total - now.total)), deposit: now.deposit ? money(now.deposit) : "",
+    };
+    const text = (typeof b.text === "string" && b.text.trim()) ? b.text.trim().slice(0, 1500) : fill(tpl.text, vars).text;
+    if (b.preview) return json({ ok: true, pct, was: was.total, now: now.total, saving: r2(was.total - now.total), text, phone, mm: mmReady(), live: specialLive(d) });
+    if (b.send) {
+      if (!phone) return json({ error: "No mobile on this quote. Add one, or turn it on without a text." }, 400);
+      const r = await sendSms(phone, text, `special:${d.num}`, { name: d.client?.name || "" });
+      if (!r.ok) return json({ error: r.error }, r.status || 502);
+    }
+    d.special = { pct, date: today(), at: new Date().toISOString(), texted: !!b.send };
+    if (!d.validUntil || d.validUntil < today()) d.validUntil = today(); // revives an expired quote for today
+    await saveDoc(s, d);
+    return json({ ok: true, sent: !!b.send, now: now.total });
   }
   if (b.action === "pay") {
     const amt = Number(b.amt);
