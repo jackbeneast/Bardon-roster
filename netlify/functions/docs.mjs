@@ -54,10 +54,10 @@ export default async (req) => {
       out.card = !!process.env.STRIPE_SECRET_KEY;
       // Invoices link to the job report (live page with photos) once the job is on the roster.
       if (d.kind === "invoice" && !d.isDeposit) { const r = await reportFor(s, d); if (r) out.report = r; }
-      // After accepting, point the client at their deposit invoice.
+      // After accepting, point the client at their deposit invoice, but only once Jack has sent it.
       if (d.kind === "quote" && d.depositInvoice) {
         const inv = await s.get(`doc/${d.depositInvoice}`);
-        if (inv) out.depositLink = { token: inv.token, num: inv.num, state: statusOf(inv), due: totals(inv).due };
+        if (inv && inv.status !== "draft") out.depositLink = { token: inv.token, num: inv.num, state: statusOf(inv), due: totals(inv).due };
       }
       return json(out);
     }
@@ -99,10 +99,12 @@ export default async (req) => {
     q.status = "accepted"; q.acceptedAt = new Date().toISOString(); q.acceptedName = name;
     q.flag = "accepted"; q.flagAt = q.acceptedAt;
     const set = await loadSettings(s);
+    // The deposit invoice is drafted, not sent: Jack sends it himself from the hub
+    // so it lands in the client's Messages thread alongside the rest of the conversation.
     if (q.depositPct > 0 && !q.depositInvoice) {
       const t = totals(q);
       const inv = await newDoc(s, set, {
-        kind: "invoice", status: "sent", sentAt: q.acceptedAt, quoteId: q.id, quoteNum: q.num,
+        kind: "invoice", status: "draft", quoteId: q.id, quoteNum: q.num,
         client: q.client, site: q.site, suburb: q.suburb, service: q.service, serviceDate: q.serviceDate,
         issued: today(), dueDate: today(), gst: q.gst, showTerms: false,
         isDeposit: true,
@@ -117,7 +119,7 @@ export default async (req) => {
     const tq = totals(q);
     await notify(s, {
       type: "quote_accept", title: `${label(q)} accepted`,
-      body: `${money(tq.total)}${q.site ? " · " + q.site : ""}${q.serviceDate ? `\nClean ${fmtDay(q.serviceDate)}${q.datePicked ? " (they picked it)" : ""}${q.jobId ? ", added to the roster" : ""}` : "\nNo date yet, add it to the roster"}${special ? `\nBooked on the today-only ${q.special.pct}% special` : ""}${q.depositInvoice ? `\n${q.depositPct}% deposit invoice sent to them` : ""}`,
+      body: `${money(tq.total)}${q.site ? " · " + q.site : ""}${q.serviceDate ? `\nClean ${fmtDay(q.serviceDate)}${q.datePicked ? " (they picked it)" : ""}${q.jobId ? ", added to the roster" : ""}` : "\nNo date yet, add it to the roster"}${special ? `\nBooked on the today-only ${q.special.pct}% special` : ""}${q.depositInvoice ? `\n${q.depositPct}% deposit invoice drafted, ready for you to send` : ""}`,
       tags: "tada", priority: 5, url: `/money/#/doc/${q.id}`,
     });
     return json({ ok: true });
