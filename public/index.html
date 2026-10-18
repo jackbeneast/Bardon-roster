@@ -1895,7 +1895,11 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function specSheet(docId,pct,edited){
     pct=pct||15;
     var card=(pipe?pipe.stages.quoted.concat(pipe.lost):[]).filter(function(x){return x.doc===docId;})[0]||{};
-    openSheet('<div class="sphero"><div class="ey">Today-only special</div><h3>Loading…</h3></div>');
+    var sh=openSheet('<div class="sphero"><div class="ey">Today-only special</div><h3>Loading…</h3></div>');
+    // The sheet sits outside #app, so it needs its own tap handler.
+    sh.addEventListener('click',function(e){
+      var spp=e.target.closest('[data-sppct]'); if(spp){ var ta0=document.getElementById('sptxt'); if(ta0&&ta0.value!==sh.dataset.spdef&&!confirm('Change the % and reset your edited text?')) return; specSheet(docId,+spp.dataset.sppct); return; }
+        });
     api('/api/docs',{method:'POST',body:{action:'special',id:docId,pct:pct,preview:true}}).then(function(p){
       var sc=document.getElementById('scrim'); if(!sc) return;
       var txtv=edited!=null?edited:p.text;
@@ -2385,7 +2389,6 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var cj=e.target.closest('[data-copyjobs]'); if(cj){ copyText(location.origin+'/jobs'); return; }
     var pt=e.target.closest('[data-ptab]'); if(pt){ pipeTab=pt.dataset.ptab; ls('pipe_tab',pipeTab); render(); return; }
     var spc=e.target.closest('[data-spec]'); if(spc){ specSheet(spc.dataset.spec,15); return; }
-    var spp=e.target.closest('[data-sppct]'); if(spp){ var sc0=document.getElementById('scrim'), ta0=document.getElementById('sptxt'); var ed=ta0&&sc0&&ta0.value!==sc0.dataset.spdef?ta0.value:null; if(ed!=null&&!confirm('Change the % and reset your edited text?')) return; specSheet(sc0.dataset.spdoc,+spp.dataset.sppct); return; }
     var sps=e.target.closest('[data-spsend]'); if(sps){ specGo(sps,true); return; }
     var spq=e.target.closest('[data-spquiet]'); if(spq){ specGo(spq,false); return; }
     var spe=e.target.closest('[data-specend]'); if(spe){ if(!spe.dataset.sure){ spe.dataset.sure='1'; spe.textContent='Tap to end'; return; } spe.disabled=true; api('/api/docs',{method:'POST',body:{action:'special',id:spe.dataset.specend,end:true}}).then(function(){ toast('Offer ended. Back to the full price'); return loadPipe(); }).catch(function(er){ spe.disabled=false; toast(er.message); }); return; }
