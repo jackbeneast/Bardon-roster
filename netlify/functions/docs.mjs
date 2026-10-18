@@ -73,6 +73,19 @@ export default async (req) => {
       out.card = !!process.env.STRIPE_SECRET_KEY;
       // Invoices link to the job report (live page with photos) once the job is on the roster.
       if (d.kind === "invoice" && !d.isDeposit) { const r = await reportFor(s, d); if (r) out.report = r; }
+      // Deposit invoices carry the quote they come from: the job, its scope and the agreed total.
+      if (d.kind === "invoice" && out.isDeposit && d.quoteId) {
+        const q = await s.get(`doc/${d.quoteId}`);
+        if (q) {
+          const tq = totals(q);
+          out.quote = {
+            num: q.num, token: q.token, acceptedAt: q.acceptedAt || "", service: q.service || "", site: q.site || "", serviceDate: q.serviceDate || d.serviceDate || "",
+            items: (q.items || []).filter((i) => !/deposit/i.test(i.title || "") || (+i.price || 0) !== 0).map(({ title, desc, qty, price }) => ({ title, desc, qty, price })),
+            gst: q.gst, sub: tq.sub, gstAmt: tq.gst, total: tq.total, depositPct: q.depositPct || 0,
+            balance: r2(Math.max(0, tq.total - out.totals.total)),
+          };
+        }
+      }
       // After accepting, point the client at their deposit invoice, but only once Jack has sent it.
       if (d.kind === "quote" && d.depositInvoice) {
         const inv = await s.get(`doc/${d.depositInvoice}`);

@@ -71,6 +71,13 @@ body{margin:0;background:var(--cream);color:var(--body);font:400 15px/1.6 var(--
 .sect h2 em{font-style:italic;font-weight:500}
 .panel{background:var(--cream);border-radius:10px;padding:16px}
 .bank{display:grid;gap:8px}
+.bkh{font:600 13px/1.3 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--meta);margin:18px 0 8px}
+.bki{padding:10px 0;border-top:1px solid rgba(26,26,26,.08)}
+.bkt{display:flex;justify-content:space-between;gap:12px;font:700 16px/1.3 var(--serif);color:var(--dark)}
+.bkt span:last-child{font:600 14px/1.3 var(--sans);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bkt small{font:400 13px var(--sans);color:var(--meta)}
+.bksum{margin-top:12px;padding-top:12px;border-top:1px solid rgba(26,26,26,.15)}
+.bksum div:first-child b{font-size:17px}
 .bank div{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}
 .bank span{color:var(--meta)}
 .bank b{color:var(--dark);font-weight:600;font-variant-numeric:tabular-nums;user-select:all}
@@ -204,6 +211,19 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
     if(q&&d.special&&d.special.baked) h+='<div class="banner gold">Booked on the today-only '+d.special.pct+'% special. The saving is shown on your quote below.</div>';
     if(q&&st==='expired') h+='<div class="banner warn">This quote expired on '+fdate(d.validUntil)+'. Call Jack on '+esc(b.phone)+' for an updated quote.</div>';
 
+    if(!q&&d.quote){ var Q=d.quote;
+      h+='<div class="sect booking"><h2>Your <em>booking</em></h2><div class="panel"><div class="bank">'+
+        '<div><span>Quote</span><b>#'+Q.num+(Q.acceptedAt?' · accepted '+fdate((function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);})(new Date(Q.acceptedAt))):'')+'</b></div>'+
+        (Q.service?'<div><span>Service</span><b>'+esc(Q.service)+'</b></div>':'')+
+        (Q.site?'<div><span>Property</span><b style="text-align:right">'+esc(Q.site)+'</b></div>':'')+
+        (Q.serviceDate?'<div><span>Clean date</span><b>'+fdate(Q.serviceDate,true)+'</b></div>':'')+'</div>';
+      if(Q.items.length){ h+='<h3 class="bkh">What\'s included</h3>';
+        Q.items.forEach(function(i){ var a=i.qty*i.price; h+='<div class="bki"><div class="bkt"><span>'+esc(i.title)+(i.qty!==1?' <small>× '+i.qty+'</small>':'')+'</span>'+(a?'<span>'+money(a)+'</span>':'')+'</div>'+(i.desc?'<div class="desc">'+rich(i.desc)+'</div>':'')+'</div>'; }); }
+      h+='<div class="bank bksum"><div><span>Agreed total'+(Q.gst?' incl. GST':'')+'</span><b>'+money(Q.total)+'</b></div>'+
+        '<div><span>This deposit'+(Q.depositPct?' ('+Q.depositPct+'%)':'')+'</span><b>'+money(t.total)+'</b></div>'+
+        '<div><span>Balance on completion</span><b>'+money(Q.balance)+'</b></div></div>'+
+        (Q.token?'<div class="btns noprint"><a class="btn outline" href="/q/'+esc(Q.token)+'">View the full quote</a></div>':'')+'</div></div>';
+    }
     h+='<div class="items"><div class="ihead"><span>Description</span><span>Qty</span><span>Unit price</span><span>Amount</span></div>';
     d.items.forEach(function(i){ var a=i.qty*i.price;
       h+='<div class="item'+(i.special||(i.price<0&&/^Today-only special/.test(i.title||''))?' spi':'')+'"><div><div class="t">'+esc(i.title)+'</div>'+(i.qty!==1?'<div class="mob">'+i.qty+' × '+money(i.price)+'</div>':'')+(i.desc?'<div class="desc">'+rich(i.desc)+'</div>':'')+'</div><div class="q">'+i.qty+'</div><div class="p">'+money(i.price)+'</div><div class="a">'+money(a)+'</div></div>'; });
