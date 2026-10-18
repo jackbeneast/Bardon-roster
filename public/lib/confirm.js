@@ -11,7 +11,7 @@
   function first(n){ return String(n||'').trim().split(/\s+/)[0]||'there'; }
 
   function build(o){
-    var j=o.job, d=o.doc||null, dep=o.deposit||null, origin=o.origin||location.origin, phone=o.phone||'0406 216 212', text=o.sms||'0468 193 772';
+    var j=o.job, d=o.doc||null, dep=o.deposit&&o.deposit.state!=='draft'?o.deposit:null, origin=o.origin||location.origin, phone=o.phone||'0406 216 212', text=o.sms||'0468 193 772';
     var who=first(d&&(d.client.contact||d.client.name)||j.client);
     var place=[j.address,j.suburb].filter(Boolean).join(', ');
     var size=d&&(d.beds||d.baths)?' ('+[d.beds?d.beds+' bed':'',d.baths?d.baths+' bath':''].filter(Boolean).join(', ')+')':'';

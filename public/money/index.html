@@ -501,15 +501,19 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 
     // Timeline
     h+='<div class="card"><h2>Progress</h2><ul class="tl"><li class="on"><span>Created</span><span>'+ftime(d.created)+'</span></li><li class="'+(d.sentAt||d.state!=='draft'?'on':'')+'"><span>Sent</span><span>'+(d.sentAt?ftime(d.sentAt):'')+'</span></li><li class="'+(d.viewedAt?'on':'')+'"><span>Opened by client</span><span>'+(d.viewedAt?ftime(d.viewedAt)+(d.lastViewed&&d.lastViewed!==d.viewedAt?'<br><small>last '+ftime(d.lastViewed)+'</small>':''):'')+'</span></li>';
-    if(isQ) h+='<li class="'+(d.state==='accepted'?'on':'')+'"><span>Accepted'+(d.acceptedName?' by '+esc(d.acceptedName):'')+'</span><span>'+(d.acceptedAt?ftime(d.acceptedAt):'')+'</span></li>';
+    if(isQ) h+='<li class="'+(d.state==='accepted'?'on':'')+'"><span>'+(/^Marked by /.test(d.acceptedName||'')?'Marked accepted by '+esc(d.acceptedName.slice(10)):/^Approved in /.test(d.acceptedName||'')?esc(d.acceptedName):'Accepted'+(d.acceptedName?' by '+esc(d.acceptedName):''))+'</span><span>'+(d.acceptedAt?ftime(d.acceptedAt):'')+'</span></li>';
     else h+='<li class="'+(d.state==='paid'?'on':'')+'"><span>Paid in full</span><span>'+(d.state==='paid'&&d.payments.length?fdate(d.payments[d.payments.length-1].date):'')+'</span></li>';
     h+='</ul></div>';
 
     if(isQ){
       h+='<div class="card"><h2>Next <em>steps</em></h2>';
       if(d.state==='accepted'){
-        if(d.depositInvoice){ var dep=docById(d.depositInvoice); if(dep) h+='<button class="alert '+(dep.state==='paid'?'ok':'gold')+'" data-open="'+dep.id+'">Deposit invoice #'+dep.num+': '+(dep.state==='paid'?'paid':money(dep.totals.due)+' to pay')+'</button>'; }
-        h+=jobBlock(d);
+        var dep=d.depositInvoice?docById(d.depositInvoice):null, needDep=dep||d.depositPct>0||/^(Pre-sale|Deep|Bond) clean$/.test(d.service||''), depWait=needDep&&(!dep||dep.state!=='paid');
+        if(!needDep){}
+        else if(!dep) h+='<div class="hint-card"><b>Deposit not invoiced yet.</b> The booking stays tentative until it\'s paid.</div><div class="acts"><button class="btn primary wide" data-act="inv-deposit">Invoice the deposit ('+(d.depositPct||S.settings.depositPct||50)+'%)</button></div>';
+        else if(dep.state==='draft') h+='<div class="hint-card"><b>Deposit invoice #'+dep.num+' is ready</b> · '+money(dep.totals.due)+' · not sent yet</div><div class="acts"><button class="btn primary wide" data-open="'+dep.id+'">Send the deposit invoice</button></div>';
+        else h+='<button class="alert '+(dep.state==='paid'?'ok':'gold')+'" data-open="'+dep.id+'">Deposit invoice #'+dep.num+': '+(dep.state==='paid'?'paid':money(dep.totals.due)+' to pay')+'</button>';
+        h+=jobBlock(d, depWait);
         h+='<div class="acts"><button class="btn plain" data-act="inv-balance">Invoice the balance</button><button class="btn plain" data-act="inv-full">Invoice in full</button><button class="btn plain wide" data-act="mark-sent">Undo accepted</button></div>';
       } else {
         h+='<div class="acts"><button class="btn primary wide" data-act="tojob">Approved? Turn into a job</button><button class="btn plain" data-act="mark-accepted">Mark accepted</button><button class="btn plain" data-act="mark-declined">'+(d.state==='declined'?'Declined':'Mark declined')+'</button><button class="btn plain wide" data-act="inv-full">Turn into an invoice</button></div>';
@@ -529,12 +533,12 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     app.innerHTML=h;
   }
   function jobOf(d){ return d.jobId ? S.jobs.filter(function(j){return j.id===d.jobId;})[0] : null; }
-  function jobBlock(d){
+  function jobBlock(d, depWait){
     var j=jobOf(d);
     if(!j) return '<div class="hint-card">Not on the roster yet.</div><div class="acts"><button class="btn primary wide" data-act="tojob">Turn into a job</button></div>';
     var staff=(j.staff||[]).length;
     return '<div class="hint-card"><b>On the roster</b> · '+fdate(j.date,true)+', '+fmtT(j.start)+'–'+fmtT(j.end)+'<br>'+(staff?staff+' on the team':'No team assigned yet')+(d.confirmedAt?' · Confirmation sent '+ftime(d.confirmedAt):' · Confirmation not sent yet')+'</div>'+
-      '<div class="acts"><button class="btn primary wide" data-act="confirm">'+(d.confirmedAt?'Send booking confirmation again':'Send booking confirmation')+'</button><a class="btn plain" href="/#job='+j.id+'">Open in roster</a><a class="btn plain" href="/v/'+esc(j.share||'')+'" target="_blank" rel="noopener">Client link</a></div>';
+      '<div class="acts"><button class="btn '+(depWait?'plain':'primary')+' wide" data-act="confirm">'+(d.confirmedAt?'Send booking confirmation again':'Send booking confirmation')+'</button><a class="btn plain" href="/#job='+j.id+'">Open in roster</a><a class="btn plain" href="/v/'+esc(j.share||'')+'" target="_blank" rel="noopener">Client link</a></div>';
   }
   function fmtT(t){ if(!t) return ''; var hh=+t.slice(0,2), m=t.slice(3,5); return (hh%12||12)+(m==='00'?'':':'+m)+(hh>=12?'pm':'am'); }
   function jobSheetQ(d){
@@ -549,7 +553,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   }
   function confirmSheet(d){
     var j=jobOf(d); if(!j){ toast('Add it to the roster first'); return; } j=BCConfirm.withDays(j, S.jobs);
-    var dep=d.depositInvoice?docById(d.depositInvoice):null;
+    var dep=d.depositInvoice?docById(d.depositInvoice):null; if(dep&&dep.state==='draft') dep=null; // a draft's link doesn't open for the client yet
     var m=BCConfirm.build({job:j,doc:d,deposit:dep,phone:S.settings.biz.phone,sms:S.settings.biz.sms});
     var mode='sms';
     var h='<h3>Booking <em>confirmation</em></h3><div class="seg" role="group" style="margin:0 0 12px"><button data-cm="sms" aria-pressed="true">Text</button><button data-cm="email" aria-pressed="false">Email</button></div>'+
@@ -854,6 +858,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(a==='confirm'&&d){ confirmSheet(d); return; }
     if(a==='copylink'&&d){ try{ navigator.clipboard.writeText(link(d)).then(function(){toast('Client link copied');}); }catch(x){ toast(link(d)); } return; }
     if(a==='mark-accepted'||a==='mark-declined'||a==='mark-sent'){ api('POST','/api/docs',{action:'status',id:d.id,status:a.slice(5)}).then(load).then(function(){ toast(a==='mark-accepted'?(d.serviceDate?'Accepted and added to the roster':'Marked accepted'):'Updated'); }).catch(function(x){toast(x.message);}); return; }
+    if(a==='inv-deposit'&&d){ el.disabled=true; api('POST','/api/docs',{action:'deposit',id:d.id}).then(function(r){ return load().then(function(){ go('doc/'+r.id); toast('Deposit invoice drafted. Check it, then send.'); }); }).catch(function(x){ el.disabled=false; toast(x.message); }); return; }
     if(a==='inv-full'||a==='inv-balance'){ el.disabled=true; api('POST','/api/docs',{action:'invoice',id:d.id,mode:a==='inv-balance'?'balance':'full'}).then(function(r){ return load().then(function(){ go('doc/'+r.id); toast('Invoice created as a draft. Check it, then send.'); }); }).catch(function(x){ el.disabled=false; toast(x.message); }); return; }
     if(a==='dup'||a==='dup-quote'){ api('POST','/api/docs',{action:'duplicate',id:d.id,kind:a==='dup-quote'?'quote':d.kind}).then(function(r){ return load().then(function(){ go('edit/'+r.id); toast('Copy made. Update it and save.'); }); }).catch(function(x){toast(x.message);}); return; }
     if(a==='del'){ if(!el.dataset.sure){ el.dataset.sure=1; el.firstChild.textContent='Tap again to delete for good'; return; } api('POST','/api/docs',{action:'delete',id:d.id}).then(load).then(function(){ go('list'); toast('Deleted'); }); return; }

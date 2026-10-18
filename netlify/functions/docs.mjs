@@ -17,6 +17,25 @@ const label = (d) => `${d.kind === "quote" ? "Quote" : "Invoice"} #${d.num}${d.c
 
 const r2 = (v) => Math.round(v * 100) / 100;
 
+// Draft the deposit invoice for an accepted quote (once). Drafted, not sent: Jack
+// sends it himself from the hub so it lands in the client's Messages thread.
+async function draftDeposit(s, set, q) {
+  if (q.depositInvoice) { const x = await s.get(`doc/${q.depositInvoice}`); if (x) return x; q.depositInvoice = ""; }
+  if (!(q.depositPct > 0)) return null;
+  const t = totals(q);
+  const inv = await newDoc(s, set, {
+    kind: "invoice", status: "draft", quoteId: q.id, quoteNum: q.num,
+    client: q.client, site: q.site, suburb: q.suburb, service: q.service, serviceDate: q.serviceDate,
+    issued: today(), dueDate: today(), gst: q.gst, showTerms: false,
+    isDeposit: true,
+    items: [{ title: `${q.depositPct}% deposit${q.site ? ` | ${q.site}` : ""}`, desc: depositDesc(q.depositPct, q.service) + ` Quote #${q.num}.`, qty: 1, price: r2(t.sub * q.depositPct / 100) }],
+    notes: "",
+  });
+  await saveDoc(s, inv);
+  q.depositInvoice = inv.id;
+  return inv;
+}
+
 export default async (req) => {
   const s = await store();
   const admin = await checkAdmin(s, req);
@@ -101,19 +120,7 @@ export default async (req) => {
     const set = await loadSettings(s);
     // The deposit invoice is drafted, not sent: Jack sends it himself from the hub
     // so it lands in the client's Messages thread alongside the rest of the conversation.
-    if (q.depositPct > 0 && !q.depositInvoice) {
-      const t = totals(q);
-      const inv = await newDoc(s, set, {
-        kind: "invoice", status: "draft", quoteId: q.id, quoteNum: q.num,
-        client: q.client, site: q.site, suburb: q.suburb, service: q.service, serviceDate: q.serviceDate,
-        issued: today(), dueDate: today(), gst: q.gst, showTerms: false,
-        isDeposit: true,
-        items: [{ title: `${q.depositPct}% deposit${q.site ? ` | ${q.site}` : ""}`, desc: depositDesc(q.depositPct, q.service) + ` Quote #${q.num}.`, qty: 1, price: r2(t.sub * q.depositPct / 100) }],
-        notes: "",
-      });
-      await saveDoc(s, inv);
-      q.depositInvoice = inv.id;
-    }
+    await draftDeposit(s, set, q);
     try { q.jobId = (await addJobFromQuote(s, q)) || q.jobId; } catch { /* job can be added by hand */ }
     await saveDoc(s, q);
     const tq = totals(q);
@@ -187,7 +194,7 @@ export default async (req) => {
       if (roster.jobs.some((j) => j.id === d.jobId)) return json({ ok: true, jobId: d.jobId });
       d.jobId = ""; // the job was deleted from the roster, so make a new one
     }
-    if (d.status !== "accepted") { bakeSpecial(d); d.status = "accepted"; d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; }
+    if (d.status !== "accepted") { bakeSpecial(d); d.status = "accepted"; d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; await draftDeposit(s, set, d); }
     d.jobId = await addJobFromQuote(s, d, { date: b.date, start: b.start, end: b.end });
     for (const iid of [d.depositInvoice, ...(d.invoices || [])].filter(Boolean)) { const x = await s.get(`doc/${iid}`); if (x && !x.serviceDate) { x.serviceDate = d.serviceDate; await saveDoc(s, x); } }
     await saveDoc(s, d);
@@ -198,8 +205,16 @@ export default async (req) => {
   if (b.action === "seen") { delete d.flag; delete d.flagAt; await saveDoc(s, d); return json({ ok: true }); }
   if (b.action === "status" && d.kind === "quote" && ["accepted", "declined", "sent"].includes(b.status)) {
     d.status = b.status;
-    if (b.status === "accepted") { bakeSpecial(d); d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; try { d.jobId = (await addJobFromQuote(s, d)) || d.jobId; } catch {} }
-    await saveDoc(s, d); return json({ ok: true });
+    if (b.status === "accepted") { bakeSpecial(d); d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; await draftDeposit(s, set, d); try { d.jobId = (await addJobFromQuote(s, d)) || d.jobId; } catch {} }
+    await saveDoc(s, d); return json({ ok: true, depositId: d.depositInvoice || "" });
+  }
+  if (b.action === "deposit" && d.kind === "quote") {
+    // Deposit invoice for a quote accepted before this was automatic (or with no deposit % set).
+    if (d.status !== "accepted") return json({ error: "Accept the quote first." }, 409);
+    if (!(d.depositPct > 0)) d.depositPct = set.depositPct || 50;
+    const inv = await draftDeposit(s, set, d);
+    await saveDoc(s, d);
+    return json({ ok: true, id: inv.id });
   }
   if (b.action === "special" && d.kind === "quote") {
     // Today-only special: preview → send (texts the client and turns the price on) or end.
