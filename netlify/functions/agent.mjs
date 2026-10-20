@@ -55,14 +55,21 @@ function makeSamples(agentId, roster) {
 const first = (n) => String(n || "").replace(/\(.*?\)/g, "").trim().split(/\s+/)[0] || "Team";
 
 // What an agent (or vendor) is allowed to see about a job. No client name, team notes or phone numbers.
-function view(job, roster, L, withShare, photos = {}) {
+// Actual times from the team's clock-ins: first arrival, and last clock-off once everyone who came has left.
+function actual(L) {
+  const a = L?.arrived || {}, l = L?.left || {}, ins = Object.values(a).filter(Boolean).sort();
+  if (!ins.length) return {};
+  const allOff = Object.keys(a).every((id) => l[id]);
+  return { in: ins[0], ...(allOff ? { out: Object.values(l).filter(Boolean).sort().pop() } : {}) };
+}
+function view(job, roster, L, withShare, photos = {}, all = {}) {
   const team = (job.staff || []).map((id) => roster.team.find((t) => t.id === id)).filter(Boolean)
     .map((t) => ({ id: t.id, name: first(t.name), owner: !!t.owner, ...(photos[t.id]?.ok ? { photo: `/api/teamphoto?p=${t.id}&v=${photos[t.id].v}` } : {}) }));
   const live = L || {};
   const o = {
     id: job.id, date: job.date, start: job.start, end: job.end,
     address: job.address, suburb: job.suburb, service: job.service, readyBy: job.readyBy || "",
-    rooms: roomsOf(job), team,
+    rooms: roomsOf(job), team, actual: actual(L),
     live: {
       arrived: live.arrived || {}, rooms: live.rooms || {}, flags: (live.flags || []).map(({ id, t, d, at }) => ({ id, t, d, at })),
       photos: (live.photos || []).filter((p) => p.room && p.kind).map(({ id, room, kind, at, j }) => ({ id, room, kind, at, j: j || job.id })),
@@ -74,7 +81,7 @@ function view(job, roster, L, withShare, photos = {}) {
   if (withShare && job.share) o.share = job.share;
   if (job.group) {
     const g = roster.jobs.filter((x) => x.group === job.group).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
-    if (g.length > 1) { o.dayN = g.indexOf(job) + 1; o.dayT = g.length; o.days = g.map((x) => ({ date: x.date, start: x.start, end: x.end })); }
+    if (g.length > 1) { o.dayN = g.indexOf(job) + 1; o.dayT = g.length; o.days = g.map((x) => ({ date: x.date, start: x.start, end: x.end, actual: actual(all[x.id]) })); }
   }
   return o;
 }
@@ -103,19 +110,19 @@ export default async (req) => {
       const bk = job.group || job.id;
       const [acc, fb, tp] = await Promise.all([s.get(`access/${bk}`), s.get(`fb/${bk}`), loadTemplates(s)]);
       const kind = /bond|lease/i.test(job.service || "") ? "bond" : /pre.?sale/i.test(job.service || "") ? "presale" : /deep/i.test(job.service || "") ? "deep" : /regular/i.test(job.service || "") ? "regular" : "other";
-      return json({ ...base, mode: "vendor", agent: a ? { name: a.name, agency: a.agency } : null, jobs: [view(job, roster, live[job.id], false, photos)],
+      return json({ ...base, mode: "vendor", agent: a ? { name: a.name, agency: a.agency } : null, jobs: [view(job, roster, live[job.id], false, photos, live)],
         client: { access: acc || null, feedback: fb ? { mood: fb.mood, at: fb.at } : null, reviewLink: tp.reviewLink || "", kind } });
     }
     if (k) {
       const a = k.length >= 16 && agents.find((x) => x.token === k);
       if (!a) return json({ error: "This link isn't active. Contact Jack at Bardon Clean for a new one." }, 404);
-      const jobs = roster.jobs.filter((j) => j.agentId === a.id).map((j) => view(j, roster, live[j.id], true, photos));
+      const jobs = roster.jobs.filter((j) => j.agentId === a.id).map((j) => view(j, roster, live[j.id], true, photos, live));
       return json({ ...base, mode: "agent", agent: { name: a.name, agency: a.agency }, jobs });
     }
     if (await checkAdmin(s, req)) {
       const as = u.searchParams.get("as") || "";
       const jobs = roster.jobs.filter((j) => (as ? j.agentId === as : true))
-        .map((j) => ({ ...view(j, roster, live[j.id], true, photos), agentId: j.agentId || "", client: j.client }));
+        .map((j) => ({ ...view(j, roster, live[j.id], true, photos, live), agentId: j.agentId || "", client: j.client }));
       return json({ ...base, mode: "admin", agents: agents.map(({ id, name, agency }) => ({ id, name, agency })), jobs });
     }
     return json({ error: "Open this page from the link Bardon Clean sent you." }, 401);
