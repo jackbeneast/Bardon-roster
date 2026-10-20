@@ -439,14 +439,17 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
         .catch(function(x){ b.disabled=false; toast(x.message); }); };
   }
 
+  // Scope headings like "Bedrooms ({beds})" take the counts: "Bedrooms (3)", or "Bedroom" for one.
+  function sizeScope(t,beds,baths){
+    return String(t||'').replace(/^(.*?)\s*\(\{(beds|baths)\}\)\s*$/gm,function(m,head,k){ var n=+(k==='beds'?beds:baths)||0; if(!n) return head; return n===1?head.replace(/s$/,''):head+' ('+n+')'; });
+  }
   function autofill(){
     var d=draft, pr=S.settings.prices[d.service]||{}, beds=+d.beds||0, baths=+d.baths||0;
     var scope=(S.settings.library.filter(function(l){return l.service===d.service;})[0]||{}).desc||'';
     var price=r2((+pr.base||0)+(+pr.bed||0)*beds+(+pr.bath||0)*baths);
     var size=(beds?beds+' bedroom':'')+(beds&&baths?', ':'')+(baths?baths+' bathroom':'');
-    var intro=(size?size+' property ':'')+d.service.toLowerCase()+'.'+(pr.hrs?'\n'+pr.hrs:'');
-    intro=intro.charAt(0).toUpperCase()+intro.slice(1);
-    var item={title:d.service+(beds||baths?' | '+(beds?beds+' bed':'')+(beds&&baths?' ':'')+(baths?baths+' bath':''):''), desc:intro+(scope?'\n\n'+scope:''), qty:1, price:price||'', auto:true};
+    var intro=d.service+(size?' for a '+size+' property':'')+', room by room as set out below.'+(pr.hrs?'\n'+pr.hrs:'');
+    var item={title:d.service+(beds||baths?' | '+(beds?beds+' bed':'')+(beds&&baths?' ':'')+(baths?baths+' bath':''):''), desc:intro+(scope?'\n\n'+sizeScope(scope,beds,baths):''), qty:1, price:price||'', auto:true};
     var i=d.items.findIndex(function(x){return x.auto;});
     if(i>=0) d.items[i]=item; else d.items.unshift(item);
     dirty=true; redrawItems();
@@ -475,9 +478,9 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var h='<h3>Saved <em>items</em></h3><input class="search" type="search" placeholder="Search saved items" data-libq style="margin-top:0"><div class="lib" id="libList">'+libRows(L,'')+'</div><div class="actions"><button class="btn plain grow" data-close>Close</button></div>';
     var s=sheet(h);
     s.querySelector('[data-libq]').oninput=function(){ s.querySelector('#libList').innerHTML=libRows(L,this.value); };
-    s.addEventListener('click',function(e){ var b=e.target.closest('[data-addlib]'); if(!b) return; var l=L.filter(function(x){return x.id===b.dataset.addlib;})[0]; draft.items.push({title:l.title,desc:l.desc,qty:1,price:l.price||''}); dirty=true; closeSheet(); redrawItems(); toast('Added '+l.title); });
+    s.addEventListener('click',function(e){ var b=e.target.closest('[data-addlib]'); if(!b) return; var l=L.filter(function(x){return x.id===b.dataset.addlib;})[0]; draft.items.push({title:l.title,desc:sizeScope(l.desc,draft.beds,draft.baths),qty:1,price:l.price||''}); dirty=true; closeSheet(); redrawItems(); toast('Added '+l.title); });
   }
-  function libRows(L,qq){ qq=(qq||'').toLowerCase(); var f=L.filter(function(l){return !qq||(l.title+' '+l.desc).toLowerCase().indexOf(qq)>=0;}); if(!f.length) return '<div class="empty">Nothing saved yet. Tap "Save to library" on any item to reuse it.</div>'; return f.map(function(l){ return '<button data-addlib="'+l.id+'"><b>'+esc(l.title)+(l.price?' · '+money(l.price):'')+'</b><span>'+esc((l.desc||'').replace(/\n/g,' · '))+'</span>'+(l.service?'<span class="tag">Scope for '+esc(l.service.toLowerCase())+'</span>':'')+'</button>'; }).join(''); }
+  function libRows(L,qq){ qq=(qq||'').toLowerCase(); var f=L.filter(function(l){return !qq||(l.title+' '+l.desc).toLowerCase().indexOf(qq)>=0;}); if(!f.length) return '<div class="empty">Nothing saved yet. Tap "Save to library" on any item to reuse it.</div>'; return f.map(function(l){ return '<button data-addlib="'+l.id+'"><b>'+esc(l.title)+(l.price?' · '+money(l.price):'')+'</b><span>'+esc(sizeScope(l.desc,'','').replace(/\n/g,' · '))+'</span>'+(l.service?'<span class="tag">Scope for '+esc(l.service.toLowerCase())+'</span>':'')+'</button>'; }).join(''); }
   function sheet(inner){ closeSheet(); var s=document.createElement('div'); s.className='scrim'; s.id='scrim'; s.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+inner+'</div>'; s.addEventListener('click',function(e){ if(e.target===s||e.target.closest('[data-close]')) closeSheet(); }); document.body.appendChild(s); return s; }
   function closeSheet(){ var s=document.getElementById('scrim'); if(s) s.remove(); }
   function saveSettings(next,msg){ return api('POST','/api/docs',{action:'settings',settings:next}).then(function(){ S.settings=next; toast(msg||'Saved'); }); }
@@ -661,7 +664,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     SERVICES.filter(function(s){return s!=='Other';}).forEach(function(s){ var p=st.prices[s]||{}; var ex=r2((+p.base||0)+(+p.bed||0)*3+(+p.bath||0)*2);
       h+='<div class="prow" data-svc="'+esc(s)+'"><b>'+esc(s)+'</b><div class="grid3" style="margin-top:6px"><label class="l">Base<input type="number" inputmode="decimal" step="0.01" data-p="base" value="'+(p.base||'')+'" placeholder="0"></label><label class="l">Per bedroom<input type="number" inputmode="decimal" step="0.01" data-p="bed" value="'+(p.bed||'')+'" placeholder="0"></label><label class="l">Per bathroom<input type="number" inputmode="decimal" step="0.01" data-p="bath" value="'+(p.bath||'')+'" placeholder="0"></label></div><label class="l" style="margin-top:8px;font-size:12px">Extra line under the size <small>(optional)</small><input data-p="hrs" value="'+esc(p.hrs||'')+'" placeholder="e.g. Allow a full day on site."></label><p class="hint" data-ex>3 bed 2 bath: '+money(ex)+' + GST</p></div>'; });
     h+='</div><button class="btn primary" style="width:100%;margin-top:12px" data-act="saveprices">Save prices</button></div>';
-    h+='<div class="card"><div class="hrow"><h2>Items and <em>scope</em></h2><button class="btn plain" style="min-height:40px" data-libedit="">+ New</button></div><div class="lib">'+st.library.map(function(l){ return '<button data-libedit="'+l.id+'"><b>'+esc(l.title)+(l.price?' · '+money(l.price):'')+'</b><span>'+esc((l.desc||'').replace(/\n/g,' · '))+'</span>'+(l.service?'<span class="tag">Scope for '+esc(l.service.toLowerCase())+'</span>':'')+'</button>'; }).join('')+'</div><p class="hint">Link an item to a service and it fills in with that service\'s price and size.</p></div>';
+    h+='<div class="card"><div class="hrow"><h2>Items and <em>scope</em></h2><button class="btn plain" style="min-height:40px" data-libedit="">+ New</button></div><div class="lib">'+st.library.map(function(l){ return '<button data-libedit="'+l.id+'"><b>'+esc(l.title)+(l.price?' · '+money(l.price):'')+'</b><span>'+esc(sizeScope(l.desc,'','').replace(/\n/g,' · '))+'</span>'+(l.service?'<span class="tag">Scope for '+esc(l.service.toLowerCase())+'</span>':'')+'</button>'; }).join('')+'</div><p class="hint">Link an item to a service and it fills in with that service\'s price and size.</p></div>';
     h+='<div class="card"><h2>Service <em>policies</em></h2><p class="hint" style="margin-top:-6px">Shown at the end of quotes. Start a line with "- " for a bullet.</p><textarea id="terms" style="min-height:240px">'+esc(st.terms)+'</textarea><button class="btn primary" style="width:100%;margin-top:10px" data-act="saveterms">Save policies</button></div>';
     app.innerHTML=h; autosize();
   }
@@ -707,7 +710,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var mq=[x.address,x.suburb,'QLD',x.postcode].filter(Boolean).join(', ');
     h+='<a class="alert" style="display:block;text-decoration:none;margin-top:12px" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(mq)+(x.placeId?'&query_place_id='+encodeURIComponent(x.placeId):'')+'"><b>Open in Google Maps</b>'+(x.placeId?' · address matched with Google':' · typed in by the client')+'</a>';
     if(x.photos&&x.photos.length) h+='<div class="card"><h2>Photos</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'+x.photos.map(function(p){ var u='/api/request?photo='+p; return '<a href="'+u+'" target="_blank" rel="noopener" style="display:block;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--cream-dark)"><img src="'+u+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block"></a>'; }).join('')+'</div></div>';
-    h+='<div class="card"><h2>Contact</h2><p style="margin:0">'+esc(x.name)+'<br><a href="tel:'+esc(phoneSms(x.phone))+'">'+esc(x.phone)+'</a>'+(x.email?'<br><a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a>':'')+'</p><p class="hint" style="margin:8px 0 0">Prefers '+esc(x.contact==='call'?'a call':x.contact==='email'?'email':'a text')+'.'+(x.texted?' They got an automatic text confirming the request.':'')+(x.src?' Came from '+esc(x.src)+'.':'')+'</p></div>';
+    h+='<div class="card"><h2>Contact</h2><p style="margin:0">'+esc(x.name)+'<br><a href="tel:'+esc(phoneSms(x.phone))+'">'+esc(x.phone)+'</a>'+(x.email?'<br><a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a>':'')+'</p><p class="hint" style="margin:8px 0 0">Prefers '+esc(x.contact==='call'?'a call':x.contact==='email'?'email':'a text')+'.'+(x.src?' Came from '+esc(x.src)+'.':'')+'</p></div>';
     h+='<div class="menu">'+(x.status!=='archived'?'<button data-act="req-archive">Archive<span class="chev">›</span></button>':'<button data-act="req-new">Move back to new<span class="chev">›</span></button>')+(x.status==='quoted'?'<button data-act="req-new">Mark not quoted<span class="chev">›</span></button>':'')+'<button data-act="req-delete">Delete request<span class="chev">›</span></button></div>';
     app.innerHTML=h;
   }
