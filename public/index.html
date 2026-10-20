@@ -1308,7 +1308,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     inp.click();
   }
   function checklistView(j,L,room){
-    var items=CHECKLISTS.itemsFor(room,j.service), got=L.items[room]||{}, n=items.filter(function(i){return got[i.id];}).length, st=(L.rooms[room]&&L.rooms[room].s)||'w';
+    var items=CHECKLISTS.itemsFor(room,j.service), got=L.items[room]||{}, n=items.filter(function(i){return got[i.id];}).length, st=roomPend[roomKey(j,room)]||(L.rooms[room]&&L.rooms[room].s)||'w';
     var rs=roomsOf(j), nx=rs[rs.indexOf(room)+1];
     var h='<button type="button" class="clk" data-clback style="margin:0 0 8px">‹ All updates</button><h3>'+esc(room)+' <em>checklist</em></h3>';
     h+='<p class="sub" style="margin:-6px 0 0">'+esc(CHECKLISTS.name(j.service))+' · '+esc(j.address||j.client||'')+'</p>';
@@ -1414,12 +1414,12 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       else bt='<button type="button" class="btn danger" data-leave="'+id+'" data-undo="1">Undo clock off</button>';
       h+='<div class="lrow"><span><span class="nm">'+esc(m.name)+'</span><br><span class="ds">'+ds+'</span>'+(canEdit?'<br><button type="button" class="clk" data-tedit="'+id+'">Type in times ›</button>':'')+'</span>'+bt+'</div>'; });
     h+='</div><div class="lsec"><h4>Areas'+(canEdit?'<button type="button" class="ed" data-editareas>Add or remove areas</button>':'')+'</h4>'+(canEdit&&(j.staff||[]).length?'<p class="sub" style="margin:0 0 8px">Tap names to assign each area. When you tick an area off, it\'s credited to whoever it\'s assigned to.</p>':'');
-    roomsOf(j).forEach(function(r){ var st=(L.rooms[r]&&L.rooms[r].s)||'w', by=L.rooms[r]&&member(L.rooms[r].by);
+    roomsOf(j).forEach(function(r){ var rk=roomKey(j,r), pd=roomPend[rk], rer=roomErr[rk], st=pd||(L.rooms[r]&&L.rooms[r].s)||'w', by=!pd&&L.rooms[r]&&member(L.rooms[r].by);
       var ci=CHECKLISTS.itemsFor(r,j.service), cd=ci.filter(function(i){return L.items[r]&&L.items[r][i.id];}).length;
       var asg=(L.assign[r]||[]).filter(function(x){return (j.staff||[]).includes(x);}), mine=pid&&asg.includes(pid)&&!canEdit;
       var who=canEdit&&(j.staff||[]).length?'<span class="asg">'+(j.staff||[]).map(function(x){ var mm=member(x); return mm?'<button type="button" class="chip" data-asg="'+esc(r)+'" data-who="'+x+'" aria-pressed="'+asg.includes(x)+'">'+esc(mm.name.split(' ')[0])+'</button>':''; }).join('')+'</span>'
         :asg.length?'<br><span class="ds"'+(mine?' style="color:var(--terracotta-dark);font-weight:600"':'')+'>'+(mine?'Yours':'')+(mine&&asg.length>1?' with ':'')+esc(asg.filter(function(x){return !mine||x!==pid;}).map(function(x){var mm=member(x);return mm?mm.name.split(' ')[0]:'';}).filter(Boolean).join(' & '))+'</span>':'';
-      h+='<div class="lrow'+(canEdit?' wrap':'')+'"><span><span class="nm">'+esc(r)+'</span>'+(canEdit?'':who)+(by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+(ci.length?'<br><button type="button" class="clk'+(cd===ci.length?' ok':'')+'" data-cl="'+esc(r)+'">Checklist '+cd+'/'+ci.length+' ›</button>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span>'+(canEdit?who:'')+'</div>'; });
+      h+='<div class="lrow'+(canEdit?' wrap':'')+'"><span><span class="nm">'+esc(r)+'</span>'+(canEdit?'':who)+(pd?'<br><span class="ds">Saving…</span>':by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+(rer?'<br><span class="ds" style="color:var(--terracotta-dark);font-weight:600">Didn\'t save: '+esc(rer)+'. Tap again.</span>':'')+(ci.length?'<br><button type="button" class="clk'+(cd===ci.length?' ok':'')+'" data-cl="'+esc(r)+'">Checklist '+cd+'/'+ci.length+' ›</button>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span>'+(canEdit?who:'')+'</div>'; });
     h+='</div>'+photoSec(j,L)+tourSec(j,L);
     h+='<div class="lsec"><h4>Notes for the agent</h4><p class="sub" style="margin:0 0 8px">Anything they should know before photos or buyers: damage, mould, broken fittings, stains that won\'t shift.</p>';
     L.flags.forEach(function(f){ h+='<div class="flagi"><span><b>'+esc(f.t)+'</b>'+esc(f.d)+'</span><button type="button" class="btn danger" data-unflag="'+f.id+'" style="min-height:0">Remove</button></div>'; });
@@ -1445,6 +1445,23 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     return api('/api/live',{method:'POST',body:body}).then(function(d){ takeLive(d,ctx.jobId); if(liveOpen) drawLive(); else if(!document.getElementById('scrim')) render(); return true; })
       .catch(function(e){ if(btn) btn.disabled=false; var er=document.getElementById('liveErr'); if(er){ er.textContent=e.message; er.hidden=false; } toast(e.message); return false; });
   }
+  // Area status taps show straight away, save in the background (one at a time per area),
+  // retry once on a bad signal, and say on the row itself if they still didn't save.
+  var roomPend={}, roomErr={}, roomQ={};
+  function roomKey(j,r){ return (j.group||j.id)+'|'+r; }
+  function roomSet(room, st){
+    if(!liveOpen) return;
+    var ctx={jobId:liveOpen.jobId,pid:liveOpen.pid}, j=state.jobs.find(function(x){return x.id===ctx.jobId;}); if(!j) return;
+    var rk=roomKey(j,room); roomPend[rk]=st; delete roomErr[rk]; drawLive();
+    var body={action:'room',room:room,status:st,jobId:ctx.jobId,personId:ctx.pid};
+    function send(){ return api('/api/live',{method:'POST',body:body}); }
+    roomQ[rk]=(roomQ[rk]||Promise.resolve()).then(function(){
+      return send().catch(function(e){ if(e.status && e.status<500) throw e; return new Promise(function(ok){ setTimeout(ok,1500); }).then(send); })
+        .then(function(d){ takeLive(d,ctx.jobId); if(roomPend[rk]===st) delete roomPend[rk]; },
+              function(e){ if(roomPend[rk]===st){ delete roomPend[rk]; roomErr[rk]=e.message||'no signal'; } toast('Didn\'t save '+room+'. Tap again.'); })
+        .then(function(){ if(liveOpen) drawLive(); else if(!document.getElementById('scrim')) render(); });
+    });
+  }
   function liveClick(e){
     var b=e.target.closest('button'); if(!b||!liveOpen) return;
     if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
@@ -1464,7 +1481,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(b.dataset.cl!=null){ liveOpen.room=b.dataset.cl; liveOpen.keepTop=0; drawLive(); return; }
     if(b.hasAttribute('data-clback')){ liveOpen.room=null; drawLive(); return; }
     if(b.dataset.clnext){ liveOpen.room=b.dataset.clnext; liveOpen.keepTop=0; drawLive(); return; }
-    if(b.dataset.room){ livePost({action:'room',room:b.dataset.room,status:b.dataset.st},b); return; }
+    if(b.dataset.room){ roomSet(b.dataset.room,b.dataset.st); return; }
     if(b.dataset.unsup){ livePost({action:'unsupply',id:b.dataset.unsup},b); return; }
     if(b.hasAttribute('data-addsup')){ var sv=document.getElementById('sup_t').value.trim(); if(!sv){ toast('Say what\'s running low'); return; } livePost({action:'supply',title:sv},b).then(function(){ toast('Added to the restock list'); }); return; }
     if(b.hasAttribute('data-roomph')){ roomPhoto(b.dataset.roomph); return; }
