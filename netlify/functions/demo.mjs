@@ -24,9 +24,9 @@ const MAX = 12;
 // svc: which jobs suit it best (any job can still be chosen); room: the room it suits best.
 const SLOTS = [
   { id: "home-hero", page: "Homepage", spot: "Top banner", svc: "", room: "Kitchen", files: ["hero-kitchen-brisbane"] },
-  { id: "home-presale", page: "Homepage", spot: "Pre-sale card", svc: "presale", room: "Kitchen", alts: ["Pre-sale cleaned kitchen island"] },
-  { id: "home-bond", page: "Homepage", spot: "Bond clean card", svc: "bond", room: "Kitchen", alts: ["Spotless kitchen benchtop, cooktop"] },
-  { id: "home-deep", page: "Homepage", spot: "Deep clean card", svc: "deep", room: "Bathrooms", alts: ["Gleaming freestanding bath"] },
+  { id: "home-presale", page: "Homepage", spot: "Pre-sale card", svc: "presale", room: "Kitchen", files: ["card-presale-kitchen-brisbane"] },
+  { id: "home-bond", page: "Homepage", spot: "Bond clean card", svc: "bond", room: "Kitchen", files: ["card-bond-end-of-lease-kitchen"] },
+  { id: "home-deep", page: "Homepage", spot: "Deep clean card", svc: "deep", room: "Bathrooms", files: ["card-deep-clean-bathroom"] },
   { id: "guide", page: "Homepage + Vendor's guide", spot: "Free guide picture", svc: "presale", room: "Living & dining", files: ["guide/presale-living-hero"] },
   { id: "presale-hero", page: "Pre-sale page", spot: "Top banner", svc: "presale", room: "Living & dining", files: ["presale-hero-dining"] },
   { id: "bond-hero", page: "Bond clean page", spot: "Top banner", svc: "bond", room: "Kitchen", files: ["bond-page-hero"] },

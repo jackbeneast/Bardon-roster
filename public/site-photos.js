@@ -10,9 +10,9 @@
   var HUB = 'https://bardon-roster.netlify.app';
   var SPOTS = {
     'home-hero':    { files: ['hero-kitchen-brisbane'] },
-    'home-presale': { alts: ['Pre-sale cleaned kitchen island'] },
-    'home-bond':    { alts: ['Spotless kitchen benchtop, cooktop'] },
-    'home-deep':    { alts: ['Gleaming freestanding bath'] },
+    'home-presale': { files: ['card-presale-kitchen-brisbane'], alts: ['Pre-sale cleaned kitchen island'] },
+    'home-bond':    { files: ['card-bond-end-of-lease-kitchen'], alts: ['Spotless kitchen benchtop, cooktop'] },
+    'home-deep':    { files: ['card-deep-clean-bathroom'], alts: ['Gleaming freestanding bath'] },
     'guide':        { files: ['guide/presale-living-hero'] },
     'presale-hero': { files: ['presale-hero-dining'] },
     'bond-hero':    { files: ['bond-page-hero'] },
