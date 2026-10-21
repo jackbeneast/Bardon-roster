@@ -25,7 +25,7 @@ export default async (req) => {
     let buf = u.searchParams.get("s") === "t" ? await s.getBin(`photo/${j}/${p}.t`) : null;
     if (!buf) buf = await s.getBin(`photo/${j}/${p}`);
     if (!buf) return new Response("Not found", { status: 404, headers: { "cache-control": "no-store" } });
-    return new Response(buf, { headers: { "content-type": "image/jpeg", "cache-control": "private, max-age=604800, immutable" } });
+    return new Response(buf, { headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=604800, immutable" } });
   }
 
   const roster = await loadRoster(s);

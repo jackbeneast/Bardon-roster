@@ -50,6 +50,29 @@ h2{font:700 20px/1.2 var(--serif);color:var(--dark);margin:28px 0 10px}
 .ph .k{position:absolute;left:4px;bottom:4px;background:rgba(26,26,26,.78);color:#fff;border-radius:999px;padding:3px 6px;font:600 9.5px/1 var(--sans)}
 .ph.on{outline:3px solid var(--ok);outline-offset:-3px}
 .ph.on:after{content:"✓";position:absolute;right:4px;top:4px;width:20px;height:20px;border-radius:50%;background:var(--ok);color:#fff;font:600 12px/20px var(--sans);text-align:center}
+.where{display:grid;gap:8px}
+.spot{display:flex;gap:12px;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:8px}
+.spot .im{position:relative;flex:none;width:112px;height:78px;border-radius:8px;overflow:hidden;background:var(--cream-dark);display:grid;place-items:center;text-align:center;font:500 11px/1.3 var(--sans);color:var(--meta);padding:4px}
+.spot .im img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.spot .tx{flex:1;min-width:0}
+.spot .tx b{display:block;font:600 14px/1.3 var(--sans);color:var(--dark)}
+.spot .tx span{display:block;font-size:12.5px;color:var(--meta)}
+.spot .tx span.ok{color:var(--ok)}
+.spot .acts{display:flex;flex-direction:column;gap:6px;flex:none}
+.sm{min-height:36px;padding:0 12px;border-radius:8px;border:1.5px solid var(--terracotta);background:transparent;color:var(--terracotta-dark);font:600 13px var(--sans)}
+.sm.ghost{border-color:var(--line);color:var(--meta)}
+.pg{font:600 12px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--meta);margin:14px 0 2px}
+.uses{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.uses i{font:600 11px/1 var(--sans);font-style:normal;padding:4px 7px;border-radius:999px;background:var(--cream-dark);color:var(--dark)}
+.uses i.big{background:var(--dark);color:var(--cream)}
+.uses i.off{background:transparent;border:1px dashed var(--line);color:var(--meta)}
+.pill{display:inline-block;font:600 11px/1 var(--sans);padding:4px 8px;border-radius:999px;background:#FBF3EE;color:var(--terracotta-dark);vertical-align:middle;margin-left:6px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px}
+.chips button{flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--white);color:var(--dark);font:500 13.5px var(--sans)}
+.chips button[aria-pressed="true"]{background:var(--dark);border-color:var(--dark);color:var(--cream)}
+.pick{position:sticky;top:0;z-index:20;margin:0 -16px;padding:10px 16px;background:var(--terracotta);color:#fff;display:flex;gap:10px;align-items:center;justify-content:space-between;font:600 14px/1.3 var(--sans)}
+.pick button{flex:none;min-height:36px;padding:0 12px;border-radius:8px;border:1.5px solid #fff;background:transparent;color:#fff;font:600 13px var(--sans)}
+.more{width:100%;margin-top:10px;min-height:46px;border-radius:8px;border:1.5px solid var(--line);background:var(--white);color:var(--dark);font:600 14.5px var(--sans)}
 .empty{background:var(--white);border:1px dashed var(--line);border-radius:12px;padding:24px 16px;text-align:center;color:var(--meta);margin-top:10px}
 .center{text-align:center;padding:60px 20px;color:var(--dark)}
 .btn{font:600 15px/1 var(--sans);border-radius:8px;min-height:46px;padding:0 18px;border:0;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
@@ -62,7 +85,9 @@ h2{font:700 20px/1.2 var(--serif);color:var(--dark);margin:28px 0 10px}
 var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var TARGET=8;
-var app=document.getElementById('app'), D=null, err='', busy=null, why={};
+var app=document.getElementById('app'), D=null, err='', busy=null, why={}, target=null, filt='all', shown=15;
+var DEMO_ROOMS=['Kitchen','Bathrooms','Bedrooms','Living & dining','Laundry','Windows & tracks'];
+function svcOf(s){ s=String(s||''); return /pre.?sale/i.test(s)?'presale':/bond|lease|move/i.test(s)?'bond':/deep/i.test(s)?'deep':'other'; }
 function key(){ try{ return localStorage.getItem('roster_admin_key')||''; }catch(e){ return ''; } }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function toast(m){ var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2200); }
@@ -72,8 +97,8 @@ function api(method,body,qs){
   return fetch('/api/demo'+(qs||''),{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
     .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok){ var e=new Error(d.error||'Something went wrong'); e.status=r.status; throw e; } return d; }); });
 }
-function save(msg){ return api('POST',{afters:D.afters}).then(function(d){ D.afters=d.afters; render(); if(msg) toast(msg); }).catch(function(e){ toast(e.message); }); }
-function isOn(id){ return D.afters.some(function(a){ return a.id===id; }); }
+function save(msg){ return api('POST',{afters:D.afters,slots:D.slots}).then(function(d){ D.afters=d.afters; D.slots=d.slots||{}; render(); if(msg) toast(msg); }).catch(function(e){ toast(e.message); }); }
+function isOn(id){ if(target&&target!=='gallery'){ var a=D.slots[target]; return !!(a&&a.id===id); } return D.afters.some(function(a){ return a.id===id; }); }
 // A photo the team sorted keeps its room and before/after. An unsorted one uses Claude's guess,
 // unless it was unsure or the photo looked private.
 function eff(x){
@@ -83,6 +108,18 @@ function eff(x){
 }
 function aftersOf(j){ return j.photos.map(eff).filter(function(x){ return x&&x.kind==='after'; }); }
 function rated(x){ return D.rate[x.id]; }
+// Where each gallery photo appears: the homepage gallery shows the first 3, 5 or 7; the demo job link gives
+// each of its rooms a photo from that room, then fills empty rooms with what's left (same rules as /demo).
+function usesOf(list){
+  var n=list.length>=7?7:list.length>=5?5:list.length>=3?3:0, out=list.map(function(){ return []; }), used={};
+  list.forEach(function(a,i){ if(i<n) out[i].push(i===0?['big','Gallery · large']:['','Gallery #'+(i+1)]); });
+  DEMO_ROOMS.forEach(function(r){ for(var i=0;i<list.length;i++) if(!used[i]&&list[i].room===r){ used[i]=r; return; } });
+  DEMO_ROOMS.forEach(function(r){ var have=false; for(var k in used) if(used[k]===r) have=true; if(have) return; for(var i=0;i<list.length;i++) if(!used[i]){ used[i]=r; return; } });
+  Object.keys(used).forEach(function(i){ out[i].push(['','Demo · '+used[i]]); });
+  out.forEach(function(u){ if(!u.length) u.push(['off','Spare, not shown']); });
+  return out;
+}
+function spotOf(id){ return D.spots.find(function(x){ return x.id===id; }); }
 
 function render(){
   if(err==='login'){ app.innerHTML='<div class="center">'+LOGO.replace('<svg','<svg style="width:48px;height:48px"')+'<h1 style="margin-top:12px">Log in <em>first</em></h1><p class="sub">Open the hub, log in with your password, then come back here.</p><p><a class="btn primary" href="/">Go to the hub</a></p></div>'; return; }
@@ -90,24 +127,42 @@ function render(){
   if(!D) return;
   var total=D.jobs.reduce(function(n,j){ return n+aftersOf(j).length; },0), unsorted=D.jobs.reduce(function(n,j){ return n+j.photos.filter(function(x){ return !x.room&&!D.guess[x.id]; }).length; },0);
   var h='<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><a href="/demo" target="_blank" rel="noopener" style="color:var(--terracotta-dark)">Open demo</a></div>';
-  h+='<h1>Website <em>photos</em></h1><p class="sub">Your best after photos from pre-sale, bond and deep cleans, for the website gallery and the demo job link.</p>';
+  var njobs=D.jobs.filter(function(j){ return aftersOf(j).length; }).length;
+  if(target) h+='<div class="pick"><span>Tap a photo below for: '+esc(target==='gallery'?'the homepage gallery':spotOf(target).page+' · '+spotOf(target).spot)+'</span><button type="button" data-cancel>Cancel</button></div>';
+  h+='<h1>Website <em>photos</em></h1><p class="sub">Your best after photos from all '+D.jobs.length+' jobs on the roster, and exactly where each one shows on bardonclean.au.</p>';
   h+='<div class="auto">';
   if(busy) h+='<p><b>'+(busy.phase==='sort'?'Sorting '+busy.total+' photos the team didn\'t sort…':busy.phase==='rate'?'Claude is rating '+busy.total+' after photos…':'Looking through '+busy.total+' after photos…')+'</b> '+(busy.phase==='rate'?'Judging how well each shows off the clean, and leaving out anything private.':busy.phase==='sort'?'Finding the after shots among them.':'Checking sharpness, light and framing.')+'</p><div class="prog"><i style="width:'+Math.round(busy.done/Math.max(1,busy.total)*100)+'%"></i></div>';
-  else h+='<p><b>Let the hub choose.</b> '+(D.ai?'It finds the after shots across your recent jobs (sorting any the team didn\'t), checks sharpness and light, then has Claude rate the strongest for how well they show off the clean and leave out anything private.':'It scores every after photo for sharpness, good light and landscape framing.')+' It skips near-duplicates, mixes rooms and jobs, and keeps the best '+TARGET+'.</p><button type="button" class="go" data-auto'+(total||unsorted?'':' disabled')+'>'+(D.afters.length?'Pick my best afters again':'Pick my best afters')+'</button>';
+  else h+='<p><b>Let the hub choose.</b> '+(D.ai?'It looks through the after shots from every job (sorting any the team didn\'t), checks sharpness and light, then has Claude rate the strongest for how well they show off the clean and leave out anything private.':'It scores every after photo for sharpness, good light and landscape framing.')+' It skips near-duplicates, mixes rooms and jobs, keeps the best '+TARGET+' for the gallery and puts the best fit in every page spot below (it won\'t touch spots you chose yourself).</p><button type="button" class="go" data-auto'+(total||unsorted?'':' disabled')+'>'+(D.afters.length?'Pick my best afters again':'Pick my best afters')+'</button>';
   h+='</div>';
   h+='<div class="note"><b>Give them a quick look.</b> These are public. '+(D.ai?'Claude leaves out photos showing family photos, faces, mail, the street number or number plates, but it can miss things.':'The hub judges light and sharpness, not privacy, so remove anything showing family photos, mail, the street number or number plates.')+'</div>';
 
-  h+='<h2>On your <em>website</em> <span style="font:500 14px var(--sans);color:var(--meta)">'+D.afters.length+'</span></h2>';
-  if(!D.afters.length) h+='<div class="empty">'+(total?'Nothing chosen yet. Tap the button above, or tap photos below to add them.':'No after photos on the roster yet. They appear here once the team adds after photos to a job.')+'</div>';
-  else { h+='<div class="picked">'; D.afters.forEach(function(a,i){
-    h+='<div class="card"><div class="im"><img alt="" loading="lazy" src="'+thumb(a)+'"><span class="n">'+(i+1)+'</span><button type="button" class="x" data-rm="'+a.id+'" aria-label="Remove photo '+(i+1)+'">×</button></div><div class="meta"><b>'+esc(a.room||'After')+(a.service?' · '+esc(a.service.replace(/ clean$/i,'')):'')+'</b>'+(rated(a)?'<span>Claude '+rated(a).r+'/5'+(rated(a).w?' · '+esc(rated(a).w):'')+'</span>':why[a.id]?'<span>'+esc(why[a.id])+'</span>':'')+'</div></div>'; });
-    h+='</div><p class="sub" style="margin-top:8px">Number 1 leads the gallery. Tap × to remove one.</p>'; }
+  // 1. Single-photo spots, page by page
+  h+='<h2>Page by <em>page</em></h2><p class="sub">One photo for each spot. Empty spots keep the photo the website has now.</p><div class="where">';
+  var lastPg='';
+  D.spots.forEach(function(sp){ var a=D.slots[sp.id];
+    if(sp.page!==lastPg){ h+='<div class="pg">'+esc(sp.page)+'</div>'; lastPg=sp.page; }
+    h+='<div class="spot"><div class="im">'+(a?'<img alt="" loading="lazy" src="'+thumb(a)+'">':'Current website photo')+'</div><div class="tx"><b>'+esc(sp.spot)+'</b>'+
+      (a?'<span>'+esc(a.room||'After')+(a.service?' · '+esc(a.service.replace(/ clean$/i,'')):'')+'</span><span class="ok">'+(a.man?'Your pick':'Picked by the hub')+'</span>':'<span>Best: '+esc(sp.room)+(sp.svc?', '+({presale:'pre-sale',bond:'bond',deep:'deep'})[sp.svc]+' job':'')+'</span>')+
+      '</div><div class="acts"><button type="button" class="sm" data-set="'+sp.id+'">'+(a?'Change':'Choose')+'</button>'+(a?'<button type="button" class="sm ghost" data-clr="'+sp.id+'" aria-label="Go back to the current website photo">Reset</button>':'')+'</div></div>'; });
+  h+='</div>';
 
-  h+='<h2>All your <em>afters</em></h2>';
-  D.jobs.forEach(function(j){ var af=aftersOf(j); if(!af.length) return;
+  // 2. Gallery + demo link
+  h+='<h2>Gallery &amp; <em>demo link</em> <span style="font:500 14px var(--sans);color:var(--meta)">'+D.afters.length+'</span></h2><p class="sub">The homepage “Handed back like this” gallery <span class="pill">Not live yet</span> and the <a href="/demo" target="_blank" rel="noopener">sample job link</a>. Each photo shows where it appears.</p>';
+  if(!D.afters.length) h+='<div class="empty">'+(total?'Nothing chosen yet. Tap the button above, or tap photos below to add them.':'No after photos on the roster yet. They appear here once the team adds after photos to a job.')+'</div>';
+  else { var U=usesOf(D.afters); h+='<div class="picked" style="margin-top:10px">'; D.afters.forEach(function(a,i){
+    h+='<div class="card"><div class="im"><img alt="" loading="lazy" src="'+thumb(a)+'"><span class="n">'+(i+1)+'</span><button type="button" class="x" data-rm="'+a.id+'" aria-label="Remove photo '+(i+1)+'">×</button></div><div class="meta"><b>'+esc(a.room||'After')+(a.service?' · '+esc(a.service.replace(/ clean$/i,'')):'')+'</b>'+(rated(a)?'<span>Claude '+rated(a).r+'/5</span>':why[a.id]?'<span>'+esc(why[a.id])+'</span>':'')+
+      '<div class="uses">'+U[i].map(function(u){ return '<i class="'+u[0]+'">'+esc(u[1])+'</i>'; }).join('')+'</div></div></div>'; });
+    h+='</div><p class="sub" style="margin-top:8px">Number 1 is the large gallery photo. Tap × to remove one'+(D.afters.length<12?', or <button type="button" class="sm" data-set="gallery" style="min-height:30px">Add a photo</button>':'')+'</p>'; }
+
+  // 3. Every job's afters
+  var cnt={all:0,presale:0,bond:0,deep:0,other:0}, list=D.jobs.filter(function(j){ if(!aftersOf(j).length) return false; cnt.all++; cnt[svcOf(j.service)]++; return filt==='all'||svcOf(j.service)===filt; });
+  h+='<h2>All your <em>afters</em> <span style="font:500 14px var(--sans);color:var(--meta)">'+njobs+' job'+(njobs===1?'':'s')+'</span></h2>';
+  h+='<div class="chips">'+[['all','All'],['presale','Pre-sale'],['bond','Bond'],['deep','Deep'],['other','Other']].filter(function(c){ return c[0]==='all'||cnt[c[0]]; }).map(function(c){ return '<button type="button" data-filt="'+c[0]+'" aria-pressed="'+(filt===c[0])+'">'+c[1]+' '+cnt[c[0]]+'</button>'; }).join('')+'</div>';
+  list.slice(0,shown).forEach(function(j){ var af=aftersOf(j);
     h+='<div class="job"><b>'+esc([j.suburb,j.service].filter(Boolean).join(' · ')||'Job')+'</b><span class="d">'+fday(j.date)+(j.client?' · '+esc(j.client):'')+' · '+af.length+' after'+(af.length===1?'':'s')+'</span><div class="strip">'+
       af.map(function(x){ return '<button type="button" class="ph'+(isOn(x.id)?' on':'')+'" data-ph="'+esc(j.key)+'|'+x.id+'" aria-pressed="'+isOn(x.id)+'" aria-label="'+esc(x.room||'After photo')+'"><img alt="" loading="lazy" src="'+thumb(x)+'">'+(x.room||rated(x)?'<span class="k">'+esc(x.room||'After')+(rated(x)?' · '+rated(x).r+'/5':'')+'</span>':'')+'</button>'; }).join('')+'</div></div>';
   });
+  if(list.length>shown) h+='<button type="button" class="more" data-more>Show more jobs ('+(list.length-shown)+' more)</button>';
   app.innerHTML=h;
 }
 
@@ -132,7 +187,7 @@ function exposure(l){ return Math.max(0,1-Math.abs(l-0.6)/0.38); }
 function rank(list,key){ var v=list.map(function(x){return x.f[key];}).sort(function(a,b){return a-b;}); list.forEach(function(x){ x[key+'R']=v.indexOf(x.f[key])/Math.max(1,v.length-1); }); }
 function reason(x){ var b=[]; if(x.sharpR>0.66) b.push('sharp'); if(exposure(x.f.lum)>0.75) b.push('well lit'); if(x.f.land) b.push('landscape'); if(x.stdR>0.66) b.push('strong contrast');
   return b.length?b.join(' · ').replace(/^./,function(c){return c.toUpperCase();}):'Good all-round'; }
-var JOBS=30;
+var JOBS=100000, PERJOB=60; // every job on the roster
 // Runs calls three at a time with a progress bar; stops queueing new ones after an error.
 function runCalls(phase,calls,total,done){
   if(!calls.length) return done('');
@@ -152,20 +207,23 @@ function autoPick(){
   if(busy) return;
   var jobs=D.jobs.slice(0,JOBS), warn='';
   // 1. Sort photos the team didn't (each photo is only ever sent once; the guesses are kept)
-  var todo=[]; if(D.ai) jobs.forEach(function(j){ var n=0; j.photos.forEach(function(x){ if(!x.room&&!D.guess[x.id]&&n<40){ n++; todo.push({job:j.key,x:x}); } }); });
+  var todo=[]; if(D.ai) jobs.forEach(function(j){ var n=0; j.photos.forEach(function(x){ if(!x.room&&!D.guess[x.id]&&n<PERJOB){ n++; todo.push({job:j.key,x:x}); } }); });
   runCalls('sort',batch(todo,4).map(function(bt){ return {n:bt.items.length,run:function(){
     return api('POST',{job:bt.job,items:bt.items.map(function(x){ return {j:x.j,id:x.id,at:hhmm(x.at)}; })},'?sort=1').then(function(d){ Object.keys(d.guess||{}).forEach(function(k){ D.guess[k]=d.guess[k]; }); }); }}; }),todo.length,function(e){
     if(e) warn=e;
     // 2. Measure every after photo on the phone
-    var list=[]; jobs.forEach(function(j){ aftersOf(j).slice(0,40).forEach(function(x){ list.push({job:j,x:x}); }); });
+    var list=[]; jobs.forEach(function(j){ aftersOf(j).slice(0,PERJOB).forEach(function(x){ list.push({job:j,x:x}); }); });
     if(!list.length){ busy=null; render(); toast(warn||'No after photos to choose from yet'); return; }
     busy={phase:'measure',done:0,total:list.length}; render();
-    var i=0, ok=[];
-    (function next(){
-      if(i>=list.length) return measured();
-      var it=list[i++];
-      loadImg(thumb(it.x)).then(function(im){ if(im){ try{ it.f=measure(im); ok.push(it); }catch(e){} } busy.done++; if(busy.done%5===0||busy.done===busy.total) render(); next(); });
-    })();
+    var i=0, ok=[], live=0, fin=false;
+    // six thumbnails at a time, so even hundreds of jobs go through quickly
+    function next(){
+      if(fin) return;
+      if(i>=list.length&&live===0){ fin=true; ok.sort(function(a,b){ return list.indexOf(a)-list.indexOf(b); }); return measured(); }
+      while(live<6&&i<list.length){ (function(it){ live++;
+        loadImg(thumb(it.x)).then(function(im){ if(im){ try{ it.f=measure(im); ok.push(it); }catch(e){} } live--; busy.done++; if(busy.done%10===0||busy.done===busy.total) render(); next(); }); })(list[i++]); }
+    }
+    next();
     function measured(){
       rank(ok,'sharp'); rank(ok,'std'); rank(ok,'sat');
       ok.forEach(function(x){ x.local=(0.40*x.sharpR+0.30*exposure(x.f.lum)+0.18*x.stdR+0.12*x.satR)*(x.f.land?1:0.6); });
@@ -197,6 +255,17 @@ function choose(ok,warn){
   pool.forEach(function(x){ tryAdd(x,4,12); });      // fill up if photos are scarce
   why={}; pick.forEach(function(p){ why[p.x.id]=reason(p); });
   D.afters=pick.map(function(p){ return { j:p.x.j, id:p.x.id, room:p.x.room, service:p.job.service }; });
+  // Fill each page spot (except ones Jack chose himself): landscape only, favouring the right kind of job and room,
+  // a different photo for every spot, and not the gallery's lead photo when there's another good option.
+  var taken={}; Object.keys(D.slots).forEach(function(k){ if(D.slots[k].man) taken[D.slots[k].id]=1; });
+  D.spots.forEach(function(sp){ if(D.slots[sp.id]&&D.slots[sp.id].man) return;
+    var best=null, bs=-1e9;
+    pool.forEach(function(x){ if(!x.f.land||taken[x.x.id]) return;
+      var sc=x.score+(sp.svc&&svcOf(x.job.service)===sp.svc?1.5:0)+(x.x.room===sp.room?1:0)-(pick[0]===x?0.8:0);
+      if(sc>bs){ bs=sc; best=x; } });
+    if(best){ taken[best.x.id]=1; D.slots[sp.id]={ j:best.x.j, id:best.x.id, room:best.x.room, service:best.job.service }; }
+    else delete D.slots[sp.id];
+  });
   busy=null;
   save((pick.length?'Picked your best '+pick.length+' after'+(pick.length===1?'':'s'):'No after photos good enough yet')+(warn?' · '+warn:''));
   window.scrollTo({top:0,behavior:'smooth'});
@@ -207,8 +276,16 @@ app.addEventListener('click',function(e){
   var t;
   if(e.target.closest('[data-auto]')){ autoPick(); return; }
   if((t=e.target.closest('[data-rm]'))){ var id=t.dataset.rm; D.afters=D.afters.filter(function(a){ return a.id!==id; }); save('Removed'); return; }
+  if(e.target.closest('[data-cancel]')){ target=null; render(); return; }
+  if(e.target.closest('[data-more]')){ shown+=15; render(); return; }
+  if((t=e.target.closest('[data-filt]'))){ filt=t.dataset.filt; shown=15; render(); return; }
+  if((t=e.target.closest('[data-set]'))){ target=t.dataset.set; var sp=target!=='gallery'&&spotOf(target); if(sp&&sp.svc&&filt==='all'){ filt=sp.svc; shown=15; } render();
+    var jl=document.querySelector('.job'); if(jl) jl.scrollIntoView({behavior:'smooth',block:'start'}); else toast('No after photos to choose from yet'); return; }
+  if((t=e.target.closest('[data-clr]'))){ delete D.slots[t.dataset.clr]; save('Back to the current website photo'); return; }
   if((t=e.target.closest('[data-ph]'))){
     var q=t.dataset.ph.split('|'), f=findPhoto(q[0],q[1]); if(!f) return;
+    if(target&&target!=='gallery'){ var sid=target; D.slots[sid]={ j:f.x.j, id:f.x.id, room:f.x.room, service:f.job.service, man:1 }; target=null; filt='all'; save('Set for '+spotOf(sid).page+' · '+spotOf(sid).spot); window.scrollTo({top:0,behavior:'smooth'}); return; }
+    if(target==='gallery') target=null;
     if(isOn(f.x.id)){ D.afters=D.afters.filter(function(a){ return a.id!==f.x.id; }); save('Removed'); }
     else if(D.afters.length>=12) toast('That\'s 12 already. Remove one first.');
     else { D.afters.push({ j:f.x.j, id:f.x.id, room:f.x.room, service:f.job.service }); save('Added'); }
@@ -216,10 +293,10 @@ app.addEventListener('click',function(e){
 });
 
 if(!key()){ err='login'; render(); }
-else api('GET',null,'?pick=1').then(function(d){ D=d; D.guess=D.guess||{}; D.rate=D.rate||{}; render(); // Re-pick when nothing is chosen yet, or a chosen photo is from a job the website doesn't show (e.g. a regular clean)
+else api('GET',null,'?pick=1').then(function(d){ D=d; D.guess=D.guess||{}; D.rate=D.rate||{}; D.slots=D.slots||{}; D.spots=D.spots||[]; render(); // Re-pick when nothing is chosen yet, or a chosen photo is from a job the website doesn't show (e.g. a regular clean)
   var keys={}; D.jobs.forEach(function(j){ j.photos.forEach(function(x){ keys[x.id]=1; }); });
   var stale=D.afters.some(function(a){ return !keys[a.id]; });
-  if((!D.afters.length||stale)&&D.jobs.length) autoPick(); })
+  if((!D.afters.length||stale||!Object.keys(D.slots).length)&&D.jobs.length) autoPick(); })
   .catch(function(e){ err=e.status===401?'login':e.message; render(); });
 })();
 </script>
