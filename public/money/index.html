@@ -192,7 +192,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 
   function load(){
     if(!key()){ loadErr='login'; render(); return Promise.resolve(); }
-    return Promise.all([api('GET','/api/docs'), api('GET','/api/roster').catch(function(){return {jobs:[]};}), api('GET','/api/request').catch(function(){return {requests:[]};}), api('GET','/api/books?costs=1').catch(function(){return null;})]).then(function(r){ S.reqs=r[2].requests||[]; S.costs=r[3]&&r[3].rates?r[3]:null;
+    return Promise.all([api('GET','/api/docs'), api('GET','/api/roster').catch(function(){return {jobs:[]};}), api('GET','/api/request').catch(function(){return {requests:[]};}), api('GET','/api/books?costs=1').catch(function(){return null;})]).then(function(r){ S.reqs=r[2].requests||[]; S.readerOn=!!r[2].readerOn; S.costs=r[3]&&r[3].rates?r[3]:null;
       BCSms.check(key()); BCTpl.load(key()).catch(function(){}); S.docs=r[0].docs; S.settings=r[0].settings; S.card=r[0].card; S.jobs=(r[1].jobs||[]).filter(function(j){return !j.sample;});
       loaded=true; loadErr=''; render();
     }).catch(function(e){ loadErr=e.status===401?'login':e.message; render(); });
@@ -721,27 +721,45 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   // ---------- Add a request that came through Jobber ----------
   var JRSVC=[['presale','Pre-sale clean'],['bond','Bond / end-of-lease clean'],['deep','Deep clean'],['movein','Move-in clean'],['regular','Regular cleaning'],['other','Something else']];
   function renderJobReq(){
-    JR=JR||{text:'',p:null,err:'',busy:false};
+    JR=JR||{text:'',p:null,err:'',busy:false,n:0};
     var h=topbar('#/list')+'<h1>Add a <em>Jobber</em> request</h1>';
     if(!JR.p){
-      h+='<div class="card"><p style="margin-top:0">Open the request in Jobber (the app, or the "new request" email), copy everything, and paste it here. The hub fills in the details for you to check.</p>'+
+      if(JR.busy){ h+='<div class="card" style="text-align:center"><p style="margin:8px 0">Reading '+(JR.n>1?'your '+JR.n+' screenshots':'your screenshot')+'…</p><p class="hint" style="margin:0">Takes about 10 seconds.</p></div>'; app.innerHTML=h; return; }
+      if(S.readerOn) h+='<div class="card"><p style="margin-top:0">Screenshot the request in Jobber, then pick the screenshot here. If it\'s long, take a few and pick them all. Claude reads them and fills in the details for you to check.</p>'+
+        '<label class="btn primary" style="width:100%;cursor:pointer">📷 Choose screenshots<input type="file" accept="image/*" multiple data-jrshots hidden></label>'+
+        (JR.err?'<div class="err" style="margin-top:10px">'+esc(JR.err)+'</div>':'')+'</div>';
+      else h+='<div class="hint-card" style="margin-bottom:12px">Screenshot reading needs ANTHROPIC_API_KEY in Netlify (the same key the receipt reader uses). Until then, paste the text below.</div>';
+      h+='<details class="card"'+(S.readerOn?'':' open')+'><summary style="cursor:pointer;font-weight:600">Or paste the text instead</summary><div style="margin-top:10px">'+
         '<button class="btn outline" data-act="jr-clip" style="width:100%;margin-bottom:10px">Paste from clipboard</button>'+
-        '<label class="l">Request from Jobber<textarea id="jrText" style="min-height:220px" placeholder="Paste the request here">'+esc(JR.text)+'</textarea></label>'+
-        (JR.err?'<div class="err" style="margin-top:10px">'+esc(JR.err)+'</div>':'')+
-        '<div class="acts" style="margin-top:12px"><button class="btn primary wide" data-act="jr-read">Fill in the details</button><button class="btn plain" data-act="jr-blank">Type it in myself</button></div></div>';
+        '<label class="l">Request from Jobber<textarea id="jrText" style="min-height:180px" placeholder="Paste the request here">'+esc(JR.text)+'</textarea></label>'+
+        (!S.readerOn&&JR.err?'<div class="err" style="margin-top:10px">'+esc(JR.err)+'</div>':'')+
+        '<button class="btn dark" data-act="jr-read" style="width:100%;margin-top:10px">Fill in the details</button></div></details>'+
+        '<div class="menu"><button data-act="jr-blank">Type it in myself<span class="chev">›</span></button></div>';
       app.innerHTML=h; return;
     }
     var p=JR.p, f=function(k,label,type,ph){ return '<label class="l">'+label+'<input data-jr="'+k+'" type="'+(type||'text')+'"'+(type==='tel'?' inputmode="tel"':type==='email'?' inputmode="email" autocapitalize="off"':type==='number'?' inputmode="numeric" min="0"':'')+' value="'+esc(p[k]==null?'':p[k])+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+'></label>'; };
     h+='<p class="sub">Check these against Jobber, fix anything that\'s off, then add it.</p>';
+    if(p.unsure) h+='<div class="hint-card" style="margin:0 0 12px"><b>Double-check:</b> '+esc(p.unsure)+'</div>';
     h+='<div class="card"><h2>Client</h2>'+f('name','Name')+'<div style="height:10px"></div>'+f('phone','Mobile','tel','04xx xxx xxx')+'<div style="height:10px"></div>'+f('email','Email','email')+'</div>';
     h+='<div class="card"><h2>The <em>clean</em></h2><label class="l">Service<select data-jr="service">'+JRSVC.map(function(o){ return '<option value="'+o[0]+'"'+(p.service===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select></label><div style="height:10px"></div>'+
       f('address','Street address','text','14 Latrobe Terrace')+'<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:10px">'+f('suburb','Suburb')+f('postcode','Postcode','text')+'</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">'+f('beds','Beds','number')+f('baths','Baths','number')+'</div><div style="height:10px"></div>'+
       f('date','Date they want','date')+'<div style="height:10px"></div><label class="l">Notes<textarea data-jr="notes" style="min-height:90px">'+esc(p.notes||'')+'</textarea></label></div>';
-    if(p.raw) h+='<details class="card"><summary style="cursor:pointer;font-weight:600">What you pasted</summary><p style="margin:10px 0 0;white-space:pre-wrap;font-size:14px">'+esc(p.raw)+'</p></details>';
+    if(p.raw) h+='<details class="card"><summary style="cursor:pointer;font-weight:600">'+(p.shots?'What was read':'What you pasted')+'</summary><p style="margin:10px 0 0;white-space:pre-wrap;font-size:14px">'+esc(p.raw)+'</p></details>';
     if(JR.err) h+='<div class="err" style="margin:10px 0">'+esc(JR.err)+'</div>';
     h+='<div class="acts" style="margin-top:12px"><button class="btn primary wide" data-act="jr-quote"'+(JR.busy?' disabled':'')+'>Add and create quote</button><button class="btn dark" data-act="jr-save"'+(JR.busy?' disabled':'')+'>Just add it</button><button class="btn plain" data-act="jr-back">Start again</button></div>';
     app.innerHTML=h;
+  }
+  function jrShrink(file){ return new Promise(function(res,rej){ var img=new Image(), u=URL.createObjectURL(file); img.onload=function(){ var k=Math.min(1,2000/Math.max(img.width,img.height)), c=document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg',0.82)); }; img.onerror=function(){ rej(new Error('Couldn\'t open that screenshot')); }; img.src=u; }); }
+  function jrShots(files){
+    files=Array.prototype.slice.call(files||[],0,4); if(!files.length) return;
+    JR.busy=true; JR.n=files.length; JR.err=''; renderJobReq();
+    Promise.all(files.map(jrShrink)).then(function(imgs){ return api('POST','/api/request',{action:'read',images:imgs}); })
+      .then(function(r){ var x=r.read; JR.busy=false;
+        if(!x.request&&!x.name&&!x.phone&&!x.email){ JR.err='That doesn\'t look like a request. Try a screenshot of the request page in Jobber.'; renderJobReq(); return; }
+        JR.p={name:x.name,phone:x.phone,email:x.email,service:x.service,address:x.address,suburb:x.suburb,postcode:x.postcode,beds:x.beds,baths:x.baths,date:x.date,notes:x.notes,raw:x.raw,unsure:x.unsure,shots:true};
+        renderJobReq(); window.scrollTo(0,0); })
+      .catch(function(e){ JR.busy=false; JR.err=e.message; renderJobReq(); });
   }
   function jrSave(thenQuote){
     var p=JR.p; JR.busy=true; JR.err=''; renderJobReq();
@@ -848,6 +866,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var t=e.target;
     if(t.dataset.pick){ pick(t.dataset.pick,t.value); return; }
     if(t.dataset.jr&&JR&&JR.p){ JR.p[t.dataset.jr]=t.value; return; }
+    if(t.dataset.jrshots!==undefined&&JR){ jrShots(t.files); t.value=''; return; }
     if(draft&&t.dataset.f==='service'){ renderEdit(); }
     if(draft&&t.type==='checkbox'&&t.dataset.f){ setPath(draft,t.dataset.f,t.checked); redrawTotals(); }
   });

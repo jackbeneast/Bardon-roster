@@ -3,10 +3,12 @@
 //   GET  ?photo=<id>  the photo (unguessable id, so <img> can show it in the hub)
 //   GET  (admin)   -> { requests, labels }
 //   POST (admin)   { action: "status", id, status, quoteId? } | { action: "delete", id }
+//                  | { action: "read", images: [dataUrl] }  screenshots of a Jobber request -> { read }
 //                  | { action: "add", req: {...} }  a request Jack pasted in from Jobber -> { ok, id }
 import { store, json, checkAdmin } from "../../lib/core.mjs";
 import { cleanRequest, cleanManual, loadRequests, lines, rid, pid, ipKey, SERVICES, EXTRAS } from "../../lib/requests.mjs";
 import { notify, firstName } from "../../lib/notify.mjs";
+import { readRequest, readerOn } from "../../lib/scanreq.mjs";
 
 const PHOTO = /^[a-f0-9]{24}$/;
 const MAXPHOTO = 1.5 * 1024 * 1024, MAXN = 8;
@@ -26,7 +28,7 @@ export default async (req) => {
     }
     if (!(await checkAdmin(s, req))) return json({ error: "Log in first" }, 401);
     const list = await loadRequests(s);
-    return json({ requests: list.map((r) => ({ ...r, lines: lines(r), serviceLabel: SERVICES[r.service]?.label || "", hubService: SERVICES[r.service]?.hub || "Other" })) });
+    return json({ readerOn: readerOn(), requests: list.map((r) => ({ ...r, lines: lines(r), serviceLabel: SERVICES[r.service]?.label || "", hubService: SERVICES[r.service]?.hub || "Other" })) });
   }
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
   let b; try { b = await req.json(); } catch { return json({ error: "Something went wrong sending that. Please try again." }, 400); }
@@ -34,6 +36,11 @@ export default async (req) => {
   // ---- Admin ----
   if (b.action) {
     if (!(await checkAdmin(s, req))) return json({ error: "Log in first" }, 401);
+    if (b.action === "read") { // screenshots of a Jobber request -> fields for Jack to check; nothing saved
+      if (!readerOn()) return json({ error: "Screenshot reading isn't switched on. Add ANTHROPIC_API_KEY in Netlify.", off: true }, 503);
+      try { return json({ ok: true, read: await readRequest(b.images, new Date(Date.now() + 10 * 3600e3).toISOString().slice(0, 10)) }); }
+      catch (e) { return json({ error: e.message }, e.status || 500); }
+    }
     if (b.action === "add") {
       const { req: r, error } = cleanManual(b.req || {});
       if (error) return json({ error }, 400);
