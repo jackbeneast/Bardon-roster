@@ -86,6 +86,18 @@ function view(job, roster, L, withShare, photos = {}, all = {}) {
   return o;
 }
 
+// Multi-day bookings are one job to an agent: keep a single entry per booking.
+// Show today's day, else the next one still to come, else the last (same rule as the client link).
+function oneEach(jobs) {
+  const t = new Date(Date.now() + BNE).toISOString().slice(0, 10), by = new Map();
+  for (const j of [...jobs].sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))) {
+    const k = j.group || j.id;
+    if (!by.has(k)) by.set(k, []);
+    by.get(k).push(j);
+  }
+  return [...by.values()].map((g) => g.find((j) => j.date >= t) || g[g.length - 1]);
+}
+
 export default async (req) => {
   const s = await store();
   const roster = await loadRoster(s);
@@ -116,12 +128,12 @@ export default async (req) => {
     if (k) {
       const a = k.length >= 16 && agents.find((x) => x.token === k);
       if (!a) return json({ error: "This link isn't active. Contact Jack at Bardon Clean for a new one." }, 404);
-      const jobs = roster.jobs.filter((j) => j.agentId === a.id).map((j) => view(j, roster, live[j.id], true, photos, live));
+      const jobs = oneEach(roster.jobs.filter((j) => j.agentId === a.id)).map((j) => view(j, roster, live[j.id], true, photos, live));
       return json({ ...base, mode: "agent", agent: { name: a.name, agency: a.agency }, jobs });
     }
     if (await checkAdmin(s, req)) {
       const as = u.searchParams.get("as") || "";
-      const jobs = roster.jobs.filter((j) => (as ? j.agentId === as : true))
+      const jobs = oneEach(roster.jobs.filter((j) => (as ? j.agentId === as : true)))
         .map((j) => ({ ...view(j, roster, live[j.id], true, photos, live), agentId: j.agentId || "", client: j.client }));
       return json({ ...base, mode: "admin", agents: agents.map(({ id, name, agency }) => ({ id, name, agency })), jobs });
     }

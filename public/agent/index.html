@@ -276,7 +276,7 @@ footer{margin-top:36px;font-size:12px;color:var(--meta)}
     if(kind==='upcoming'){
       h+='<div class="facts"><div class="fact"><span>Date</span><b>'+fmtDay(j.date)+(j.dayT?' · Day '+j.dayN+' of '+j.dayT:'')+'</b></div><div class="fact"><span>Start</span><b>'+fmtTime(j.start)+'</b></div><div class="fact"><span>Est. finish</span><b>'+fmtTime(L.eta||j.end)+'</b></div></div>';
     } else if(kind==='reports'){
-      h+='<div class="facts"><div class="fact"><span>Date</span><b>'+fmtDay(j.date)+(j.dayT?' · Day '+j.dayN+' of '+j.dayT:'')+'</b></div><div class="fact"><span>Finished</span><b>'+(L.done?clock(L.done):'—')+'</b></div><div class="fact"><span>Photos</span><b>'+L.photos.length+'</b></div></div>';
+      h+='<div class="facts"><div class="fact"><span>'+(j.days?'Dates':'Date')+'</span><b>'+(j.days?fmtDay(j.days[0].date)+' – '+fmtDay(j.days[j.days.length-1].date)+' · '+j.days.length+' days':fmtDay(j.date))+'</b></div><div class="fact"><span>Finished</span><b>'+(L.done?clock(L.done):'—')+'</b></div><div class="fact"><span>Photos</span><b>'+L.photos.length+'</b></div></div>';
       if(L.flags.length) h+='<div class="ready"><b>'+L.flags.length+' note'+(L.flags.length>1?'s':'')+'</b> for your attention</div>';
     } else {
       h+='<div class="bar'+(L.done?' ok':'')+'" aria-label="'+p.pct+' percent complete"><i style="width:'+p.pct+'%"></i></div>';
