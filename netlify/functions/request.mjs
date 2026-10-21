@@ -3,8 +3,9 @@
 //   GET  ?photo=<id>  the photo (unguessable id, so <img> can show it in the hub)
 //   GET  (admin)   -> { requests, labels }
 //   POST (admin)   { action: "status", id, status, quoteId? } | { action: "delete", id }
+//                  | { action: "add", req: {...} }  a request Jack pasted in from Jobber -> { ok, id }
 import { store, json, checkAdmin } from "../../lib/core.mjs";
-import { cleanRequest, loadRequests, lines, rid, pid, ipKey, SERVICES, EXTRAS } from "../../lib/requests.mjs";
+import { cleanRequest, cleanManual, loadRequests, lines, rid, pid, ipKey, SERVICES, EXTRAS } from "../../lib/requests.mjs";
 import { notify, firstName } from "../../lib/notify.mjs";
 
 const PHOTO = /^[a-f0-9]{24}$/;
@@ -33,6 +34,13 @@ export default async (req) => {
   // ---- Admin ----
   if (b.action) {
     if (!(await checkAdmin(s, req))) return json({ error: "Log in first" }, 401);
+    if (b.action === "add") {
+      const { req: r, error } = cleanManual(b.req || {});
+      if (error) return json({ error }, 400);
+      r.id = rid(); r.at = new Date().toISOString(); r.status = "new"; r.seen = true; r.photos = [];
+      await s.set(`req/${r.id}`, r);
+      return json({ ok: true, id: r.id });
+    }
     const key = `req/${String(b.id || "").replace(/[^\w]/g, "")}`;
     const r = await s.get(key);
     if (!r) return json({ error: "That request was deleted" }, 404);

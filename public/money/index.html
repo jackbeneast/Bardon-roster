@@ -152,12 +152,13 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 <script src="/lib/confirm.js"></script>
 <script src="/lib/sms.js"></script>
 <script src="/lib/templates.js"></script>
+<script src="/lib/jobberreq.js"></script>
 <script>
 (function(){
   var app=document.getElementById('app');
   var S={docs:[],settings:null,card:false,jobs:[],reqs:[]}, loaded=false, loadErr='';
   var tab=lsGet('money_tab')||'quote', filter='all', q='', draft=null, dirty=false;
-  var LIMIT=40, IMP=null, PREFILL=null;
+  var LIMIT=40, IMP=null, PREFILL=null, JR=null;
   var SERVICES=['Pre-sale clean','Bond clean','Deep clean','Regular clean','Commercial','Other'];
   var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -220,6 +221,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(r.v==='settings') return renderSettings();
     if(r.v==='import') return renderImport();
     if(r.v==='req') return renderReq(r.id);
+    if(r.v==='jobreq') return renderJobReq();
     renderList();
   }
 
@@ -690,9 +692,10 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var FIL=[['new','New'],['quoted','Quoted'],['archived','Archived'],['all','All']];
     var h='<div class="chips">'+FIL.map(function(f){ var n=S.reqs.filter(function(x){return f[0]==='all'||x.status===f[0];}).length; return '<button class="chip" data-rqf="'+f[0]+'" aria-pressed="'+(RQF===f[0])+'">'+f[1]+' '+n+'</button>'; }).join('')+'</div>';
     var list=S.reqs.filter(function(x){return RQF==='all'||x.status===RQF;});
+    h+='<button class="btn dark wide" data-go="jobreq" style="width:100%;margin:0 0 12px">+ Add a request from Jobber</button>';
     h+='<div class="list">'+(list.length?list.map(function(x){
       var size=[x.beds!=null?x.beds+' bed':'',x.baths!=null?x.baths+' bath':''].filter(Boolean).join(' ');
-      return '<button class="row" data-req="'+x.id+'"><span class="c">'+esc(x.name)+'</span><span class="a" style="font-weight:500;font-size:13px;color:var(--meta)">'+ago(x.at)+'</span><span class="m">'+esc(reqTitle(x))+(size?' · '+size:'')+'<br>'+(x.date?'For '+fdate(x.date):'No date yet')+(x.photos&&x.photos.length?' · '+x.photos.length+' photo'+(x.photos.length>1?'s':''):'')+'</span><span style="text-align:right">'+(x.status==='new'?'<span class="pill viewed">'+(x.seen?'New':'Unread')+'</span>':x.status==='quoted'?'<span class="pill accepted">Quoted</span>':'<span class="pill expired">Archived</span>')+'</span></button>'; }).join(''):'<div class="empty">'+(RQF==='new'?'No new requests.':'Nothing here.')+'</div>')+'</div>';
+      return '<button class="row" data-req="'+x.id+'"><span class="c">'+esc(x.name)+'</span><span class="a" style="font-weight:500;font-size:13px;color:var(--meta)">'+ago(x.at)+'</span><span class="m">'+esc(reqTitle(x))+(size?' · '+size:'')+'<br>'+(x.source==='jobber'?'From Jobber · ':'')+(x.date?'For '+fdate(x.date):'No date yet')+(x.photos&&x.photos.length?' · '+x.photos.length+' photo'+(x.photos.length>1?'s':''):'')+'</span><span style="text-align:right">'+(x.status==='new'?'<span class="pill viewed">'+(x.seen?'New':'Unread')+'</span>':x.status==='quoted'?'<span class="pill accepted">Quoted</span>':'<span class="pill expired">Archived</span>')+'</span></button>'; }).join(''):'<div class="empty">'+(RQF==='new'?'No new requests.':'Nothing here.')+'</div>')+'</div>';
     h+='<div class="card" style="margin-top:18px"><h2>Your request <em>form</em></h2><p class="sub" style="margin:0 0 10px">Link to this from your website, Google profile, Instagram and email signature. Every request lands here and pings your phone.</p><p style="margin:0 0 12px;word-break:break-all"><a href="'+formUrl+'" target="_blank" rel="noopener">'+esc(formUrl.replace(/^https?:\/\//,''))+'</a></p><div class="acts"><button class="btn dark" data-act="copyform">Copy link</button><a class="btn plain" href="'+formUrl+'" target="_blank" rel="noopener">Open it</a></div></div>';
     h+='<div class="menu"><button data-go="settings">Business, bank and numbering<span class="chev">›</span></button><button data-go="import">Import from Jobber<span class="chev">›</span></button></div>';
     return h;
@@ -710,10 +713,43 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var mq=[x.address,x.suburb,'QLD',x.postcode].filter(Boolean).join(', ');
     h+='<a class="alert" style="display:block;text-decoration:none;margin-top:12px" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(mq)+(x.placeId?'&query_place_id='+encodeURIComponent(x.placeId):'')+'"><b>Open in Google Maps</b>'+(x.placeId?' · address matched with Google':' · typed in by the client')+'</a>';
     if(x.photos&&x.photos.length) h+='<div class="card"><h2>Photos</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'+x.photos.map(function(p){ var u='/api/request?photo='+p; return '<a href="'+u+'" target="_blank" rel="noopener" style="display:block;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--cream-dark)"><img src="'+u+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block"></a>'; }).join('')+'</div></div>';
+    if(x.raw) h+='<details class="card"><summary style="cursor:pointer;font-weight:600">What came through '+(x.source==='jobber'?'Jobber':'')+'</summary><p style="margin:10px 0 0;white-space:pre-wrap;font-size:14px;color:var(--dark)">'+esc(x.raw)+'</p></details>';
     h+='<div class="card"><h2>Contact</h2><p style="margin:0">'+esc(x.name)+'<br><a href="tel:'+esc(phoneSms(x.phone))+'">'+esc(x.phone)+'</a>'+(x.email?'<br><a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a>':'')+'</p><p class="hint" style="margin:8px 0 0">Prefers '+esc(x.contact==='call'?'a call':x.contact==='email'?'email':'a text')+'.'+(x.src?' Came from '+esc(x.src)+'.':'')+'</p></div>';
     h+='<div class="menu">'+(x.status!=='archived'?'<button data-act="req-archive">Archive<span class="chev">›</span></button>':'<button data-act="req-new">Move back to new<span class="chev">›</span></button>')+(x.status==='quoted'?'<button data-act="req-new">Mark not quoted<span class="chev">›</span></button>':'')+'<button data-act="req-delete">Delete request<span class="chev">›</span></button></div>';
     app.innerHTML=h;
   }
+  // ---------- Add a request that came through Jobber ----------
+  var JRSVC=[['presale','Pre-sale clean'],['bond','Bond / end-of-lease clean'],['deep','Deep clean'],['movein','Move-in clean'],['regular','Regular cleaning'],['other','Something else']];
+  function renderJobReq(){
+    JR=JR||{text:'',p:null,err:'',busy:false};
+    var h=topbar('#/list')+'<h1>Add a <em>Jobber</em> request</h1>';
+    if(!JR.p){
+      h+='<div class="card"><p style="margin-top:0">Open the request in Jobber (the app, or the "new request" email), copy everything, and paste it here. The hub fills in the details for you to check.</p>'+
+        '<button class="btn outline" data-act="jr-clip" style="width:100%;margin-bottom:10px">Paste from clipboard</button>'+
+        '<label class="l">Request from Jobber<textarea id="jrText" style="min-height:220px" placeholder="Paste the request here">'+esc(JR.text)+'</textarea></label>'+
+        (JR.err?'<div class="err" style="margin-top:10px">'+esc(JR.err)+'</div>':'')+
+        '<div class="acts" style="margin-top:12px"><button class="btn primary wide" data-act="jr-read">Fill in the details</button><button class="btn plain" data-act="jr-blank">Type it in myself</button></div></div>';
+      app.innerHTML=h; return;
+    }
+    var p=JR.p, f=function(k,label,type,ph){ return '<label class="l">'+label+'<input data-jr="'+k+'" type="'+(type||'text')+'"'+(type==='tel'?' inputmode="tel"':type==='email'?' inputmode="email" autocapitalize="off"':type==='number'?' inputmode="numeric" min="0"':'')+' value="'+esc(p[k]==null?'':p[k])+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+'></label>'; };
+    h+='<p class="sub">Check these against Jobber, fix anything that\'s off, then add it.</p>';
+    h+='<div class="card"><h2>Client</h2>'+f('name','Name')+'<div style="height:10px"></div>'+f('phone','Mobile','tel','04xx xxx xxx')+'<div style="height:10px"></div>'+f('email','Email','email')+'</div>';
+    h+='<div class="card"><h2>The <em>clean</em></h2><label class="l">Service<select data-jr="service">'+JRSVC.map(function(o){ return '<option value="'+o[0]+'"'+(p.service===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select></label><div style="height:10px"></div>'+
+      f('address','Street address','text','14 Latrobe Terrace')+'<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:10px">'+f('suburb','Suburb')+f('postcode','Postcode','text')+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">'+f('beds','Beds','number')+f('baths','Baths','number')+'</div><div style="height:10px"></div>'+
+      f('date','Date they want','date')+'<div style="height:10px"></div><label class="l">Notes<textarea data-jr="notes" style="min-height:90px">'+esc(p.notes||'')+'</textarea></label></div>';
+    if(p.raw) h+='<details class="card"><summary style="cursor:pointer;font-weight:600">What you pasted</summary><p style="margin:10px 0 0;white-space:pre-wrap;font-size:14px">'+esc(p.raw)+'</p></details>';
+    if(JR.err) h+='<div class="err" style="margin:10px 0">'+esc(JR.err)+'</div>';
+    h+='<div class="acts" style="margin-top:12px"><button class="btn primary wide" data-act="jr-quote"'+(JR.busy?' disabled':'')+'>Add and create quote</button><button class="btn dark" data-act="jr-save"'+(JR.busy?' disabled':'')+'>Just add it</button><button class="btn plain" data-act="jr-back">Start again</button></div>';
+    app.innerHTML=h;
+  }
+  function jrSave(thenQuote){
+    var p=JR.p; JR.busy=true; JR.err=''; renderJobReq();
+    var body={name:p.name,phone:p.phone,email:p.email,service:p.service,address:p.address,suburb:p.suburb,postcode:p.postcode,beds:p.beds,baths:p.baths,date:p.date,notes:p.notes,raw:p.raw,source:'jobber'};
+    api('POST','/api/request',{action:'add',req:body}).then(function(r){ JR=null; return load().then(function(){ var x=reqById(r.id); toast('Added to requests'); if(thenQuote&&x) quoteFromReq(x); else go('req/'+r.id); }); })
+      .catch(function(e){ JR.busy=false; JR.err=e.message; renderJobReq(); });
+  }
+
   function reqStatus(x,st,extra){ var b={action:'status',id:x.id,status:st}; for(var k in extra||{}) b[k]=extra[k]; return api('POST','/api/request',b).then(load); }
   function quoteFromReq(x){
     var agent=x.who==='agent'&&x.agency;
@@ -800,6 +836,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   app.addEventListener('input',function(e){
     var t=e.target;
     if(t.dataset.search!==undefined){ q=t.value; var rl=document.getElementById('rows'); var list=S.docs.filter(function(d){return d.kind===tab && match(d,filter) && (!q||(d.num+' '+d.client.name+' '+d.site+' '+d.suburb).toLowerCase().indexOf(q.toLowerCase())>=0);}); rl.innerHTML=rows(list); return; }
+    if(t.id==='jrText'&&JR){ JR.text=t.value; }
+    if(t.dataset.jr&&JR&&JR.p){ JR.p[t.dataset.jr]=t.value; }
     if(t.tagName==='TEXTAREA'){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight+2,520)+'px'; }
     if(!draft) { if(t.dataset.p){ var pr=t.closest('.prow'), v=function(k){return +pr.querySelector('[data-p="'+k+'"]').value||0;}; pr.querySelector('[data-ex]').textContent='3 bed 2 bath: '+money(r2(v('base')+v('bed')*3+v('bath')*2))+' + GST'; } return; }
     if(t.dataset.est){ draft.est=draft.est||{}; draft.est[t.dataset.est]=t.value; dirty=true; redrawCheck(); return; }
@@ -809,6 +847,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   app.addEventListener('change',function(e){
     var t=e.target;
     if(t.dataset.pick){ pick(t.dataset.pick,t.value); return; }
+    if(t.dataset.jr&&JR&&JR.p){ JR.p[t.dataset.jr]=t.value; return; }
     if(draft&&t.dataset.f==='service'){ renderEdit(); }
     if(draft&&t.type==='checkbox'&&t.dataset.f){ setPath(draft,t.dataset.f,t.checked); redrawTotals(); }
   });
@@ -840,6 +879,11 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(a==='copyform'){ var fu=location.origin+'/quote'; (navigator.clipboard?navigator.clipboard.writeText(fu):Promise.reject()).then(function(){ toast('Link copied'); },function(){ prompt('Copy this link',fu); }); return; }
     var rq=route().v==='req'?reqById(route().id):null;
     if(rq&&a==='req-quote'){ quoteFromReq(rq); return; }
+    if(a==='jr-clip'){ if(!navigator.clipboard||!navigator.clipboard.readText){ toast('Long-press the box and tap Paste'); return; } navigator.clipboard.readText().then(function(t){ JR.text=t||''; JR.err=''; renderJobReq(); if(JR.text) toast('Pasted'); }).catch(function(){ toast('Long-press the box and tap Paste'); }); return; }
+    if(a==='jr-read'){ var tx=(document.getElementById('jrText')||{}).value||JR.text; JR.text=tx; if(tx.trim().length<10){ JR.err='Paste the request from Jobber first.'; renderJobReq(); return; } JR.p=BCJobReq.parse(tx); JR.err=(!JR.p.name&&!JR.p.phone&&!JR.p.email)?'Couldn\'t find a name or contact in that. Fill them in below.':''; renderJobReq(); window.scrollTo(0,0); return; }
+    if(a==='jr-blank'){ JR.p={name:'',phone:'',email:'',service:'other',address:'',suburb:'',postcode:'',beds:'',baths:'',date:'',notes:'',raw:''}; JR.err=''; renderJobReq(); return; }
+    if(a==='jr-back'){ JR={text:JR.text,p:null,err:''}; renderJobReq(); return; }
+    if(a==='jr-save'||a==='jr-quote'){ jrSave(a==='jr-quote'); return; }
     if(rq&&a==='req-text'){ e.preventDefault(); var msg=(window.BCTpl&&BCTpl.get('lead_first')?BCTpl.fill(BCTpl.get('lead_first').text,BCTpl.varsFor({name:rq.name,service:rq.serviceLabel,suburb:rq.suburb})).text:reqText(rq)), mob=String(rq.phone||'').replace(/[^\d+]/g,'').replace(/^\+61/,'0').replace(/^61(?=4\d{8}$)/,'0');
       // With Mobile Message on, the conversation lives in Messages: open it with this text ready to send.
       if(BCSms.ready&&/^04\d{8}$/.test(mob)){ location.href='/messages/#/t/'+mob+'?name='+encodeURIComponent(rq.name||'')+'&draft='+encodeURIComponent(msg); return; }
