@@ -222,6 +222,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(r.v==='import') return renderImport();
     if(r.v==='req') return renderReq(r.id);
     if(r.v==='jobreq') return renderJobReq();
+    if(r.v==='requests'){ tab='request'; lsSet('money_tab',tab); history.replaceState(null,'','#/list'); return renderList(); }
     renderList();
   }
 
