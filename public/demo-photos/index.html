@@ -104,7 +104,19 @@ function api(method,body,qs){
   return fetch('/api/demo'+(qs||''),{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
     .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok){ var e=new Error(d.error||'Something went wrong'); e.status=r.status; throw e; } return d; }); });
 }
-function save(msg){ return api('POST',{afters:D.afters,slots:D.slots,show:D.show}).then(function(d){ D.afters=d.afters; D.slots=d.slots||{}; D.show=d.show||{}; render(); if(msg) toast(msg); }).catch(function(e){ toast(e.message); }); }
+// Saves run one after another, so a slow save can never land after a newer one and undo it.
+var queue=Promise.resolve();
+function inLine(fn){ var p=queue.then(fn,fn); queue=p.catch(function(){}); return p; }
+function save(msg){ return inLine(function(){ return api('POST',{afters:D.afters,slots:D.slots}).then(function(d){ D.afters=d.afters; D.slots=d.slots||{}; render(); if(msg) toast(msg); }).catch(function(e){ toast(e.message); }); }); }
+// Sample reports: each tap saves just that one change. The page shows it straight away,
+// then confirms with what was actually saved (and puts it back if the save failed).
+var showSaving={};
+function saveShow(kind,body,msg){
+  var before=JSON.stringify(D.show);
+  showSaving[kind]=1; render();
+  return inLine(function(){ return api('POST',Object.assign({action:'show',kind:kind},body)).then(function(d){ D.show=d.show||{}; delete showSaving[kind]; render(); if(msg) toast(msg); })
+    .catch(function(e){ D.show=JSON.parse(before); delete showSaving[kind]; render(); toast('Not saved: '+e.message); }); });
+}
 // Sample reports: a real job's sorted photos (team-sorted only, never guesses)
 function sortedOf(j){ return j.photos.filter(function(x){ return x.room&&x.kind; }); }
 function pairsOf(j){ var r={}; sortedOf(j).forEach(function(x){ (r[x.room]=r[x.room]||{})[x.kind]=1; }); return Object.keys(r).filter(function(k){ return r[k].before&&r[k].after; }).length; }
@@ -117,7 +129,7 @@ function showHtml(){
       var vis=ph.filter(function(x){ return !hid[x.id]; });
       h+='<p class="sub" style="margin:8px 0 0">'+esc([j.suburb,j.service].filter(Boolean).join(' · '))+' · '+fday(j.date)+' · '+vis.filter(function(x){return x.kind==='before';}).length+' before, '+vis.filter(function(x){return x.kind==='after';}).length+' after'+(ph.length-vis.length?' · '+(ph.length-vis.length)+' hidden':'')+'</p>';
       h+='<div class="strip">'+ph.map(function(x){ return '<button type="button" class="ph'+(hid[x.id]?' hid':'')+'" data-hide="'+k[0]+'|'+x.id+'" aria-pressed="'+!hid[x.id]+'" aria-label="'+esc(x.room+', '+x.kind+(hid[x.id]?', hidden':''))+'"><img alt="" loading="lazy" src="'+thumb(x)+'"><span class="k">'+esc(x.room)+' · '+(x.kind==='before'?'B':'A')+'</span></button>'; }).join('')+'</div>';
-      h+='<div style="display:flex;gap:8px;margin-top:10px"><button type="button" class="sm" data-showpick="'+k[0]+'">Change job</button><button type="button" class="sm ghost" data-showrm="'+k[0]+'">Remove</button></div>';
+      h+='<div style="display:flex;gap:8px;margin-top:10px;align-items:center"><button type="button" class="sm" data-showpick="'+k[0]+'">Change job</button><button type="button" class="sm ghost" data-showrm="'+k[0]+'">Remove</button>'+(showSaving[k[0]]?'<span class="sub" style="margin:0">Saving…</span>':'<span class="sub" style="margin:0;color:var(--ok)">Saved</span>')+'</div>';
     } else h+='<div style="margin-top:10px"><button type="button" class="sm" data-showpick="'+k[0]+'">Choose a job</button></div>';
     if(showPick===k[0]){
       var cands=D.jobs.filter(function(x){ return svcOf(x.service)===k[0] && pairsOf(x); }).sort(function(a,b){ return pairsOf(b)-pairsOf(a) || b.date.localeCompare(a.date); });
@@ -310,9 +322,9 @@ app.addEventListener('click',function(e){
   if((t=e.target.closest('[data-rm]'))){ var id=t.dataset.rm; D.afters=D.afters.filter(function(a){ return a.id!==id; }); save('Removed'); return; }
   if(e.target.closest('[data-cancel]')){ target=null; render(); return; }
   if((t=e.target.closest('[data-showpick]'))){ showPick=showPick===t.dataset.showpick?'':t.dataset.showpick; render(); return; }
-  if((t=e.target.closest('[data-showset]'))){ var q2=t.dataset.showset.split('|'); D.show[q2[0]]={key:q2[1],hide:[]}; showPick=''; save('Sample report set. Check its photos below.'); return; }
-  if((t=e.target.closest('[data-showrm]'))){ delete D.show[t.dataset.showrm]; save('Sample report removed'); return; }
-  if((t=e.target.closest('[data-hide]'))){ var q3=t.dataset.hide.split('|'), sel=D.show[q3[0]]; if(!sel) return; var hs=sel.hide||[]; sel.hide=hs.indexOf(q3[1])>=0?hs.filter(function(x){ return x!==q3[1]; }):hs.concat([q3[1]]); save(sel.hide.indexOf(q3[1])>=0?'Hidden from the demo':'Showing in the demo'); return; }
+  if((t=e.target.closest('[data-showset]'))){ var q2=t.dataset.showset.split('|'); D.show[q2[0]]={key:q2[1],hide:[]}; showPick=''; saveShow(q2[0],{key:q2[1]},'Sample report set. Check its photos below.'); return; }
+  if((t=e.target.closest('[data-showrm]'))){ var k2=t.dataset.showrm; delete D.show[k2]; saveShow(k2,{key:''},'Sample report removed'); return; }
+  if((t=e.target.closest('[data-hide]'))){ var q3=t.dataset.hide.split('|'), sel=D.show[q3[0]]; if(!sel) return; var hs=sel.hide||[]; sel.hide=hs.indexOf(q3[1])>=0?hs.filter(function(x){ return x!==q3[1]; }):hs.concat([q3[1]]); saveShow(q3[0],{hide:sel.hide},sel.hide.indexOf(q3[1])>=0?'Hidden from the demo':'Showing in the demo'); return; }
   if(e.target.closest('[data-more]')){ shown+=15; render(); return; }
   if((t=e.target.closest('[data-filt]'))){ filt=t.dataset.filt; shown=15; render(); return; }
   if((t=e.target.closest('[data-set]'))){ target=t.dataset.set; var sp=target!=='gallery'&&spotOf(target); if(sp&&sp.svc&&filt==='all'){ filt=sp.svc; shown=15; } render();

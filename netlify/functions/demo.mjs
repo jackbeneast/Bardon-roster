@@ -68,9 +68,12 @@ function cleanShow(o) {
   }
   return out;
 }
+// Sample reports live in their own blob (demoshow), so nothing that saves the gallery or the
+// website spots (including older versions of the picker) can wipe them. Falls back to the copy
+// that was briefly kept inside demophotos.
 async function loadPicks(s) {
-  const raw = await s.get("demophotos");
-  return { afters: clean(Array.isArray(raw) ? raw : raw && raw.afters), slots: cleanSlots(raw && raw.slots), show: cleanShow(raw && raw.show) };
+  const [raw, sh] = await Promise.all([s.get("demophotos"), s.get("demoshow")]);
+  return { afters: clean(Array.isArray(raw) ? raw : raw && raw.afters), slots: cleanSlots(raw && raw.slots), show: cleanShow(sh || (raw && raw.show)) };
 }
 const MAX_REPORT = 60;
 // What the public demo gets for each sample report: rooms, sorted photos (minus hidden ones)
@@ -141,10 +144,29 @@ export default async (req) => {
   if (req.method === "POST") {
     let b; try { b = await req.json(); } catch { return json({ error: "Bad data" }, 400); }
     const cur = await loadPicks(s);
+    // One sample report at a time: { action: "show", kind, key } sets it, key "" removes it,
+    // { action: "show", kind, hide: [ids] } changes which of its photos are hidden.
+    if (b.action === "show") {
+      const kind = String(b.kind || "");
+      if (!SHOW_KINDS.includes(kind)) return json({ error: "Pick pre-sale, bond or deep" }, 400);
+      const show = { ...cur.show };
+      if (b.key !== undefined) {
+        const key = String(b.key || "");
+        if (!key) delete show[kind];
+        else if (!J.test(key)) return json({ error: "That job can't be used. Try another." }, 400);
+        else show[kind] = { key, hide: [] };
+      }
+      if (Array.isArray(b.hide)) {
+        if (!show[kind]) return json({ error: "Choose a job first" }, 400);
+        show[kind] = { ...show[kind], hide: b.hide };
+      }
+      const out = cleanShow(show);
+      await s.set("demoshow", out);
+      return json({ ok: true, show: out });
+    }
     const afters = b.afters === undefined ? cur.afters : clean(b.afters), slots = b.slots === undefined ? cur.slots : cleanSlots(b.slots);
-    const show = b.show === undefined ? cur.show : cleanShow(b.show);
-    await s.set("demophotos", { afters, slots, show });
-    return json({ ok: true, afters, slots, show });
+    await s.set("demophotos", { afters, slots });
+    return json({ ok: true, afters, slots, show: cur.show });
   }
 
   if (req.method !== "GET") return json({ error: "Method not allowed" }, 405);
