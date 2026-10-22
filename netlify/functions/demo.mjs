@@ -78,15 +78,20 @@ async function loadPicks(s) {
 const MAX_REPORT = 80;
 // What the public demo gets for each sample report: rooms, sorted photos (minus hidden ones)
 // and which checklist items were ticked. Nothing that identifies the client or the address.
-function reportOf(roster, live, pick) {
+function reportOf(roster, live, pick, guess = {}) {
   const days = roster.jobs.filter((j) => !j.sample && (j.group || j.id) === pick.key).sort((a, b) => (a.date + (a.start || "")).localeCompare(b.date + (b.start || "")));
   if (!days.length) return null;
   const home = days[0], L = live[home.id] || {}, hide = new Set(pick.hide);
   const rooms = roomsOf(home);
   // A fair share for every room (up to 4 befores and 6 afters each), so a job with 150 kitchen
   // shots still shows the bedrooms and living areas.
-  const ok = (L.photos || []).filter((p) => P.test(p.id) && rooms.includes(p.room) && KINDS.includes(p.kind) && !hide.has(p.id))
-    .sort((a, b) => String(a.at || "").localeCompare(String(b.at || "")));
+  // The team's own sorting first; for photos they didn't sort, the hub's automatic sorting,
+  // but never one it flagged as possibly private.
+  const ok = (L.photos || []).filter((p) => P.test(p.id) && !hide.has(p.id)).map((p) => {
+    if (rooms.includes(p.room) && KINDS.includes(p.kind)) return p;
+    const g = guess[p.id];
+    return g && !g.priv && ROOMS.includes(g.room) && KINDS.includes(g.kind) ? { ...p, room: g.room, kind: g.kind } : null;
+  }).filter(Boolean).sort((a, b) => String(a.at || "").localeCompare(String(b.at || "")));
   const per = {}, photos = [];
   for (const p of ok) {
     const k = p.room + "|" + p.kind, cap = p.kind === "before" ? 4 : 6;
@@ -114,9 +119,9 @@ export default async (req) => {
     const slots = Object.fromEntries(Object.entries(p.slots).map(([k, x]) => [k, { url: url(x), room: x.room, service: x.service }]));
     const reports = {};
     if (Object.keys(p.show).length) {
-      const [roster, raw] = await Promise.all([loadRoster(s), loadAllLive(s)]);
+      const [roster, raw, guess] = await Promise.all([loadRoster(s), loadAllLive(s), merged(s, "demoguess/")]);
       const live = bookingLive(roster, raw);
-      for (const [k, pick] of Object.entries(p.show)) { const r = reportOf(roster, live, pick); if (r) reports[k] = r; }
+      for (const [k, pick] of Object.entries(p.show)) { const r = reportOf(roster, live, pick, guess); if (r) reports[k] = r; }
     }
     return new Response(JSON.stringify({ afters, slots, reports }), {
       headers: { "content-type": "application/json", "cache-control": "public, max-age=120", "access-control-allow-origin": "*" },

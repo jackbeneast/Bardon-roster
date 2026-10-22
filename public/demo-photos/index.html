@@ -118,7 +118,9 @@ function saveShow(kind,body,msg){
     .catch(function(e){ D.show=JSON.parse(before); delete showSaving[kind]; render(); toast('Not saved: '+e.message); }); });
 }
 // Sample reports: a real job's sorted photos (team-sorted only, never guesses)
-function sortedOf(j){ return j.photos.filter(function(x){ return x.room&&x.kind; }); }
+// Sorted by the team, or by the hub's automatic sorting when the team didn't (never one it thought private).
+function sortedOf(j){ return j.photos.map(function(x){ if(x.room&&x.kind) return x; var g=D.guess[x.id]; return g&&!g.priv&&g.room&&(g.kind==='before'||g.kind==='after')?{room:g.room,kind:g.kind,j:x.j,id:x.id,at:x.at,auto:true}:null; }).filter(Boolean); }
+function countKind(j,k){ return sortedOf(j).filter(function(x){ return x.kind===k; }).length; }
 function pairsOf(j){ var r={}; sortedOf(j).forEach(function(x){ (r[x.room]=r[x.room]||{})[x.kind]=1; }); return Object.keys(r).filter(function(k){ return r[k].before&&r[k].after; }).length; }
 function showHtml(){
   var h='<h2>Sample <em>reports</em></h2><p class="sub">Pick a real finished job to be the sample report people see in the demo: its before and after photos, room by room, and the checks the team ticked. The address and client name are never shown. Tap a photo to hide it.</p>';
@@ -132,9 +134,15 @@ function showHtml(){
       h+='<div style="display:flex;gap:8px;margin-top:10px;align-items:center"><button type="button" class="sm" data-showpick="'+k[0]+'">Change job</button><button type="button" class="sm ghost" data-showrm="'+k[0]+'">Remove</button>'+(showSaving[k[0]]?'<span class="sub" style="margin:0">Saving…</span>':'<span class="sub" style="margin:0;color:var(--ok)">Saved</span>')+'</div>';
     } else h+='<div style="margin-top:10px"><button type="button" class="sm" data-showpick="'+k[0]+'">Choose a job</button></div>';
     if(showPick===k[0]){
-      var cands=D.jobs.filter(function(x){ return svcOf(x.service)===k[0] && pairsOf(x); }).sort(function(a,b){ return pairsOf(b)-pairsOf(a) || b.date.localeCompare(a.date); });
-      if(!cands.length) h+='<p class="sub" style="margin-top:10px">No '+k[1].toLowerCase()+' jobs with sorted before and after photos of the same room yet.</p>';
-      else h+='<div class="cands">'+cands.slice(0,12).map(function(x){ var so=sortedOf(x); return '<button type="button" class="cand" data-showset="'+k[0]+'|'+esc(x.key)+'"><span class="cimg">'+so.filter(function(q){return q.kind==='after';}).slice(0,3).map(function(q){ return '<img alt="" loading="lazy" src="'+thumb(q)+'">'; }).join('')+'</span><b>'+esc([x.suburb,fday(x.date)].filter(Boolean).join(' · '))+'</b><span>'+pairsOf(x)+' room'+(pairsOf(x)===1?'':'s')+' with before and after · '+so.length+' photos'+(x.client?' · '+esc(x.client):'')+'</span></button>'; }).join('')+'</div>';
+      // Any job with sorted photos. The same kind of clean first, then the rest, best before/after coverage first.
+      var cands=D.jobs.filter(function(x){ return sortedOf(x).length; }).sort(function(a,b){ var ma=svcOf(a.service)===k[0]?1:0, mb=svcOf(b.service)===k[0]?1:0; return mb-ma || pairsOf(b)-pairsOf(a) || sortedOf(b).length-sortedOf(a).length || b.date.localeCompare(a.date); });
+      var unsorted=D.jobs.filter(function(x){ return x.photos.length && !sortedOf(x).length; }).length;
+      if(!cands.length) h+='<p class="sub" style="margin-top:10px">No jobs with sorted photos yet.'+(unsorted?' Tap the button at the top of this page to let the hub sort them.':'')+'</p>';
+      else { var firstOther=true;
+        h+='<div class="cands">'+cands.slice(0,15).map(function(x){ var so=sortedOf(x), same=svcOf(x.service)===k[0], lead='';
+          if(!same && firstOther){ firstOther=false; lead='<p class="sub" style="margin:6px 0 0">'+(cands[0]===x?'No '+k[1].toLowerCase()+' jobs with photos yet. Any of these work:':'Other jobs')+'</p>'; }
+          var nb=countKind(x,'before'), na=countKind(x,'after');
+          return lead+'<button type="button" class="cand" data-showset="'+k[0]+'|'+esc(x.key)+'"><span class="cimg">'+so.filter(function(q){return q.kind==='after';}).slice(0,3).map(function(q){ return '<img alt="" loading="lazy" src="'+thumb(q)+'">'; }).join('')+'</span><b>'+esc([x.suburb,x.service,fday(x.date)].filter(Boolean).join(' · '))+'</b><span>'+nb+' before, '+na+' after'+(pairsOf(x)?' · '+pairsOf(x)+' room'+(pairsOf(x)===1?'':'s')+' with both':'')+(x.client?' · '+esc(x.client):'')+'</span></button>'; }).join('')+'</div>'; }
     }
     h+='</div>';
   });
