@@ -96,6 +96,15 @@ input:focus,button:focus-visible{outline:2px solid var(--terracotta);outline-off
 .err{color:var(--terracotta-dark);font:500 14px var(--sans);margin-top:10px}
 details.terms{margin-top:28px;border-top:1px solid var(--line);padding-top:16px}
 details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:pointer}
+details.rate{margin-top:22px;border-top:0;padding-top:0;background:var(--cream);border-radius:10px;padding:14px 16px}
+details.rate summary{font-size:17px}
+details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var(--meta);margin-top:2px}
+.rate .rlist{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:12px}
+.rate .rlist li{border-top:1px solid var(--line);padding-top:12px}
+.rate .rlist b{display:block;font:700 15px/1.3 var(--serif);color:var(--dark);margin-bottom:2px}
+.rate .rlist li::marker{content:none}
+.rate .rlab{margin-top:14px;background:var(--white);border-radius:8px;padding:12px 14px;color:var(--dark)}
+.rate .rmore{margin:14px 0 0;font-size:13px;color:var(--meta)}
 .foot{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--meta);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 14px}
 .toolbar .who{font:500 13px var(--sans);color:var(--meta)}
@@ -180,6 +189,16 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
     return fetch(url,{method:method,headers:h,body:body?JSON.stringify(body):undefined,cache:'no-store'}).then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong'); return d; }); });
   }
 
+  // "What's in your quote": shown on every quote, collapsed. Same story as bardonclean.au/our-rates/.
+  var RATE='<details class="terms rate"'+'{OPEN}'+'><summary>What\'s in your quote<small>Why our rates sit where they do</small></summary><div class="desc">'+
+    '<div class="rlab"><b>Your labour estimate</b><br>The labour behind this quote is forecast from our extensive experience with these cleans. Done properly, a full top-to-bottom kitchen can take 5 to 6 hours, and a large bathroom 3 hours or more. We work detailed and slow, and we don\'t rush to fit a price.</div>'+
+    '<ul class="rlist">'+
+    '<li><b>A properly paid team</b>Cleaning is hard physical labour. We pay above award, with overtime on bigger jobs.</li>'+
+    '<li><b>Full insurance</b>$20 million public liability, WorkCover, professional indemnity, income protection, and property and equipment insurance. If something is damaged or someone is hurt in your home, it\'s covered.</li>'+
+    '<li><b>Clean equipment, every home</b>Every tool is cleaned before and after each job. On our specialty cleans every microfibre cloth is brand new and retired after use, because even washed cloths hold dust and fibres. No cross-contamination from other properties.</li>'+
+    '<li><b>Systems and testing</b>Written processes and checklists for every clean, and products tested constantly. The same result whichever cleaner arrives.</li>'+
+    '<li><b>The costs you don\'t see</b>Super and leave, training, insurance premiums, equipment replacement, new microfibre, vehicle and travel, booking and admin, accounting and compliance.</li>'+
+    '</ul><p class="rmore">The full breakdown, including questions worth asking any cleaner: <a href="https://www.bardonclean.au/our-rates/" style="color:var(--terracotta-dark)">bardonclean.au/our-rates</a></p></div></details>';
   var STATE={draft:'Draft',sent:'Awaiting response',viewed:'Awaiting response',accepted:'Accepted',declined:'Declined',expired:'Expired',paid:'Paid','part-paid':'Part paid',overdue:'Overdue'};
 
   function render(){
@@ -235,6 +254,7 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
     var rep='';
     if(!q&&d.report) rep+='<div class="sect noprint"><h2>Your job <em>report</em></h2><div class="panel"><p style="margin:0 0 4px;color:var(--dark)">'+(d.report.done?'Your clean was signed off '+fdate((function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);})(new Date(d.report.done)),true)+'.':'Follow your clean room by room.')+(d.report.photos?' '+d.report.photos+' before and after photos.':'')+'</p><div class="btns"><a class="btn dark" href="/v/'+esc(d.report.share)+'">View job report</a></div></div></div>';
     if(!q&&d.report) rep+='<div class="printonly" style="margin-top:12px;font-size:13px">Job report: '+esc(location.origin)+'/v/'+esc(d.report.share)+'</div>';
+    if(q) h+=RATE.replace('{OPEN}',params.has('rates')?' open':'');
     if(d.notes) h+='<div class="callout" style="border-left-color:var(--dark);background:var(--cream)">'+lines(d.notes)+'</div>';
 
     // ---- Act on it ----
