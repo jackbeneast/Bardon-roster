@@ -151,7 +151,7 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
 <div class="wrap" id="app"><div class="center">Loading…</div></div>
 <script>
 (function(){
-  var app=document.getElementById('app'), path=location.pathname.split('/'), receipt=path[1]==='r', kind=(path[1]==='i'||receipt)?'invoice':'quote', token=path[2]||'';
+  var app=document.getElementById('app'), path=location.pathname.split('/'), receipt=path[1]==='r', kind=(path[1]==='i'||receipt)?'invoice':'quote', token=path[2]||'', AGENT=(/[?&]a=([\w-]{16,80})/.exec(location.search)||[])[1]||'';
   var params=new URLSearchParams(location.search), data=null, err='', isAdmin=false;
   var LOGO='<svg viewBox="0 0 48 48" role="img" aria-label="Bardon Clean"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -320,7 +320,7 @@ details.terms summary{font:700 19px/1.3 var(--serif);color:var(--dark);cursor:po
   });
 
   function load(){
-    return api('GET','/api/docs?t='+encodeURIComponent(token)).then(function(d){ if(d.kind!==kind&&!receipt){ history.replaceState(null,'','/'+(d.kind==='invoice'?'i':'q')+'/'+token+location.search); } data=d; err=''; render(); })
+    return api('GET','/api/docs?t='+encodeURIComponent(token)+(AGENT?'&a='+encodeURIComponent(AGENT):'')).then(function(d){ if(d.kind!==kind&&!receipt){ history.replaceState(null,'','/'+(d.kind==='invoice'?'i':'q')+'/'+token+location.search); } data=d; err=''; render(); })
       .catch(function(x){ err=x.message; render(); });
   }
   if(!/^[a-f0-9]{16,}$/.test(token)){ err='This link isn\'t complete. Check the message Bardon Clean sent you.'; render(); }

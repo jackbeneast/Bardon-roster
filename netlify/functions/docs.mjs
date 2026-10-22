@@ -1,6 +1,6 @@
 // Quotes and invoices. Jack (admin) creates and edits; clients open a private
 // link (/q/<token> or /i/<token>) to view, accept and pay.
-import { store, json, checkAdmin } from "../../lib/core.mjs";
+import { store, json, checkAdmin, loadRoster } from "../../lib/core.mjs";
 import {
   loadSettings, cleanSettings, cleanDoc, loadDocs, findByToken, saveDoc, newDoc,
   recordPayment, addJobFromQuote, publicView, fillJobberQuote, totals, statusOf, today, addDays, depositDesc, reportFor, freeDates,
@@ -48,7 +48,10 @@ export default async (req) => {
       if (!d || (d.status === "draft" && !admin)) return json({ error: "This link isn't active. Text Jack at Bardon Clean on 0468 193 772." }, 404);
       const set = await loadSettings(s);
       if (fillJobberQuote(d, set)) await saveDoc(s, d);
-      if (!admin) {
+      // The agent opening it from their portal (?a=<agent link>): not the client, so not counted.
+      const ag = u.searchParams.get("a") || "";
+      const byAgent = !admin && ag.length >= 16 && ((await loadRoster(s)).agents || []).some((x) => x.token === ag);
+      if (!admin && !byAgent) {
         // Only counted when the page runs in a real browser (link previews don't run it).
         const now = new Date().toISOString();
         const firstView = !d.viewedAt;

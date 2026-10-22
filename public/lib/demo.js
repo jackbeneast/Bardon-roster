@@ -69,14 +69,31 @@
   function data(aud, phase, step, saved){
     var base = { lock: LOCK, phone: '0406 216 212', demo: true };
     if (aud === 'agent') {
-      return Object.assign(base, { mode: 'agent', agent: { name: 'Sample agent', agency: 'Demo listings' }, jobs: [
-        job(CFG.sell, 'demo-live', 'day', step, 0),
-        Object.assign(job({ address: 'Sample: 3 Preview Ave', suburb: 'Ashgrove', service: 'Deep clean', readyBy: 'Photography 9am next day', flags: [] }, 'demo-next', 'before', 0), { date: day(3) }),
+      // Sample prices and a sample conversation, so the Price & billing and Messages parts show.
+      // Every figure here is made up for the demo.
+      var bill = function(price, depositPaid, paidInFull, quoteState){
+        var dep = Math.round(price / 2), items = [{ kind: 'quote', num: 'S1', state: quoteState || 'accepted', total: price, paid: 0, due: 0, gst: true }];
+        if (quoteState !== 'sent') items.push({ kind: 'invoice', num: 'S2', deposit: true, state: depositPaid ? 'paid' : 'sent', total: dep, paid: depositPaid ? dep : 0, due: depositPaid ? 0 : dep, dueDate: day(0), gst: true });
+        if (paidInFull) items.push({ kind: 'invoice', num: 'S3', state: 'paid', total: price - dep, paid: price - dep, due: 0, gst: true });
+        var paid = items.filter(function(x){ return x.kind === 'invoice'; }).reduce(function(n, x){ return n + x.paid; }, 0);
+        return { price: price, paid: paid, owing: Math.max(0, price - paid), items: items };
+      };
+      if (!saved.chat) saved.chat = { on: true, msgs: [
+        { id: 'c1', dir: 'in', via: 'portal', text: 'Re 21 Example St: Vendor loved the report. They\'re replacing the oven seal before photos, thanks for flagging it.', at: at(day(-1), '16:12') },
+        { id: 'c2', dir: 'out', text: 'Great to hear. Photos are all in the report if the photographer wants a look first.', at: at(day(-1), '16:20') },
+        { id: 'c3', dir: 'in', via: 'portal', text: 'Re 7 Latrobe Tce: Keys are in the lockbox by the side gate. Photographer is booked 9am tomorrow.', at: at(day(0), '07:34') },
+        { id: 'c4', dir: 'out', text: 'Got them, thanks. Team is on site now. You\'ll see each room tick off as it\'s done.', at: at(day(0), '07:58') }
+      ] };
+      var out = Object.assign(base, { mode: 'agent', agent: { name: 'Sample agent', agency: 'Demo listings' }, chat: saved.chat, jobs: [
+        Object.assign(job(CFG.sell, 'demo-live', 'day', step, 0), { billing: bill(690, true, false) }),
+        Object.assign(job({ address: 'Sample: 3 Preview Ave', suburb: 'Ashgrove', service: 'Deep clean', readyBy: 'Photography 9am next day', flags: [] }, 'demo-next', 'before', 0), { date: day(3), billing: bill(480, false, false) }),
         job({ address: 'Sample: 21 Example St', suburb: 'Bardon', service: 'Pre-sale clean', readyBy: 'Open home Saturday 10am', flags: [
           { id: 'f1', t: 'Oven door seal cracked', d: 'Cleaned fully, but the seal is split along the bottom edge. Worth replacing before photos if the oven will be shown open.', after: 1 },
           { id: 'f2', t: 'Mould returning through shower silicone', d: 'Main bathroom. Treated and cleaned, but it\'s under the silicone, so it will come back. A re-seal would fix it properly.', after: 2 }
         ] }, 'demo-done', 'done', 0, -1)
       ] });
+      out.jobs[2].billing = bill(560, true, true);
+      return out;
     }
     var cfg = CFG[aud] || CFG.sell;
     return Object.assign(base, { mode: 'vendor', agent: null, jobs: [job(cfg, 'demo-' + aud, phase, step)],
@@ -98,7 +115,7 @@
 
   function bar(aud, phase, playing){
     var h = '<div class="db"><p><span class="tag">Sample</span>';
-    if (aud === 'agent') h += '<b>This is the agent portal.</b> Every listing we clean for you, live. The jobs here are made up, and nothing you tap is sent.';
+    if (aud === 'agent') h += '<b>This is the agent portal.</b> Every listing we clean for you, live: progress, photos, prices and messages with Jack in one place. Everything here is made up, and nothing you tap is sent.';
     else h += '<b>This is the page every Bardon Clean client gets.</b> The job is made up, and nothing you tap is sent.';
     h += '</p>';
     if (aud !== 'agent') {

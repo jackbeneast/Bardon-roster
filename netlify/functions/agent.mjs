@@ -5,6 +5,10 @@ import { loadTemplates } from "../../lib/templates.mjs";
 import { loadTeamPhotos } from "./teamphoto.mjs";
 import { embedUrl } from "../../lib/bunny.mjs";
 import { refreshTours } from "../../lib/tour.mjs";
+import { loadDocs } from "../../lib/docs.mjs";
+import { loadThread, logPortal } from "../../lib/messages.mjs";
+import { auMobile, sendSms, mmReady } from "../../lib/mm.mjs";
+import { createHash, randomInt } from "node:crypto";
 
 // ---- sample jobs, so a new agent's link isn't empty on first open ----
 // Three clearly labelled jobs: finished yesterday (report), on site today, booked later this week.
@@ -98,6 +102,42 @@ function oneEach(jobs) {
   return [...by.values()].map((g) => g.find((j) => j.date >= t) || g[g.length - 1]);
 }
 
+
+// ---- portal chat ----
+// The agent's portal messages and Jack's texts are one conversation (thr/<mobile>),
+// so Jack answers from Messages and the agent sees it here and by text.
+const MAX_CHAT = 150;
+async function chatFor(s, a) {
+  const phone = auMobile(a.phone);
+  if (!phone) return { on: false, ready: mmReady() };
+  const t = await loadThread(s, phone);
+  const msgs = (t.msgs || []).filter((m) => m.dir !== "sys" || /unsub/i.test(m.text)).slice(-MAX_CHAT)
+    .map(({ id, dir, text, at, via, ref, status }) => ({ id, dir, text, at, ...(via ? { via } : {}), ...(ref ? { ref } : {}), ...(status === "failed" ? { failed: true } : {}) }));
+  return { on: true, ready: mmReady(), phone: phone.replace(/^(\d{4})(\d{3})(\d{3})$/, "$1 $2 $3"), msgs };
+}
+
+// ---- prices and invoices, shown openly to the agent ----
+// Every quote and invoice on the booking (any day of it), with a link that opens it
+// without counting as the client opening it.
+function billingFor(raw, roster, docs, k) {
+  const ids = new Set((raw.group ? roster.jobs.filter((x) => x.group === raw.group) : [raw]).map((x) => x.id));
+  const quoteIds = new Set(docs.filter((d) => d.kind === "quote" && ids.has(d.jobId)).map((d) => d.id));
+  const mine = docs.filter((d) => !["draft", "declined"].includes(d.state) && (ids.has(d.jobId) || (d.quoteId && quoteIds.has(d.quoteId))));
+  if (!mine.length) return null;
+  const items = mine.sort((a, b) => (a.created || "").localeCompare(b.created || "")).map((d) => ({
+    kind: d.kind, num: d.num, deposit: !!d.isDeposit, state: d.state,
+    total: d.totals.total, paid: d.totals.paid, due: d.totals.due, dueDate: d.dueDate || "", gst: !!d.gst,
+    ...(d.token && !d.archived ? { href: `/${d.kind === "invoice" ? "i" : "q"}/${d.token}?a=${k}` } : {}),
+  }));
+  const q = items.filter((x) => x.kind === "quote" && x.state !== "expired").pop();
+  const invs = items.filter((x) => x.kind === "invoice");
+  // The price of the clean: the quote, else the full invoices (deposits are part of it).
+  const price = q ? q.total : invs.filter((x) => !x.deposit).reduce((n, x) => n + x.total, 0) || invs.reduce((n, x) => n + x.total, 0);
+  const paid = invs.reduce((n, x) => n + x.paid, 0);
+  return { price: Math.round(price * 100) / 100, paid: Math.round(paid * 100) / 100, owing: Math.round(Math.max(0, price - paid) * 100) / 100, items };
+}
+const codeHash = (a, c) => createHash("sha256").update(`${a}|${c}`).digest("hex");
+
 export default async (req) => {
   const s = await store();
   const roster = await loadRoster(s);
@@ -106,6 +146,11 @@ export default async (req) => {
 
   if (req.method === "GET") {
     const k = u.searchParams.get("k") || "", v = u.searchParams.get("v") || "";
+    if (k && u.searchParams.get("chat")) {
+      const a = k.length >= 16 && agents.find((x) => x.token === k);
+      if (!a) return json({ error: "This link isn't active." }, 404);
+      return json({ chat: await chatFor(s, a) });
+    }
     // Videos still processing in Bunny: check on them so they appear as soon as they're ready
     const watch = v.length >= 16 ? roster.jobs.filter((j) => j.share === v) : k.length >= 16 ? roster.jobs.filter((j) => { const a = agents.find((x) => x.token === k); return a && j.agentId === a.id; }) : [];
     if (watch.length) await refreshTours(s, roster, watch).catch(() => {});
@@ -128,8 +173,14 @@ export default async (req) => {
     if (k) {
       const a = k.length >= 16 && agents.find((x) => x.token === k);
       if (!a) return json({ error: "This link isn't active. Contact Jack at Bardon Clean for a new one." }, 404);
-      const jobs = oneEach(roster.jobs.filter((j) => j.agentId === a.id)).map((j) => view(j, roster, live[j.id], true, photos, live));
-      return json({ ...base, mode: "agent", agent: { name: a.name, agency: a.agency }, jobs });
+      const chat = await chatFor(s, a);
+      const docs = (await loadDocs(s).catch(() => [])).filter((d) => !d.archived || d.jobId);
+      const jobs = oneEach(roster.jobs.filter((j) => j.agentId === a.id)).map((j) => {
+        const o = view(j, roster, live[j.id], true, photos, live), b = billingFor(j, roster, docs, k);
+        if (b) o.billing = b;
+        return o;
+      });
+      return json({ ...base, mode: "agent", agent: { name: a.name, agency: a.agency }, jobs, chat });
     }
     if (await checkAdmin(s, req)) {
       const as = u.searchParams.get("as") || "";
@@ -190,6 +241,51 @@ export default async (req) => {
         ? { type: "feedback", title: `Happy client: ${where(job)}`, body: text || "They tapped \"Really happy\" on their link.", tags: "star", url: "/" }
         : { type: "feedback", title: `Client says something's not right: ${where(job)}`, body: text, tags: "warning", priority: 5, url: "/" });
       return json({ ok: true, feedback: { mood, at: rec.at } });
+    }
+    if (b.action === "msg" || b.action === "code" || b.action === "verify") {
+      const a = typeof b.k === "string" && b.k.length >= 16 && agents.find((x) => x.token === b.k);
+      if (!a) return json({ error: "This link isn't active. Call Jack on 0406 216 212." }, 404);
+      const nm = String(a.name || "Agent").split(/\s+/)[0];
+      if (b.action === "msg") {
+        const phone = auMobile(a.phone);
+        if (!phone) return json({ error: "Add your mobile first, so Jack's replies reach you." }, 400);
+        let text = typeof b.text === "string" ? b.text.trim().slice(0, 1000) : "";
+        if (!text) return json({ error: "Type a message first." }, 400);
+        const t = await loadThread(s, phone), hour = Date.now() - 3600e3;
+        if ((t.msgs || []).filter((m) => m.via === "portal" && Date.parse(m.at) > hour).length >= 20) return json({ error: "That's a lot of messages in an hour. Call Jack on 0406 216 212." }, 429);
+        // About a listing: put the address up front so Jack sees it in Messages and on his phone.
+        const job = typeof b.ref === "string" && b.ref ? roster.jobs.find((j) => j.id === b.ref && j.agentId === a.id) : null;
+        const place = job ? (job.address || job.suburb || "").replace(/^Sample:\s*/, "") : "";
+        if (place && !text.toLowerCase().startsWith("re " + place.toLowerCase())) text = `Re ${place}: ${text}`;
+        await logPortal(s, phone, text, job ? job.id : "", a.name);
+        await notify(s, { type: "text_in", title: `Portal message from ${nm}${a.agency ? " (" + a.agency + ")" : ""}`, body: text.slice(0, 300), tags: "speech_balloon", priority: 4, url: `/messages/#/t/${phone}` });
+        return json({ ok: true, chat: await chatFor(s, a) });
+      }
+      if (b.action === "code") {
+        const phone = auMobile(b.phone);
+        if (!phone) return json({ error: "That isn't an Australian mobile number." }, 400);
+        const rec = (await s.get(`agentcode/${a.id}`)) || {}, sends = (rec.sends || []).filter((x) => Date.now() - Date.parse(x) < 3600e3);
+        if (sends.length >= 3) return json({ error: "Too many codes in an hour. Try again later, or call Jack on 0406 216 212." }, 429);
+        const code = String(randomInt(0, 1e6)).padStart(6, "0");
+        const r = await sendSms(phone, `Your Bardon Clean portal code is ${code}. It works for 15 minutes.`, "portal-code", { name: a.name });
+        if (!r.ok) return json({ error: r.status === 503 ? "Texting isn't switched on yet. Call Jack on 0406 216 212." : r.error }, r.status);
+        await s.set(`agentcode/${a.id}`, { phone, hash: codeHash(a.id, code), at: new Date().toISOString(), tries: 0, sends: [...sends, new Date().toISOString()] });
+        return json({ ok: true });
+      }
+      const rec = await s.get(`agentcode/${a.id}`);
+      if (!rec || !rec.hash || Date.now() - Date.parse(rec.at) > 15 * 60e3) return json({ error: "That code has expired. Send a new one." }, 400);
+      if ((rec.tries || 0) >= 5) return json({ error: "Too many tries. Send a new code." }, 429);
+      if (codeHash(a.id, String(b.code || "").replace(/\D/g, "")) !== rec.hash) {
+        await s.set(`agentcode/${a.id}`, { ...rec, tries: (rec.tries || 0) + 1 });
+        return json({ error: "That code isn't right. Check the text and try again." }, 400);
+      }
+      await s.del(`agentcode/${a.id}`);
+      const fresh = await loadRoster(s), ag = (fresh.agents || []).find((x) => x.id === a.id);
+      if (!ag) return json({ error: "This link isn't active." }, 404);
+      ag.phone = rec.phone;
+      await s.set("roster", { ...fresh, savedAt: new Date().toISOString() });
+      await notify(s, { type: "agent", title: `${nm} switched on portal messages`, body: `Mobile ${rec.phone}${a.agency ? " · " + a.agency : ""}`, tags: "handshake", url: `/messages/#/t/${rec.phone}` });
+      return json({ ok: true, chat: await chatFor(s, ag) });
     }
     if (b.action === "book") {
       const a = typeof b.k === "string" && b.k.length >= 16 && agents.find((x) => x.token === b.k);

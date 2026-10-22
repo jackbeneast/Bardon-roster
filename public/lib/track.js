@@ -5,6 +5,8 @@
 (function(){
   try{
     if(localStorage.getItem('roster_admin_key')) return;
+    // Agents opening a client's quote or invoice from their portal aren't the client.
+    if(/[?&]a=/.test(location.search) && /^\/(q|i|r)\//.test(location.pathname)) return;
   }catch(e){}
   var parts=location.pathname.split('/'), p=parts[1], t=parts[2]||'';
   if(['q','i','r','v','a'].indexOf(p)<0 || !/^[\w-]{16,80}$/.test(t)) return;
