@@ -280,6 +280,18 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
   var gal=[], galKind='', accEdit=false, fbMode='', formDirty=false, data=null, tab='today', openId=null, photoMode='after', as='', err='';
   var JACK='0406 216 212', JACK_TXT='0468 193 772';
   var chatRef='', codeFor='', chatTimer=0, sending=false;
+  // Redraw without moving the reader: skip if nothing changed, and put the scroll back.
+  function swap(el,html){
+    if(el._h===html) return false;
+    var y=window.scrollY, oy=el.scrollTop;
+    el.innerHTML=html; el._h=html;
+    if(window.scrollY!==y) window.scrollTo(0,y);
+    if(el.scrollTop!==oy) el.scrollTop=oy;
+    return true;
+  }
+  // While someone is touching or scrolling, hold the demo's auto-play still.
+  var busyUntil=0;
+  ['touchstart','touchmove','wheel','scroll','keydown'].forEach(function(ev){ window.addEventListener(ev,function(){ busyUntil=Date.now()+6000; },{passive:true,capture:true}); });
   function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
   function money(v){ v=+v||0; var c=Math.abs(v%1)>0.004; return '$'+v.toLocaleString('en-AU',{minimumFractionDigits:c?2:0,maximumFractionDigits:c?2:0}); }
   function initials(n){ var p=String(n||'').replace(/\(.*?\)/g,'').trim().split(/\s+/).filter(Boolean); return ((p[0]||'?').charAt(0)+(p.length>1?p[p.length-1].charAt(0):'')).toUpperCase(); }
@@ -322,7 +334,7 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
   // On the day, the sample clean plays itself: a room finishes every few seconds, then lock-up.
   // The agent portal loops so the live listing keeps moving.
   function demoTick(){
-    if(document.visibilityState!=='visible' || lb || formDirty) return;
+    if(document.visibilityState!=='visible' || lb || vp || formDirty || Date.now()<busyUntil) return;
     if(demoAud!=='agent' && demo.phase!=='day') return;
     if(demo.step<BCDemo.steps){ demo.step++; load(); }
     else if(demoAud==='agent' && ++demo.hold>3){ demo.hold=0; demo.step=1; load(); }
@@ -394,7 +406,7 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
 
     if(mode==='vendor'){
       $('kind').textContent='Your clean'; document.title='Your clean · Bardon Clean';
-      tabsEl.hidden=true; openId=data.jobs[0]&&data.jobs[0].id; main.innerHTML=''; showDetail(true); return;
+      tabsEl.hidden=true; openId=data.jobs[0]&&data.jobs[0].id; showDetail(true); return;
     }
     var L=lists();
     tabsEl.hidden=true; document.body.classList.add('app');
@@ -417,7 +429,7 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
       h+=L.reports.length?'<div class="list">'+L.reports.map(function(j){return card(j,'reports');}).join('')+'</div>':'<div class="empty">Finished cleans will appear here.</div>';
     } else if(tab==='book') h+=bookForm();
     if(tab!=='messages') h+='<footer>Bardon Clean · Jack East · <b style="user-select:all">'+JACK+'</b><br>'+(demoAud?'A sample of the portal. Real agents see only their own listings.':mode==='admin'?'Preview only. Agents see just the jobs tagged to them.':'This link is private to you. To show a vendor, open the clean and tap Share with the vendor.')+'</footer>';
-    main.innerHTML=h;
+    swap(main,h);
     composerSync();
     if(tab==='messages'){ markSeen(); scrollEnd(); }
     if(openId) showDetail(false);
@@ -659,9 +671,11 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
     h+='<section class="blk"><div class="actions">'+(mode!=='vendor'&&(j.share||demoAud)?'<button type="button" class="btn primary" data-sharejob="'+esc(j.id)+'">Share with the vendor</button>':'')+(mode==='agent'?'<button type="button" class="btn outline" data-askjob="'+esc(j.id)+'">Message Jack about this</button>':'<a class="btn outline" href="tel:+61406216212">Call Jack</a>')+'</div><p class="contact">Jack East, Bardon Clean · <b>'+JACK+'</b>'+(mode==='agent'?' · <a href="tel:+61406216212" style="color:var(--btn);font-weight:600">Call</a>':'')+'</p>'+(mode!=='vendor'&&j.share?'<p class="sub">The vendor gets this clean only: progress, photos and notes. No prices, no other listings.</p>':'')+'</section>';
     h+='</div>';
 
-    if(standalone){ $('main').innerHTML=h; return; }
-    el.innerHTML='<div class="dhead"><div class="wrap"><button class="back" data-back>← Back</button><span class="sub" style="margin-left:auto">'+esc(p.label)+'</span></div></div>'+h;
-    if(el.hidden){ el.hidden=false; document.body.style.overflow='hidden'; el.scrollTop=0; } else el.scrollTop=keep;
+    if(standalone){ swap($('main'),h); return; }
+    var opening=el.hidden;
+    if(opening) el._h='';
+    swap(el,'<div class="dhead"><div class="wrap"><button class="back" data-back>← Back</button><span class="sub" style="margin-left:auto">'+esc(p.label)+'</span></div></div>'+h);
+    if(opening){ el.hidden=false; document.body.style.overflow='hidden'; el.scrollTop=0; } else if(el.scrollTop!==keep) el.scrollTop=keep;
   }
   // Full-screen photo viewer: swipe (or arrow keys) between every photo in the current set.
   var lb=null;
