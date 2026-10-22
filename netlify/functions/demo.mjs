@@ -75,7 +75,7 @@ async function loadPicks(s) {
   const [raw, sh] = await Promise.all([s.get("demophotos"), s.get("demoshow")]);
   return { afters: clean(Array.isArray(raw) ? raw : raw && raw.afters), slots: cleanSlots(raw && raw.slots), show: cleanShow(sh || (raw && raw.show)) };
 }
-const MAX_REPORT = 60;
+const MAX_REPORT = 80;
 // What the public demo gets for each sample report: rooms, sorted photos (minus hidden ones)
 // and which checklist items were ticked. Nothing that identifies the client or the address.
 function reportOf(roster, live, pick) {
@@ -83,9 +83,17 @@ function reportOf(roster, live, pick) {
   if (!days.length) return null;
   const home = days[0], L = live[home.id] || {}, hide = new Set(pick.hide);
   const rooms = roomsOf(home);
-  const photos = (L.photos || []).filter((p) => P.test(p.id) && rooms.includes(p.room) && KINDS.includes(p.kind) && !hide.has(p.id))
-    .sort((a, b) => String(a.at || "").localeCompare(String(b.at || ""))).slice(0, MAX_REPORT)
-    .map((p) => ({ room: p.room, kind: p.kind, url: url({ j: p.j || home.id, id: p.id }) }));
+  // A fair share for every room (up to 4 befores and 6 afters each), so a job with 150 kitchen
+  // shots still shows the bedrooms and living areas.
+  const ok = (L.photos || []).filter((p) => P.test(p.id) && rooms.includes(p.room) && KINDS.includes(p.kind) && !hide.has(p.id))
+    .sort((a, b) => String(a.at || "").localeCompare(String(b.at || "")));
+  const per = {}, photos = [];
+  for (const p of ok) {
+    const k = p.room + "|" + p.kind, cap = p.kind === "before" ? 4 : 6;
+    if ((per[k] = (per[k] || 0) + 1) > cap) continue;
+    photos.push({ room: p.room, kind: p.kind, url: url({ j: p.j || home.id, id: p.id }) });
+  }
+  photos.splice(MAX_REPORT);
   if (!photos.length) return null;
   const ticked = Object.fromEntries(Object.entries(L.items || {}).filter(([r]) => rooms.includes(r)).map(([r, v]) => [r, Object.keys(v || {}).slice(0, 200)]));
   return { service: home.service || "", rooms, photos, ticked, days: days.length };
