@@ -49,6 +49,12 @@ h2{font:700 20px/1.2 var(--serif);color:var(--dark);margin:28px 0 10px}
 .ph img{width:100%;height:100%;object-fit:cover;display:block}
 .ph .k{position:absolute;left:4px;bottom:4px;background:rgba(26,26,26,.78);color:#fff;border-radius:999px;padding:3px 6px;font:600 9.5px/1 var(--sans)}
 .ph.on{outline:3px solid var(--ok);outline-offset:-3px}
+.ph.hid img{opacity:.25;filter:grayscale(1)}
+.ph.hid:after{content:"Hidden";position:absolute;inset:0;display:grid;place-items:center;font:600 12px var(--sans);color:var(--dark)}
+.cands{display:grid;gap:8px;margin-top:12px}
+.cand{display:grid;gap:4px;text-align:left;border:1px solid var(--line);border-radius:10px;background:var(--cream);padding:10px;font:inherit;color:inherit;cursor:pointer}
+.cand b{color:var(--dark)}.cand span{font-size:13px;color:var(--meta)}
+.cand .cimg{display:flex;gap:4px}.cand img{width:72px;height:54px;object-fit:cover;border-radius:6px}
 .ph.on:after{content:"✓";position:absolute;right:4px;top:4px;width:20px;height:20px;border-radius:50%;background:var(--ok);color:#fff;font:600 12px/20px var(--sans);text-align:center}
 .where{display:grid;gap:8px}
 .spot{display:flex;gap:12px;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:8px}
@@ -85,7 +91,8 @@ h2{font:700 20px/1.2 var(--serif);color:var(--dark);margin:28px 0 10px}
 var LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var TARGET=8;
-var app=document.getElementById('app'), D=null, err='', busy=null, why={}, target=null, filt='all', shown=15;
+var app=document.getElementById('app'), D=null, err='', busy=null, why={}, target=null, filt='all', shown=15, showPick='';
+var SHOW=[['presale','Pre-sale','/demo and the agent portal'],['bond','Bond','/demo/rent'],['deep','Deep','the agent portal\'s live listing']];
 var DEMO_ROOMS=['Kitchen','Bathrooms','Bedrooms','Living & dining','Laundry','Windows & tracks'];
 function svcOf(s){ s=String(s||''); return /pre.?sale/i.test(s)?'presale':/bond|lease|move/i.test(s)?'bond':/deep/i.test(s)?'deep':'other'; }
 function key(){ try{ return localStorage.getItem('roster_admin_key')||''; }catch(e){ return ''; } }
@@ -97,7 +104,30 @@ function api(method,body,qs){
   return fetch('/api/demo'+(qs||''),{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
     .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok){ var e=new Error(d.error||'Something went wrong'); e.status=r.status; throw e; } return d; }); });
 }
-function save(msg){ return api('POST',{afters:D.afters,slots:D.slots}).then(function(d){ D.afters=d.afters; D.slots=d.slots||{}; render(); if(msg) toast(msg); }).catch(function(e){ toast(e.message); }); }
+function save(msg){ return api('POST',{afters:D.afters,slots:D.slots,show:D.show}).then(function(d){ D.afters=d.afters; D.slots=d.slots||{}; D.show=d.show||{}; render(); if(msg) toast(msg); }).catch(function(e){ toast(e.message); }); }
+// Sample reports: a real job's sorted photos (team-sorted only, never guesses)
+function sortedOf(j){ return j.photos.filter(function(x){ return x.room&&x.kind; }); }
+function pairsOf(j){ var r={}; sortedOf(j).forEach(function(x){ (r[x.room]=r[x.room]||{})[x.kind]=1; }); return Object.keys(r).filter(function(k){ return r[k].before&&r[k].after; }).length; }
+function showHtml(){
+  var h='<h2>Sample <em>reports</em></h2><p class="sub">Pick a real finished job to be the sample report people see in the demo: its before and after photos, room by room, and the checks the team ticked. The address and client name are never shown. Tap a photo to hide it.</p>';
+  h+='<div class="note"><b>Check every photo.</b> Befores show the home as it was. Hide anything with family photos, faces, mail, the street number or number plates.</div>';
+  SHOW.forEach(function(k){ var sel=D.show[k[0]], j=sel&&D.jobs.find(function(x){ return x.key===sel.key; });
+    h+='<div class="job"><b>'+k[1]+' sample</b><span class="d">Shows on '+k[2]+'</span>';
+    if(j){ var ph=sortedOf(j), hid={}; (sel.hide||[]).forEach(function(id){ hid[id]=1; });
+      var vis=ph.filter(function(x){ return !hid[x.id]; });
+      h+='<p class="sub" style="margin:8px 0 0">'+esc([j.suburb,j.service].filter(Boolean).join(' · '))+' · '+fday(j.date)+' · '+vis.filter(function(x){return x.kind==='before';}).length+' before, '+vis.filter(function(x){return x.kind==='after';}).length+' after'+(ph.length-vis.length?' · '+(ph.length-vis.length)+' hidden':'')+'</p>';
+      h+='<div class="strip">'+ph.map(function(x){ return '<button type="button" class="ph'+(hid[x.id]?' hid':'')+'" data-hide="'+k[0]+'|'+x.id+'" aria-pressed="'+!hid[x.id]+'" aria-label="'+esc(x.room+', '+x.kind+(hid[x.id]?', hidden':''))+'"><img alt="" loading="lazy" src="'+thumb(x)+'"><span class="k">'+esc(x.room)+' · '+(x.kind==='before'?'B':'A')+'</span></button>'; }).join('')+'</div>';
+      h+='<div style="display:flex;gap:8px;margin-top:10px"><button type="button" class="sm" data-showpick="'+k[0]+'">Change job</button><button type="button" class="sm ghost" data-showrm="'+k[0]+'">Remove</button></div>';
+    } else h+='<div style="margin-top:10px"><button type="button" class="sm" data-showpick="'+k[0]+'">Choose a job</button></div>';
+    if(showPick===k[0]){
+      var cands=D.jobs.filter(function(x){ return svcOf(x.service)===k[0] && pairsOf(x); }).sort(function(a,b){ return pairsOf(b)-pairsOf(a) || b.date.localeCompare(a.date); });
+      if(!cands.length) h+='<p class="sub" style="margin-top:10px">No '+k[1].toLowerCase()+' jobs with sorted before and after photos of the same room yet.</p>';
+      else h+='<div class="cands">'+cands.slice(0,12).map(function(x){ var so=sortedOf(x); return '<button type="button" class="cand" data-showset="'+k[0]+'|'+esc(x.key)+'"><span class="cimg">'+so.filter(function(q){return q.kind==='after';}).slice(0,3).map(function(q){ return '<img alt="" loading="lazy" src="'+thumb(q)+'">'; }).join('')+'</span><b>'+esc([x.suburb,fday(x.date)].filter(Boolean).join(' · '))+'</b><span>'+pairsOf(x)+' room'+(pairsOf(x)===1?'':'s')+' with before and after · '+so.length+' photos'+(x.client?' · '+esc(x.client):'')+'</span></button>'; }).join('')+'</div>';
+    }
+    h+='</div>';
+  });
+  return h;
+}
 function isOn(id){ if(target&&target!=='gallery'){ var a=D.slots[target]; return !!(a&&a.id===id); } return D.afters.some(function(a){ return a.id===id; }); }
 // A photo the team sorted keeps its room and before/after. An unsorted one uses Claude's guess,
 // unless it was unsure or the photo looked private.
@@ -129,7 +159,7 @@ function render(){
   var h='<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><a href="/demo" target="_blank" rel="noopener" style="color:var(--terracotta-dark)">Open demo</a></div>';
   var njobs=D.jobs.filter(function(j){ return aftersOf(j).length; }).length;
   if(target) h+='<div class="pick"><span>Tap a photo below for: '+esc(target==='gallery'?'the homepage gallery':spotOf(target).page+' · '+spotOf(target).spot)+'</span><button type="button" data-cancel>Cancel</button></div>';
-  h+='<h1>Website <em>photos</em></h1><p class="sub">Your best after photos from all '+D.jobs.length+' jobs on the roster, and exactly where each one shows on bardonclean.au.</p>';
+  h+='<h1>Website &amp; demo <em>photos</em></h1><p class="sub">Your best after photos from all '+D.jobs.length+' jobs on the roster, and exactly where each one shows on bardonclean.au.</p>';
   h+='<div class="auto">';
   if(busy) h+='<p><b>'+(busy.phase==='sort'?'Sorting '+busy.total+' photos the team didn\'t sort…':busy.phase==='rate'?'Claude is rating '+busy.total+' after photos…':'Looking through '+busy.total+' after photos…')+'</b> '+(busy.phase==='rate'?'Judging how well each shows off the clean, and leaving out anything private.':busy.phase==='sort'?'Finding the after shots among them.':'Checking sharpness, light and framing.')+'</p><div class="prog"><i style="width:'+Math.round(busy.done/Math.max(1,busy.total)*100)+'%"></i></div>';
   else h+='<p><b>Let the hub choose.</b> '+(D.ai?'It looks through the after shots from every job (sorting any the team didn\'t), checks sharpness and light, then has Claude rate the strongest for how well they show off the clean and leave out anything private.':'It scores every after photo for sharpness, good light and landscape framing.')+' It skips near-duplicates, mixes rooms and jobs, keeps the best '+TARGET+' for the gallery and puts the best fit in every page spot below (it won\'t touch spots you chose yourself).</p><button type="button" class="go" data-auto'+(total||unsorted?'':' disabled')+'>'+(D.afters.length?'Pick my best afters again':'Pick my best afters')+'</button>';
@@ -153,6 +183,8 @@ function render(){
     h+='<div class="card"><div class="im"><img alt="" loading="lazy" src="'+thumb(a)+'"><span class="n">'+(i+1)+'</span><button type="button" class="x" data-rm="'+a.id+'" aria-label="Remove photo '+(i+1)+'">×</button></div><div class="meta"><b>'+esc(a.room||'After')+(a.service?' · '+esc(a.service.replace(/ clean$/i,'')):'')+'</b>'+(rated(a)?'<span>Claude '+rated(a).r+'/5</span>':why[a.id]?'<span>'+esc(why[a.id])+'</span>':'')+
       '<div class="uses">'+U[i].map(function(u){ return '<i class="'+u[0]+'">'+esc(u[1])+'</i>'; }).join('')+'</div></div></div>'; });
     h+='</div><p class="sub" style="margin-top:8px">Number 1 is the large gallery photo. Tap × to remove one'+(D.afters.length<12?', or <button type="button" class="sm" data-set="gallery" style="min-height:30px">Add a photo</button>':'')+'</p>'; }
+
+  h+=showHtml();
 
   // 3. Every job's afters
   var cnt={all:0,presale:0,bond:0,deep:0,other:0}, list=D.jobs.filter(function(j){ if(!aftersOf(j).length) return false; cnt.all++; cnt[svcOf(j.service)]++; return filt==='all'||svcOf(j.service)===filt; });
@@ -277,6 +309,10 @@ app.addEventListener('click',function(e){
   if(e.target.closest('[data-auto]')){ autoPick(); return; }
   if((t=e.target.closest('[data-rm]'))){ var id=t.dataset.rm; D.afters=D.afters.filter(function(a){ return a.id!==id; }); save('Removed'); return; }
   if(e.target.closest('[data-cancel]')){ target=null; render(); return; }
+  if((t=e.target.closest('[data-showpick]'))){ showPick=showPick===t.dataset.showpick?'':t.dataset.showpick; render(); return; }
+  if((t=e.target.closest('[data-showset]'))){ var q2=t.dataset.showset.split('|'); D.show[q2[0]]={key:q2[1],hide:[]}; showPick=''; save('Sample report set. Check its photos below.'); return; }
+  if((t=e.target.closest('[data-showrm]'))){ delete D.show[t.dataset.showrm]; save('Sample report removed'); return; }
+  if((t=e.target.closest('[data-hide]'))){ var q3=t.dataset.hide.split('|'), sel=D.show[q3[0]]; if(!sel) return; var hs=sel.hide||[]; sel.hide=hs.indexOf(q3[1])>=0?hs.filter(function(x){ return x!==q3[1]; }):hs.concat([q3[1]]); save(sel.hide.indexOf(q3[1])>=0?'Hidden from the demo':'Showing in the demo'); return; }
   if(e.target.closest('[data-more]')){ shown+=15; render(); return; }
   if((t=e.target.closest('[data-filt]'))){ filt=t.dataset.filt; shown=15; render(); return; }
   if((t=e.target.closest('[data-set]'))){ target=t.dataset.set; var sp=target!=='gallery'&&spotOf(target); if(sp&&sp.svc&&filt==='all'){ filt=sp.svc; shown=15; } render();
@@ -293,7 +329,7 @@ app.addEventListener('click',function(e){
 });
 
 if(!key()){ err='login'; render(); }
-else api('GET',null,'?pick=1').then(function(d){ D=d; D.guess=D.guess||{}; D.rate=D.rate||{}; D.slots=D.slots||{}; D.spots=D.spots||[]; render(); // Re-pick when nothing is chosen yet, or a chosen photo is from a job the website doesn't show (e.g. a regular clean)
+else api('GET',null,'?pick=1').then(function(d){ D=d; D.show=D.show||{}; D.guess=D.guess||{}; D.rate=D.rate||{}; D.slots=D.slots||{}; D.spots=D.spots||[]; render(); // Re-pick when nothing is chosen yet, or a chosen photo is from a job the website doesn't show (e.g. a regular clean)
   var keys={}; D.jobs.forEach(function(j){ j.photos.forEach(function(x){ keys[x.id]=1; }); });
   var stale=D.afters.some(function(a){ return !keys[a.id]; });
   if((!D.afters.length||stale||!Object.keys(D.slots).length)&&D.jobs.length) autoPick(); })

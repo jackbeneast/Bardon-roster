@@ -254,6 +254,70 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
 .verify .row2{display:flex;gap:8px}
 .verify .row2 input{flex:1}
 .verify .row2 .btn{flex:none}
+
+/* ---- report ---- */
+.rep .intro .eyebrow{display:block;font:600 12px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--btn);margin-bottom:8px}
+.sec-sub{margin:-4px 0 12px}
+.glance{background:var(--dark);color:var(--cream);border-radius:12px;padding:18px;margin-top:14px;display:grid;gap:14px}
+.glance .gl-top{display:flex;gap:12px;align-items:center}
+.glance .gl-top b{display:block;font:700 22px/1.2 var(--serif);color:#fff}
+.glance .gl-k{display:block;font:500 12px/1.3 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:#B9B2AA}
+.glance .tick{flex:none;width:40px;height:40px;border-radius:50%;background:#3E7A47;color:#fff;display:grid;place-items:center;font:700 20px/1 var(--sans)}
+.glance .tick.cal{background:var(--btn)}
+.glance .dot{flex:none;width:14px;height:14px;margin:0 13px;border-radius:50%;background:#F3B38F;box-shadow:0 0 0 6px rgba(243,179,143,.25);animation:pulse 1.6s infinite}
+.glance .bar{background:#3A3A3A}.glance .bar i{background:#F3B38F}
+.gl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 10px}
+.glance.live .gl-grid,.glance.booked .gl-grid{grid-template-columns:repeat(2,1fr)}
+.gl-grid span{display:block;font:500 11px/1.3 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:#B9B2AA}
+.gl-grid b{display:block;font:600 16px/1.3 var(--sans);color:#fff;font-variant-numeric:tabular-nums;margin-top:2px;overflow-wrap:anywhere}
+.gl-p{margin:0;font-size:14px;color:#D8D0C7}.gl-p b{color:#fff;font-weight:600}
+.gl-note{display:block;width:100%;text-align:left;border:0;border-radius:8px;background:rgba(244,185,66,.16);color:#F7D58C;font:600 14px/1.4 var(--sans);padding:10px 12px}
+.rooms{display:grid;gap:12px}
+.room{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:12px}
+.rhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.rhead h3{font-size:18px}
+.rhead .sub{display:block;margin-top:2px}
+.st.d{background:var(--ok-bg);border-radius:999px;padding:5px 9px}.st.p{background:var(--live);border-radius:999px;padding:5px 9px}.st.w{padding:5px 0}
+.ba{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:var(--cream-dark);touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:ew-resize}
+.ba img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
+.ba .bf{clip-path:inset(0 calc(100% - var(--p)) 0 0)}
+.ba .hd{position:absolute;top:0;bottom:0;left:var(--p);width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+.ba .hd i{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:50%;background:#fff;color:var(--dark);display:grid;place-items:center;font:700 14px/1 var(--sans);font-style:normal;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.lab{position:absolute;top:10px;font:600 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:#fff;background:rgba(26,26,26,.62);padding:6px 8px;border-radius:999px;pointer-events:none}
+.lab.l{left:10px}.lab.r{right:10px}
+.hero-ph{position:relative;display:block;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:var(--cream-dark)}
+.hero-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.strip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.strip::-webkit-scrollbar{display:none}
+.strip a{position:relative;flex:none;width:84px;height:84px;border-radius:6px;overflow:hidden;background:var(--cream-dark)}
+.strip img{width:100%;height:100%;object-fit:cover;display:block}
+.strip span{position:absolute;left:4px;bottom:4px;font:600 10px/1 var(--sans);color:#fff;background:rgba(26,26,26,.62);padding:3px 5px;border-radius:4px}
+details.cl{border-top:1px solid var(--cream-dark);padding-top:10px}
+details.cl summary{cursor:pointer;font:600 14px/1.4 var(--sans);color:var(--btn);list-style:none;display:flex;align-items:center;gap:6px;min-height:32px}
+details.cl summary::-webkit-details-marker{display:none}
+details.cl summary::after{content:"›";transform:rotate(90deg);transition:transform .2s}
+details.cl[open] summary::after{transform:rotate(-90deg)}
+details.cl h4{font:600 12px/1 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--meta);margin:14px 0 6px}
+details.cl ul{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+details.cl li{font-size:14px;color:var(--dark);display:flex;gap:8px}
+details.cl li::before{content:"✓";color:var(--ok);font-weight:700;flex:none;width:14px}
+details.cl li.inc::before{content:"·";color:var(--meta)}
+.flag .sub{display:block;margin-top:6px;font-size:12px}
+.checks li{justify-content:space-between}
+.checks li span{flex:1}
+.checks time{font-size:13px;color:var(--meta);font-variant-numeric:tabular-nums}
+.std{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.std li{font-size:14px;color:var(--body);padding-left:30px;position:relative}
+.std li::before{content:"✓";position:absolute;left:0;top:1px;width:20px;height:20px;border-radius:50%;background:var(--ok-bg);color:var(--ok);font:700 12px/20px var(--sans);text-align:center}
+.std b{display:block;color:var(--dark);font-weight:600}
+.panel hr{border:0;border-top:1px solid var(--cream-dark);margin:12px 0}
+.cred{display:grid;gap:8px;font-size:14px;color:var(--dark)}
+.cred div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--cream-dark);padding-bottom:8px}
+.cred div:last-child{border:0;padding-bottom:0}
+.cred span{color:var(--meta)}
+.free{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.free span{background:var(--white);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font:500 13px/1 var(--sans);color:var(--dark)}
+@media (prefers-reduced-motion:reduce){.glance .dot{animation:none}}
 @media (max-width:420px){.facts{grid-template-columns:1fr 1fr 1fr}.two{grid-template-columns:1fr}.who{max-width:46%}}
 </style></head><body>
 <header class="top"><div class="wrap">
@@ -267,6 +331,7 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
 <main class="wrap" id="main"><div class="intro"><h1>Loading<em>…</em></h1></div></main>
 <div class="detail" id="detail" hidden></div>
 
+<script src="/lib/checklists.js"></script>
 <script src="/lib/demo.js"></script>
 <script>
 (function(){
@@ -390,6 +455,7 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
       h+='<div class="facts"><div class="fact"><span>'+(ac.in?'Started':'Start')+'</span><b>'+(ac.in?clock(ac.in):fmtTime(j.start))+'</b></div><div class="fact"><span>'+(L.done||ac.out?'Finished':'Est. finish')+'</span><b>'+(ac.out?clock(ac.out):L.done?clock(L.done):fmtTime(L.eta||j.end))+'</b></div><div class="fact"><span>Rooms</span><b>'+p.done+' of '+j.rooms.length+'</b></div></div>';
     }
     if(j.readyBy && kind!=='reports') h+='<div class="ready">Ready for <b>'+esc(j.readyBy)+'</b></div>';
+    if(kind==='today' && L.flags.length) h+='<div class="ready"><b>'+L.flags.length+' note'+(L.flags.length>1?'s':'')+'</b> for your attention</div>';
     if(j.team.length && kind!=='reports') h+=chips(j);
     if(mode!=='vendor') h+=moneyLine(j);
     return h+'</button>';
@@ -417,7 +483,7 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
       else h+='<div class="intro"><h1>On site <em>today</em></h1><p>'+DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]+'. Updates as the team works through each room.</p></div>';
       if(mode==='agent') h+='<section class="blk"><h2>On site <em>today</em></h2><p class="sub" style="margin:-4px 0 0">'+DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]+'. Updates as the team finishes each room.</p>';
       h+=L.today.length?'<div class="list">'+L.today.map(function(j){return card(j,'today');}).join('')+'</div>':'<div class="empty">No cleans at your listings today.'+(L.upcoming.length?' The next one is '+fmtDay(L.upcoming[0].date)+'.':'')+'</div>';
-      if(mode==='agent') h+='</section>';
+      if(mode==='agent') h+='</section>'+credSec();
     } else if(tab==='messages'){
       h+=chatView();
     } else if(tab==='upcoming'){
@@ -435,6 +501,16 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
     if(openId) showDetail(false);
   }
 
+  // ---- contractor details agents need on file ----
+  function credSec(){
+    var bz=data.biz||{};
+    return '<section class="blk"><h2>For your <em>files</em></h2><div class="panel"><div class="cred">'+
+      '<div><span>Business</span><b>'+esc(bz.legal||'Jack East T/A Bardon Clean')+'</b></div>'+
+      '<div><span>ABN</span><b>'+esc(bz.abn||'46 426 437 394')+'</b></div>'+
+      '<div><span>Public liability</span><b>$20 million</b></div>'+
+      '<div><span>WorkCover</span><b>Covered</b></div></div>'+
+      '<div class="actions" style="margin-top:12px"><button type="button" class="btn outline" data-ask="Hi Jack, could you send through your certificate of currency for our files?">Request a certificate of currency</button></div></div></section>';
+  }
   // ---- home ----
   function heroHtml(L,d){
     var hr=d.getHours(), g=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
@@ -562,7 +638,8 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
   }
 
   function bookForm(){
-    return '<div class="intro"><h1>Book a <em>clean</em></h1><p>Tell us the property and when it needs to be ready. Jack confirms the details and price in Messages.</p></div>'+
+    var fr=(data&&data.free)||[];
+    return '<div class="intro"><h1>Book a <em>clean</em></h1><p>Tell us the property and when it needs to be ready. Jack confirms the details and price in Messages.</p>'+(fr.length?'<p class="sub" style="margin-top:12px">Next days with room for a clean</p><div class="free">'+fr.map(function(d){ return '<span>'+esc(fmtDay(d))+'</span>'; }).join('')+'</div>':'')+'</div>'+
     '<form id="bookForm" novalidate>'+
     '<div class="two"><label for="b_addr">Street address<input id="b_addr" name="address" required></label><label for="b_sub">Suburb<input id="b_sub" name="suburb"></label></div>'+
     '<label for="b_svc">Service<select id="b_svc" name="service"><option>Pre-sale clean</option><option>Deep clean</option><option>Bond clean</option><option>Other</option></select></label>'+
@@ -601,7 +678,142 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
     }
     return h+'</div></section>';
   }
-  function afterCard(j){
+  // ================= The report =================
+  // Written from the reader's side: every section answers a question a vendor or agent
+  // would otherwise text Jack. Is it on track? What exactly did you do? Is it locked?
+  // Anything I need to fix? What does it cost? What happens next? Can I trust you?
+  function kindOfSvc(s){ s=String(s||''); return /bond|lease|vacate/i.test(s)?'bond':/pre.?sale/i.test(s)?'presale':/deep/i.test(s)?'deep':/regular/i.test(s)?'regular':'other'; }
+  function phaseOf(j){ var L=j.live; if(L.done||(j.date<today()&&!Object.keys(L.arrived||{}).length&&!Object.keys(L.rooms||{}).length)) return 'done'; if(Object.keys(L.arrived||{}).length||Object.keys(L.rooms||{}).length) return 'live'; return 'booked'; }
+  function CL(){ return window.CHECKLISTS; }
+  function roomItems(j,r){ return CL()?CL().itemsFor(r,j.service):[]; }
+  function roomTicked(j,r){ var t=(j.live.ticked||{})[r]; return t&&t.length?t:[]; }
+  function roomChecks(j,r){ var tk=roomTicked(j,r); if(tk.length) return tk.length; return (j.live.checks&&j.live.checks[r])||0; }
+  function totalChecks(j){ return j.rooms.reduce(function(n,r){ return n+roomChecks(j,r); },0); }
+  function lockedAt(L){ var v=Object.keys(L.lock||{}).map(function(k){return L.lock[k];}).filter(Boolean).sort(); return v.length?v[v.length-1]:''; }
+  function photoSrc(j,x){ return x.src||('/api/photo?j='+encodeURIComponent(x.j||j.id)+'&p='+x.id); }
+  function thumbSrc(src){ return /^data:/.test(src)?src:src+(src.indexOf('?')<0?'?':'&')+'s=t'; }
+
+  // ---- 1. At a glance: the whole answer in one card ----
+  function glance(j,p,ph){
+    var L=j.live, ac=j.actual||{}, notes=L.flags.length, h='<div class="glance '+ph+'">';
+    if(ph==='done'){
+      h+='<div class="gl-top"><span class="tick" aria-hidden="true">✓</span><div><span class="gl-k">'+(j.readyBy?'Ready for':'Finished')+'</span><b>'+esc(j.readyBy||('Finished '+(L.done?clock(L.done):fmtDay(j.date))))+'</b></div></div>';
+      var lk=lockedAt(L);
+      h+='<div class="gl-grid">'+[
+        ['Finished',L.done?clock(L.done)+(new Date(L.done).toDateString()!==new Date().toDateString()?', '+fmtDay(iso(new Date(L.done))):''):(ac.out?clock(ac.out):fmtDay(j.date))],
+        ['Rooms',p.done+' of '+j.rooms.length],
+        ['Checks done',totalChecks(j)||'—'],
+        ['Photos',L.photos.length||'—'],
+        ['Notes for you',notes?notes:'None'],
+        ['Locked up',lk?clock(lk):'—']
+      ].map(function(x){ return '<div><span>'+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
+      if(notes) h+='<button type="button" class="gl-note" data-goto="attention">'+notes+' thing'+(notes>1?'s':'')+' worth knowing'+(kindOfSvc(j.service)==='presale'?' before buyers walk through':'')+' ›</button>';
+    } else if(ph==='live'){
+      h+='<div class="gl-top"><span class="dot" aria-hidden="true"></span><div><span class="gl-k">Cleaning now</span><b>'+p.done+' of '+j.rooms.length+' rooms done</b></div></div>';
+      h+='<div class="bar"><i style="width:'+p.pct+'%"></i></div>';
+      h+='<div class="gl-grid">'+[
+        ['Team arrived',ac.in?clock(ac.in):'—'],
+        ['Est. finish',fmtTime(L.eta||j.end)],
+        ['Checks done',totalChecks(j)||'—'],
+        ['Notes for you',notes?notes:'None']
+      ].map(function(x){ return '<div><span>'+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
+      if(j.readyBy) h+='<p class="gl-p">On track to be ready for <b>'+esc(j.readyBy)+'</b>.</p>';
+    } else {
+      h+='<div class="gl-top"><span class="tick cal" aria-hidden="true">✓</span><div><span class="gl-k">Booked and confirmed</span><b>'+esc(longDay(j.date))+'</b></div></div>';
+      h+='<div class="gl-grid">'+[
+        ['Team arrives',fmtTime(j.start)],
+        ['Finishing around',fmtTime(j.end)],
+        ['Rooms',j.rooms.length],
+        ['Team',j.team.length?j.team.map(function(t){return t.name;}).join(', '):'Confirmed soon']
+      ].map(function(x){ return '<div><span>'+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
+      if(j.days&&j.days.length>1) h+='<p class="gl-p">'+j.days.length+' days: '+j.days.map(function(x){ return esc(fmtDay(x.date)); }).join(', ')+'</p>';
+      if(j.readyBy) h+='<p class="gl-p">Ready for <b>'+esc(j.readyBy)+'</b>.</p>';
+    }
+    return h+'</div>';
+  }
+
+  // ---- 2. Before & after slider ----
+  function ba(bsrc,asrc,label){
+    return '<div class="ba" role="slider" tabindex="0" aria-label="'+esc(label)+': drag to compare before and after" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" style="--p:50%">'+
+      '<img class="af" loading="lazy" alt="'+esc(label+', after')+'" src="'+esc(asrc)+'"><img class="bf" loading="lazy" alt="'+esc(label+', before')+'" src="'+esc(bsrc)+'">'+
+      '<span class="lab l">Before</span><span class="lab r">After</span><span class="hd" aria-hidden="true"><i>‹ ›</i></span></div>';
+  }
+
+  // ---- 3. Room by room: photos, and every check the team ticked ----
+  function roomCard(j,r,ph){
+    var L=j.live, x=L.rooms[r], s=(x&&x.s)||'w', ps=L.photos.filter(function(q){return q.room===r;});
+    var bef=ps.filter(function(q){return q.kind==='before';}), aft=ps.filter(function(q){return q.kind==='after';});
+    var items=roomItems(j,r), tk=roomTicked(j,r), n=roomChecks(j,r);
+    var h='<article class="room"><div class="rhead"><div><h3>'+esc(r)+'</h3><span class="sub">'+
+      (s==='d'?'Done '+clock(x.at):s==='p'?'Started '+clock(x.at):ph==='booked'?(items.length?items.length+' checks on the list':'On the list'):'To do')+
+      (s!=='w'&&n?' · '+n+' checks':'')+'</span></div>'+
+      '<span class="st '+s+'">'+(s==='d'?'Done':s==='p'?'In progress':ph==='booked'?'Included':'To do')+'</span></div>';
+    if(bef.length&&aft.length) h+=ba(photoSrc(j,bef[0]),photoSrc(j,aft[0]),r);
+    else if(aft.length) h+='<a class="hero-ph" href="'+esc(photoSrc(j,aft[0]))+'" data-gi="'+galPush(photoSrc(j,aft[0]),r,'After')+'"><img loading="lazy" alt="'+esc(r+', after')+'" src="'+esc(photoSrc(j,aft[0]))+'"><span class="lab r">After</span></a>';
+    var rest=bef.slice(bef.length&&aft.length?1:0).map(function(q){return [q,'Before'];}).concat(aft.slice(1).map(function(q){return [q,'After'];}));
+    if(bef.length&&aft.length){ galPush(photoSrc(j,bef[0]),r,'Before'); galPush(photoSrc(j,aft[0]),r,'After'); }
+    if(rest.length) h+='<div class="strip">'+rest.map(function(z){ var src=photoSrc(j,z[0]); return '<a href="'+esc(src)+'" data-gi="'+galPush(src,r,z[1])+'"><img loading="lazy" alt="'+esc(r+', '+z[1].toLowerCase())+'" src="'+esc(thumbSrc(src))+'"><span>'+z[1]+'</span></a>'; }).join('')+'</div>';
+    // The checklist: what was done (ticked) or, before the clean, what's included.
+    if(items.length && (ph==='booked' || n)){
+      var on={}; tk.forEach(function(id){ on[id]=1; }); var showAll=ph==='booked'||!tk.length;
+      var secs=CL().sectionsFor(r,j.service);
+      h+='<details class="cl"><summary>'+(ph==='booked'?'What\'s included ('+items.length+')':s==='d'?'Every check we did ('+n+')':'Checks done so far ('+n+')')+'</summary>'+
+        secs.map(function(sec){ var its=sec.items.filter(function(i){ return showAll||on[i.id]; }); if(!its.length) return '';
+          return '<h4>'+esc(sec.title)+'</h4><ul>'+its.map(function(i){ return '<li class="'+(ph==='booked'?'inc':'')+'">'+esc(i.t)+'</li>'; }).join('')+'</ul>'; }).join('')+
+        (ph!=='booked'&&s==='d'&&tk.length&&tk.length<items.length?'<p class="sub">Some items don\'t apply to every home (a gas cooktop, a second shower), so the team only ticks what\'s there.</p>':'')+'</details>';
+    }
+    return h+'</article>';
+  }
+  function galPush(src,room,kind){ gal.push({src:src,room:room,kind:kind}); return gal.length-1; }
+
+  // ---- 4. What's next, by kind of clean ----
+  function nextSteps(j,ph){
+    var k=kindOfSvc(j.service), L=[];
+    if(ph==='booked'){
+      L.push(['Power and water on','The team needs both to clean. Please leave them connected.']);
+      L.push(['Pets, alarms and anything fragile','Let us know in the access details so the team can plan for it.']);
+      L.push(['Valuables and paperwork','Please put away anything valuable or private before we arrive.']);
+      L.push(['We bring everything','All equipment and products. Nothing for you to buy or leave out.']);
+      if(k==='presale') L.push(['Styling comes after us','Book your stylist for after the clean, and the photographer after styling.']);
+      if(k==='bond') L.push(['Moving out first','The clean goes best once furniture and belongings are out.']);
+      return '<section class="blk"><h2>Before we <em>arrive</em></h2><div class="panel"><ul class="prep">'+L.map(function(x){ return '<li><b>'+x[0]+'</b>'+x[1]+'</li>'; }).join('')+'</ul></div></section>';
+    }
+    if(ph!=='done') return '';
+    if(k==='presale'){
+      L.push(['Next: styling, then photos','The home is clean and ready for the stylist. Photos come once styling is done.']);
+      L.push(['Keep it photo-ready','Benches clear, bins out of sight, towels fresh and the shower glass wiped after use.']);
+      L.push(['On photo day','Open every blind and turn on every light before the photographer arrives.']);
+      L.push(['Something out of place?','Message Jack before photos or an open home and we\'ll sort it out.']);
+    } else if(k==='bond'){
+      L.push(['Keys back to your agent','Return keys and remotes as your agent has asked.']);
+      L.push(['The exit inspection','Your property manager inspects against the entry report.']);
+      L.push(['If anything comes up','Message Jack straight away with the agent\'s notes and photos.']);
+    } else {
+      L.push(['Keeping it this way','Run the bathroom fan after showers and wipe benches daily to hold the finish longer.']);
+      L.push(['Anything not right?','Message Jack and we\'ll look at it.']);
+    }
+    return '<section class="blk"><h2>What happens <em>next</em></h2><div class="panel"><ul class="prep">'+L.map(function(x){ return '<li><b>'+x[0]+'</b>'+x[1]+'</li>'; }).join('')+'</ul></div></section>';
+  }
+
+  // ---- 5. Who's looking after the home ----
+  var STANDARDS=[
+    ['Fully insured','$20 million public liability, plus WorkCover for every team member.'],
+    ['A fresh set of cloths for every home','Microfibre is never reused between homes.'],
+    ['Clean tools, every time','Equipment is cleaned before and after every clean.'],
+    ['Premium products','Tested and refined all the time. We bring everything.'],
+    ['A team that\'s looked after','Paid above award, with overtime on bigger jobs.']
+  ];
+  function trustSec(j){
+    var h='<section class="blk"><h2>Who\'s looking after <em>the home</em></h2><div class="panel">';
+    if(j.team.length) h+=j.team.map(function(t){ var a=j.live.arrived[t.id]; return '<div class="person">'+(t.photo?'<img class="av" style="object-fit:cover;padding:0" alt="" src="'+esc(t.photo)+'">':'<span class="av">'+esc(initial(t.name))+'</span>')+'<div><b>'+esc(t.name)+(t.owner?' <span class="sub">· owner</span>':'')+'</b><span class="sub">'+(a?'Arrived '+clock(a):(j.date>=today()?'Starts '+fmtTime(j.start):'On this clean'))+'</span></div></div>'; }).join('')+'<hr>';
+    h+='<ul class="std">'+STANDARDS.map(function(x){ return '<li><b>'+x[0]+'</b>'+x[1]+'</li>'; }).join('')+'</ul>';
+    var bz=data.biz||{};
+    h+='<p class="sub" style="margin:12px 0 0">'+esc(bz.legal||'Jack East T/A Bardon Clean')+' · ABN '+esc(bz.abn||'46 426 437 394')+'</p>';
+    return h+'</div></section>';
+  }
+
+  // ---- vendor: feedback and booking again ----
+  function feedbackCard(){
     var c=(data.client||{}), fb=c.feedback, h='<section class="blk"><h2>How did we <em>go?</em></h2><div class="panel">';
     if(fb) h+='<p style="margin:0;font-size:15px">'+(fb.mood==='happy'?'Thank you. Jack will pass that on to the team.':'Thanks for letting us know. Jack will be in touch.')+'</p>';
     else {
@@ -609,9 +821,11 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
       if(fbMode) h+='<form id="fbForm" class="cform" style="margin-top:12px" novalidate><label for="fb_t">'+(fbMode==='happy'?'Anything you\'d like the team to hear? <small>Optional</small>':'What wasn\'t right? <small>Jack reads every one</small>')+'<textarea id="fb_t" name="text"></textarea></label><div class="err" id="fbErr" hidden></div><button type="submit" class="btn primary">Send to Jack</button></form>';
     }
     if(c.reviewLink) h+='<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--cream-dark)"><p class="sub" style="margin:0 0 10px">Reviews help a small local business like ours.</p><a class="btn outline" style="width:100%" href="'+esc(c.reviewLink)+'" target="_blank" rel="noopener">Leave a Google review</a></div>';
-    h+='</div></section>';
-    var moving=c.kind==='presale'||c.kind==='bond', svc={presale:'presale',bond:'bond',deep:'deep',regular:'regular'}[c.kind]||'';
-    h+='<section class="blk"><h2>Book <em>again</em></h2><div class="panel again">';
+    return h+'</div></section>';
+  }
+  function againCard(){
+    var c=(data.client||{}), moving=c.kind==='presale'||c.kind==='bond', svc={presale:'presale',bond:'bond',deep:'deep',regular:'regular'}[c.kind]||'';
+    var h='<section class="blk"><h2>Book <em>again</em></h2><div class="panel again">';
     if(moving) h+='<a class="btn primary" href="/quote?service=movein&src=client-link">Moving? Get your new place cleaned</a>';
     h+='<a class="btn '+(moving?'outline':'primary')+'" href="/quote?src=client-link'+(svc&&!moving?'&service='+svc:'')+'">Book another clean</a>';
     if(c.kind!=='regular') h+='<a class="btn outline" href="/quote?service=regular&src=client-link">Ask about regular cleans</a>';
@@ -622,53 +836,51 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
     if(!a.in) return 'Team arrives '+fmtTime(x.start)+(x.end?' · finishing around '+fmtTime(x.end):'');
     return 'Team arrived '+clock(a.in)+(a.out?' · finished '+clock(a.out):x.end?' · finishing around '+fmtTime(x.end):'');
   }
-  function bookingCard(j,L){
-    var started=Object.keys(L.arrived||{}).length||L.done||j.date<today();
+  function bookingCard(j){
     var h='<div class="panel bk" style="margin-top:12px"><span class="sub">Your booking</span><div class="bk-when">'+(j.days?j.days.map(function(x){ return '<b>'+esc(longDay(x.date))+'</b><span>'+whenLine(x,x.actual)+'</span>'; }).join(''):'<b>'+esc(longDay(j.date))+'</b><span>'+whenLine(j,j.actual)+'</span>')+'</div>';
     h+='<dl class="bk-rows">'+(j.address||j.suburb?'<div><dt>Where</dt><dd>'+esc([j.address,j.suburb].filter(Boolean).join(', '))+'</dd></div>':'')+(j.service?'<div><dt>Service</dt><dd>'+esc(j.service)+'</dd></div>':'')+(j.readyBy?'<div><dt>Ready for</dt><dd>'+esc(j.readyBy)+'</dd></div>':'')+'</dl>';
-    h+='<div class="actions" style="margin-top:12px">'+(started?'':'<a class="btn outline" href="'+icsHref(j)+'" download="bardon-clean.ics">Add to calendar</a>')+'<a class="btn dark" href="sms:+61468193772">Text Jack</a></div></div>';
-    if(!started){
-      h+='<section class="blk"><h2>Before we <em>arrive</em></h2><div class="panel"><ul class="prep"><li><b>Power and water</b>Please leave both on. The team needs them to clean.</li><li><b>Pets and hazards</b>Let us know about pets, alarms or anything the team should watch for.</li></ul></div></section>';
-      h+='<section class="blk"><h2>On the <em>day</em></h2><div class="panel sub" style="font-size:14px">Keep this link. As the team works it updates with their arrival, each room as it\'s finished, and before and after photos.</div></section>';
-    }
+    h+='<div class="actions" style="margin-top:12px"><a class="btn outline" href="'+icsHref(j)+'" download="bardon-clean.ics">Add to calendar</a><a class="btn dark" href="sms:+61468193772">Text Jack</a></div></div>';
     return h;
   }
+
   function showDetail(standalone){
     var j=(data.jobs||[]).find(function(x){return x.id===openId;}), el=$('detail');
     if(!j){ if(standalone){ $('main').innerHTML='<div class="empty">This clean is no longer listed. Call Jack on <b>'+JACK+'</b>.</div>'; } closeDetail(); return; }
-    var p=prog(j), L=j.live, ac=j.actual||{}, keep=el.scrollTop, h='';
+    var p=prog(j), L=j.live, ph=phaseOf(j), keep=el.scrollTop, h='', V=mode==='vendor';
+    gal=[];
     if(standalone){ el.hidden=true; }
-    h+='<div class="wrap" style="padding-bottom:60px">';
-    h+='<div class="intro"><h1>'+esc(j.address||j.suburb)+'</h1><p>'+esc([j.address?j.suburb:'',j.service,fmtDay(j.date)+(j.dayT?' (day '+j.dayN+' of '+j.dayT+')':'')].filter(Boolean).join(' · '))+'</p>'+(standalone&&data.agent?'<p>Arranged by '+esc(data.agent.name)+(data.agent.agency?', '+esc(data.agent.agency):'')+'</p>':'')+'</div>';
-    if(mode==='vendor' && L.done) h+=afterCard(j);
-    if(mode==='vendor') h+=bookingCard(j,L);
-    if(mode==='vendor' && !L.done && !Object.keys(L.arrived||{}).length) h+=accessSec(j);
-    h+='<div class="panel" style="margin-top:12px;display:grid;gap:12px"><div class="ctop"><span class="sub">Status</span><span class="pill '+p.cls+'">'+esc(p.label)+'</span></div><div class="bar'+(L.done?' ok':'')+'"><i style="width:'+p.pct+'%"></i></div>';
-    h+='<div class="facts"><div class="fact"><span>'+(ac.in?'Started':'Start')+'</span><b>'+(ac.in?clock(ac.in):fmtTime(j.start))+'</b></div><div class="fact"><span>'+(L.done||ac.out?'Finished':'Est. finish')+'</span><b>'+(ac.out?clock(ac.out):L.done?clock(L.done):fmtTime(L.eta||j.end))+'</b></div><div class="fact"><span>Rooms</span><b>'+p.done+' of '+j.rooms.length+'</b></div></div>';
-    if(j.readyBy) h+='<div class="ready">Ready for <b>'+esc(j.readyBy)+'</b></div>';
-    h+='</div>';
-    if(mode!=='vendor') h+=billSec(j);
-    if(L.done) h+=tourBlock(L); // finished: the tour is the first thing they see
-    if(L.updated) h+='<p class="updated">Last update '+clock(L.updated)+(new Date(L.updated).toDateString()!==new Date().toDateString()?', '+fmtDay(iso(new Date(L.updated))):'')+'. This page refreshes itself.</p>';
+    h+='<div class="wrap rep" style="padding-bottom:60px">';
+    h+='<div class="intro"><span class="eyebrow">'+esc(j.service||'Clean')+(j.dayT?' · Day '+j.dayN+' of '+j.dayT:'')+'</span><h1>'+esc(j.address||j.suburb)+'</h1><p>'+esc([j.address?j.suburb:'',fmtDay(j.date)].filter(Boolean).join(' · '))+'</p>'+(standalone&&data.agent?'<p>Arranged by '+esc(data.agent.name)+(data.agent.agency?', '+esc(data.agent.agency):'')+'</p>':'')+'</div>';
 
-    h+='<section class="blk"><h2>Progress</h2><div class="panel"><ol class="tl">'+STEPS.map(function(s,i){ if(i===0) return ''; var hit=i<=p.step; return '<li class="'+(hit?'hit':'')+(i===p.step&&!L.done&&p.step>0?' now':'')+(i===4?' last':'')+'"><span>'+s+'</span><time>'+(hit?whenAt(p.times[i]):'')+'</time></li>'; }).join('')+'</ol></div></section>';
+    h+=glance(j,p,ph);
+    if(L.updated && ph==='live') h+='<p class="updated">Last update '+clock(L.updated)+'. This page updates itself.</p>';
 
-    if(j.team.length) h+='<section class="blk"><h2>The <em>team</em></h2><div class="panel">'+j.team.map(function(t){ var a=L.arrived[t.id]; return '<div class="person">'+(t.photo?'<img class="av" style="object-fit:cover;padding:0" alt="" src="'+esc(t.photo)+'">':'<span class="av">'+esc(initial(t.name))+'</span>')+'<div><b>'+esc(t.name)+(t.owner?' <span class="sub">· owner</span>':'')+'</b><span class="sub">'+(a?'Arrived '+clock(a):(j.date>=today()?'Starts '+fmtTime(j.start):'—'))+'</span></div></div>'; }).join('')+'</div></section>';
+    if(V && ph==='done') h+=feedbackCard();
+    if(ph==='done') h+=tourBlock(L);
+    if(V && ph==='booked') h+=bookingCard(j);
+    if(V && ph==='booked') h+=accessSec(j);
 
-    h+='<section class="blk"><h2>Room by <em>room</em></h2><div class="panel">'+j.rooms.map(function(r){ var x=L.rooms[r], s=(x&&x.s)||'w'; return '<div class="row"><span>'+esc(r)+(x?'<em>'+(s==='d'?'Done ':'Started ')+clock(x.at)+(L.checks&&L.checks[r]?' · '+L.checks[r]+' checks':'')+'</em>':'')+'</span><span class="st '+s+'">'+(s==='d'?'Done':s==='p'?'In progress':'To do')+'</span></div>'; }).join('')+'</div></section>';
+    // Room by room
+    h+='<section class="blk"><h2>'+(ph==='booked'?'What we\'ll <em>clean</em>':'Room by <em>room</em>')+'</h2>'+
+      (ph==='booked'?'<p class="sub sec-sub">Every room has its own checklist. The team ticks each item off on the day, and you\'ll see them here.</p>':
+       ph==='done'?'<p class="sub sec-sub">Drag across a photo to compare before and after. Open a room to see every check the team ticked.</p>':'<p class="sub sec-sub">Each room ticks over as the team finishes it.</p>')+
+      '<div class="rooms">'+j.rooms.map(function(r){ return roomCard(j,r,ph); }).join('')+'</div></section>';
+    if(ph==='live') h+=tourBlock(L);
 
-    if(!L.done) h+=tourBlock(L);
-    var ph=L.photos.filter(function(x){return x.kind===photoMode;}); gal=[]; galKind=photoMode==='after'?'After':'Before';
-    h+='<section class="blk"><h2>Photos</h2><div class="seg" role="group" aria-label="Show"><button type="button" data-pm="before" aria-pressed="'+(photoMode==='before')+'">Before <span class="n">'+L.photos.filter(function(x){return x.kind==='before';}).length+'</span></button><button type="button" data-pm="after" aria-pressed="'+(photoMode==='after')+'">After <span class="n">'+L.photos.filter(function(x){return x.kind==='after';}).length+'</span></button></div>';
-    if(!ph.length) h+='<div class="empty" style="margin-top:0">'+(photoMode==='after'?'After photos appear as each room is finished.':'No before photos yet.')+'</div>';
-    j.rooms.forEach(function(r){ var rp=ph.filter(function(x){return x.room===r;}); if(!rp.length) return; h+='<div class="proom"><h4>'+esc(r)+'</h4><div class="photos">'+rp.map(function(x){ var src=x.src||('/api/photo?j='+encodeURIComponent(x.j||j.id)+'&p='+x.id); gal.push({src:src,room:r}); return '<a href="'+src+'" data-gi="'+(gal.length-1)+'"><img loading="lazy" src="'+(/^data:/.test(src)?src:src+'&s=t')+'" alt="'+esc(r+', '+photoMode)+'"></a>'; }).join('')+'</div></div>'; });
-    h+='</section>';
+    if(ph!=='booked') h+='<section class="blk" id="attention"><h2>For your <em>attention</em></h2>'+(L.flags.length?'<p class="sub sec-sub">Things the team noticed that are worth knowing'+(kindOfSvc(j.service)==='presale'?' before buyers walk through':'')+'.</p>'+L.flags.map(function(f){return '<div class="flag"><b>'+esc(f.t)+'</b>'+esc(f.d)+(f.at?'<span class="sub">Noted '+clock(f.at)+'</span>':'')+'</div>';}).join(''):'<div class="panel sub">Nothing flagged. The team notes anything you should know, such as wear or marks that won\'t come out.</div>')+'</section>';
 
-    h+='<section class="blk"><h2>For your <em>attention</em></h2>'+(L.flags.length?L.flags.map(function(f){return '<div class="flag"><b>'+esc(f.t)+'</b>'+esc(f.d)+'</div>';}).join(''):'<div class="panel sub">Nothing flagged. The team notes anything you should know, such as damage or marks that won\'t come out.</div>')+'</section>';
+    if(ph!=='booked'){
+      var lk=Object.keys(data.lock), nl=Object.keys(L.lock||{}).length;
+      h+='<section class="blk"><h2>Lock-up &amp; <em>handover</em></h2><div class="panel"><ul class="checks">'+lk.map(function(k){return '<li class="'+(L.lock[k]?'':'no')+'"><span>'+esc(data.lock[k])+'</span>'+(L.lock[k]?'<time>'+clock(L.lock[k])+'</time>':'')+'</li>';}).join('')+'</ul>'+(nl<lk.length?'<p class="sub" style="margin:10px 0 0">The team ticks each of these off before leaving.</p>':'<p class="sub" style="margin:10px 0 0">Checked and ticked off by the team before leaving.</p>')+'</div></section>';
+    }
 
-    h+='<section class="blk"><h2>Lock-<em>up</em></h2><div class="panel"><ul class="checks">'+Object.keys(data.lock).map(function(k){return '<li class="'+(L.lock[k]?'':'no')+'">'+esc(data.lock[k])+'</li>';}).join('')+'</ul>'+(Object.keys(L.lock).length<Object.keys(data.lock).length?'<p class="sub" style="margin:10px 0 0">The team ticks these off before leaving.</p>':'')+'</div></section>';
+    h+=billSec(j);
+    h+=nextSteps(j,ph);
+    if(ph==='live') h+='<section class="blk"><h2>Progress</h2><div class="panel"><ol class="tl">'+STEPS.map(function(s,i){ if(i===0) return ''; var hit=i<=p.step; return '<li class="'+(hit?'hit':'')+(i===p.step&&!L.done&&p.step>0?' now':'')+(i===4?' last':'')+'"><span>'+s+'</span><time>'+(hit?whenAt(p.times[i]):'')+'</time></li>'; }).join('')+'</ol></div></section>';
+    h+=trustSec(j);
+    if(V && ph==='done') h+=againCard();
 
-    h+='<section class="blk"><div class="actions">'+(mode!=='vendor'&&(j.share||demoAud)?'<button type="button" class="btn primary" data-sharejob="'+esc(j.id)+'">Share with the vendor</button>':'')+(mode==='agent'?'<button type="button" class="btn outline" data-askjob="'+esc(j.id)+'">Message Jack about this</button>':'<a class="btn outline" href="tel:+61406216212">Call Jack</a>')+'</div><p class="contact">Jack East, Bardon Clean · <b>'+JACK+'</b>'+(mode==='agent'?' · <a href="tel:+61406216212" style="color:var(--btn);font-weight:600">Call</a>':'')+'</p>'+(mode!=='vendor'&&j.share?'<p class="sub">The vendor gets this clean only: progress, photos and notes. No prices, no other listings.</p>':'')+'</section>';
+    h+='<section class="blk"><div class="actions">'+(!V&&(j.share||demoAud)?'<button type="button" class="btn primary" data-sharejob="'+esc(j.id)+'">Share with the vendor</button>':'')+(mode==='agent'?'<button type="button" class="btn outline" data-askjob="'+esc(j.id)+'">Message Jack about this</button>':V?'<a class="btn primary" href="sms:+61468193772">Text Jack</a><a class="btn outline" href="tel:+61406216212">Call Jack</a>':'<a class="btn outline" href="tel:+61406216212">Call Jack</a>')+'</div><p class="contact">Jack East, owner · <b>'+JACK+'</b>'+(mode==='agent'?' · <a href="tel:+61406216212" style="color:var(--btn);font-weight:600">Call</a>':'')+'</p>'+(!V&&j.share?'<p class="sub">The vendor gets this clean only: progress, photos, notes and their own invoices. No other listings.</p>':'')+'</section>';
     h+='</div>';
 
     if(standalone){ swap($('main'),h); return; }
@@ -681,14 +893,14 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
   var lb=null;
   function lbIndex(){ var tr=lb.querySelector('.lb-track'); return Math.round(tr.scrollLeft/Math.max(1,tr.clientWidth)); }
   function lbLabel(){ if(!lb) return; var i=Math.min(lb.list.length-1,Math.max(0,lbIndex())), it=lb.list[i];
-    lb.querySelector('.lb-top div').innerHTML='<b>'+esc(it.room)+'</b> <span>· '+esc(galKind)+'</span>';
+    lb.querySelector('.lb-top div').innerHTML='<b>'+esc(it.room)+'</b> <span>· '+esc(it.kind||galKind)+'</span>';
     lb.querySelector('.lb-bot').textContent=(i+1)+' of '+lb.list.length;
     lb.querySelector('.prev').hidden=i===0; lb.querySelector('.next').hidden=i===lb.list.length-1; }
   function lbGo(d){ var tr=lb.querySelector('.lb-track'); tr.scrollTo({left:(lbIndex()+d)*tr.clientWidth,behavior:'smooth'}); }
   function lbOpen(i){
     if(lb) return; var list=gal.slice();
     var el=document.createElement('div'); el.className='lb'; el.setAttribute('role','dialog'); el.setAttribute('aria-label','Photos');
-    el.innerHTML='<div class="lb-top"><div></div><button type="button" class="lb-x" aria-label="Close">×</button></div><div class="lb-track">'+list.map(function(x,k){ return '<div class="lb-slide"><img alt="'+esc(x.room+', '+galKind)+'" src="'+(Math.abs(k-i)<=2?x.src:'')+'" data-src="'+x.src+'" decoding="async"></div>'; }).join('')+'</div><button type="button" class="lb-nav prev" aria-label="Previous">‹</button><button type="button" class="lb-nav next" aria-label="Next">›</button><div class="lb-bot"></div>';
+    el.innerHTML='<div class="lb-top"><div></div><button type="button" class="lb-x" aria-label="Close">×</button></div><div class="lb-track">'+list.map(function(x,k){ return '<div class="lb-slide"><img alt="'+esc(x.room+', '+(x.kind||galKind))+'" src="'+(Math.abs(k-i)<=2?x.src:'')+'" data-src="'+x.src+'" decoding="async"></div>'; }).join('')+'</div><button type="button" class="lb-nav prev" aria-label="Previous">‹</button><button type="button" class="lb-nav next" aria-label="Next">›</button><div class="lb-bot"></div>';
     document.body.appendChild(el); lb=el; lb.list=list;
     var tr=el.querySelector('.lb-track'), raf=0;
     tr.scrollLeft=i*tr.clientWidth; lbLabel();
@@ -700,6 +912,18 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
   function lbClose(viaButton){ if(!lb) return; lb.remove(); lb=null; if(viaButton){ try{ if(history.state&&history.state.lb) history.back(); }catch(e){} } }
   window.addEventListener('popstate',function(){ if(lb) lbClose(false); });
   window.addEventListener('resize',function(){ if(lb){ var i=lbIndex(); var tr=lb.querySelector('.lb-track'); tr.scrollLeft=i*tr.clientWidth; } });
+  // Before/after slider: drag sideways to compare. Vertical swipes still scroll the page
+  // (touch-action: pan-y), and arrow keys move it for keyboard users.
+  function baSet(el,pct){ pct=Math.max(0,Math.min(100,pct)); el.style.setProperty('--p',pct+'%'); el.setAttribute('aria-valuenow',Math.round(pct)); }
+  var baDrag=null;
+  document.addEventListener('pointerdown',function(e){ var el=e.target.closest('.ba'); if(!el) return; baDrag={el:el,x:e.clientX,y:e.clientY,on:false}; });
+  document.addEventListener('pointermove',function(e){ if(!baDrag) return; var d=baDrag;
+    if(!d.on){ if(Math.abs(e.clientX-d.x)<6) return; if(Math.abs(e.clientY-d.y)>Math.abs(e.clientX-d.x)){ baDrag=null; return; } d.on=true; }
+    var r=d.el.getBoundingClientRect(); baSet(d.el,(e.clientX-r.left)/r.width*100); });
+  document.addEventListener('pointerup',function(e){ if(!baDrag) return; var d=baDrag; baDrag=null; if(!d.on){ var r=d.el.getBoundingClientRect(); baSet(d.el,(e.clientX-r.left)/r.width*100); } });
+  document.addEventListener('pointercancel',function(){ baDrag=null; });
+  document.addEventListener('keydown',function(e){ var el=e.target.closest&&e.target.closest('.ba'); if(!el) return; if(e.key==='ArrowLeft'||e.key==='ArrowRight'){ e.preventDefault(); baSet(el,(+el.getAttribute('aria-valuenow')||50)+(e.key==='ArrowLeft'?-10:10)); } });
+  document.addEventListener('click',function(e){ var g=e.target.closest('[data-goto]'); if(!g) return; var t=document.getElementById(g.dataset.goto); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); });
   document.addEventListener('click',function(e){ var a=e.target.closest('a[data-gi]'); if(!a) return; e.preventDefault(); lbOpen(+a.dataset.gi); });
   function tourBlock(L){ var tv=L.tour||[]; if(!tv.length) return '';
     return '<section class="blk"><h2>Property <em>tour</em></h2><div class="tour">'+tv.map(function(v,i){ return '<button type="button" class="tv" data-tv="'+i+'" aria-label="Played walkthrough video: '+esc(v.title)+'"><i class="pl" aria-hidden="true"></i><span style="margin:0;color:inherit"><b>'+esc(v.title)+'</b><span>'+(v.secs?vlen(v.secs)+' · ':'')+'Walkthrough video</span></span></button>'; }).join('')+'</div></section>';
@@ -735,6 +959,7 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
     if(b.dataset.sharejob){ var sj=(data.jobs||[]).find(function(x){return x.id===b.dataset.sharejob;}); if(sj) shareReport(sj); return; }
     if(b.dataset.askjob){ chatRef=b.dataset.askjob; closeDetail(); tab='messages'; render(); var t2=$('cText'); if(t2) t2.focus(); return; }
     if(b.dataset.quick){ var t3=$('cText'); t3.value=b.dataset.quick+(t3.value?' '+t3.value:''); lsSet('bc_draft_'+cred,t3.value); sizeBox(t3); t3.focus(); return; }
+    if(b.dataset.ask){ closeDetail(); tab='messages'; render(); var t4=$('cText'); if(t4){ t4.value=b.dataset.ask; lsSet('bc_draft_'+cred,t4.value); sizeBox(t4); t4.focus(); } return; }
     if(b.hasAttribute('data-unref')){ chatRef=''; composerSync(); return; }
     if(b.hasAttribute('data-recode')){ codeFor=''; render(); return; }
     if(b.dataset.entry){ b.parentNode.querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed', x===b && x.getAttribute('aria-pressed')!=='true'); }); formDirty=true; return; }

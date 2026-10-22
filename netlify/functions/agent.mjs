@@ -5,7 +5,7 @@ import { loadTemplates } from "../../lib/templates.mjs";
 import { loadTeamPhotos } from "./teamphoto.mjs";
 import { embedUrl } from "../../lib/bunny.mjs";
 import { refreshTours } from "../../lib/tour.mjs";
-import { loadDocs } from "../../lib/docs.mjs";
+import { loadDocs, loadSettings, freeDates } from "../../lib/docs.mjs";
 import { loadThread, logPortal } from "../../lib/messages.mjs";
 import { auMobile, sendSms, mmReady } from "../../lib/mm.mjs";
 import { createHash, randomInt } from "node:crypto";
@@ -80,6 +80,8 @@ function view(job, roster, L, withShare, photos = {}, all = {}) {
       tour: (live.tour || []).filter((v) => v.ready).map(({ id, title, secs }) => ({ id, title, secs: secs || 0, src: embedUrl(id) })),
       lock: live.lock || {}, eta: live.eta || "", done: live.done || "", updated: live.updated || "",
       checks: Object.fromEntries(Object.entries(live.items || {}).map(([r, v]) => [r, Object.keys(v || {}).length])),
+      // Which checklist items were ticked in each room, so the report can list them.
+      ticked: Object.fromEntries(Object.entries(live.items || {}).map(([r, v]) => [r, Object.keys(v || {}).slice(0, 200)])),
     },
   };
   if (withShare && job.share) o.share = job.share;
@@ -127,7 +129,7 @@ function billingFor(raw, roster, docs, k) {
   const items = mine.sort((a, b) => (a.created || "").localeCompare(b.created || "")).map((d) => ({
     kind: d.kind, num: d.num, deposit: !!d.isDeposit, state: d.state,
     total: d.totals.total, paid: d.totals.paid, due: d.totals.due, dueDate: d.dueDate || "", gst: !!d.gst,
-    ...(d.token && !d.archived ? { href: `/${d.kind === "invoice" ? "i" : "q"}/${d.token}?a=${k}` } : {}),
+    ...(d.token && !d.archived ? { href: `/${d.kind === "invoice" ? "i" : "q"}/${d.token}${k ? `?a=${k}` : ""}` } : {}),
   }));
   const q = items.filter((x) => x.kind === "quote" && x.state !== "expired").pop();
   const invs = items.filter((x) => x.kind === "invoice");
@@ -156,7 +158,8 @@ export default async (req) => {
     if (watch.length) await refreshTours(s, roster, watch).catch(() => {});
     const live = bookingLive(roster, await loadAllLive(s));
     const photos = await loadTeamPhotos(s);
-    const base = { lock: LOCK, phone: "0406 216 212" };
+    const set = await loadSettings(s).catch(() => null);
+    const base = { lock: LOCK, phone: "0406 216 212", biz: { abn: set?.biz?.abn || "46 426 437 394", legal: set?.biz?.legal || "Jack East T/A Bardon Clean" } };
     if (v) {
       // Multi-day bookings share one client link: show today's day, else the next one, else the last.
       const all = v.length >= 16 ? roster.jobs.filter((j) => j.share === v).sort((a, b) => a.date.localeCompare(b.date)) : [];
@@ -167,7 +170,10 @@ export default async (req) => {
       const bk = job.group || job.id;
       const [acc, fb, tp] = await Promise.all([s.get(`access/${bk}`), s.get(`fb/${bk}`), loadTemplates(s)]);
       const kind = /bond|lease/i.test(job.service || "") ? "bond" : /pre.?sale/i.test(job.service || "") ? "presale" : /deep/i.test(job.service || "") ? "deep" : /regular/i.test(job.service || "") ? "regular" : "other";
-      return json({ ...base, mode: "vendor", agent: a ? { name: a.name, agency: a.agency } : null, jobs: [view(job, roster, live[job.id], false, photos, live)],
+      const vj = view(job, roster, live[job.id], false, photos, live);
+      const vb = billingFor(job, roster, (await loadDocs(s).catch(() => [])).filter((d) => !d.archived || d.jobId), "");
+      if (vb) vj.billing = vb;
+      return json({ ...base, mode: "vendor", agent: a ? { name: a.name, agency: a.agency } : null, jobs: [vj],
         client: { access: acc || null, feedback: fb ? { mood: fb.mood, at: fb.at } : null, reviewLink: tp.reviewLink || "", kind } });
     }
     if (k) {
@@ -180,7 +186,8 @@ export default async (req) => {
         if (b) o.billing = b;
         return o;
       });
-      return json({ ...base, mode: "agent", agent: { name: a.name, agency: a.agency }, jobs, chat });
+      const free = set ? (await freeDates(s, set).catch(() => [])).slice(0, 8) : [];
+      return json({ ...base, mode: "agent", agent: { name: a.name, agency: a.agency }, jobs, chat, free });
     }
     if (await checkAdmin(s, req)) {
       const as = u.searchParams.get("as") || "";
