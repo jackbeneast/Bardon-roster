@@ -12,7 +12,7 @@
 //                            for unsorted photos; cached in demoguess/<job>/<first id>
 //   POST ?rate=1   (admin)   { job, items: [{ j, id }] } -> Claude rates after photos 1-5 for the website and
 //                            flags private ones; cached in demorate/<job>/<first id> as { id: { r, p, w } }
-import { store, json, checkAdmin, loadRoster, loadAllLive, bookingLive } from "../../lib/core.mjs";
+import { store, json, checkAdmin, loadRoster, loadAllLive, bookingLive, roomsOf } from "../../lib/core.mjs";
 import { sortPhotos, rateAfters, sortConfigured } from "../../lib/photosort.mjs";
 
 const ROOMS = ["Kitchen", "Bathrooms", "Bedrooms", "Living & dining", "Laundry", "Windows & tracks", "Outdoor & garage"];
@@ -56,9 +56,39 @@ function cleanSlots(o) {
   }
   return out;
 }
+// Sample reports: one real finished job per kind of clean, shown in the demo with the
+// address hidden. Jack picks the job and can hide any photo. { presale|bond|deep: { key, hide: [ids] } }
+const SHOW_KINDS = ["presale", "bond", "deep"];
+function cleanShow(o) {
+  const out = {};
+  for (const k of SHOW_KINDS) {
+    const x = o && o[k];
+    if (!x || !J.test(String(x.key || ""))) continue;
+    out[k] = { key: String(x.key), hide: [...new Set((Array.isArray(x.hide) ? x.hide : []).filter((id) => P.test(String(id))))].slice(0, 300) };
+  }
+  return out;
+}
+// Sample reports live in their own blob (demoshow), so nothing that saves the gallery or the
+// website spots (including older versions of the picker) can wipe them. Falls back to the copy
+// that was briefly kept inside demophotos.
 async function loadPicks(s) {
-  const raw = await s.get("demophotos");
-  return { afters: clean(Array.isArray(raw) ? raw : raw && raw.afters), slots: cleanSlots(raw && raw.slots) };
+  const [raw, sh] = await Promise.all([s.get("demophotos"), s.get("demoshow")]);
+  return { afters: clean(Array.isArray(raw) ? raw : raw && raw.afters), slots: cleanSlots(raw && raw.slots), show: cleanShow(sh || (raw && raw.show)) };
+}
+const MAX_REPORT = 60;
+// What the public demo gets for each sample report: rooms, sorted photos (minus hidden ones)
+// and which checklist items were ticked. Nothing that identifies the client or the address.
+function reportOf(roster, live, pick) {
+  const days = roster.jobs.filter((j) => !j.sample && (j.group || j.id) === pick.key).sort((a, b) => (a.date + (a.start || "")).localeCompare(b.date + (b.start || "")));
+  if (!days.length) return null;
+  const home = days[0], L = live[home.id] || {}, hide = new Set(pick.hide);
+  const rooms = roomsOf(home);
+  const photos = (L.photos || []).filter((p) => P.test(p.id) && rooms.includes(p.room) && KINDS.includes(p.kind) && !hide.has(p.id))
+    .sort((a, b) => String(a.at || "").localeCompare(String(b.at || ""))).slice(0, MAX_REPORT)
+    .map((p) => ({ room: p.room, kind: p.kind, url: url({ j: p.j || home.id, id: p.id }) }));
+  if (!photos.length) return null;
+  const ticked = Object.fromEntries(Object.entries(L.items || {}).filter(([r]) => rooms.includes(r)).map(([r, v]) => [r, Object.keys(v || {}).slice(0, 200)]));
+  return { service: home.service || "", rooms, photos, ticked, days: days.length };
 }
 async function merged(s, prefix) {
   const out = {};
@@ -74,7 +104,13 @@ export default async (req) => {
     const p = await loadPicks(s);
     const afters = p.afters.map((x) => ({ url: url(x), room: x.room, service: x.service }));
     const slots = Object.fromEntries(Object.entries(p.slots).map(([k, x]) => [k, { url: url(x), room: x.room, service: x.service }]));
-    return new Response(JSON.stringify({ afters, slots }), {
+    const reports = {};
+    if (Object.keys(p.show).length) {
+      const [roster, raw] = await Promise.all([loadRoster(s), loadAllLive(s)]);
+      const live = bookingLive(roster, raw);
+      for (const [k, pick] of Object.entries(p.show)) { const r = reportOf(roster, live, pick); if (r) reports[k] = r; }
+    }
+    return new Response(JSON.stringify({ afters, slots, reports }), {
       headers: { "content-type": "application/json", "cache-control": "public, max-age=120", "access-control-allow-origin": "*" },
     });
   }
@@ -107,9 +143,30 @@ export default async (req) => {
 
   if (req.method === "POST") {
     let b; try { b = await req.json(); } catch { return json({ error: "Bad data" }, 400); }
-    const afters = clean(b.afters), slots = cleanSlots(b.slots);
+    const cur = await loadPicks(s);
+    // One sample report at a time: { action: "show", kind, key } sets it, key "" removes it,
+    // { action: "show", kind, hide: [ids] } changes which of its photos are hidden.
+    if (b.action === "show") {
+      const kind = String(b.kind || "");
+      if (!SHOW_KINDS.includes(kind)) return json({ error: "Pick pre-sale, bond or deep" }, 400);
+      const show = { ...cur.show };
+      if (b.key !== undefined) {
+        const key = String(b.key || "");
+        if (!key) delete show[kind];
+        else if (!J.test(key)) return json({ error: "That job can't be used. Try another." }, 400);
+        else show[kind] = { key, hide: [] };
+      }
+      if (Array.isArray(b.hide)) {
+        if (!show[kind]) return json({ error: "Choose a job first" }, 400);
+        show[kind] = { ...show[kind], hide: b.hide };
+      }
+      const out = cleanShow(show);
+      await s.set("demoshow", out);
+      return json({ ok: true, show: out });
+    }
+    const afters = b.afters === undefined ? cur.afters : clean(b.afters), slots = b.slots === undefined ? cur.slots : cleanSlots(b.slots);
     await s.set("demophotos", { afters, slots });
-    return json({ ok: true, afters, slots });
+    return json({ ok: true, afters, slots, show: cur.show });
   }
 
   if (req.method !== "GET") return json({ error: "Method not allowed" }, 405);
@@ -129,10 +186,11 @@ export default async (req) => {
       });
     if (!photos.length) continue;
     const dates = roster.jobs.filter((x) => (x.group || x.id) === key).map((x) => x.date).sort();
-    jobs.push({ key, date: dates[0], suburb: j.suburb || "", service: j.service || "", client: j.client || "", photos });
+    const done = !!(live[j.id] && live[j.id].done);
+    jobs.push({ key, date: dates[0], suburb: j.suburb || "", service: j.service || "", client: j.client || "", photos, done });
   }
   jobs.sort((a, b) => b.date.localeCompare(a.date));
-  return json({ afters: picks.afters, slots: picks.slots, spots: SLOTS, rooms: ROOMS, jobs, guess, rate, ai: sortConfigured() });
+  return json({ afters: picks.afters, slots: picks.slots, show: picks.show, spots: SLOTS, rooms: ROOMS, jobs, guess, rate, ai: sortConfigured() });
 };
 
 export const config = { path: "/api/demo" };

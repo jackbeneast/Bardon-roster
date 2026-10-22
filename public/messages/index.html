@@ -257,7 +257,7 @@ function msgsHtml(){
     var nx=m[i+1], endOfRun=!nx||nx.dir!==x.dir||dayKey(nx.at)!==dk||new Date(nx.at)-new Date(x.at)>15*60e3;
     h+='<div class="b '+(x.dir==='in'?'rcv':'snt')+(x.status==='failed'?' failed':'')+(x.pending?' pending':'')+(gap?' gap':'')+'">'+esc(x.text)+'</div>';
     if(x.dir==='out'&&(x.status==='failed'||x.pending)) h+='<div class="st r'+(x.status==='failed'?' bad':'')+'">'+(x.pending?'Sending…':'Not delivered')+'</div>';
-    else if(endOfRun) h+='<div class="st '+(x.dir==='in'?'l':'r')+'">'+hm(new Date(x.at))+(x.dir==='out'&&i===lastOut?' · '+(x.status==='delivered'?'Delivered':'Sent'):'')+'</div>';
+    else if(endOfRun) h+='<div class="st '+(x.dir==='in'?'l':'r')+'">'+(x.via==='portal'?'From their agent portal · ':'')+hm(new Date(x.at))+(x.dir==='out'&&i===lastOut?' · '+(x.status==='delivered'?'Delivered':'Sent'):'')+'</div>';
     prev=x;
   });
   return h;
