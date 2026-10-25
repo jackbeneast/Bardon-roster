@@ -10,8 +10,14 @@
 //                            -> saves the set (max 12 afters, in order) and the website spots
 //   POST ?sort=1   (admin)   { job, items: [{ j, id, at }] } -> Claude guesses room, before/after and privacy
 //                            for unsorted photos; cached in demoguess/<job>/<first id>
+//   POST ?up=1&svc=&room=  (admin)  body = thumbnail bytes then full bytes (tl = thumbnail length)
+//                            -> Jack's own photo, uploaded straight to the picker (not from a job).
+//                            Stored in photo/upload/<id>, listed in demouploads. { ok, up: { id, svc, room, at } }
+//   DELETE ?up=<id>  (admin) removes an uploaded photo (and takes it off every spot it was on)
+//   pages: { presale|bond|deep: [items] } -> each service page's own "Handed back like this" photos (max 6)
 //   POST ?rate=1   (admin)   { job, items: [{ j, id }] } -> Claude rates after photos 1-5 for the website and
 //                            flags private ones; cached in demorate/<job>/<first id> as { id: { r, p, w } }
+import { randomBytes } from "node:crypto";
 import { store, json, checkAdmin, loadRoster, loadAllLive, bookingLive, roomsOf } from "../../lib/core.mjs";
 import { sortPhotos, rateAfters, sortConfigured } from "../../lib/photosort.mjs";
 
@@ -32,6 +38,20 @@ const SLOTS = [
   { id: "bond-hero", page: "Bond clean page", spot: "Top banner", svc: "bond", room: "Kitchen", files: ["bond-page-hero"] },
   { id: "deep-hero", page: "Deep clean page", spot: "Top banner", svc: "deep", room: "Bathrooms", files: ["deepclean-hero-vanity"] },
 ];
+const PAGES = ["presale", "bond", "deep"], PAGE_MAX = 6;
+const SVC_NAME = { presale: "Pre-sale clean", bond: "Bond clean", deep: "Deep clean", other: "" };
+const UP_MAX = 5 * 1024 * 1024, UP_TMAX = 400 * 1024, UP_LIMIT = 200;
+const isJpeg = (b) => b.length > 2 && b[0] === 0xff && b[1] === 0xd8;
+function cleanUploads(list) {
+  return (Array.isArray(list) ? list : []).filter((x) => x && P.test(String(x.id || ""))).map((x) => ({
+    id: String(x.id), svc: SVC_NAME[x.svc] !== undefined ? x.svc : "other", room: ROOMS.includes(x.room) ? x.room : "", at: String(x.at || "").slice(0, 40),
+  }));
+}
+function cleanPages(o) {
+  const out = {};
+  for (const k of PAGES) { const l = clean(o && o[k]).slice(0, PAGE_MAX); if (l.length) out[k] = l; }
+  return out;
+}
 const SLOT_IDS = new Set(SLOTS.map((x) => x.id));
 const url = (x) => `/api/photo?j=${encodeURIComponent(x.j)}&p=${x.id}`;
 const str = (v, n) => String(v ?? "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, n);
@@ -73,7 +93,7 @@ function cleanShow(o) {
 // that was briefly kept inside demophotos.
 async function loadPicks(s) {
   const [raw, sh] = await Promise.all([s.get("demophotos"), s.get("demoshow")]);
-  return { afters: clean(Array.isArray(raw) ? raw : raw && raw.afters), slots: cleanSlots(raw && raw.slots), show: cleanShow(sh || (raw && raw.show)) };
+  return { afters: clean(Array.isArray(raw) ? raw : raw && raw.afters), slots: cleanSlots(raw && raw.slots), pages: cleanPages(raw && raw.pages), show: cleanShow(sh || (raw && raw.show)) };
 }
 const MAX_REPORT = 80;
 // What the public demo gets for each sample report: rooms, sorted photos (minus hidden ones)
@@ -117,18 +137,56 @@ export default async (req) => {
     const p = await loadPicks(s);
     const afters = p.afters.map((x) => ({ url: url(x), room: x.room, service: x.service }));
     const slots = Object.fromEntries(Object.entries(p.slots).map(([k, x]) => [k, { url: url(x), room: x.room, service: x.service }]));
+    const pages = Object.fromEntries(Object.entries(p.pages).map(([k, l]) => [k, l.map((x) => ({ url: url(x), room: x.room, service: x.service }))]));
     const reports = {};
     if (Object.keys(p.show).length) {
       const [roster, raw, guess] = await Promise.all([loadRoster(s), loadAllLive(s), merged(s, "demoguess/")]);
       const live = bookingLive(roster, raw);
       for (const [k, pick] of Object.entries(p.show)) { const r = reportOf(roster, live, pick, guess); if (r) reports[k] = r; }
     }
-    return new Response(JSON.stringify({ afters, slots, reports }), {
+    return new Response(JSON.stringify({ afters, slots, pages, reports }), {
       headers: { "content-type": "application/json", "cache-control": "public, max-age=120", "access-control-allow-origin": "*" },
     });
   }
 
   if (!(await checkAdmin(s, req))) return json({ error: "Log in first" }, 401);
+
+  // Jack's own photos, uploaded from his phone (resized there to JPEG + thumbnail).
+  if (req.method === "POST" && u.searchParams.get("up")) {
+    const b = new Uint8Array(await req.arrayBuffer());
+    const tl = Math.max(0, parseInt(u.searchParams.get("tl") || "0", 10) || 0);
+    if (!b.length || b.length > UP_MAX + UP_TMAX || tl > UP_TMAX || tl >= b.length) return json({ error: "Photo is too large. Try again." }, 413);
+    const thumb = b.subarray(0, tl), full = b.subarray(tl);
+    if (!isJpeg(full) || (tl && !isJpeg(thumb))) return json({ error: "That file isn't a photo." }, 400);
+    const ups = cleanUploads(await s.get("demouploads"));
+    if (ups.length >= UP_LIMIT) return json({ error: `That's ${UP_LIMIT} uploads. Delete some first.` }, 400);
+    const id = randomBytes(12).toString("hex");
+    await s.setBin(`photo/upload/${id}`, full.slice().buffer);
+    if (tl) await s.setBin(`photo/upload/${id}.t`, thumb.slice().buffer);
+    let room = ROOMS.includes(u.searchParams.get("room")) ? u.searchParams.get("room") : "";
+    if (!room && sortConfigured()) { // let Claude name the room for the caption; never blocks the upload
+      try { room = (await sortPhotos([{ b64: Buffer.from(tl ? thumb : full).toString("base64") }]))[0].room || ""; } catch {}
+    }
+    const svc = SVC_NAME[u.searchParams.get("svc")] !== undefined ? u.searchParams.get("svc") : "other";
+    const up = { id, svc, room, at: new Date().toISOString() };
+    // re-read just before saving, so uploads sent in parallel don't drop each other
+    const now = cleanUploads(await s.get("demouploads"));
+    now.push(up);
+    await s.set("demouploads", now);
+    return json({ ok: true, up });
+  }
+  if (req.method === "DELETE" && u.searchParams.get("up")) {
+    const id = String(u.searchParams.get("up"));
+    if (!P.test(id)) return json({ error: "Bad photo" }, 400);
+    await s.set("demouploads", cleanUploads(await s.get("demouploads")).filter((x) => x.id !== id));
+    await Promise.all([s.del(`photo/upload/${id}`), s.del(`photo/upload/${id}.t`)]);
+    const cur = await loadPicks(s), gone = (x) => !(x.j === "upload" && x.id === id);
+    const slots = Object.fromEntries(Object.entries(cur.slots).filter(([, x]) => gone(x)));
+    const pages = Object.fromEntries(Object.entries(cur.pages).map(([k, l]) => [k, l.filter(gone)]));
+    const afters = cur.afters.filter(gone);
+    await s.set("demophotos", { afters, slots, pages: cleanPages(pages) });
+    return json({ ok: true, afters, slots, pages: cleanPages(pages) });
+  }
 
   if (req.method === "POST" && (u.searchParams.get("sort") || u.searchParams.get("rate"))) {
     const rate = !!u.searchParams.get("rate");
@@ -178,12 +236,13 @@ export default async (req) => {
       return json({ ok: true, show: out });
     }
     const afters = b.afters === undefined ? cur.afters : clean(b.afters), slots = b.slots === undefined ? cur.slots : cleanSlots(b.slots);
-    await s.set("demophotos", { afters, slots });
-    return json({ ok: true, afters, slots, show: cur.show });
+    const pages = b.pages === undefined ? cur.pages : cleanPages(b.pages);
+    await s.set("demophotos", { afters, slots, pages });
+    return json({ ok: true, afters, slots, pages, show: cur.show });
   }
 
   if (req.method !== "GET") return json({ error: "Method not allowed" }, 405);
-  const [roster, raw, picks, guess, rate] = await Promise.all([loadRoster(s), loadAllLive(s), loadPicks(s), merged(s, "demoguess/"), merged(s, "demorate/")]);
+  const [roster, raw, picks, guess, rate, upsRaw] = await Promise.all([loadRoster(s), loadAllLive(s), loadPicks(s), merged(s, "demoguess/"), merged(s, "demorate/"), s.get("demouploads")]);
   const live = bookingLive(roster, raw);
   const seen = new Set(), jobs = [];
   for (const j of roster.jobs) {
@@ -203,7 +262,15 @@ export default async (req) => {
     jobs.push({ key, date: dates[0], suburb: j.suburb || "", service: j.service || "", client: j.client || "", photos, done });
   }
   jobs.sort((a, b) => b.date.localeCompare(a.date));
-  return json({ afters: picks.afters, slots: picks.slots, show: picks.show, spots: SLOTS, rooms: ROOMS, jobs, guess, rate, ai: sortConfigured() });
+  // Jack's uploads show first, one group per kind of clean, newest first
+  const ups = cleanUploads(upsRaw).reverse();
+  for (const k of ["other", "deep", "bond", "presale"]) {
+    const l = ups.filter((x) => x.svc === k);
+    if (!l.length) continue;
+    jobs.unshift({ key: "upload-" + k, upload: k, date: l[0].at.slice(0, 10), suburb: "", service: SVC_NAME[k], client: "",
+      photos: l.map((x) => ({ room: x.room, kind: "after", j: "upload", id: x.id, at: x.at, up: 1 })), done: true });
+  }
+  return json({ afters: picks.afters, slots: picks.slots, pages: picks.pages, pageSpots: PAGES, show: picks.show, spots: SLOTS, rooms: ROOMS, jobs, guess, rate, ai: sortConfigured() });
 };
 
 export const config = { path: "/api/demo" };
