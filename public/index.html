@@ -1024,6 +1024,20 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   var teamPhotos=null;
   var staffTok=null;
+  // Team app invite: an editable text that goes out from the business number (and shows in Messages).
+  function inviteMsg(t,u){ var f=t.name.split(' ')[0];
+    return 'Hi '+f+', I\'ve built Bardon Clean its own team app, and this link is yours.\n\nEverything for your shifts is in one place now:\n- Your shifts, and one tap to confirm them\n- The brief for each job: address, how to get in, parking and what the client wants\n- Your rooms for the day, with a checklist for each one\n- The toolkit: how we clean every room, and what to do if something goes wrong\n- Your payslips, hours and super, and an estimate of this week\'s pay\n\nOpen it now and it\'ll show you around in a minute. Then add it to your home screen so it\'s one tap away.\n\nThis link is just for you, so please don\'t share it.\n\n'+u+'\n\nJack'; }
+  function inviteSheet(t,u){
+    var h='<h3>Invite '+esc(t.name.split(' ')[0])+' to the <em>team app</em></h3><p class="sub" style="margin:-6px 0 10px">Sends from your business number to <strong>'+esc(t.phone)+'</strong> and shows in Messages. Change anything you like first.</p>';
+    h+='<textarea class="copybox" id="f_inv" style="min-height:300px">'+esc(inviteMsg(t,u))+'</textarea>';
+    h+='<p class="sub" style="margin:8px 0 0">When they open it, a short welcome tour shows them around: shifts, the day on the job, the toolkit, their pay and adding it to their home screen. <a href="'+esc(u)+'" target="_blank" rel="noopener">See their app</a></p>';
+    h+='<div class="err" id="invErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="button" class="btn primary" data-isend style="flex:1">Send text</button></div>';
+    var s=openSheet(h), box=s.querySelector('#f_inv'), err=s.querySelector('#invErr');
+    s.querySelector('[data-close]').onclick=function(){ closeSheet(); teamSheet(); };
+    s.querySelector('[data-isend]').onclick=function(){ var b=this; if(!box.value.trim()) return; b.disabled=true; b.textContent='Sending…'; err.hidden=true;
+      api('/api/sms',{method:'POST',body:{to:t.phone,message:box.value,ref:'teamapp',name:t.name}}).then(function(){ toast('Invite sent to '+t.name.split(' ')[0]); closeSheet(); teamSheet(); })
+        .catch(function(e){ b.disabled=false; b.textContent='Send text'; err.textContent=e.message; err.hidden=false; }); };
+  }
   function teamSheet(){
     if(teamPhotos===null){ teamPhotos={}; api('/api/teamphoto?list=1').then(function(d){ teamPhotos=d.photos||{}; if(document.getElementById('teamList')){ closeSheet(); teamSheet(); } }).catch(function(){}); }
     var h='<h3>Manage <em>team</em></h3><div id="teamList">', TP=teamPhotos||{};
@@ -1036,13 +1050,14 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       h+='</div>'; }
     if(others.length){ h+='<div class="lsec"><h4>Team app links</h4><p class="sub" style="margin:0 0 8px">Each person\'s own link to the team app: today\'s shift, clock in, their rooms and checklists, their payslips and the toolkit. It\'s private to them, so only send it to that person. Send it once; they add it to their home screen.</p>';
       if(staffTok===null){ staffTok={}; api('/api/staff').then(function(d){ var o={}; Object.keys(d.profiles||{}).forEach(function(id){ if(d.profiles[id].token) o[id]=d.profiles[id].token; }); staffTok=o; if(document.getElementById('teamList')){ closeSheet(); teamSheet(); } }).catch(function(){}); }
-      others.forEach(function(t){ var u=location.origin+'/me/'+t.id+(staffTok[t.id]?'?k='+staffTok[t.id]:''), msg='Hi '+t.name.split(' ')[0]+', here\'s your Bardon Clean team app. Your shifts, the job brief, your rooms and checklists are all in here. Add it to your home screen: '+u+'\n\nJack';
-        h+='<div class="lrow" style="flex-wrap:wrap"><span class="nm">'+esc(t.name.split(' ')[0])+'</span><span style="display:flex;gap:6px">'+(t.phone?'<a class="btn outline" href="'+smsHref(t.phone,msg)+'" style="min-height:38px;padding:0 12px">Text it</a>':'')+'<button type="button" class="btn outline" data-copyme="'+esc(u)+'" style="min-height:38px;padding:0 12px">Copy</button></span></div>'; });
+      others.forEach(function(t){ var u=location.origin+'/me/'+t.id+(staffTok[t.id]?'?k='+staffTok[t.id]:'');
+        h+='<div class="lrow" style="flex-wrap:wrap"><span class="nm">'+esc(t.name.split(' ')[0])+'</span><span style="display:flex;gap:6px">'+(t.phone?'<button type="button" class="btn primary" data-invite="'+t.id+'" style="min-height:38px;padding:0 12px">Send invite</button>':'<span class="sub" style="margin:0">Add their mobile above</span>')+'<button type="button" class="btn outline" data-copyme="'+esc(u)+'" style="min-height:38px;padding:0 12px">Copy link</button></span></div>'; });
       h+='</div>'; }
     h+='</div><form id="teamForm" class="fgrid" style="margin-top:16px" novalidate><label class="l" for="f_newname">Add a team member<input id="f_newname" name="name" placeholder="First name and last initial" required></label>';
     h+='<div class="err" id="teamErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Done</button><button type="submit" class="btn primary">Add</button></div></form>';
     var s=openSheet(h);
     s.querySelector('[data-close]').onclick=closeSheet;
+    Array.prototype.forEach.call(s.querySelectorAll('[data-invite]'),function(b){ b.onclick=function(){ var t=member(b.dataset.invite); if(t) inviteSheet(t, location.origin+'/me/'+t.id+(staffTok&&staffTok[t.id]?'?k='+staffTok[t.id]:'')); }; });
     Array.prototype.forEach.call(s.querySelectorAll('[data-copyme]'),function(b){ b.onclick=function(){ var u=b.dataset.copyme; (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(function(){ toast('Link copied'); },function(){ prompt('Copy this link',u); }); }; });
     Array.prototype.forEach.call(s.querySelectorAll('[data-tpsrc]'),function(im){ fetch(im.dataset.tpsrc,{headers:{'x-admin-key':key()}}).then(function(r){ return r.ok?r.blob():null; }).then(function(bl){ if(bl) im.src=URL.createObjectURL(bl); }).catch(function(){}); });
     function tpPost(body,qs){ var hd={'x-admin-key':key()}; if(!qs) hd['content-type']='application/json'; return fetch('/api/teamphoto'+(qs||''),{method:'POST',headers:hd,body:qs?body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong'); teamPhotos=d.photos; return d; }); }); }
