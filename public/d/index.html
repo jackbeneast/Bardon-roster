@@ -56,6 +56,16 @@ body{margin:0;background:var(--cream);color:var(--body);font:400 15px/1.6 var(--
 .desc ul{margin:0 0 6px;padding-left:18px}
 .desc li{margin:2px 0}
 .desc li::marker{color:var(--terracotta)}
+.desc .rm{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0;break-inside:avoid-page;background:var(--white)}
+.desc .rmh{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.desc .ri{width:36px;height:36px;border-radius:9px;background:var(--cream);color:var(--terracotta);display:flex;align-items:center;justify-content:center;flex:none}
+.desc .rmh h4{margin:0;flex:1;font:700 15px/1.3 var(--serif);letter-spacing:0}
+.desc .rn{font-size:12px;color:var(--meta);white-space:nowrap}
+.desc ul.tk{list-style:none;padding:0;margin:0}
+.desc ul.tk li{display:flex;gap:8px;align-items:flex-start;padding:2px 0;line-height:1.45}
+.desc ul.tk li svg{color:#3F7A4A;flex:none;margin-top:3px}
+.desc .ex{display:flex;gap:8px;align-items:flex-start;background:var(--cream);border-radius:8px;padding:10px 12px;color:var(--dark)}
+.desc .ex svg{color:var(--terracotta);flex:none;margin-top:4px}
 .tot{margin-left:auto;max-width:320px;margin-top:16px;font-variant-numeric:tabular-nums}
 .tot div{display:flex;justify-content:space-between;gap:14px;padding:6px 0;font-size:14px;color:var(--dark)}
 .tot .grand{border-top:2px solid var(--dark);margin-top:6px;padding-top:12px;font:700 22px/1.2 var(--serif)}
@@ -169,17 +179,40 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
   function fdate(s,dow){ if(!s) return ''; var p=s.split('-'), d=new Date(+p[0],+p[1]-1,+p[2]); return (dow?DOW[d.getDay()]+' ':'')+d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear(); }
   function lines(t){ return esc(t).replace(/\n/g,'<br>'); }
   // Plain text to tidy HTML: "- " lines become bullets, the line before a bullet list becomes a subheading.
+  // Room icons for the scope of work: a heading that names a room gets its icon
+  // and its lines become ticks, so clients can see at a glance what's covered.
+  var RI=(function(){ function sv(d){ return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>'; }
+    return [
+      [/kitchen|pantry/i, sv('<rect x="3" y="11" width="18" height="10" rx="1"/><path d="M3 15h18M9 11V8M15 11V8M7 5h10"/><circle cx="8" cy="18" r=".6"/><circle cx="16" cy="18" r=".6"/>')],
+      [/bath|ensuite|shower/i, sv('<path d="M3 12h18v3a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5z"/><path d="M6 12V5a2 2 0 0 1 4 0M7 20l-1 2M17 20l1 2"/>')],
+      [/toilet|powder|\bwc\b/i, sv('<path d="M7 3h10v6H7zM5 9h14a7 7 0 0 1-7 7 7 7 0 0 1-7-7zM9 16l-1 5h8l-1-5"/>')],
+      [/laundry/i, sv('<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 7h16"/><circle cx="12" cy="14" r="4"/><circle cx="7" cy="5" r=".6"/>')],
+      [/bed|guest|nursery/i, sv('<path d="M3 19V7M3 13h18v6M21 19v-4a2 2 0 0 0-2-2"/><rect x="5" y="9" width="5" height="4" rx="1.5"/>')],
+      [/living|dining|lounge|family|rumpus|media/i, sv('<path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3zM5 18v2M19 18v2"/>')],
+      [/entry|hall|stair|foyer/i, sv('<path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17M3 21h18"/><circle cx="15" cy="12" r=".9"/>')],
+      [/window|glass|track/i, sv('<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 3v18M4 12h16"/>')],
+      [/balcony|deck|patio|outdoor|alfresco|veranda|courtyard/i, sv('<circle cx="12" cy="7" r="3"/><path d="M12 1v1M5 3.5l.7.7M19 3.5l-.7.7M3 21h18M5 21v-6h14v6M9 15v6M15 15v6"/>')],
+      [/garage|carport|shed/i, sv('<path d="M3 21V9l9-6 9 6v12"/><path d="M7 21v-9h10v9M7 15h10M7 18h10"/>')],
+      [/study|office/i, sv('<rect x="4" y="5" width="16" height="11" rx="1"/><path d="M9 20h6M12 16v4"/>')],
+      [/extra|add-on|optional/i, sv('<path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/>')]
+    ]; })();
+  var TICK='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
+  var NOT='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  function roomIcon(x){ for(var i=0;i<RI.length;i++) if(RI[i][0].test(x)) return RI[i][1]; return ''; }
   function rich(t){
-    var L=String(t||'').split('\n'), h='', inList=false;
+    var L=String(t||'').split('\n'), h='', inList=false, inRoom=false;
     function isB(x){ return /^\s*[-•*]\s+/.test(x||''); }
     for(var i=0;i<L.length;i++){
       var x=L[i];
-      if(isB(x)){ if(!inList){ h+='<ul>'; inList=true; } h+='<li>'+esc(x.replace(/^\s*[-•*]\s+/,''))+'</li>'; continue; }
-      if(inList){ h+='</ul>'; inList=false; }
+      if(isB(x)){ var li=esc(x.replace(/^\s*[-•*]\s+/,'')); if(!inList){ h+=inRoom?'<ul class="tk">':'<ul>'; inList=true; } h+=inRoom?'<li>'+TICK+'<span>'+li+'</span></li>':'<li>'+li+'</li>'; continue; }
+      if(inList){ h+='</ul>'; inList=false; if(inRoom){ h+='</div>'; inRoom=false; } }
       if(!x.trim()) continue;
-      if(isB(L[i+1]) && x.length<70) h+='<h4>'+esc(x.trim())+'</h4>'; else h+='<p>'+esc(x)+'</p>';
+      if(isB(L[i+1]) && x.length<70){ var ic=roomIcon(x); if(ic){ var n=0; for(var k=i+1;k<L.length&&isB(L[k]);k++) n++; h+='<div class="rm"><div class="rmh"><span class="ri">'+ic+'</span><h4>'+esc(x.trim())+'</h4><span class="rn">'+n+' item'+(n===1?'':'s')+'</span></div>'; inRoom=true; } else h+='<h4>'+esc(x.trim())+'</h4>'; }
+      else if(/aren't included|are not included|isn't included|not included|excluded/i.test(x)) h+='<p class="ex">'+NOT+'<span>'+esc(x)+'</span></p>';
+      else h+='<p>'+esc(x)+'</p>';
     }
     if(inList) h+='</ul>';
+    if(inRoom) h+='</div>';
     return h;
   }
   function toast(m){ var t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2400); }

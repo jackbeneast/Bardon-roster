@@ -121,6 +121,23 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .spe{display:flex;gap:12px;align-items:center;border-top:1px solid var(--cd);padding:10px 0}
 .spe .th{width:84px;flex:none;border-radius:8px;overflow:hidden;background:var(--cream);border:1px solid var(--line)}
 .spe .th svg,.spe .th img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
+.pf{background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.pf>svg{display:block;width:100%;height:auto;background:var(--cream)}
+.pf p{font:400 13px/1.4 var(--sans);color:var(--body);padding:8px 10px 10px}
+.pf .y{font-weight:600;color:var(--dark);display:flex;gap:5px;align-items:center;padding-bottom:0}
+.pf.no .y{color:var(--tcd)}
+.pfk{font:600 13px var(--sans);color:var(--dark);margin:4px 0 -2px}
+.hmap{background:var(--white);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.hmap>svg{display:block;width:100%;height:auto}
+.hd .hr{transition:opacity .2s}
+.hmap[data-on="1"] [data-d="1"] .hr{opacity:.35}.hmap[data-on="2"] [data-d="2"] .hr{opacity:.35}.hmap[data-on="3"] [data-d="3"] .hr{opacity:.35}.hmap[data-on="4"] [data-d="4"] .hr{opacity:.35}.hmap[data-on="5"] [data-d="5"] .hr{opacity:.35}.hmap[data-on="6"] [data-d="6"] .hr{opacity:.35}.hmap[data-on="7"] [data-d="7"] .hr{opacity:.35}.hmap[data-on="8"] [data-d="8"] .hr{opacity:.35}.hmap[data-on="9"] [data-d="9"] .hr{opacity:.35}
+.spot{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:8px 0;min-height:46px;font:400 15px/1.4 var(--sans);color:var(--dark);cursor:pointer}
+.spot:first-of-type{border-top:0}
+.spot .n{width:24px;height:24px;border-radius:12px;background:var(--tcd);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+.spot.on{font-weight:600}
+details.lc summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:28px}
+details.lc summary::-webkit-details-marker{display:none}
+details.lc[open] summary{margin-bottom:12px}
 .bul{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--cd);line-height:1.5}
 .bul:first-of-type{border-top:0}
 .bul i{width:7px;height:7px;border-radius:4px;background:var(--tcd);margin-top:8px;flex:none}
@@ -389,6 +406,7 @@ function renderRoom(id, room){
     h+='<div class="card tight"><div class="sec"><p class="lbl b">'+(si+1)+' · '+esc(sec.title)+'</p><p class="sub">'+sd+' / '+sec.items.length+'</p></div>';
     sec.items.forEach(function(i){ var on=!!got[i.id]; h+='<label class="it'+(on?' on':'')+'"><input type="checkbox" data-item="'+i.id+'"'+(on?' checked':'')+'><span>'+esc(i.t)+'</span>'+(i.s?tmChip('i|'+room+'|'+i.id,i.t+' · '+room,i.s):'')+'</label>'; });
     h+='</div>'; });
+  var lm=g?mapHtml(g):''; if(lm) h+='<details class="card lc"'+(st.n>=st.total&&!st.done?' open':'')+'><summary><span class="lbl b">Last check · easy to miss</span><span class="sub">'+g.spots.length+' spots</span></summary>'+lm+'</details>';
   h+='<div class="card" style="display:flex;flex-direction:column;gap:12px;'+(st.photos.length?'':'border:1.5px dashed var(--tcd)')+'"><div class="between"><p class="lbl b">After photos</p><p class="sub">'+(st.photos.length?st.photos.length+' taken':'At least 1 needed')+'</p></div><div class="ph">';
   st.photos.slice(-5).forEach(function(p){ h+='<a href="'+photoSrc(j,p,true)+'" target="_blank" rel="noopener"><img src="'+photoSrc(j,p)+'" alt="'+esc(room)+' after photo" loading="lazy"></a>'; });
   h+='<button class="add" data-photo'+(busy.photo?' disabled':'')+'>'+I.cam+(busy.photo?esc(busy.photo):'Take photo')+'</button></div><p class="sub">Doorway shot of the whole room first, then the detail. Nothing personal in shot. They go on the job report.</p></div>';
@@ -610,6 +628,10 @@ function tmGet(id){ return TM.filter(function(x){ return x.id===id; })[0]||null;
 function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); if(sec<60) return sec+' sec'; var m=sec/60; return (m%1?m.toFixed(1).replace('.0',''):m)+' min'; }
 function clockOf(ms){ var t=Math.max(0,Math.ceil(ms/1000)), m=Math.floor(t/60), s2=t%60; return m+':'+pad(s2); }
 function tmLeft(r){ return r.done?'Done':clockOf(r.end-Date.now()); }
+function pairsHtml(g){ var ps=(g.pairs||[]).map(function(v){ return window.TKART&&TKART.pair(String(v).slice(4)); }).filter(Boolean); if(!ps.length) return '';
+  return '<div class="card" style="display:flex;flex-direction:column;gap:10px"><p class="lbl b">The standard</p>'+ps.map(function(x){ return (ps.length>1?'<p class="pfk">'+esc(x.k)+'</p>':'')+'<div class="grid2"><div class="pf">'+x.pass+'<p class="y">'+I.tick+' Passes</p><p style="padding-top:2px">'+esc(x.ok)+'</p></div><div class="pf no">'+x.fail+'<p class="y">'+I.cross+' Redo</p><p style="padding-top:2px">'+esc(x.no)+'</p></div></div>'; }).join('')+'</div>'; }
+function mapHtml(g){ var m=g.map&&window.TKART?TKART.map(String(g.map).slice(4)):''; if(!m||!(g.spots||[]).length) return ''; var k='m'+g.id;
+  return '<div class="hmap" data-mapw="'+k+'">'+m+'</div><div>'+g.spots.map(function(x,i){ return '<button type="button" class="spot" data-spot="'+(i+1)+'" data-sw="'+k+'"><span class="n">'+(i+1)+'</span><span>'+esc(x)+'</span></button>'; }).join('')+'</div>'; }
 function picOf(v){ if(!v) return ''; if(/^art:/.test(v)) return (window.TKART&&TKART.get(v.slice(4)))||''; return '<img src="'+img(v)+'" alt="" loading="lazy">'; }
 function stepT(x){ x=String(x||''); var m=x.match(/\s*\[(\d+(?:\.\d+)?)\s*(s|secs?|seconds?|m|mins?|minutes?)\]\s*$/i); if(!m) return {t:x,s:0}; var n=parseFloat(m[1]); return {t:x.slice(0,m.index).trim(), s:Math.round(/^s/i.test(m[2])?n:n*60)}; }
 function tmChip(id,label,s){ var r=tmGet(id); return '<button type="button" class="tm'+(r?(r.done?' done':' run'):'')+'" data-tm="'+esc(id)+'" data-tl="'+esc(String(label).slice(0,80))+'" data-ts="'+s+'" aria-label="'+(r?'Timer running':'Start a '+fmtDur(s)+' timer')+'">'+I.clock+'<span data-tmleft="'+esc(id)+'" data-tmdef="'+esc(fmtDur(s))+'">'+(r?tmLeft(r):fmtDur(s))+'</span></button>'; }
@@ -668,7 +690,7 @@ function renderTimersEdit(){
 
 // ---------- toolkit ----------
 var Q='';
-function gtext(g){ return [g.title,g.sub,g.body,g.miss,g.product,g.dwell].concat(g.steps||[],g.done||[],g.kit||[],g.never||[]).join(' ').toLowerCase(); }
+function gtext(g){ return [g.title,g.sub,g.body,g.miss,g.product,g.dwell].concat(g.steps||[],g.done||[],g.kit||[],g.never||[],g.spots||[]).join(' ').toLowerCase(); }
 function renderKit(){
   nav('kit');
   var q=Q.trim().toLowerCase();
@@ -703,6 +725,7 @@ function renderGuide(id){
   var h=back(history.length>1?'javascript:history.back()':'#/kit','Back')+'<div class="between"><p class="lbl">'+esc((SECS.filter(function(s){return s.id===g.sec;})[0]||{}).title||'Toolkit')+'</p>'+(ADMIN?'<a class="ed" href="#/edit/'+g.id+'">Edit</a>':'')+'</div><h1>'+esc(g.title)+'</h1><div class="stack">';
   if(g.good||g.bad) h+='<div class="grid2">'+(g.good?'<div style="display:flex;flex-direction:column;gap:6px"><img class="std" src="'+img(g.good)+'" alt="Done right"><p style="font-weight:600;font-size:13px">'+I.tick+' This passes</p></div>':'')+(g.bad?'<div style="display:flex;flex-direction:column;gap:6px"><img class="std" src="'+img(g.bad)+'" alt="Needs redoing"><p style="font-weight:600;font-size:13px;color:var(--tcd)">'+I.cross+' Redo this</p></div>':'')+'</div>';
   if(g.done.length) h+='<div class="dark"><p class="lbl">Done means</p>'+g.done.map(function(x){ return '<p style="line-height:1.6">'+esc(x)+'</p>'; }).join('')+'</div>';
+  h+=pairsHtml(g);
   var facts=[['Product',g.product],['Dwell time',g.dwell],['Time',g.time]].filter(function(x){return x[1];});
   if(facts.length) h+='<div class="grid2">'+facts.map(function(x){ return '<div class="card" style="padding:14px'+(facts.length===3&&x[0]==='Time'?';grid-column:1/-1':'')+'"><p class="lbl">'+x[0]+'</p><p style="margin-top:6px;font-weight:600">'+esc(x[1])+'</p></div>'; }).join('')+'</div>';
   if(g.body) h+='<p style="font-size:16px;line-height:1.65">'+esc(g.body)+'</p>';
@@ -711,7 +734,9 @@ function renderGuide(id){
   if(g.steps.length){ var anyT=g.steps.some(function(x){ return stepT(x).s; });
     h+='<div class="card" style="padding:10px 16px"><div class="between" style="padding:4px 0"><p class="lbl b">Step by step</p>'+(anyT?'<p class="sub" style="font-size:12px">Tap a time to start it</p>':'')+'</div>'+g.steps.map(function(x,i){ var st=stepT(x); var pc=picOf((g.pics||[])[i]); return '<div class="step"><span class="n">'+(i+1)+'</span><div style="flex:1;min-width:0"><div style="display:flex;gap:10px;align-items:flex-start"><p style="flex:1">'+esc(st.t)+'</p>'+(st.s?tmChip('g|'+g.id+'|'+i,st.t,st.s):'')+'</div>'+(pc?'<div class="sp">'+pc+'</div>':'')+'</div></div>'; }).join('')+'</div>'; }
   if(nv.length) h+='<div class="dark"><p class="lbl">Never</p>'+nv.map(function(x){ return '<p style="line-height:1.6">'+I.cross+' '+esc(x)+'</p>'; }).join('')+'</div>';
-  if(g.miss) h+='<div class="tint"><p class="lbl">Easy to miss</p><p style="line-height:1.6">'+esc(g.miss)+'</p></div>';
+  var mh=mapHtml(g);
+  if(mh) h+='<div class="tint"><p class="lbl">Easy to miss</p>'+mh+'</div>';
+  else if(g.miss) h+='<div class="tint"><p class="lbl">Easy to miss</p><p style="line-height:1.6">'+esc(g.miss)+'</p></div>';
   if(!g.done.length&&!g.steps.length&&!g.body&&!(g.kit||[]).length) h+='<div class="card sub">Nothing written here yet.'+(ADMIN?' Tap Edit to add it.':'')+'</div>';
   h+='<a class="btn k" href="'+tel(C.contact.phone)+'">'+I.phone+'Not sure? Call '+esc(C.contact.name||'Jack')+'</a>';
   app.innerHTML=h+'</div>';
@@ -723,9 +748,9 @@ function renderEdit(id){
   nav('kit');
   var isNew=/^new-/.test(id||'');
   if(!DRAFT||DRAFT._for!==id){
-    var g=isNew?{id:'g'+Date.now().toString(36),sec:id.slice(4),title:'',sub:'',room:'',done:[],kit:[],never:[],pics:[],product:'',dwell:'',time:'',steps:[],miss:'',body:'',good:'',bad:''}:guide(id);
+    var g=isNew?{id:'g'+Date.now().toString(36),sec:id.slice(4),title:'',sub:'',room:'',done:[],kit:[],never:[],pics:[],product:'',dwell:'',time:'',steps:[],miss:'',body:'',good:'',bad:'',map:'',spots:[],pairs:[]}:guide(id);
     if(!g){ go('kit'); return; }
-    DRAFT=JSON.parse(JSON.stringify(g)); DRAFT.kit=DRAFT.kit||[]; DRAFT.never=DRAFT.never||[]; DRAFT.pics=(DRAFT.pics||[]).slice(); DRAFT._for=id; DRAFT._new=isNew;
+    DRAFT=JSON.parse(JSON.stringify(g)); DRAFT.kit=DRAFT.kit||[]; DRAFT.never=DRAFT.never||[]; DRAFT.pics=(DRAFT.pics||[]).slice(); DRAFT.spots=DRAFT.spots||[]; DRAFT.pairs=(DRAFT.pairs||[]).slice(); DRAFT.map=DRAFT.map||''; DRAFT._for=id; DRAFT._new=isNew;
   }
   var d=DRAFT;
   function f(n,label,hint,v){ return '<label class="f">'+label+(hint?' <small>'+hint+'</small>':'')+'<input class="t" name="'+n+'" value="'+esc(v)+'"></label>'; }
@@ -736,6 +761,11 @@ function renderEdit(id){
   h+='<div class="card" style="display:flex;flex-direction:column;gap:14px"><p class="lbl b">Your standard photos</p><div class="grid2">'+ph('good','This passes')+ph('bad','Redo this')+'</div></div>';
   h+='<div class="card" style="display:flex;flex-direction:column;gap:14px">'+ta('done','Done means','one per line',d.done.join('\n'))+ta('kit','What you need','products and tools, one per line. Name the exact product you use',d.kit.join('\n'),5)+f('product','Main product','optional',d.product)+f('dwell','Dwell time','',d.dwell)+f('time','Time','',d.time)+'</div>';
   h+='<div class="card" style="display:flex;flex-direction:column;gap:14px">'+ta('steps','Step by step','one per line. End a step with [5 min] or [30 sec] to give it a timer',d.steps.join('\n'),9)+ta('body','Extra explanation','optional',d.body,3)+ta('never','Never','optional, one per line',d.never.join('\n'),3)+ta('miss','Easy to miss','optional',d.miss,2)+'</div>';
+  if(window.TKART){ var MN={mkitchen:'Kitchen',mbath:'Bathroom',mtoilet:'Toilet',mbed:'Bedroom',mliving:'Living room',mhall:'Hallway and stairs',mlaundry:'Laundry'};
+    h+='<div class="card" style="display:flex;flex-direction:column;gap:14px"><p class="lbl b">Drawings</p><p class="sub" style="margin-top:-8px">The standard: pick the pass and redo drawings that fit this guide.</p><div>'+TKART.pairs.map(function(k){ var x=TKART.pair(k), on=d.pairs.indexOf('art:'+k)>=0; return '<label class="it"><input type="checkbox" name="pair" value="art:'+k+'"'+(on?' checked':'')+'><span>'+esc(x.k)+'</span></label>'; }).join('')+'</div>';
+    h+='<label class="f">Easy-to-miss map<select class="t" name="map"><option value="">None</option>'+TKART.maps.map(function(k){ return '<option value="art:'+k+'"'+(d.map==='art:'+k?' selected':'')+'>'+esc(MN[k]||k)+'</option>'; }).join('')+'</select></label>';
+    if(d.map){ h+='<div class="hmap">'+TKART.map(d.map.slice(4))+'</div>'+ta('spots','What each number is','one per line, in number order. Shows instead of the Easy to miss text',d.spots.join('\n'),5); }
+    h+='</div>'; }
   if(d.steps.length){ h+='<div class="card" style="display:flex;flex-direction:column;gap:2px"><p class="lbl b">Step pictures</p><p class="sub" style="padding-bottom:6px">Optional. One per step, in step order. A photo of your own replaces the drawing.</p>'+d.steps.map(function(x,i){ var v=d.pics[i]||'', pc=picOf(v), bz=busy['sp'+i];
       return '<div class="spe"><div class="th">'+(pc||'<div style="aspect-ratio:3/2"></div>')+'</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><p style="font-size:14px;line-height:1.4"><strong>'+(i+1)+'.</strong> '+esc(stepT(x).t)+'</p><div class="row" style="gap:12px"><button type="button" class="ghost" style="padding:4px 0;min-height:36px" data-sph="'+i+'">'+(bz?'Uploading…':v?'Replace':'Add photo')+'</button>'+(v?'<button type="button" class="ghost" style="padding:4px 0;min-height:36px" data-sphx="'+i+'">Remove</button>':'')+'</div></div></div>'; }).join('')+'</div>'; }
   h+='<p class="err hide" id="gerr"></p><div class="row"><a class="btn o" href="'+(d._new?'#/kit':'#/guide/'+d.id)+'">Cancel</a><button class="btn p" type="submit"'+(busy.save?' disabled':'')+'>'+(busy.save?'Saving…':'Save')+'</button></div>';
@@ -744,6 +774,7 @@ function renderEdit(id){
   var form=document.getElementById('gf');
   form.oninput=function(){ readDraft(form); };
   form.querySelector('[name=sec]').onchange=function(){ readDraft(form); renderEdit(id); };
+  if(form.elements.map) form.elements.map.onchange=function(){ readDraft(form); renderEdit(id); };
   form.onsubmit=function(e){ e.preventDefault(); readDraft(form);
     if(!d.title.trim()){ var er=document.getElementById('gerr'); er.textContent='Give it a title.'; er.classList.remove('hide'); return; }
     var g={}; Object.keys(d).forEach(function(k){ if(k[0]!=='_') g[k]=d[k]; }); g.pics=(d.pics||[]).slice(0,d.steps.length);
@@ -753,7 +784,9 @@ function renderEdit(id){
 }
 function readDraft(form){ var E=form.elements, d=DRAFT; ['title','sub','product','dwell','time','body','miss'].forEach(function(k){ d[k]=E[k].value; }); d.sec=E.sec.value; if(E.room) d.room=E.room.value;
   d.done=E.done.value.split('\n').map(function(x){return x.trim();}).filter(Boolean); d.steps=E.steps.value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
-  d.kit=E.kit.value.split('\n').map(function(x){return x.trim();}).filter(Boolean); d.never=E.never.value.split('\n').map(function(x){return x.trim();}).filter(Boolean); }
+  d.kit=E.kit.value.split('\n').map(function(x){return x.trim();}).filter(Boolean); d.never=E.never.value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
+  if(E.map){ d.map=E.map.value; d.pairs=Array.prototype.filter.call(form.querySelectorAll('[name=pair]'),function(c){return c.checked;}).map(function(c){return c.value;}); }
+  if(E.spots) d.spots=E.spots.value.split('\n').map(function(x){return x.trim();}).filter(Boolean); }
 function renderBasics(){
   nav('kit');
   var f=C.focus||{};
@@ -841,6 +874,7 @@ document.addEventListener('click',function(e){
   if(t.dataset.tmq){ var qm=+t.dataset.tmq; tmStart('q|'+Date.now().toString(36),fmtDur(qm)+' timer',qm); return; }
   if(t.dataset.tmx){ tmStop(t.dataset.tmx); return; }
   if(t.dataset.tmp){ var rp=tmGet(t.dataset.tmp); if(rp){ rp.end+=60000; tmSave(); tmPaint(); } return; }
+  if(t.dataset.spot){ var mw=document.querySelector('[data-mapw="'+t.dataset.sw+'"]'), on=mw&&mw.getAttribute('data-on')===t.dataset.spot; if(mw){ if(on) mw.removeAttribute('data-on'); else mw.setAttribute('data-on',t.dataset.spot); } Array.prototype.forEach.call(document.querySelectorAll('[data-sw="'+t.dataset.sw+'"]'),function(b){ b.classList.toggle('on',!on&&b===t); }); return; }
   if(t.dataset.jump){ var je=document.getElementById(t.dataset.jump); if(je) je.scrollIntoView({behavior:'smooth',block:'start'}); return; }
   if(t.dataset.act==='reload'){ err=''; R=null; render(); load(); return; }
   if(t.dataset.act==='notme'){ PID=''; ls('me_pid',null); go('who'); return; }
