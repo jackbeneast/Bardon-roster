@@ -32,7 +32,7 @@
         ['k_splgrout','Splashback grout lines scrubbed','d'],
         ['k_power','Power points along the bench','a'],
         ['k_switch','Light switches','a'],
-        ['k_walls','Walls spot-cleaned for marks and splashes','d']
+        ['k_walls','Walls spot-cleaned for marks and scuffs','r']
       ]],
       ['Overhead cupboards', [
         ['k_ohfront','Overhead cupboard doors, outside','a'],
@@ -250,7 +250,7 @@
       ['Walls and fittings', [
         ['r_switch','Light switches','a'],
         ['r_power','Power points','d'],
-        ['r_walls','Walls spot-cleaned for marks and scuffs','d'],
+        ['r_walls','Walls spot-cleaned for marks and scuffs','r'],
         ['r_handle','Door handle','a'],
         ['r_door','Door, both sides','d'],
         ['r_dframe','Door frame','d'],
@@ -299,7 +299,7 @@
       ['Walls and fittings', [
         ['l_switch','Light switches','a'],
         ['l_power','Power points','d'],
-        ['l_walls','Walls spot-cleaned','d'],
+        ['l_walls','Walls spot-cleaned for marks and scuffs','r'],
         ['l_handles','Door handles','a'],
         ['l_doors','Doors, both sides','d'],
         ['l_dframe','Door frames','d'],
@@ -561,7 +561,7 @@
       ['Walls and fittings', [
         ['lv_switch','Light switches','a'],
         ['lv_power','Power points','d'],
-        ['lv_walls','Walls spot-cleaned','d'],
+        ['lv_walls','Walls spot-cleaned for marks and scuffs','r'],
         ['lv_handles','Door handles','a'],
         ['lv_doors','Doors, both sides','d'],
         ['lv_dframe','Door frames','d'],
@@ -608,7 +608,7 @@
       ['Walls and fittings', [
         ['dn_switch','Light switches','a'],
         ['dn_power','Power points','d'],
-        ['dn_walls','Walls spot-cleaned','d'],
+        ['dn_walls','Walls spot-cleaned for marks and scuffs','r'],
         ['dn_sills','Window sills and frames','a'],
         ['dn_blinds','Blind slats','d'],
         ['dn_skirt','Skirting boards','d']
@@ -651,7 +651,7 @@
       ['Walls and fittings', [
         ['st_switch','Light switches','a'],
         ['st_power','Power points','d'],
-        ['st_walls','Walls spot-cleaned','d'],
+        ['st_walls','Walls spot-cleaned for marks and scuffs','r'],
         ['st_handle','Door handle','a'],
         ['st_door','Door, both sides','d'],
         ['st_sill','Window sill and frame','a'],
@@ -683,7 +683,7 @@
         ['hs_power','Power points','d'],
         ['hs_handles','Door handles','a'],
         ['hs_doors','Doors, both sides','d'],
-        ['hs_walls','Walls spot-cleaned for scuffs','d']
+        ['hs_walls','Walls spot-cleaned for marks and scuffs','r']
       ]],
       ['Stairs', [
         ['hs_rail','Handrail wiped','a'],
@@ -871,7 +871,7 @@
         ['g_switch','Light switches','a'],
         ['g_power','Power points','d'],
         ['g_handle','Door handles','a'],
-        ['g_walls','Walls spot-cleaned','d'],
+        ['g_walls','Walls spot-cleaned for marks and scuffs','r'],
         ['g_skirt','Skirting boards','d']
       ]],
       ['Floor', [
@@ -882,8 +882,49 @@
     ]
   };
 
+  // Wall wash: every room on a deep, pre-sale or bond clean (regular cleans keep
+  // the spot-clean item). Dry-dust, wash top down, rinse, torch check.
+  // Added after the high dusting; in wet rooms after the vanity, so the shower
+  // and bath rinse can't splash washed walls.
+  function wallWash(p, extra, wet){
+    var w = wet ? 'Painted walls' : 'Walls';
+    return ['Wall wash', [
+      [p+'_wwtest','Wash tested behind the door: no paint on the cloth','d'],
+      [p+'_wwmove','Furniture eased off the walls','d'],
+      [p+'_wwtowel','Towel laid along the skirting','d'],
+      [p+'_wwcorn','Cornices dry-dusted','d'],
+      [p+'_wwdust',w+' dry-dusted, top down','d'],
+      [p+'_wwwash',w+' washed one section at a time, top down','d']
+    ].concat(extra||[]).concat([
+      [p+'_wwhand','Hand marks around switches, handles and door frames washed','d'],
+      [p+'_wwspot','Leftover marks treated by hand','d'],
+      [p+'_wwrinse',w+' rinsed with clean water','d'],
+      [p+'_wwtorch',w+' checked with a torch at an angle','d'],
+      [p+'_wwback','Towel lifted and furniture put back where it was','d']
+    ])];
+  }
+  function addAfter(room, after, sec){
+    var L = C[room], i = -1;
+    for (var n=0;n<L.length;n++) if (L[n][0]===after) { i = n; break; }
+    L.splice(i < 0 ? 0 : i + 1, 0, sec);
+  }
+  addAfter('Kitchen','Up high', wallWash('k', [['k_wwgrease','Grease splashes beside the cooktop and the bin washed','d']]));
+  addAfter('Bathrooms','Vanity', wallWash('b', [['b_wwsteam','Steam marks under the fan and around the mirror washed','d']], true));
+  addAfter('Powder room','Vanity', wallWash('pw', null, true));
+  addAfter('Toilet','Up high', wallWash('wc', [['wc_wwloo','Wall behind the toilet washed last, with a toilet cloth','d']], true));
+  addAfter('Bedrooms','Up high', wallWash('r', [['r_wwbed','Wall behind the bed head and bedside tables washed','d']]));
+  addAfter('Living & dining','Up high', wallWash('l', [['l_wwtv','Wall around the TV washed by hand, clear of the electronics','d']]));
+  addAfter('Living','Up high', wallWash('lv', [['lv_wwtv','Wall around the TV washed by hand, clear of the electronics','d']]));
+  addAfter('Dining','Up high', wallWash('dn'));
+  addAfter('Study','Up high', wallWash('st', [['st_wwdesk','Wall behind the desk washed, clear of papers and cables','d']]));
+  addAfter('Hallway & stairs','Up high', wallWash('hs', [['hs_wwstair','Stairwell walls washed as high as the step stool safely reaches','d'],['hs_wwscuff','Hand-height scuffs along the hall and stairs','d']]));
+  addAfter('Entry','Outside the door', wallWash('en'));
+  addAfter('Laundry','Up high', wallWash('n', [['n_wwtub','Wall behind the tub and beside the machines washed','d']], true));
+  addAfter('_general','Up high', wallWash('g'));
+
   // Main bedroom = the bedroom list plus a walk-in robe after the wardrobe.
-  C['Main bedroom'] = C['Bedrooms'].slice(0, 3).concat([
+  var wi = 0; C['Bedrooms'].forEach(function(s, n){ if (s[0]==='Wardrobe') wi = n + 1; });
+  C['Main bedroom'] = C['Bedrooms'].slice(0, wi).concat([
     ['Walk-in robe', [
       ['mr_light','Walk-in robe light fitting','a'],
       ['mr_shelf','Walk-in robe shelves (if empty)','d'],
@@ -893,7 +934,7 @@
       ['mr_mirror','Walk-in robe mirrors streak-free','a'],
       ['mr_vac','Walk-in robe floor vacuumed','a']
     ]]
-  ], C['Bedrooms'].slice(3));
+  ], C['Bedrooms'].slice(wi));
 
   // Granny flat = kitchen, bathroom, bedroom and living, one after the other.
   C['Granny flat'] = [['Kitchen','Kitchen'],['Bathroom','Bathrooms'],['Bedroom','Bedrooms'],['Living','Living & dining']].reduce(function(all, p){
