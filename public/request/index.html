@@ -210,8 +210,12 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
   var saved=lsGet(); if(saved&&saved.a&&saved.a.service&&saved.a.service!=='regular'&&Date.now()-saved.at<14*864e5) resumeOffer=true;
   var params=new URLSearchParams(location.search);
   var src=params.get('src')||params.get('utm_source')||(document.referrer&&document.referrer.indexOf(location.host)<0?document.referrer.replace(/^https?:\/\//,'').split('/')[0]:'');
-  if(params.get('service')&&SERVICES.some(function(s){return s.k===params.get('service');})&&!resumeOffer) A.service=params.get('service');
-  if(A.service==='commercial') step=1; // straight to the business details
+  // A service in the link always wins over an old draft for a different service.
+  var want=params.get('service'); if(!SERVICES.some(function(s){return s.k===want;})) want='';
+  if(want){
+    if(resumeOffer&&saved.a.service===want&&want==='commercial'){ for(var k0 in saved.a) if(A.hasOwnProperty(k0)) A[k0]=saved.a[k0]; step=Math.max(1,Math.min(saved.step||1,6)); resumeOffer=false; }
+    else { if(resumeOffer&&saved.a.service!==want) resumeOffer=false; if(!resumeOffer){ A.service=want; if(want==='commercial') step=1; } }
+  }
 
   function svc(){ return SERVICES.filter(function(s){return s.k===A.service;})[0]||SERVICES.filter(function(s){return s.k==='other';})[0]; }
   var isReg=function(){ return A.service==='regular'; };
