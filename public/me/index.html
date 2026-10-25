@@ -121,11 +121,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .spe{display:flex;gap:12px;align-items:center;border-top:1px solid var(--cd);padding:10px 0}
 .spe .th{width:84px;flex:none;border-radius:8px;overflow:hidden;background:var(--cream);border:1px solid var(--line)}
 .spe .th svg,.spe .th img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
-.pf{background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
-.pf>svg{display:block;width:100%;height:auto;background:var(--cream)}
-.pf p{font:400 13px/1.4 var(--sans);color:var(--body);padding:8px 10px 10px}
-.pf .y{font-weight:600;color:var(--dark);display:flex;gap:5px;align-items:center;padding-bottom:0}
-.pf.no .y{color:var(--tcd)}
+.pfc{background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.pfc>svg{display:block;width:100%;height:auto;background:var(--cream)}
+.pfc p{font:400 13px/1.4 var(--sans);color:var(--body);padding:8px 10px 10px}
+.pfc .y{font-weight:600;color:var(--dark);display:flex;gap:5px;align-items:center;padding-bottom:0}
+.pfc.no .y{color:var(--tcd)}
 .pfk{font:600 13px var(--sans);color:var(--dark);margin:4px 0 -2px}
 .hmap{background:var(--white);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .hmap>svg{display:block;width:100%;height:auto}
@@ -629,7 +629,7 @@ function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); if(sec<60) return sec+' s
 function clockOf(ms){ var t=Math.max(0,Math.ceil(ms/1000)), m=Math.floor(t/60), s2=t%60; return m+':'+pad(s2); }
 function tmLeft(r){ return r.done?'Done':clockOf(r.end-Date.now()); }
 function pairsHtml(g){ var ps=(g.pairs||[]).map(function(v){ return window.TKART&&TKART.pair(String(v).slice(4)); }).filter(Boolean); if(!ps.length) return '';
-  return '<div class="card" style="display:flex;flex-direction:column;gap:10px"><p class="lbl b">The standard</p>'+ps.map(function(x){ return (ps.length>1?'<p class="pfk">'+esc(x.k)+'</p>':'')+'<div class="grid2"><div class="pf">'+x.pass+'<p class="y">'+I.tick+' Passes</p><p style="padding-top:2px">'+esc(x.ok)+'</p></div><div class="pf no">'+x.fail+'<p class="y">'+I.cross+' Redo</p><p style="padding-top:2px">'+esc(x.no)+'</p></div></div>'; }).join('')+'</div>'; }
+  return '<div class="card" style="display:flex;flex-direction:column;gap:10px"><p class="lbl b">The standard</p>'+ps.map(function(x){ return (ps.length>1?'<p class="pfk">'+esc(x.k)+'</p>':'')+'<div class="grid2"><div class="pfc">'+x.pass+'<p class="y">'+I.tick+' Passes</p><p style="padding-top:2px">'+esc(x.ok)+'</p></div><div class="pfc no">'+x.fail+'<p class="y">'+I.cross+' Redo</p><p style="padding-top:2px">'+esc(x.no)+'</p></div></div>'; }).join('')+'</div>'; }
 function mapHtml(g){ var m=g.map&&window.TKART?TKART.map(String(g.map).slice(4)):''; if(!m||!(g.spots||[]).length) return ''; var k='m'+g.id;
   return '<div class="hmap" data-mapw="'+k+'">'+m+'</div><div>'+g.spots.map(function(x,i){ return '<button type="button" class="spot" data-spot="'+(i+1)+'" data-sw="'+k+'"><span class="n">'+(i+1)+'</span><span>'+esc(x)+'</span></button>'; }).join('')+'</div>'; }
 function picOf(v){ if(!v) return ''; if(/^art:/.test(v)) return (window.TKART&&TKART.get(v.slice(4)))||''; return '<img src="'+img(v)+'" alt="" loading="lazy">'; }
