@@ -13,6 +13,7 @@ const EXP = { none: "No cleaning experience yet", home: "Cleaned for family or f
 const TRANSPORT = { car: "Own car and licence", licence: "Licence, no car", public: "Public transport" };
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HOURS = { "10": "Up to 10 a week", "20": "10 to 20 a week", "30": "20 to 30 a week", "38": "30 or more a week" };
+const OTHER = { none: "No other work at the moment", cleaning: "Cleans for other companies or own clients", job: "Another job outside cleaning", study: "Studying" };
 const HEARD = { indeed: "Indeed", seek: "Seek", facebook: "Facebook", friend: "Friend or someone on the team", website: "Bardon Clean website", other: "Other" };
 
 const str = (v, n = 200) => (typeof v === "string" ? v.trim().slice(0, n) : "");
@@ -34,6 +35,7 @@ export function cleanApp(b) {
   return { app: {
     name, phone, email, suburb, rightToWork: work, days, hours: pick(HOURS, b.hours), start: /^\d{4}-\d{2}-\d{2}$/.test(b.start || "") ? b.start : "",
     exp: pick(EXP, b.exp), transport: pick(TRANSPORT, b.transport), heard: pick(HEARD, b.heard), about: str(b.about, 1500),
+    other: pick(OTHER, b.other), proud: str(b.proud, 1200), src: str(b.src, 80),
   } };
 }
 
@@ -47,7 +49,7 @@ export default async (req) => {
   const admin = await checkAdmin(s, req);
   if (req.method === "GET") {
     if (!admin) return json({ error: "Log in first" }, 401);
-    return json({ candidates: await loadCandidates(s), labels: { EXP, TRANSPORT, HOURS, HEARD } });
+    return json({ candidates: await loadCandidates(s), labels: { EXP, TRANSPORT, HOURS, HEARD, OTHER } });
   }
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
   let b; try { b = await req.json(); } catch { return json({ error: "Something went wrong sending that. Please try again." }, 400); }

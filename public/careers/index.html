@@ -3,144 +3,360 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Work with us · Bardon Clean</title>
-<meta name="description" content="Casual cleaning work with Bardon Clean in Brisbane's inner west. Apply in a few minutes.">
+<title>Apply to join the team · Bardon Clean</title>
+<meta name="description" content="Apply for casual cleaning work with Bardon Clean in Brisbane's inner west. $37.50/hr weekdays, paid weekly. A few minutes on your phone.">
 <meta name="theme-color" content="#F5F0EB">
 <meta name="color-scheme" content="light">
-<link rel="icon" href="/icons/favicon.png">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="/icons/brand-favicon.png">
+<link rel="apple-touch-icon" href="/icons/brand-apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,500&display=swap" rel="stylesheet">
 <style>
-:root{--terracotta:#C06B3C;--terracotta-dark:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cream-dark:#EDE6DE;--body:#4A4A4A;--meta:#7A7A7A;--white:#fff;--line:#E2D9CE;
-  --serif:'Playfair Display',Georgia,serif;--sans:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+:root{--terracotta:#C06B3C;--terracotta-dark:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cream-dark:#EDE6DE;--body:#4A4A4A;--meta:#7A7A7A;--gold:#F4B942;--white:#fff;--line:#E2D9CE;
+  --serif:'Playfair Display',Georgia,serif;--sans:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;--r:14px}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--cream);color:var(--body);font:400 16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
-a{color:var(--terracotta-dark)}
+a{color:var(--terracotta)}
 button,input,select,textarea{font:inherit;color:inherit}
-.wrap{max-width:620px;margin:0 auto;padding:0 18px calc(60px + env(safe-area-inset-bottom))}
-header{display:flex;align-items:center;justify-content:space-between;padding:18px 0 4px}
+.wrap{max-width:640px;margin:0 auto;padding:0 18px calc(120px + env(safe-area-inset-bottom))}
+header.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--dark)}
-.brand svg{width:34px;height:34px}
-.brand b{font:700 19px/1 var(--serif)}
-header a.call{font:500 14px var(--sans);color:var(--dark);text-decoration:none;border-bottom:1px solid var(--line)}
-h1{font:700 32px/1.15 var(--serif);color:var(--dark);margin:24px 0 10px}
+.brand svg{width:34px;height:34px;flex:none}
+.brand b{font:700 19px/1 var(--serif);letter-spacing:.2px}
+.top .call{font:500 14px var(--sans);color:var(--dark);text-decoration:none;border-bottom:1px solid var(--line)}
+.prog{height:3px;background:var(--cream-dark);border-radius:3px;margin:14px 0 0;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--terracotta);width:0;transition:width .35s ease}
+.stepno{font:500 13px var(--sans);color:var(--meta);margin:10px 0 0;display:flex;justify-content:space-between;align-items:center}
+.stepno button{background:none;border:0;padding:6px 0;color:var(--dark);font-weight:500;cursor:pointer}
+h1{font:700 32px/1.15 var(--serif);color:var(--dark);margin:22px 0 8px;letter-spacing:-.2px}
 h1 em,h2 em{font-style:italic;font-weight:500;color:var(--terracotta)}
-h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:34px 0 12px}
-.lead{margin:0 0 18px}
-.facts{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:6px 16px;margin:0 0 8px}
-.facts div{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--cream-dark);font-size:15px}
-.facts div:last-child{border:0}
-.facts dt{color:var(--meta)}
-.facts dd{margin:0;color:var(--dark);font-weight:500;text-align:right}
-ul.ok{margin:0;padding:0 0 0 20px}
-ul.ok li{margin:4px 0}
-form{display:grid;gap:18px}
-label,.lbl{display:grid;gap:6px;font:500 15px/1.35 var(--sans);color:var(--dark)}
-label small,.lbl small{font-weight:400;color:var(--meta)}
-input,select,textarea{width:100%;font-size:16px;padding:12px;min-height:50px;border:1px solid #CFC5BA;border-radius:8px;background:var(--white)}
-textarea{min-height:110px;resize:vertical}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.pills{display:flex;flex-wrap:wrap;gap:8px}
-.pills label{display:block;position:relative}
-.pills input{position:absolute;opacity:0;width:1px;height:1px}
-.pills span{display:inline-flex;align-items:center;min-height:46px;padding:0 16px;border:1.5px solid #CFC5BA;border-radius:999px;background:var(--white);font:500 15px var(--sans);cursor:pointer}
-.pills input:checked+span{background:var(--dark);border-color:var(--dark);color:var(--cream)}
-.pills input:focus-visible+span{outline:2px solid var(--terracotta);outline-offset:2px}
-.hp{position:absolute;left:-9999px}
-.err{color:var(--terracotta-dark);font:500 15px var(--sans)}
-button.go{min-height:56px;border:0;border-radius:8px;background:var(--terracotta);color:#fff;font:600 17px var(--sans);cursor:pointer}
-button.go:disabled{opacity:.6}
-.done{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:22px 18px;margin-top:24px}
-.done h2{margin-top:0}
-footer{margin-top:40px;font-size:14px;color:var(--meta)}
-@media (max-width:420px){.two{grid-template-columns:1fr}}
+h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
+.lead{margin:0 0 22px;color:var(--body)}
+.q{margin:0 0 26px;border:0;padding:0;min-width:0}
+.q>legend,.lbl{font:500 15px/1.4 var(--sans);color:var(--dark);margin:0 0 10px;padding:0;display:block}
+.lbl small,legend small{font-weight:400;color:var(--meta)}
+.hint{font-size:14px;color:var(--meta);margin:-4px 0 12px}
+/* service cards */
+.cards{display:grid;gap:10px}
+.card{position:relative;display:block;background:var(--white);border:1.5px solid var(--line);border-radius:var(--r);padding:16px 48px 16px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.card input{position:absolute;opacity:0;pointer-events:none}
+.card b{display:block;font:700 18px/1.3 var(--serif);color:var(--dark)}
+.card span{display:block;font-size:14.5px;color:var(--body);margin-top:3px;line-height:1.45}
+.card::after{content:"";position:absolute;right:16px;top:50%;width:20px;height:20px;margin-top:-10px;border-radius:50%;border:1.5px solid var(--line);background:var(--white)}
+.card:has(input:checked){border-color:var(--terracotta);box-shadow:0 0 0 3px rgba(192,107,60,.12)}
+.card:has(input:checked)::after{border:6px solid var(--terracotta)}
+.card:has(input:focus-visible){outline:2px solid var(--dark);outline-offset:2px}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;display:inline-flex;align-items:center;min-height:44px;padding:9px 16px;background:var(--white);border:1.5px solid var(--line);border-radius:999px;cursor:pointer;font:500 15px var(--sans);color:var(--dark);transition:all .15s;user-select:none}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip:has(input:checked){background:var(--dark);border-color:var(--dark);color:var(--cream)}
+.chip:has(input:focus-visible){outline:2px solid var(--terracotta);outline-offset:2px}
+.chips.wide .chip{flex:1 1 calc(50% - 8px);justify-content:center;text-align:center}
+/* inputs */
+.field{display:block;margin:0 0 16px}
+.field input,.field select,.field textarea{display:block;width:100%;margin-top:6px;padding:13px 14px;background:var(--white);border:1.5px solid var(--line);border-radius:12px;font-size:16px;color:var(--dark);outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+.field textarea{min-height:110px;resize:vertical;line-height:1.5}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--terracotta)}
+.field.bad input{border-color:#B23A2A}
+.row2{display:grid;grid-template-columns:1fr 110px;gap:12px}
+.ac{position:relative;margin:0 0 16px}
+.ac .field{margin:0}
+.ac ul{list-style:none;margin:6px 0 0;padding:6px;background:var(--white);border:1.5px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(26,26,26,.10)}
+.ac li{padding:11px 12px;border-radius:9px;cursor:pointer;line-height:1.35}
+.ac li b{display:block;font-weight:500;color:var(--dark)}
+.ac li span{font-size:14px;color:var(--meta)}
+.ac li[aria-selected="true"],.ac li:hover{background:var(--cream)}
+.ac li.manual{color:var(--terracotta);font-size:14.5px;font-weight:500}
+.ac .gfoot{font-size:11.5px;color:var(--meta);text-align:right;padding:4px 8px 0}
+.ok{display:flex;gap:8px;align-items:center;font-size:14px;color:#2F6B3F;margin:8px 0 0}
+.ok svg{width:16px;height:16px}
+/* steppers */
+.steppers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stp{background:var(--white);border:1.5px solid var(--line);border-radius:var(--r);padding:12px 10px;text-align:center}
+.stp .k{font:500 13px var(--sans);color:var(--meta)}
+.stp .v{font:700 26px/1.2 var(--serif);color:var(--dark);margin:2px 0 6px}
+.stp .b{display:flex;justify-content:center;gap:8px}
+.stp button{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--line);background:var(--cream);font:500 20px/1 var(--sans);color:var(--dark);cursor:pointer}
+.stp button:active{background:var(--cream-dark)}
+.stp button:disabled{opacity:.35}
+/* photos */
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px;border:1.5px dashed #CDBFAF;border-radius:var(--r);background:var(--white);cursor:pointer;text-align:center;padding:18px;color:var(--dark);font-weight:500}
+.drop small{font-weight:400;color:var(--meta);font-size:14px}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.thumbs div{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--cream-dark)}
+.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.thumbs button{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(26,26,26,.75);color:#fff;font-size:16px;line-height:1;cursor:pointer}
+.tips{margin:14px 0 0;padding:0;list-style:none;font-size:14.5px}
+.tips li{padding-left:18px;position:relative;margin-bottom:4px}
+.tips li::before{content:"";position:absolute;left:2px;top:.65em;width:6px;height:6px;border-radius:50%;background:var(--terracotta)}
+/* trust */
+.trust{margin:30px 0 0;padding:18px;border-top:1px solid var(--line);display:grid;gap:12px}
+.trust div{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:14.5px;line-height:1.45}
+.trust svg{width:22px;height:22px;color:var(--terracotta);margin-top:1px}
+.trust b{color:var(--dark);font-weight:600}
+/* review quote */
+.quote{margin:24px 0 0;padding:20px 0 0;border-top:1px solid var(--line)}
+.quote .st{color:var(--terracotta);letter-spacing:2px;font-size:14px;margin:0 0 8px}
+.quote blockquote{margin:0 0 10px;font:italic 500 17px/1.45 var(--serif);color:var(--dark)}
+.quote cite{display:block;font:400 13px var(--sans);font-style:normal;color:var(--meta)}
+.jack{display:flex;gap:12px;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:0 0 22px}
+.jack .av{flex:none;width:44px;height:44px;border-radius:50%;background:var(--dark);color:var(--cream);display:grid;place-items:center;font:700 18px var(--serif)}
+.jack p{margin:0;font-size:14.5px;line-height:1.45}
+.jack b{color:var(--dark)}
+/* review */
+.rev{background:var(--white);border:1px solid var(--line);border-radius:var(--r);margin:0 0 14px;overflow:hidden}
+.rev h3{display:flex;justify-content:space-between;align-items:center;margin:0;padding:12px 16px;font:600 14px var(--sans);color:var(--dark);background:var(--cream-dark)}
+.rev h3 button{background:none;border:0;color:var(--terracotta);font:500 14px var(--sans);text-decoration:underline;cursor:pointer;padding:4px 0}
+.rev dl{margin:0;padding:6px 16px 10px}
+.rev dl div{display:grid;grid-template-columns:120px 1fr;gap:10px;padding:7px 0;border-bottom:1px solid var(--cream-dark);font-size:15px}
+.rev dl div:last-child{border-bottom:0}
+.rev dt{color:var(--meta)}
+.rev dd{margin:0;color:var(--dark);word-break:break-word}
+/* bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(245,240,235,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 18px calc(12px + env(safe-area-inset-bottom));z-index:5}
+.bar .in{max-width:640px;margin:0 auto;display:flex;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:12px;border:0;font:600 16px var(--sans);cursor:pointer;text-decoration:none;transition:background .15s}
+.btn.primary{background:var(--terracotta);color:#fff;flex:1}
+.btn.primary:hover{background:var(--terracotta-dark)}
+.btn.primary:disabled{opacity:.6;cursor:default}
+.btn.outline{background:transparent;color:var(--terracotta);border:2px solid var(--terracotta)}
+.btn.dark{background:var(--dark);color:var(--cream)}
+.err{background:#FBEBE6;color:#8A2E1F;border-radius:12px;padding:12px 14px;font-size:15px;margin:0 0 16px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.foot{margin-top:34px;font-size:13px;color:var(--meta);line-height:1.6}
+/* done */
+.done{text-align:left;padding-top:10px}
+.tick{width:56px;height:56px;border-radius:50%;background:var(--dark);display:grid;place-items:center;margin:26px 0 0}
+.tick svg{width:26px;height:26px;color:var(--cream)}
+.next{list-style:none;margin:22px 0 26px;padding:0;counter-reset:n}
+.next li{counter-increment:n;position:relative;padding:0 0 18px 46px}
+.next li::before{content:counter(n);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--white);border:1.5px solid var(--terracotta);color:var(--terracotta);display:grid;place-items:center;font:600 14px var(--sans)}
+.next b{display:block;color:var(--dark);font-weight:600}
+.resume{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 18px;font-size:14.5px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.resume button{background:none;border:0;color:var(--terracotta);text-decoration:underline;font:500 14px var(--sans);cursor:pointer;white-space:nowrap}
+.fade{animation:fade .28s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.fade{animation:none}.prog i{transition:none}}
+@media (min-width:700px){h1{font-size:38px}.cards{grid-template-columns:1fr 1fr}.wrap{padding-top:12px}}
+</style>
+<style>
+/* careers additions, same tokens as the quote form */
+.pay{background:var(--dark);color:var(--cream);border-radius:var(--r);padding:18px 18px 16px;margin:0 0 22px}
+.pay .big{font:700 34px/1 var(--serif);color:#fff}
+.pay .big small{font:500 15px var(--sans);color:#D9D3CC;margin-left:6px}
+.pay .rates{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 12px}
+.pay .rates div{background:rgba(245,240,235,.08);border-radius:10px;padding:9px 8px;text-align:center}
+.pay .rates b{display:block;font:700 18px/1.2 var(--serif);color:#fff}
+.pay .rates span{font-size:12.5px;color:#D9D3CC}
+.pay p{margin:0;font-size:14px;color:#D9D3CC;line-height:1.5}
+.pay p b{color:var(--cream);font-weight:600}
+.card em{font-style:normal;display:inline-block;margin-left:6px;font:600 11.5px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--terracotta);vertical-align:2px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <a class="brand" href="https://bardonclean.au"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg><b>Bardon Clean</b></a>
-    <a class="call" href="sms:+61468193772">Text Jack</a>
+  <header class="top">
+    <a class="brand" href="https://bardonclean.au/careers/" aria-label="Bardon Clean careers">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>
+      <b>Bardon Clean</b>
+    </a>
+    <a class="call" href="sms:0468193772">Text Jack</a>
   </header>
-
-  <main id="main">
-    <h1>Casual cleaners, <em>Brisbane inner west</em></h1>
-    <p class="lead">Bardon Clean does pre-sale, bond and deep cleans for homes around Bardon, Paddington, Ashgrove and nearby. We're looking for casual cleaners who take pride in doing a job properly.</p>
-
-    <dl class="facts">
-      <div><dt>Role</dt><dd>Casual, mostly weekdays</dd></div>
-      <div><dt>Hours</dt><dd>About 15 to 30 a week, varies</dd></div>
-      <div><dt>Pay</dt><dd>$37.50/hr weekdays, plus super</dd></div>
-      <div><dt>Weekends</dt><dd>Saturday $47.39 · Sunday $60.93</dd></div>
-      <div><dt>Paid</dt><dd>Weekly, every Tuesday</dd></div>
-    </dl>
-
-    <h2>What we <em>provide</em></h2>
-    <ul class="ok">
-      <li>All equipment and products on site</li>
-      <li>A Bardon Clean shirt</li>
-      <li>Training on our checklists, room by room, on your phone</li>
-      <li>Shifts on a roster you can see and confirm with one tap</li>
-    </ul>
-
-    <h2>Apply in a few <em>minutes</em></h2>
-    <form id="f" novalidate>
-      <input class="hp" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <label for="name">Your name<input id="name" name="name" autocomplete="name" required></label>
-      <div class="two">
-        <label for="phone">Mobile<input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required></label>
-        <label for="email">Email <small>Optional</small><input id="email" name="email" type="email" autocomplete="email"></label>
-      </div>
-      <label for="suburb">Suburb you live in<input id="suburb" name="suburb" autocomplete="address-level2" required></label>
-
-      <div class="lbl">Can you legally work in Australia?<div class="pills" role="radiogroup">
-        <label><input type="radio" name="rightToWork" value="yes"><span>Yes</span></label>
-        <label><input type="radio" name="rightToWork" value="no"><span>No</span></label>
-      </div></div>
-
-      <div class="lbl">Days you can work<div class="pills">
-        <label><input type="checkbox" name="days" value="Mon"><span>Mon</span></label>
-        <label><input type="checkbox" name="days" value="Tue"><span>Tue</span></label>
-        <label><input type="checkbox" name="days" value="Wed"><span>Wed</span></label>
-        <label><input type="checkbox" name="days" value="Thu"><span>Thu</span></label>
-        <label><input type="checkbox" name="days" value="Fri"><span>Fri</span></label>
-        <label><input type="checkbox" name="days" value="Sat"><span>Sat</span></label>
-        <label><input type="checkbox" name="days" value="Sun"><span>Sun</span></label>
-      </div></div>
-
-      <label for="hours">Hours you'd like<select id="hours" name="hours"><option value="">Choose</option><option value="10">Up to 10 a week</option><option value="20">10 to 20 a week</option><option value="30">20 to 30 a week</option><option value="38">30 or more a week</option></select></label>
-      <label for="start">When could you start? <small>Optional</small><input id="start" name="start" type="date"></label>
-
-      <label for="exp">Cleaning experience<select id="exp" name="exp"><option value="">Choose</option><option value="residential">Paid residential cleaning</option><option value="commercial">Commercial or office cleaning</option><option value="housekeeping">Hotel or housekeeping</option><option value="home">Cleaned for family or friends</option><option value="none">No cleaning experience yet</option></select></label>
-      <label for="transport">Getting to jobs<select id="transport" name="transport"><option value="">Choose</option><option value="car">Own car and licence</option><option value="licence">Licence, no car</option><option value="public">Public transport</option></select></label>
-
-      <label for="about">Tell Jack a bit about yourself <small>Optional</small><textarea id="about" name="about" placeholder="Past jobs, other work you do, anything you'd like him to know"></textarea></label>
-      <label for="heard">How did you hear about us? <small>Optional</small><select id="heard" name="heard"><option value="">Choose</option><option value="indeed">Indeed</option><option value="seek">Seek</option><option value="facebook">Facebook</option><option value="friend">Friend or someone on the team</option><option value="website">Bardon Clean website</option><option value="other">Other</option></select></label>
-
-      <div class="err" id="err" hidden></div>
-      <button type="submit" class="go">Send application</button>
-    </form>
-  </main>
-  <footer>Jack East, Bardon Clean · Questions? Text <a href="sms:+61468193772">0468 193 772</a></footer>
+  <div class="prog" aria-hidden="true"><i id="prog"></i></div>
+  <main id="app" aria-live="polite"></main>
+  <p class="foot">Jack East T/A Bardon Clean · ABN 46 426 437 394 · Bardon, Brisbane<br>Your details are only used for your application. They're never shared or sold.</p>
 </div>
+<div class="bar" id="bar" hidden><div class="in" id="barIn"></div></div>
+
 <script>
 (function(){
-  var t0=Date.now(), f=document.getElementById('f'), er=document.getElementById('err');
-  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
-  f.addEventListener('submit',function(e){
-    e.preventDefault();
-    var el=f.elements, rw=f.querySelector('[name=rightToWork]:checked');
-    var body={ hp:el.hp.value, t:Date.now()-t0, name:el.name.value, phone:el.phone.value, email:el.email.value, suburb:el.suburb.value,
-      rightToWork:rw?rw.value:'', days:Array.prototype.map.call(f.querySelectorAll('[name=days]:checked'),function(x){return x.value;}),
-      hours:el.hours.value, start:el.start.value, exp:el.exp.value, transport:el.transport.value, about:el.about.value, heard:el.heard.value };
-    var bt=f.querySelector('.go'); bt.disabled=true; bt.textContent='Sending…'; er.hidden=true;
-    fetch('/api/careers',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
-      .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong. Please try again.'); return d; }); })
-      .then(function(d){ document.getElementById('main').innerHTML='<div class="done"><h2>Thanks'+(d.first?', '+esc(d.first):'')+'</h2><p>Your application is with Jack. If it looks like a fit he\'ll call or text you for a short chat, then a paid trial shift.</p><p style="margin:0">Questions in the meantime? Text <a href="sms:+61468193772">0468 193 772</a>.</p></div>'; window.scrollTo(0,0); })
-      .catch(function(x){ bt.disabled=false; bt.textContent='Send application'; er.textContent=x.message; er.hidden=false; });
+  // ---------- content ----------
+  var HOURS=[
+    {k:'10',t:'Up to 10 hours a week',d:'A shift or two around study, family or another job.'},
+    {k:'20',t:'10 to 20 hours a week',d:'Two or three days in most weeks.'},
+    {k:'30',t:'20 to 30 hours a week',d:'Most weekdays, most weeks.'},
+    {k:'38',t:'30 or more a week',d:'As much as there is. Hours do vary week to week.'}
+  ];
+  var DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var WORK=[['yes','Yes'],['no','No']];
+  var EXP=[
+    {k:'residential',t:'Paid residential cleaning',d:'Homes, bond or end-of-lease, deep cleans.'},
+    {k:'commercial',t:'Commercial or office cleaning',d:'Offices, clinics, shops, venues.'},
+    {k:'housekeeping',t:'Hotel or housekeeping',d:'Rooms, turnovers, serviced apartments.'},
+    {k:'home',t:'Cleaned for family or friends',d:'Not paid, but you know what a proper clean takes.'},
+    {k:'none',t:'No cleaning experience yet',d:'Still apply. Everyone is trained on our checklists.'}
+  ];
+  var TRANSPORT=[['car','Own car and licence'],['licence','Licence, no car'],['public','Public transport']];
+  var OTHER=[['none','No other work right now'],['cleaning','I clean for others too'],['job','Another job'],['study','Studying']];
+  var HEARD=[['website','Bardon Clean website'],['indeed','Indeed'],['seek','Seek'],['facebook','Facebook'],['friend','Friend or someone on the team'],['other','Other']];
+
+  // ---------- state ----------
+  var KEY='bc_job_draft_v1', t0=Date.now();
+  var A={hours:'',days:[],start:'',rightToWork:'',exp:'',transport:'',other:'',proud:'',about:'',name:'',phone:'',email:'',suburb:'',heard:''};
+  var step=0, done=false, sending=false, err='', resumeOffer=false, editing=false, first='';
+  function lsGet(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ return null; } }
+  function lsSet(){ try{ localStorage.setItem(KEY,JSON.stringify({a:A,step:step,at:Date.now()})); }catch(e){} }
+  function lsDel(){ try{ localStorage.removeItem(KEY); }catch(e){} }
+  var saved=lsGet(); if(saved&&saved.a&&saved.a.hours&&Date.now()-saved.at<14*864e5) resumeOffer=true;
+  var params=new URLSearchParams(location.search);
+  var src=params.get('src')||params.get('utm_source')||(document.referrer&&document.referrer.indexOf(location.host)<0?document.referrer.replace(/^https?:\/\//,'').split('/')[0]:'');
+  if(/bardonclean/.test(src)||src==='website') A.heard='website';
+  else if(/indeed/i.test(src)) A.heard='indeed'; else if(/seek/i.test(src)) A.heard='seek'; else if(/facebook|fb/i.test(src)) A.heard='facebook';
+
+  var STEPS=[
+    {id:'hours', ok:function(){ return !!A.hours || 'Choose how much work you\'re after.'; }},
+    {id:'availability', ok:function(){ if(!A.days.length) return 'Tick the days you can work.'; if(!A.rightToWork) return 'Let us know if you can work in Australia.'; return true; }},
+    {id:'experience', ok:function(){ return true; }},
+    {id:'words', ok:function(){ return true; }},
+    {id:'contact', ok:function(){ if(A.name.trim().length<2) return 'Add your name.'; if(A.phone.replace(/\D/g,'').length<8) return 'Add a mobile number so Jack can call you.'; if(A.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(A.email.trim())) return 'That email doesn\'t look right.'; if(!A.suburb.trim()) return 'Add the suburb you live in.'; return true; }},
+    {id:'review', ok:function(){ return true; }}
+  ];
+
+  // ---------- helpers ----------
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function label(list,k){ for(var i=0;i<list.length;i++){ var o=list[i]; if((o.k||o[0])===k) return o.t||o[1]; } return ''; }
+  function radios(name,list,cls){ return '<div class="chips'+(cls?' '+cls:'')+'" role="radiogroup">'+list.map(function(o){ return '<label class="chip"><input type="radio" name="'+name+'" value="'+o[0]+'"'+(A[name]===o[0]?' checked':'')+'>'+esc(o[1])+'</label>'; }).join('')+'</div>'; }
+  function checks(name,list){ return '<div class="chips">'+list.map(function(o){ return '<label class="chip"><input type="checkbox" name="'+name+'" value="'+o[0]+'"'+(A[name].indexOf(o[0])>=0?' checked':'')+'>'+esc(o[1])+'</label>'; }).join('')+'</div>'; }
+  function cards(name,list){ return '<div class="cards">'+list.map(function(o){ return '<label class="card"><input type="radio" name="'+name+'" value="'+o.k+'"'+(A[name]===o.k?' checked':'')+'><b>'+esc(o.t)+(o.tag?'<em>'+esc(o.tag)+'</em>':'')+'</b><span>'+esc(o.d)+'</span></label>'; }).join('')+'</div>'; }
+  function field(name,lab,opts){ opts=opts||{};
+    return '<label class="field" for="f_'+name+'"><span class="lbl" style="margin:0">'+lab+'</span>'+(opts.area?'<textarea id="f_'+name+'" name="'+name+'" maxlength="'+(opts.max||1500)+'" placeholder="'+esc(opts.ph||'')+'">'+esc(A[name])+'</textarea>':'<input id="f_'+name+'" name="'+name+'" value="'+esc(A[name])+'"'+(opts.type?' type="'+opts.type+'"':'')+(opts.im?' inputmode="'+opts.im+'"':'')+(opts.ac?' autocomplete="'+opts.ac+'"':'')+(opts.ph?' placeholder="'+esc(opts.ph)+'"':'')+(opts.min?' min="'+opts.min+'"':'')+'>')+'</label>'; }
+  function today(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+  function fdate(s){ if(!s) return ''; var p=s.split('-'), d=new Date(+p[0],+p[1]-1,+p[2]); return d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short',year:'numeric'}); }
+  function ico(n){ var P={
+      cash:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 9.5v5M17.5 9.5v5"/>',
+      cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 14.5l2 2 4-4"/>',
+      kit:'<path d="M9 7V5h6v2"/><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 12h18M10 12v2h4v-2"/>',
+      shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+      phone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 17.5h2"/>'};
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P[n]+'</svg>'; }
+  function pay(){ return '<div class="pay"><div class="big">$37.50<small>an hour, weekdays</small></div>'+
+    '<div class="rates"><div><b>$47.39</b><span>Saturday</span></div><div><b>$60.93</b><span>Sunday</span></div><div><b>$74.47</b><span>Public holiday</span></div></div>'+
+    '<p><b>Casual rates, plus super.</b> Paid weekly, every Tuesday.</p></div>'; }
+  function trust(){ return '<div class="trust">'+
+    '<div>'+ico('cash')+'<span><b>Above award on weekdays,</b> with overtime on the bigger jobs.</span></div>'+
+    '<div>'+ico('kit')+'<span><b>Everything supplied.</b> Shirt, equipment and products, with fresh cloths for every home.</span></div>'+
+    '<div>'+ico('phone')+'<span><b>Your shifts on your phone.</b> See the roster and confirm with one tap.</span></div>'+
+    '<div>'+ico('shield')+'<span><b>Covered by WorkCover</b> and trained room by room on our checklists.</span></div></div>'; }
+  function jack(t){ return '<div class="jack"><div class="av">J</div><p>'+t+'</p></div>'; }
+
+  // ---------- render ----------
+  var app=document.getElementById('app'), bar=document.getElementById('bar'), barIn=document.getElementById('barIn'), prog=document.getElementById('prog');
+  function render(focusTop){
+    if(done) return renderDone();
+    var s=STEPS[step].id, h='';
+    prog.style.width=Math.round((step+(s==='review'?1:0))/(STEPS.length)*100)+'%';
+    if(step>0) h+='<div class="stepno"><button type="button" data-back>← Back</button><span>Step '+(step+1)+' of '+STEPS.length+'</span></div>';
+    h+='<form id="f" novalidate class="fade"><div class="hp" aria-hidden="true"><label>Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label></div>';
+    if(s==='hours'){
+      h+='<h1>Join the <em>team</em></h1><p class="lead">Casual cleaning work in Brisbane\'s inner west: pre-sale, bond and deep cleans. Six short steps, all on your phone.</p>';
+      if(resumeOffer) h+='<div class="resume"><span>You started an application earlier.</span><button type="button" data-resume>Pick up where you left off</button></div>';
+      h+='<fieldset class="q"><legend>How much work are you after?</legend>'+cards('hours',HOURS)+'</fieldset>';
+      h+=pay();
+      h+=trust();
+    }
+    if(s==='availability'){
+      h+='<h1>Your <em>availability</em></h1><p class="lead">Be upfront here. A roster built on your real availability works better for everyone.</p>';
+      h+='<fieldset class="q"><legend>Days you can work <small>(choose any)</small></legend>'+checks('days',DAYS.map(function(d){return [d,d];}))+'<p class="hint" style="margin:10px 0 0">Most of our work is on weekdays.</p></fieldset>';
+      h+=field('start','When could you start? <small>(optional)</small>',{type:'date',min:today()});
+      h+='<fieldset class="q"><legend>Can you legally work in Australia?</legend>'+radios('rightToWork',WORK,'wide')+'</fieldset>';
+    }
+    if(s==='experience'){
+      h+='<h1>Your <em>experience</em></h1><p class="lead">Experience helps. Showing up and caring about the finish matters more.</p>';
+      h+='<fieldset class="q"><legend>Cleaning experience</legend>'+cards('exp',EXP)+'</fieldset>';
+      h+='<fieldset class="q"><legend>Getting to jobs</legend>'+radios('transport',TRANSPORT)+'</fieldset>';
+      h+='<fieldset class="q"><legend>Other work at the moment</legend><p class="hint">Cleaning for other companies is fine. Just keep us posted on your availability.</p>'+radios('other',OTHER)+'</fieldset>';
+    }
+    if(s==='words'){
+      h+='<h1>In your <em>words</em></h1><p class="lead">Both optional. A couple of honest sentences beat a polished paragraph.</p>';
+      h+=field('proud','Tell us about something you finished properly and were proud of <small>(optional)</small>',{area:true,max:1200,ph:'A job, a room, a project, anything at all'});
+      h+=field('about','Anything else Jack should know? <small>(optional)</small>',{area:true,ph:'Past jobs, other commitments, questions about the role'});
+    }
+    if(s==='contact'){
+      h+='<h1>Your <em>details</em></h1><p class="lead">So Jack can call or text you about a chat.</p>';
+      h+=field('name','Your name',{ac:'name',ph:'First and last name'});
+      h+=field('phone','Mobile',{type:'tel',im:'tel',ac:'tel',ph:'04xx xxx xxx'});
+      h+=field('email','Email <small>(optional)</small>',{type:'email',im:'email',ac:'email',ph:'name@email.com'});
+      h+=field('suburb','Suburb you live in',{ac:'address-level2',ph:'e.g. Ashgrove'});
+      h+='<label class="field" for="f_heard"><span class="lbl" style="margin:0">How did you hear about us? <small>(optional)</small></span><select id="f_heard" name="heard"><option value="">Choose…</option>'+HEARD.map(function(o){return '<option value="'+o[0]+'"'+(A.heard===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>';
+    }
+    if(s==='review'){
+      h+='<h1>Check and <em>send</em></h1><p class="lead">Make sure this looks right. You can change anything.</p>';
+      h+=reviewHtml();
+      h+=jack('<b>Jack reads every application himself.</b> If it looks like a fit, he\'ll call or text you for a short chat.');
+    }
+    if(err) h+='<div class="err" role="alert">'+esc(err)+'</div>';
+    h+='</form>';
+    app.innerHTML=h;
+    var nextLabel=s==='review'?(sending?'Sending…':'Send application'):editing?'Back to review':s==='words'&&!A.proud.trim()&&!A.about.trim()?'Skip for now':'Continue';
+    bar.hidden=false;
+    barIn.innerHTML='<button class="btn primary" type="button" data-next'+(sending?' disabled':'')+'>'+nextLabel+'</button>';
+    if(focusTop){ window.scrollTo(0,0); var hh=app.querySelector('h1'); if(hh){ hh.setAttribute('tabindex','-1'); hh.focus({preventScroll:true}); } }
+  }
+  function reviewHtml(){
+    function sec(title,go,rows){ rows=rows.filter(function(r){return r[1];}); return '<div class="rev"><h3><span>'+title+'</span><button type="button" data-goto="'+go+'">Edit</button></h3><dl>'+rows.map(function(r){ return '<div><dt>'+esc(r[0])+'</dt><dd>'+esc(r[1])+'</dd></div>'; }).join('')+'</dl></div>'; }
+    var h='';
+    h+=sec('Hours',0,[['Looking for',label(HOURS,A.hours)]]);
+    h+=sec('Availability',1,[['Days',A.days.join(', ')],['Can start',A.start?fdate(A.start):'Not set'],['Work in Australia',label(WORK,A.rightToWork)]]);
+    h+=sec('Experience',2,[['Experience',label(EXP,A.exp)||'Not set'],['Getting to jobs',label(TRANSPORT,A.transport)],['Other work',label(OTHER,A.other)]]);
+    h+=sec('In your words',3,[['Proud of',A.proud||'Skipped'],['Anything else',A.about]]);
+    h+=sec('Your details',4,[['Name',A.name],['Mobile',A.phone],['Email',A.email],['Suburb',A.suburb]]);
+    return h;
+  }
+  function renderDone(){
+    prog.style.width='100%'; bar.hidden=true;
+    app.innerHTML='<div class="done fade"><div class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>'+
+      '<h1>Thanks'+(first?', '+esc(first):'')+'. <em>Application received.</em></h1><p class="lead">It\'s with Jack now. Here\'s what happens next.</p>'+
+      '<ol class="next"><li><b>Jack reads your application</b>Every one, himself.</li><li><b>A short phone chat</b>If it looks like a fit, about 15 minutes. Nothing formal.</li><li><b>A paid trial shift</b>Working alongside the team on a real job.</li><li><b>Contracts and your roster</b>Signed on your phone, with your shifts ready to confirm.</li></ol>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn dark" href="sms:0468193772">Text Jack</a><a class="btn outline" href="https://bardonclean.au/careers/">Back to the website</a></div></div>';
+    window.scrollTo(0,0);
+  }
+
+  // ---------- input ----------
+  function readForm(){
+    var f=document.getElementById('f'); if(!f) return;
+    [].forEach.call(f.querySelectorAll('input[type=radio]:checked'),function(i){ A[i.name]=i.value; });
+    var ds=f.querySelectorAll('input[name=days]'); if(ds.length) A.days=[].map.call(f.querySelectorAll('input[name=days]:checked'),function(i){return i.value;});
+    [].forEach.call(f.querySelectorAll('input:not([type]),input[type=text],input[type=tel],input[type=email],input[type=date],textarea,select'),function(i){ if(i.name&&i.name!=='website'&&A.hasOwnProperty(i.name)) A[i.name]=i.value; });
+  }
+  app.addEventListener('change',function(e){
+    var t=e.target; readForm(); lsSet();
+    if(t.name==='hours'&&!editing){ err=''; setTimeout(function(){ next(); },180); }
   });
+  app.addEventListener('input',function(e){ if(e.target.name){ readForm(); lsSet(); if(STEPS[step].id==='words'){ var b=barIn.querySelector('[data-next]'); if(b&&!editing) b.textContent=(A.proud.trim()||A.about.trim())?'Continue':'Skip for now'; } } });
+  app.addEventListener('submit',function(e){ e.preventDefault(); next(); });
+  app.addEventListener('keydown',function(e){ if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.type!=='checkbox'&&e.target.type!=='radio'){ e.preventDefault(); next(); } });
+  document.addEventListener('click',function(e){
+    var el;
+    if((el=e.target.closest('[data-next]'))){ next(); return; }
+    if((el=e.target.closest('[data-back]'))){ readForm(); err=''; editing=false; step=Math.max(0,step-1); lsSet(); render(true); return; }
+    if((el=e.target.closest('[data-goto]'))){ readForm(); err=''; editing=true; step=+el.dataset.goto; render(true); return; }
+    if((el=e.target.closest('[data-resume]'))){ var sv=lsGet(); if(sv){ for(var k in sv.a) if(A.hasOwnProperty(k)) A[k]=sv.a[k]; step=Math.min(sv.step||0,STEPS.length-1); } resumeOffer=false; render(true); return; }
+  });
+  function next(){
+    readForm(); resumeOffer=false;
+    var ok=STEPS[step].ok();
+    if(ok!==true){ err=ok; render(); var bad=document.querySelector('.err'); if(bad) bad.scrollIntoView({block:'center',behavior:'smooth'}); return; }
+    err='';
+    if(STEPS[step].id==='review') return send();
+    step=editing?STEPS.length-1:step+1; if(STEPS[step].id==='review') editing=false;
+    lsSet(); render(true);
+  }
+
+  // ---------- send ----------
+  function send(){
+    if(sending) return; sending=true; render();
+    var body={}; for(var k in A) body[k]=A[k];
+    body.t=Date.now()-t0; body.src=src;
+    var hp=document.querySelector('input[name=website]'); body.hp=hp?hp.value:'';
+    fetch('/api/careers',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok) throw new Error(d.error||'That didn\'t send. Please try again.'); return d; }); })
+      .then(function(d){ first=(d&&d.first)||(A.name.trim().split(/\s+/)[0]||''); done=true; sending=false; lsDel(); render(); })
+      .catch(function(x){ sending=false; err=(x&&x.message)||'That didn\'t send. Check your connection and try again.'; render(); });
+  }
+
+  render();
 })();
 </script>
 </body>
