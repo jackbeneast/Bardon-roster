@@ -171,6 +171,11 @@ export default async (req) => {
     at: now,
   });
   if (photo) await s.setBin(`staffid/${pid}`, photo);
+  // Tick "Onboarding form" on their hiring card.
+  for (const k of await s.list("cand/")) {
+    const c = await s.get(k);
+    if (c && (c.teamId === pid || (c.phone && mob(c.phone) === mob(f.mobile) && c.stage !== "no"))) { c.checks = { ...(c.checks || {}), form: true }; if (!c.teamId) c.teamId = pid; await s.set(k, c); }
+  }
   await notify(s, { type: "onboard", title: `${full} sent their new starter form`, body: "Their profile is filled in. Check it and add them to Xero payroll.", tags: "clipboard", priority: 4, url: `/team/#/p/${pid}` });
   return json({ ok: true, first });
 };

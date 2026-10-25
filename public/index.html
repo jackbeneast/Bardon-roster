@@ -499,7 +499,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   var LOGO = '<svg viewBox="0 0 48 48" role="img" aria-label="Bardon Clean"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
   var canEdit = false, saving = false, pendingReq = null, liveOpen = null;
   var qv=(location.search.match(/[?&]v=(\w+)/)||[])[1];
-  var view = (qv && ['today','roster','pipeline','agents','more','activity','regulars','contracts'].indexOf(qv)>=0) ? qv : (ls('roster_view')||'today');
+  var view = (qv && ['today','roster','pipeline','agents','more','activity','regulars','contracts','onboard'].indexOf(qv)>=0) ? qv : (ls('roster_view')||'today');
   var upState=null;
   function key(v){ if(v===undefined) return ls('roster_admin_key')||''; try{ if(v===null) localStorage.removeItem('roster_admin_key'); else localStorage.setItem('roster_admin_key',v);}catch(e){} }
   function api(path, opts){
@@ -558,6 +558,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   var today = new Date(); today.setHours(0,0,0,0);
   var startStr = ss('roster_start'); var start = startStr ? parse(startStr) : today;
   var filter = ls('roster_filter') || 'all';
+  // ?p=<team id> opens the roster on that person's own shifts (the link new starters get).
+  (function(){ var p=(location.search.match(/[?&]p=([\w-]+)/)||[])[1]; if(p){ filter=p; ls('roster_filter',p); try{ history.replaceState(null,'',location.pathname); }catch(e){} } })();
   var DAYS = 14;
   var sel = ss('roster_sel') || iso(today);
   function curView(){ var v=ls('roster_rview'); return (v==='week'||v==='month'||v==='list')?v:(canEdit?'week':'list'); }
@@ -666,7 +668,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     app.innerHTML='<div class="brand"><div class="wm">Bardon Clean</div></div><h1>Team <em>roster</em></h1><p class="sub" style="margin-top:14px">The hub hit an error showing this screen. Send Claude a screenshot of this.</p><p class="sub" style="font-size:12px;word-break:break-word">'+esc((e&&e.message)||String(e))+'<br>'+esc(st)+'</p><button class="ghost" data-act="reload">Try again</button>'; } }
   function renderMain(){
     document.body.classList.toggle('has-nav', !!(loaded && canEdit));
-    if(loaded && canEdit && view!=='roster'){ app.innerHTML=(view==='contracts'?renderContracts():view==='regulars'?renderRegulars():view==='pipeline'?renderPipeline():view==='agents'?renderAgentsView():view==='more'?renderMore():view==='wages'?renderWages():view==='activity'?renderActivity():renderToday())+navBar(); if(view==='activity') loadActivity(); return; }
+    if(loaded && canEdit && view!=='roster'){ app.innerHTML=(view==='onboard'?renderOnboard():view==='contracts'?renderContracts():view==='regulars'?renderRegulars():view==='pipeline'?renderPipeline():view==='agents'?renderAgentsView():view==='more'?renderMore():view==='wages'?renderWages():view==='activity'?renderActivity():renderToday())+navBar(); if(view==='activity') loadActivity(); return; }
     var h='';
     if(!loaded){ app.innerHTML='<div class="brand"><div class="wm">Bardon Clean</div></div><h1>Team <em>roster</em></h1><p class="sub" style="margin-top:14px">'+(loadErr?esc(loadErr)+' <button class="ghost" data-act="reload">Try again</button>':'Loading…')+'</p>'; return; }
     h+='<div class="brand"><div class="wm">Bardon Clean</div></div>';
@@ -1870,7 +1872,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(c.trialDate) h+='<span class="cs wait">Trial '+fmtDay(parse(c.trialDate))+'</span>';
     if(c.stage==='onboarding'){ var ck=c.checks||{}, ack=c.teamId&&state.acks&&state.acks[c.teamId]; h+=['contract','form'].map(function(k){ return '<span class="cs '+(ck[k]?'ok':'wait')+'">'+(ck[k]?'✓ ':'')+(k==='contract'?'Contract':'Onboarding form')+'</span>'; }).join('')+'<span class="cs '+(ack?'ok':'wait')+'">'+(ack?'✓ ':'')+'First-day info</span>'; }
     if(c.auto) h+='<span class="cs no">'+esc(c.auto)+'</span>';
-    h+='</div><div class="pact"><button type="button" class="go" data-cand="'+c.id+'">Open</button>';
+    h+='</div><div class="pact"><button type="button" class="go" data-cand="'+c.id+'">Open</button>'+(c.stage==='trial'||c.stage==='onboarding'?'<button type="button" data-view="onboard">Onboarding</button>':'');
     var tp={applied:'hire_screen',screened:'hire_trial',trial:'hire_welcome',onboarding:'',no:'hire_decline'}[c.stage];
     if(mob) h+='<a href="/messages/#/t/'+mob+'?name='+encodeURIComponent(c.name)+(tp?'&tpl='+tp:'')+'">Text</a><a href="tel:'+mob+'">Call</a>';
     return h+'</div></div>';
@@ -1894,11 +1896,12 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<div class="lsec"><h4>Application</h4>'+[['Mobile',c.phone],['Email',c.email],['Suburb',c.suburb],['Work in Australia',c.rightToWork==='yes'?'Yes':'No'],['Days',(c.days||[]).join(', ')],['Hours',c.hours?L.HOURS[c.hours]:''],['Can start',c.start?fmtDay(parse(c.start)):''],['Experience',c.exp?L.EXP[c.exp]:''],['Transport',c.transport?L.TRANSPORT[c.transport]:''],['About them',c.about]].filter(function(r){return r[1];}).map(function(r){ return '<p class="sub" style="margin:4px 0;color:var(--dark)"><b>'+r[0]+':</b> '+esc(r[1])+'</p>'; }).join('')+'</div>';
     h+='<div class="lsec"><h4>Your scorecard</h4>'+SCORE.map(function(s){ return '<div class="lrow"><span class="nm" style="font-weight:500">'+s[1]+'</span><span class="rseg">'+[1,2,3].map(function(v){ return '<button type="button" data-csc="'+s[0]+'" data-v="'+v+'" aria-pressed="'+(sc[s[0]]===v)+'"'+(sc[s[0]]===v?' style="background:var(--dark);color:#fff;border-color:var(--dark)"':'')+'>'+['','Low','OK','Strong'][v]+'</button>'; }).join('')+'</span></div>'; }).join('');
     h+='<label class="l" for="c_notes" style="margin-top:10px">Notes from the call or trial<textarea id="c_notes">'+esc(c.notes||'')+'</textarea></label><button type="button" class="btn outline" data-cnotes style="width:100%;margin-top:8px">Save notes</button></div>';
-    if(c.stage==='onboarding') h+='<div class="lsec"><h4>Onboarding</h4><label class="tick"><input type="checkbox" data-cck="contract"'+(ck.contract?' checked':'')+'>Contract signed (ticks itself when they sign in the hub)</label>'+(ck.contract?'':'<button type="button" class="btn outline" data-cmk style="width:100%;margin:4px 0 8px;min-height:42px">Create their contract link</button>')+'<label class="tick"><input type="checkbox" data-cck="form"'+(ck.form?' checked':'')+'>Onboarding form done (tax, super, bank, ID)</label><label class="tick"><input type="checkbox" data-cck="shirt"'+(ck.shirt?' checked':'')+'>Shirt given</label><p class="sub">First-day info: '+(c.teamId&&state.acks&&state.acks[c.teamId]?'read ✓':'not read yet (it\'s on their roster link)')+'</p></div>';
+    if(c.stage==='onboarding') h+='<div class="lsec"><h4>Onboarding</h4><label class="tick"><input type="checkbox" data-cck="contract"'+(ck.contract?' checked':'')+'>Contract signed (ticks itself when they sign in the hub)</label>'+(ck.contract?'':'<button type="button" class="btn outline" data-view="onboard" style="width:100%;margin:4px 0 8px;min-height:42px">Send contract and form from Onboarding</button>')+'<label class="tick"><input type="checkbox" data-cck="form"'+(ck.form?' checked':'')+'>Onboarding form done (tax, super, bank, ID)</label><label class="tick"><input type="checkbox" data-cck="shirt"'+(ck.shirt?' checked':'')+'>Shirt given</label><p class="sub">First-day info: '+(c.teamId&&state.acks&&state.acks[c.teamId]?'read ✓':'not read yet (it\'s on their roster link)')+'</p></div>';
     h+='<div class="lsec"><h4>Next step</h4>';
     if(c.stage==='applied') h+='<button type="button" class="btn yes" data-cstage="screened" style="width:100%">Phone chat done: mark screened</button>';
     if(c.stage==='applied'||c.stage==='screened') h+='<label class="l" for="c_trial" style="margin-top:10px">Trial shift date<input id="c_trial" type="date" value="'+esc(c.trialDate||'')+'"></label><button type="button" class="btn '+(c.stage==='screened'?'yes':'outline')+'" data-ctrial style="width:100%;margin-top:8px">Book trial and add to the team list</button><p class="sub">Adds them to your team so you can put the trial shift on the roster.</p>';
     if(c.stage==='trial') h+='<button type="button" class="btn yes" data-chire style="width:100%">Trial went well: offer the job</button>';
+    if(c.stage==='trial'||c.stage==='onboarding') h+='<button type="button" class="btn outline" data-view="onboard" style="width:100%;margin-top:8px">Texts, contract and form: open Onboarding</button>';
     if(c.stage==='onboarding') h+='<button type="button" class="btn yes" data-cstage="active" style="width:100%">All set up: move to On the team</button>';
     if(c.stage!=='no') h+='<button type="button" class="btn outline" data-cstage="no" style="width:100%;margin-top:8px">Not a fit</button>';
     else h+='<button type="button" class="btn outline" data-cstage="applied" style="width:100%">Move back to Applied</button><button type="button" class="btn danger" data-cdel style="width:100%;margin-top:8px">Delete application</button>';
@@ -2011,15 +2014,14 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   var TOOLS=[
     ['Send to the team',[
       ['Team roster','Shifts and confirmations. The link your team uses.','https://bardon-roster.netlify.app',1],
-      ['New starter form','Fills in their profile in Team & pay. Personal links are on each profile.','https://bardon-roster.netlify.app/start',1],
+      ['New starter form (general link)','Use Tools → Onboarding instead: it sends each person their own link.','https://bardon-roster.netlify.app/start',1],
       ['Stock room','Tap + or − as products are used. 7am email when low.','https://claude.ai/artifact/EgGkdoMHLWVzHE4cvqRRKQ',1]]],
     ['Hiring and team admin',[
-      ['Hiring steps and message templates','8-step hiring guide, which channel for what, team texts.','https://claude.ai/artifact/5CSV5aC3GxW4vS5i8QyDxY'],
-      ['Employment contracts','Send a casual their agreement. Track who\'s signed.','https://claude.ai/artifact/GiVmk2quzkiW68iyGFHA2h'],
+      ['Old hiring guide','Replaced by Tools → Onboarding. Kept for reference.','https://claude.ai/artifact/5CSV5aC3GxW4vS5i8QyDxY'],
       ['Team & pay','Profiles, pay runs, payslips, super and tax.','/team/'],
       ['Day One Team Manual','What a new starter needs on their first shift.','https://claude.ai/code/artifact/7c89d3b7-4c7c-4fe8-ba34-1f5ddb07ffda'],
       ['Team platform','Training, standards, SOPs and checklists.','https://claude.ai/artifact/S8HC3VN7JXqdqe3GNs5GmH'],
-      ['Form submissions','Netlify: bardon-onboarding and bardon-contract, then Forms.','https://app.netlify.com']]],
+      ['Old form submissions','Before the hub: Netlify → bardon-onboarding and bardon-contract → Forms.','https://app.netlify.com']]],
     ['Business',[
       ['Jobber','Quotes, jobs, scheduling and invoicing.','https://secure.getjobber.com'],
       ['Walkthrough form','On-site walkthrough for quoting.','https://claude.ai/artifact/8429NnQ1kJydxxZ2mv7E26'],
@@ -2299,12 +2301,131 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
         w2.document.close(); setTimeout(function(){ w2.print(); },400); };
     }).catch(function(e){ toast(e.message); });
   }
+  // ---------- Onboarding: new starters from trial to first shift, all by text ----------
+  // Each person gets one welcome link (/w/…) holding their contract, new starter form,
+  // shift and first-day info. Every text goes from the business number and lands in Messages.
+  var OB=null, obErr='', obReady=null;
+  var OB_STEPS=[
+    ['welcome','ob_welcome','Welcome pack','One link with their contract, form, shift and first-day info.'],
+    ['trial','ob_trial','Shift details','Day, time, address and what to wear, with a link to confirm.'],
+    ['contract','ob_contract','Employment agreement','Their contract on its own, or a nudge to sign.'],
+    ['form','ob_form','New starter form','Tax, super and bank on its own, or a nudge.'],
+    ['reminder','ob_reminder','Reminder','Something is still outstanding.'],
+    ['dayBefore','ob_daybefore','Day before','See you tomorrow, with the address and start time.']
+  ];
+  function loadOb(){ if(obReady===null) BCSms.check(key()).then(function(d){ obReady=!!(d&&d.ready); if(view==='onboard'&&!document.getElementById('scrim')) render(); });
+    return api('/api/welcome').then(function(d){ OB=d; obErr=''; if(view==='onboard'&&!document.getElementById('scrim')) render(); return d; }).catch(function(e){ obErr=e.message; if(view==='onboard') render(); }); }
+  function obMob(p){ return String(p.phone||'').replace(/[^\d+]/g,'').replace(/^\+61/,'0').replace(/^61(?=4\d{8}$)/,'0'); }
+  function obDone(st){ return [st.contract==='signed', st.form==='done', !!(st.shift&&st.shift.confirmed==='yes'), st.firstDay==='read']; }
+  function obChips(st){
+    var d=obDone(st), L=['Contract','Form','Shift confirmed','First-day info'];
+    return L.map(function(l,i){ var cls=d[i]?'ok':(i===2&&st.shift&&st.shift.confirmed==='no')?'no':'wait'; return '<span class="cs '+cls+'">'+(d[i]?'✓ ':'')+(i===2&&!st.shift?'No shift yet':i===2&&st.shift&&st.shift.confirmed==='no'?'Can\'t make shift':l)+'</span>'; }).join('');
+  }
+  function obNext(p){ var st=p.status, s=p.sent||{};
+    if(obDone(st).every(Boolean)) return 'All done. Move them to On the team';
+    if(!s.welcome) return 'Send the welcome pack';
+    if(!st.shift) return 'Put their shift on the roster';
+    if(!s.trial) return 'Text their shift details';
+    if(st.shift.confirmed==='no') return 'They can\'t make the shift. Call them';
+    var out=obDone(st).filter(function(x){return !x;}).length;
+    if(out) return out+' thing'+(out===1?'':'s')+' still to do'+(s.reminder?'':'. Send a reminder?');
+    return 'All done. Move them to On the team';
+  }
+  function obVars(p){ var st=p.status, l=st.links||{}, s=st.shift, v={first:String(p.name||'').split(/\s+/)[0], name:p.name, welcome_link:l.welcome, contract_link:l.contract, start_link:l.form, roster_link:l.roster};
+    if(s){ v.date=fmtDay(parse(s.date)); v.time=fmtTime(s.start); v.when=fmtDay(parse(s.date))+', '+fmtTime(s.start)+(s.end?' to '+fmtTime(s.end):''); v.address=[s.address,s.suburb].filter(Boolean).join(', ')||s.client; }
+    else if(p.trialDate){ v.date=fmtDay(parse(p.trialDate)); }
+    return v;
+  }
+  function renderOnboard(){
+    var h=topbar('New starter <em>onboarding</em>');
+    h+='<p class="sub" style="margin-top:-4px">New starters from trial shift to day one. Every text goes from your business number and shows in Messages.</p>';
+    if(!OB){ h+=obErr?'<div class="err">'+esc(obErr)+'</div>':'<p class="sub">Loading…</p>'; if(!obErr) loadOb(); return h; }
+    if(obReady===false) h+='<div class="warn"><strong>Mobile Message isn\'t connected.</strong> Texts will open on your own phone instead of going from the business number.</div>';
+    h+='<button type="button" class="btn primary" data-obadd style="width:100%;margin:6px 0 14px">+ Add a new starter</button>';
+    var ppl=OB.people||[];
+    if(!ppl.length) h+='<div class="pempty">Nobody onboarding. Add a new starter, or book a trial from Pipeline → Hiring.</div>';
+    ppl.forEach(function(p){ var st=p.status, n=obDone(st).filter(Boolean).length, mob=obMob(p);
+      h+='<div class="pcard"><div class="pt"><h3>'+esc(p.name)+'</h3><span class="amt">'+n+'/4</span></div><div class="pm">'+(st.shift?'First shift '+fmtDay(parse(st.shift.date))+', '+fmtTime(st.shift.start)+(st.shift.suburb?' · '+esc(st.shift.suburb):''):p.trialDate?'Trial '+fmtDay(parse(p.trialDate))+' · not on the roster yet':'No shift date yet')+'<br><b style="color:var(--dark)">Next:</b> '+esc(obNext(p))+'</div><div class="pchips">'+obChips(st)+'</div>';
+      h+='<div class="pact"><button type="button" class="go" data-obopen="'+p.id+'">Open</button>'+(mob?'<a href="/messages/#/t/'+mob+'?name='+encodeURIComponent(p.name)+'">Messages</a><a href="tel:'+mob+'">Call</a>':'')+'</div></div>'; });
+    h+='<div class="menu"><button type="button" data-act="info">'+IC.info+'Edit first-day info (everyone sees this)<span class="chev">›</span></button><a href="/messages/#/templates">'+IC.text+'Edit the onboarding texts (Hiring section)<span class="chev">›</span></a><button type="button" data-view="contracts">'+IC.text+'All employment contracts<span class="chev">›</span></button><a href="/team/">'+IC.team+'Team profiles &amp; pay<span class="chev">›</span></a></div>';
+    return h;
+  }
+  function obAddSheet(){
+    var h='<h3>Add a new <em>starter</em></h3><p class="sub" style="margin:-6px 0 10px">For someone who didn\'t apply through your careers page. Applicants are already in Pipeline → Hiring: book their trial there and they show up here.</p><form id="obAdd" class="fgrid" novalidate><label class="l">Full name<input name="name" autocomplete="off" placeholder="e.g. Sam Taylor"></label><label class="l">Mobile<input name="phone" type="tel" inputmode="tel" placeholder="04xx xxx xxx"></label><label class="l">Email <small>(optional)</small><input name="email" type="email" inputmode="email"></label><label class="l">Trial or first shift date<input name="trial" type="date"></label><div class="err" id="obAddErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Add and make their links</button></div></form>';
+    var s=openSheet(h);
+    s.querySelector('[data-close]').onclick=closeSheet;
+    s.querySelector('#obAdd').onsubmit=function(e){ e.preventDefault(); var f=e.target.elements, bt=e.target.querySelector('.primary'), er=s.querySelector('#obAddErr'); bt.disabled=true;
+      api('/api/welcome',{method:'POST',body:{action:'add',name:f.name.value,phone:f.phone.value,email:f.email.value,trialDate:f.trial.value}}).then(function(d){ cands=null; return Promise.all([loadOb(),refresh()]).then(function(){ closeSheet(); obSheet(d.id); toast('Added. Their team-list spot and links are ready.'); }); })
+        .catch(function(x){ bt.disabled=false; er.textContent=x.message; er.hidden=false; }); };
+  }
+  function obSheet(id){
+    var p=(OB&&OB.people||[]).filter(function(x){return x.id===id;})[0]; if(!p) return;
+    if(!p.welcome){ api('/api/welcome',{method:'POST',body:{action:'prep',id:id}}).then(loadOb).then(function(){ obSheet(id); }).catch(function(e){ toast(e.message); }); return; }
+    var st=p.status, l=st.links||{}, s=st.shift, sent=p.sent||{}, mob=obMob(p);
+    function sentLine(k){ return sent[k]?'Texted '+fmtDay(new Date(sent[k])):'Not texted yet'; }
+    function row(k,done,title,body,btns){ return '<div class="lsec" style="margin-top:12px;padding-top:12px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h4 style="margin:0">'+title+'</h4><span class="cs '+(done===true?'ok':done==='no'?'no':'wait')+'">'+(done===true?'✓ Done':done==='no'?'Can\'t make it':'To do')+'</span></div><p class="sub" style="margin:6px 0 8px">'+body+'</p><div class="pact" style="display:flex;flex-wrap:wrap;gap:8px">'+btns+'</div></div>'; }
+    function txtBtn(k,label){ return '<button type="button" class="btn '+(sent[k]?'outline':'yes')+'" data-obtxt="'+k+'" style="flex:1;min-height:42px">'+(label||'Text it')+'</button>'; }
+    function cp(link,label){ return link?'<button type="button" class="btn outline" data-obcopy="'+esc(link)+'" style="flex:0 0 auto;min-height:42px">'+(label||'Copy link')+'</button>':''; }
+    var h='<h3>'+esc(p.name)+'</h3><p class="sub" style="margin:-6px 0 4px">'+esc([mob,p.email].filter(Boolean).join(' · '))+'</p>';
+    h+='<div class="pchips" style="margin:8px 0 4px">'+obChips(st)+'</div>';
+    h+=row('welcome',!!sent.welcome,'1. Welcome pack',sentLine('welcome')+'. Their one page with everything: contract, form, shift and first-day info. Each step ticks itself.',txtBtn('welcome','Text welcome pack')+cp(l.welcome)+'<a class="btn outline" href="'+esc(l.welcome)+'" target="_blank" rel="noopener" style="flex:0 0 auto;min-height:42px;text-decoration:none">Preview</a>');
+    var shiftBody=s?fmtDay(parse(s.date))+', '+range(s.start,s.end)+' · '+esc([s.address,s.suburb].filter(Boolean).join(', ')||s.client)+'<br>'+(s.confirmed==='yes'?'They\'ve confirmed.':s.confirmed==='no'?'They said they can\'t make it.':'Not confirmed yet.')+' '+sentLine('trial')+'.':'Not on the roster yet. Add a job (or add them to one) for '+(p.trialDate?fmtDay(parse(p.trialDate)):'their first day')+', then text the details.';
+    h+=row('trial',s&&s.confirmed==='yes'?true:s&&s.confirmed==='no'?'no':false,'2. Shift',shiftBody,(s?txtBtn('trial','Text shift details'):'<button type="button" class="btn yes" data-obroster style="flex:1;min-height:42px">Open the roster</button>')+'<label class="l" style="flex:1 1 100%;margin:4px 0 0">Trial or first shift date<input type="date" id="obTrial" value="'+esc(p.trialDate||'')+'"></label>');
+    h+=row('contract',st.contract==='signed','3. Employment agreement',(st.contract==='signed'?'Signed '+fmtDay(new Date(st.contractSignedAt))+'.':'Waiting for them to sign. '+sentLine('contract')+'.')+' Ticks itself when they sign.',(st.contract==='signed'?'<button type="button" class="btn outline" data-obct="'+esc(p.contractId)+'" style="flex:1;min-height:42px">View signed copy</button>':txtBtn('contract','Text the contract')+cp(l.contract)));
+    h+=row('form',st.form==='done','4. New starter form',(st.form==='done'?'Sent in '+fmtDay(new Date(st.formAt))+'. Their profile is filled in. Add them to Xero payroll.':'Tax, super, bank, ID and emergency contact. '+sentLine('form')+'.'),(st.form==='done'?'<a class="btn outline" href="/team/#/p/'+esc(p.teamId)+'" style="flex:1;min-height:42px;text-decoration:none">Open their profile</a>':txtBtn('form','Text the form')+cp(l.form)));
+    h+=row('firstday',st.firstDay==='read','5. First-day info',st.firstDay==='read'?'They\'ve read it.':'On their welcome page and the roster. They tap Got it once read.','<button type="button" class="btn outline" data-act="info" style="flex:1;min-height:42px">Edit first-day info</button>');
+    h+='<div class="lsec"><h4>Nudges</h4><div style="display:flex;gap:8px;flex-wrap:wrap">'+txtBtn('reminder','Reminder: finish onboarding')+(s?txtBtn('dayBefore','Day before: see you tomorrow'):'')+'</div><p class="sub" style="margin-top:8px">'+(sent.reminder?'Reminder '+sentLine('reminder').toLowerCase()+'. ':'')+(sent.dayBefore?'Day-before '+sentLine('dayBefore').toLowerCase()+'.':'')+'</p></div>';
+    h+='<div class="lsec"><h4>Finish</h4>'+(obDone(st).every(Boolean)?'<button type="button" class="btn yes" data-obstage="active" style="width:100%">All set up: move to On the team</button>':'<button type="button" class="btn outline" data-obstage="active" style="width:100%">Move to On the team anyway</button>')+'<button type="button" class="btn outline" data-obstage="no" style="width:100%;margin-top:8px">Not going ahead</button>'+(mob?'<a class="btn outline" href="/messages/#/t/'+mob+'?name='+encodeURIComponent(p.name)+'" style="width:100%;margin-top:8px;text-decoration:none">Open their conversation</a>':'')+'</div>';
+    h+='<div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Close</button></div>';
+    var sh=openSheet(h);
+    sh.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return;
+      if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
+      if(b.dataset.obtxt){ obCompose(p,b.dataset.obtxt); return; }
+      if(b.dataset.obcopy){ var v=b.dataset.obcopy; (navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(function(){ toast('Link copied'); }).catch(function(){ window.prompt('Copy this link',v); }); return; }
+      if(b.dataset.obct){ ctView(b.dataset.obct); return; }
+      if(b.hasAttribute('data-obroster')){ closeSheet(); setView('roster'); toast('Add their shift, then come back to Tools → Onboarding'); return; }
+      if(b.dataset.obstage){ var stg=b.dataset.obstage; if(stg==='no'&&!b.dataset.sure){ b.dataset.sure='1'; b.textContent='Tap again: not going ahead'; return; } b.disabled=true;
+        api('/api/careers',{method:'POST',body:{action:'update',id:p.id,stage:stg}}).then(function(){ cands=null; closeSheet(); return loadOb(); }).then(function(){ toast(stg==='active'?p.name.split(' ')[0]+' is on the team':'Moved to Not a fit'); }).catch(function(x){ b.disabled=false; toast(x.message); }); return; }
+    });
+    var td=sh.querySelector('#obTrial'); if(td) td.addEventListener('change',function(){ api('/api/welcome',{method:'POST',body:{action:'trial',id:p.id,trialDate:td.value}}).then(function(){ p.trialDate=td.value; toast('Date saved'); loadOb(); }).catch(function(x){ toast(x.message); }); });
+  }
+  function obCompose(p,step){
+    var def=OB_STEPS.filter(function(x){return x[0]===step;})[0], mob=obMob(p);
+    if(!mob){ toast('Add their mobile first (Tools → Manage team)'); return; }
+    BCTpl.load(key()).then(function(){
+      var tp=BCTpl.get(def[1]); if(!tp){ toast('That template is missing. Refresh the page.'); return; }
+      var f=BCTpl.fill(tp.text,obVars(p));
+      var h='<h3>'+esc(def[2])+' <em>text</em></h3><p class="sub" style="margin:-6px 0 8px">To '+esc(p.name.split(' ')[0])+', '+esc(mob)+(obReady?' · from '+esc(BCSms.from||'your business number'):' · opens on your phone')+'</p>';
+      if(f.missing.length) h+='<div class="warn" style="margin:0 0 10px">Fill in before sending: '+f.missing.map(function(m){return '{'+esc(m)+'}';}).join(', ')+'</div>';
+      h+='<label class="l" for="obMsg">Message<textarea id="obMsg" style="min-height:230px">'+esc(f.text)+'</textarea></label><p class="sub" style="font-size:12.5px">Edit it here for just this text. To change it for everyone: Tools → Text templates → Hiring.</p><div class="err" id="obMsgErr" hidden></div>';
+      h+='<div class="actions"><button type="button" class="btn outline" data-back>Back</button><button type="button" class="btn primary" data-send>'+(obReady?'Send text':'Open in Messages')+'</button></div>';
+      var s=openSheet(h);
+      s.querySelector('[data-back]').onclick=function(){ obSheet(p.id); };
+      s.querySelector('[data-send]').onclick=function(){ var bt=this, text=s.querySelector('#obMsg').value.trim(), er=s.querySelector('#obMsgErr');
+        if(!text) return; if(/\{\w+\??\}/.test(text)){ er.textContent='There\'s still a {blank} in the message. Fill it in or delete it.'; er.hidden=false; return; }
+        function logged(){ return api('/api/welcome',{method:'POST',body:{action:'sent',id:p.id,step:step}}).then(loadOb).then(function(){ obSheet(p.id); }); }
+        if(!obReady){ location.href=smsHref(mob,text); setTimeout(logged,800); return; }
+        bt.disabled=true; bt.textContent='Sending…';
+        api('/api/messages',{method:'POST',body:{action:'send',to:mob,text:text,name:p.name}}).then(function(){ toast('Sent to '+p.name.split(' ')[0]); return logged(); })
+          .catch(function(x){ bt.disabled=false; bt.textContent='Send text'; er.textContent=x.message; er.hidden=false; });
+      };
+    }).catch(function(e){ toast(e.message); });
+  }
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-obopen],[data-obadd]'); if(b){ if(b.hasAttribute('data-obadd')) obAddSheet(); else obSheet(b.dataset.obopen); return; }
+    // Buttons inside a sheet sit outside #app, so the main handler doesn't see them.
+    var inSheet=e.target.closest('#scrim'); if(!inSheet) return;
+    var v=e.target.closest('[data-view="onboard"]'); if(v){ closeSheet(); OB=null; setView('onboard'); return; }
+    var i=e.target.closest('[data-act="info"]'); if(i){ infoSheet(); return; }
+  });
   function renderMore(){
     var h=topbar('Tools');
     function it(act,icon,label){ return '<button type="button" data-act="'+act+'">'+icon+label+'<span class="chev">›</span></button>'; }
     h+='<div class="sect"><span>Clients</span></div><div class="menu" style="margin-top:0"><button type="button" data-view="agents">'+IC.agents+'Real estate agents'+((state.requests||[]).length?' ('+state.requests.length+' requests)':'')+'<span class="chev">›</span></button><a href="/messages/">'+IC.chat+'Messages'+(state.msgUnread?' ('+state.msgUnread+' new)':'')+'<span class="chev">›</span></a><a href="/messages/#/templates">'+IC.text+'Text templates<span class="chev">›</span></a><a href="/engage/">'+IC.eye+'Client engagement<span class="chev">›</span></a><a href="/demo-photos/">'+IC.eye+'Website &amp; demo photos<span class="chev">›</span></a></div>';
     h+='<div class="sect"><span>Money</span></div><div class="menu" style="margin-top:0"><a href="/money/#/requests">'+IC.text+'Quote requests<span class="chev">›</span></a><a href="/money/">'+IC.text+'Quotes &amp; invoices<span class="chev">›</span></a><a href="/money/#/edit/new-quote">'+IC.plus+'New quote<span class="chev">›</span></a><a href="/money/#/edit/new-invoice">'+IC.plus+'New invoice<span class="chev">›</span></a><a href="/books/">'+IC.grid+'Profit &amp; expenses<span class="chev">›</span></a><a href="/pricing/">'+IC.grid+'Price calculator<span class="chev">›</span></a><a href="/books/#/add">'+IC.plus+'Log an expense<span class="chev">›</span></a><a href="/books/#/jobber">'+IC.roster+'Jobber sync<span class="chev">›</span></a></div>';
     var supN=allSupplies().length;
+    var obN=OB?(OB.people||[]).length:0;
+    h+='<div class="sect"><span>Team</span></div><div class="menu" style="margin-top:0"><button type="button" data-view="onboard">'+IC.team+'Onboarding new starters'+(obN?' ('+obN+')':'')+'<span class="chev">›</span></button><a href="/?v=pipeline#hiring">'+IC.funnel+'Hiring: applicants and trials<span class="chev">›</span></a></div>';
     h+='<div class="sect"><span>Roster</span></div><div class="menu" style="margin-top:0">'+it('confirms',IC.tick,'Shift confirmations')+'<button type="button" data-view="regulars">'+IC.roster+'Regular clients<span class="chev">›</span></button><button type="button" data-view="contracts">'+IC.text+'Employment contracts<span class="chev">›</span></button>'+it('restock',IC.tick,'Restock list'+(supN?' ('+supN+')':''))+'<a href="/team/">'+IC.team+'Team profiles &amp; pay runs<span class="chev">›</span></a><a href="/team/#/run">'+IC.plus+'Run pay<span class="chev">›</span></a><button type="button" data-view="wages">'+IC.grid+'Wage estimate<span class="chev">›</span></button>'+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'</div>';
     h+='<div class="sect"><span>Notifications</span></div><div class="menu" style="margin-top:0"><button type="button" data-view="activity">'+IC.bell+'Activity'+(state.actUnread?' ('+state.actUnread+' new)':'')+'<span class="chev">›</span></button>'+it('notify',IC.bell,'Phone notifications'+(state.notifyOn?'':' (off)'))+'</div>';
     TOOLS.forEach(function(g){ h+='<div class="sect"><span>'+esc(g[0])+'</span></div><div class="tl2" style="margin-top:0">'+g[1].map(toolRow).join('')+'</div>'; });

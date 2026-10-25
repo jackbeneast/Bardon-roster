@@ -55,6 +55,12 @@
   to = "/start/index.html"
   status = 200
 
+# New starter's personal onboarding page: /w/<token>
+[[redirects]]
+  from = "/w/*"
+  to = "/welcome/index.html"
+  status = 200
+
 # Employee pay link /pay/<token>: their own payslips
 [[redirects]]
   from = "/pay/*"

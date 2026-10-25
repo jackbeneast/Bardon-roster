@@ -24,11 +24,11 @@ async function loadAll(s) {
 const summary = (c) => { const { signed, ...rest } = c; return { ...rest, link: linkOf(c), signedName: signed?.full_name || "", hasSig: !!signed }; };
 
 // Tick "Contract signed" on the matching hiring card, by email or name.
-async function tickCandidate(s, email, name) {
+async function tickCandidate(s, email, name, candId) {
   const keys = await s.list("cand/"), e = (email || "").toLowerCase(), n = (name || "").toLowerCase().replace(/\s+/g, " ");
   for (const k of keys) {
     const c = await s.get(k); if (!c) continue;
-    if ((e && c.email === e) || (n && c.name.toLowerCase().replace(/\s+/g, " ") === n)) {
+    if ((candId && c.id === candId) || (e && c.email === e) || (n && c.name.toLowerCase().replace(/\s+/g, " ") === n)) {
       c.checks = { ...(c.checks || {}), contract: true }; await s.set(k, c);
     }
   }
@@ -73,7 +73,7 @@ export default async (req) => {
     c.status = "signed"; c.signedAt = new Date().toISOString(); c.signed = v;
     await s.setBin(`ctsig/${c.id}`, png);
     await s.set(`ct/${c.id}`, c);
-    await tickCandidate(s, v.email, v.full_name);
+    await tickCandidate(s, v.email, v.full_name, c.candId);
     await notify(s, { type: "contract", title: `${v.full_name} signed their contract`, body: `Starts ${v.start_date}. Signed copy is in Tools → Employment contracts.`, tags: "memo", priority: 4, url: "/?v=contracts" });
     return json({ ok: true });
   }

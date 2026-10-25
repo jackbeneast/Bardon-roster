@@ -251,7 +251,7 @@ input[readonly]{background:var(--cream)}
     <div class="tick">✓</div>
     <h2>Signed — thank you</h2>
     <p>Your agreement has been sent to Bardon Clean. Jack will be in touch about your first shift.</p>
-    <div class="actions" style="margin-top:14px"><button class="btn outline" type="button" id="saveCopy">Save a copy (PDF)</button></div>
+    <div class="actions" style="margin-top:14px"><a class="btn primary" id="backW" href="#" style="display:none;margin-bottom:10px">Back to your checklist</a><button class="btn outline" type="button" id="saveCopy">Save a copy (PDF)</button></div>
   </section>
 
   <p class="foot noprint">Questions about this agreement? Call Jack on 0406 216 212 before signing.</p>
@@ -349,7 +349,7 @@ input[readonly]{background:var(--cream)}
     fetch('/api/contracts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)})
       .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); }); })
       .then(function(){
-        $('signForm').hidden = true; $('done').hidden = false;
+        $('signForm').hidden = true; $('done').hidden = false; try { var w = sessionStorage.getItem('bc_welcome'); if (w && /^\/w\/[a-f0-9]+$/.test(w)) { $('backW').href = w; $('backW').style.display = ''; } } catch (e) {}
         document.querySelector('.steps').hidden = true;
         $('done').scrollIntoView({behavior:'smooth',block:'start'});
       })

@@ -57,6 +57,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible,.opt:focus-within{o
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function pad(n){ return (n<10?'0':'')+n; }
   function today(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function backW(){ try{ var w=sessionStorage.getItem('bc_welcome'); if(w&&/^\/w\/[a-f0-9]+$/.test(w)) return '<p style="margin-top:20px"><a class="btn primary" href="'+w+'" style="display:inline-flex;align-items:center;text-decoration:none">Back to your checklist</a></p>'; }catch(e){} return ''; }
   function digits(v){ return String(v||'').replace(/\D/g,''); }
   function tfnOk(v){ var d=digits(v), w=d.length===9?[1,4,3,7,5,8,6,9,10]:d.length===8?[10,7,8,4,6,3,5,1]:null; if(!w) return false; var s=0; for(var i=0;i<d.length;i++) s+=+d[i]*w[i]; return s%11===0; }
   F.signDate=today();
@@ -117,7 +118,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible,.opt:focus-within{o
     sending=true; render();
     fetch('/api/onboard',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({t:t,form:F,idPhoto:photo})})
       .then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'That didn\'t send. Try again.'); return d; }); })
-      .then(function(){ app.innerHTML='<div class="wm">'+LOGO+'Bardon Clean</div><div class="center"><h1>Thanks, <em>'+esc(F.preferred||F.first)+'</em></h1><p>Your details are with Jack. He\'ll be in touch about your first shift.</p></div>'; window.scrollTo(0,0); })
+      .then(function(){ app.innerHTML='<div class="wm">'+LOGO+'Bardon Clean</div><div class="center"><h1>Thanks, <em>'+esc(F.preferred||F.first)+'</em></h1><p>Your details are with Jack. He\'ll be in touch about your first shift.</p>'+backW()+'</div>'; window.scrollTo(0,0); })
       .catch(function(x){ sending=false; err=x.message; render(); });
   }
   function shrink(file){
