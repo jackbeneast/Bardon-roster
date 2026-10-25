@@ -165,8 +165,17 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
     {k:'bond',t:'Bond / end-of-lease clean',d:'A thorough exit clean to your agent\'s checklist.',date:'When does the lease end or the final inspection happen?'},
     {k:'deep',t:'Deep clean',d:'A full reset for a home that needs more than a tidy.',date:'When would you like it done?'},
     {k:'movein',t:'Move-in clean',d:'A clean slate before your things go in.',date:'When are you moving in?'},
-    {k:'other',t:'Something else',d:'Tell us what you need and Jack will take a look.',date:'When would you like it done?'}
+    {k:'other',t:'Something else',d:'Tell us what you need and Jack will take a look.',date:'When would you like it done?'},
+    {k:'commercial',t:'Commercial clean',d:'Clinics, practices and childcare centres.',date:'When would you like to start?'}
   ];
+  // Commercial
+  var IND=[['medical','Medical or GP clinic'],['allied','Allied health (physio, dental, specialist)'],['childcare','Childcare or early learning'],['other','Other']];
+  var SITES=[['1','1 site'],['2-3','2–3 sites'],['4+','4 or more']];
+  var CSIZE=[['s','Under 150 m²'],['m','150–400 m²'],['l','Over 400 m²'],['unsure','Not sure']];
+  var CFREQ=[['daily','Daily'],['several','A few times a week'],['weekly','Weekly'],['fortnightly','Fortnightly'],['unsure','Not sure yet']];
+  var WINDOW=[['before','Before opening'],['after','After close'],['weekend','Weekends'],['any','Flexible']];
+  var CURRENT=[['none','No cleaner yet'],['switch','Replacing a current cleaner'],['oneoff','A one-off clean']];
+  var CACCESS=[['onsite','Someone on site'],['keys','Keys or alarm code'],['tbc','Not sure yet']];
   var WHO=[['owner','Owner or vendor'],['tenant','Tenant'],['agent','Real estate agent or property manager'],['other','Other']];
   var PTYPE=[['house','House'],['townhouse','Townhouse'],['unit','Apartment or unit']];
   var FURN=[['empty','Empty'],['furnished','Furnished'],['partly','Partly furnished']];
@@ -186,12 +195,13 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
     deep:['Kitchen','Each bathroom','The areas that bother you most'],
     movein:['Kitchen','Each bathroom','Floors'],
     regular:['Kitchen','Bathrooms','Main living area'],
+    commercial:['Reception and waiting area','Treatment or consult rooms','Bathrooms','Kitchen or staff room'],
     other:['Whatever you\'d like cleaned']
   };
 
   // ---------- state ----------
   var KEY='bc_quote_draft_v1', t0=Date.now();
-  var A={service:'',who:'',agency:'',placeId:'',address:'',suburb:'',postcode:'',ptype:'',beds:3,baths:2,storeys:1,furnished:'',condition:'',extras:[],freq:'',days:[],date:'',flex:'',time:'',access:'',name:'',phone:'',email:'',contact:'text',heard:'',notes:''};
+  var A={service:'',who:'',agency:'',placeId:'',address:'',suburb:'',postcode:'',ptype:'',beds:3,baths:2,storeys:1,furnished:'',condition:'',extras:[],freq:'',days:[],date:'',flex:'',time:'',access:'',name:'',phone:'',email:'',contact:'text',heard:'',notes:'',business:'',role:'',industry:'',sites:'1',csize:'',cfreq:'',window:'',current:''};
   var photos=[]; // {data, url}
   var step=0, done=false, sending=false, err='', resumeOffer=false, editing=false;
   function lsGet(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ return null; } }
@@ -201,19 +211,21 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
   var params=new URLSearchParams(location.search);
   var src=params.get('src')||params.get('utm_source')||(document.referrer&&document.referrer.indexOf(location.host)<0?document.referrer.replace(/^https?:\/\//,'').split('/')[0]:'');
   if(params.get('service')&&SERVICES.some(function(s){return s.k===params.get('service');})&&!resumeOffer) A.service=params.get('service');
+  if(A.service==='commercial') step=1; // straight to the business details
 
   function svc(){ return SERVICES.filter(function(s){return s.k===A.service;})[0]||SERVICES.filter(function(s){return s.k==='other';})[0]; }
   var isReg=function(){ return A.service==='regular'; };
+  var isCom=function(){ return A.service==='commercial'; };
   var needsState=function(){ return ['presale','bond','movein','deep'].indexOf(A.service)>=0; };
 
   // Steps adapt to the service.
   var STEPS=[
     {id:'service', ok:function(){ return !!A.service || 'Choose the kind of clean you need.'; }},
-    {id:'property', ok:function(){ if(!A.suburb.trim()) return 'Add the suburb.'; if(A.who==='agent'&&!A.agency.trim()) return 'Add your agency name.'; return true; }},
+    {id:'property', ok:function(){ if(isCom()){ if(A.business.trim().length<2) return 'Add the business name.'; if(!A.industry) return 'Choose the kind of business.'; } if(!A.suburb.trim()) return 'Add the suburb.'; if(A.who==='agent'&&!A.agency.trim()) return 'Add your agency name.'; return true; }},
     {id:'details', ok:function(){ if(isReg()&&!A.freq) return 'Choose how often.'; return true; }},
     {id:'timing', ok:function(){ return true; }},
     {id:'photos', ok:function(){ return true; }},
-    {id:'contact', ok:function(){ if(A.name.trim().length<2) return 'Add your name.'; if(A.phone.replace(/\D/g,'').length<8) return 'Add a phone number so Jack can reach you.'; if(A.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(A.email.trim())) return 'That email doesn\'t look right.'; return true; }},
+    {id:'contact', ok:function(){ if(A.name.trim().length<2) return 'Add your name.'; if(A.phone.replace(/\D/g,'').length<8) return 'Add a phone number so Jack can reach you.'; if(isCom()&&!A.email.trim()) return 'Add an email so Jack can send your proposal.'; if(A.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(A.email.trim())) return 'That email doesn\'t look right.'; return true; }},
     {id:'review', ok:function(){ return true; }}
   ];
 
@@ -241,7 +253,7 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
     bond:['Very professional, reliable and went above and beyond, delivering a bond clean that even impressed a very picky agent.','Marina Jeffery · Bond clean · Google review'],
     deep:['They went beyond a surface clean and paid attention to all the little details — it really shows.','Rhianna Brandis · Deep clean · Google review']
   };
-  function review(){ var r=REVIEWS[A.service]||REVIEWS.presale; return '<figure class="quote"><p class="st" aria-label="5 stars">★★★★★</p><blockquote>“'+esc(r[0])+'”</blockquote><cite>'+esc(r[1])+'</cite></figure>'; }
+  function review(){ if(isCom()) return ''; var r=REVIEWS[A.service]||REVIEWS.presale; return '<figure class="quote"><p class="st" aria-label="5 stars">★★★★★</p><blockquote>“'+esc(r[0])+'”</blockquote><cite>'+esc(r[1])+'</cite></figure>'; }
   function trust(){ return '<div class="trust">'+
     '<div>'+ico('user')+'<span><b>Quoted personally by Jack,</b> the owner. Not a call centre.</span></div>'+
     '<div>'+ico('doc')+'<span><b>A written quote with the full scope</b> before you commit. No obligation.</span></div>'+
@@ -259,20 +271,35 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
     if(s==='service'){
       h+='<h1>Request a <em>quote</em></h1><p class="lead">Tell us about the property and Jack, owner of Bardon Clean, will prepare your quote.</p>';
       if(resumeOffer) h+='<div class="resume"><span>You started a request earlier.</span><button type="button" data-resume>Pick up where you left off</button></div>';
-      h+='<fieldset class="q"><legend>What do you need?</legend><div class="cards">'+SERVICES.map(function(o){ return '<label class="card"><input type="radio" name="service" value="'+o.k+'"'+(A.service===o.k?' checked':'')+'><b>'+esc(o.t)+'</b><span>'+esc(o.d)+'</span></label>'; }).join('')+'</div></fieldset>';
-      h+='<p class="hint" style="margin-top:-10px">Business or clinic? <a href="mailto:hello@bardonclean.au?subject=Commercial%20cleaning%20enquiry">Email us about commercial cleaning</a>.</p>';
+      h+='<fieldset class="q"><legend>What do you need?</legend><div class="cards">'+SERVICES.filter(function(o){ return o.k!=='commercial'||isCom(); }).map(function(o){ return '<label class="card"><input type="radio" name="service" value="'+o.k+'"'+(A.service===o.k?' checked':'')+'><b>'+esc(o.t)+'</b><span>'+esc(o.d)+'</span></label>'; }).join('')+'</div></fieldset>';
+      h+='<p class="hint" style="margin-top:-10px">Business or clinic? <a href="?service=commercial">Request a commercial quote</a>.</p>';
       h+=review();
       h+=trust();
     }
-    if(s==='property'){
+    if(s==='property'&&isCom()){
+      h+='<h1>Your <em>business</em></h1><p class="lead">Commercial clean. Tell us who you are and where the site is.</p>';
+      h+=field('business','Business name',{ac:'organization',ph:'e.g. Bardon Family Practice'});
+      h+='<fieldset class="q"><legend>Kind of business</legend>'+radios('industry',IND)+'</fieldset>';
+    }
+    if(s==='property'&&!isCom()){
       h+='<h1>The <em>property</em></h1><p class="lead">'+esc(svc().t)+'. Where is it, and who\'s booking?</p>';
-      h+='<div class="ac"><label class="field" for="f_address"><span class="lbl" style="margin:0">Property address</span><input id="f_address" name="address" value="'+esc(A.address)+'" autocomplete="'+(LOOK.off?'address-line1':'off')+'" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="addrList" placeholder="Start typing, e.g. 12 Fernberg Rd"></label><div id="addrBox"></div>'+(A.placeId?'<p class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Address found</p>':'')+'</div>';
+    }
+    if(s==='property'){
+      h+='<div class="ac"><label class="field" for="f_address"><span class="lbl" style="margin:0">'+(isCom()?'Site address':'Property address')+'</span><input id="f_address" name="address" value="'+esc(A.address)+'" autocomplete="'+(LOOK.off?'address-line1':'off')+'" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="addrList" placeholder="Start typing, e.g. 12 Fernberg Rd"></label><div id="addrBox"></div>'+(A.placeId?'<p class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Address found</p>':'')+'</div>';
       h+='<div class="row2">'+field('suburb','Suburb',{ac:'address-level2',ph:'e.g. Paddington'})+field('postcode','Postcode',{im:'numeric',ac:'postal-code',ph:'4064',max:4})+'</div>';
-      h+='<fieldset class="q"><legend>Who\'s booking?</legend>'+radios('who',WHO)+'</fieldset>';
-      if(A.who==='agent') h+=field('agency','Agency',{ac:'organization',ph:'e.g. Harcourts, The Gap'});
+      if(isCom()) h+='<fieldset class="q"><legend>How many sites?</legend>'+radios('sites',SITES)+'</fieldset>';
+      if(!isCom()) h+='<fieldset class="q"><legend>Who\'s booking?</legend>'+radios('who',WHO)+'</fieldset>';
+      if(!isCom()&&A.who==='agent') h+=field('agency','Agency',{ac:'organization',ph:'e.g. Harcourts, The Gap'});
       h+=review();
     }
-    if(s==='details'){
+    if(s==='details'&&isCom()){
+      h+='<h1>About the <em>space</em></h1><p class="lead">Rough answers are fine. Jack sees every site in person before he quotes.</p>';
+      h+='<fieldset class="q"><legend>Approximate size</legend>'+radios('csize',CSIZE,'wide')+'</fieldset>';
+      h+='<fieldset class="q"><legend>How often?</legend>'+radios('cfreq',CFREQ)+'</fieldset>';
+      h+='<fieldset class="q"><legend>When can we clean?</legend>'+radios('window',WINDOW)+'</fieldset>';
+      h+='<fieldset class="q"><legend>Current arrangement <small>(optional)</small></legend>'+radios('current',CURRENT)+'</fieldset>';
+    }
+    if(s==='details'&&!isCom()){
       h+='<h1>About the <em>home</em></h1><p class="lead">Size and condition are what change a quote most.</p>';
       h+='<fieldset class="q"><legend>Type of home</legend>'+radios('ptype',PTYPE)+'</fieldset>';
       h+='<fieldset class="q"><legend>Size</legend><div class="steppers">'+stepper('beds','Bedrooms',LIM.beds[0],LIM.beds[1],1)+stepper('baths','Bathrooms',LIM.baths[0],LIM.baths[1],.5)+stepper('storeys','Storeys',LIM.storeys[0],LIM.storeys[1],1)+'</div><p class="hint" style="margin:8px 0 0">Count a powder room or separate toilet as half a bathroom.</p></fieldset>';
@@ -287,25 +314,26 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
       h+='<fieldset class="q"><legend>Anything extra? <small>(optional)</small></legend>'+checks('extras',isReg()?EXTRAS.filter(function(e){return EXTRAS_REG.indexOf(e[0])>=0;}):EXTRAS)+'</fieldset>';
     }
     if(s==='timing'){
-      h+='<h1>Timing and <em>access</em></h1><p class="lead">Jack will confirm a date and time with you when he sends the quote.</p>';
+      h+='<h1>Timing and <em>access</em></h1><p class="lead">'+(isCom()?'Jack will confirm a start date with you once the proposal is agreed.':'Jack will confirm a date and time with you when he sends the quote.')+'</p>';
       h+='<label class="field" for="f_date"><span class="lbl" style="margin:0">'+esc(svc().date)+' <small>(optional)</small></span><input id="f_date" name="date" type="date" min="'+today()+'" value="'+esc(A.date)+'"></label>';
       h+='<fieldset class="q"><legend>How fixed is that date?</legend>'+radios('flex',FLEX)+'</fieldset>';
-      h+='<fieldset class="q"><legend>Time of day</legend>'+radios('time',TIME)+'</fieldset>';
-      h+='<fieldset class="q"><legend>Access on the day</legend>'+radios('access',ACCESS)+'</fieldset>';
+      if(!isCom()) h+='<fieldset class="q"><legend>Time of day</legend>'+radios('time',TIME)+'</fieldset>';
+      h+='<fieldset class="q"><legend>'+(isCom()?'Access to the site':'Access on the day')+'</legend>'+radios('access',isCom()?CACCESS:ACCESS)+'</fieldset>';
     }
     if(s==='photos'){
-      h+='<h1>A few <em>photos</em></h1><p class="lead">Optional, but they help Jack quote accurately without needing a visit. Phone photos are fine.</p>';
+      h+='<h1>A few <em>photos</em></h1><p class="lead">'+(isCom()?'Optional, but they help Jack prepare for the walkthrough. Phone photos are fine.':'Optional, but they help Jack quote accurately without needing a visit. Phone photos are fine.')+'</p>';
       h+='<label class="drop" for="ph">'+(photos.length?'Add more photos':'Add photos')+'<small>Up to 8. They\'re only used for your quote.</small><input id="ph" type="file" accept="image/*" multiple hidden></label>';
       if(photos.length) h+='<div class="thumbs">'+photos.map(function(p,i){ return '<div><img src="'+p.url+'" alt="Photo '+(i+1)+'"><button type="button" data-rmph="'+i+'" aria-label="Remove photo '+(i+1)+'">×</button></div>'; }).join('')+'</div>';
       h+='<p class="lbl" style="margin:18px 0 6px">Most useful</p><ul class="tips">'+(PHOTO_TIPS[A.service]||PHOTO_TIPS.other).map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul>';
     }
     if(s==='contact'){
-      h+='<h1>Your <em>details</em></h1><p class="lead">So Jack can send your quote and ask anything he needs.</p>';
+      h+='<h1>Your <em>details</em></h1><p class="lead">'+(isCom()?'So Jack can arrange a walkthrough and send your proposal.':'So Jack can send your quote and ask anything he needs.')+'</p>';
       h+=field('name','Your name',{ac:'name',ph:'First and last name'});
       h+=field('phone','Mobile',{type:'tel',im:'tel',ac:'tel',ph:'04xx xxx xxx'});
-      h+=field('email','Email <small>(optional)</small>',{type:'email',im:'email',ac:'email',ph:'name@email.com'});
+      if(isCom()) h+=field('role','Your role <small>(optional)</small>',{ac:'organization-title',ph:'e.g. Practice manager, centre director'});
+      h+=field('email',isCom()?'Email':'Email <small>(optional)</small>',{type:'email',im:'email',ac:'email',ph:'name@email.com'});
       h+='<fieldset class="q"><legend>Best way to reach you</legend>'+radios('contact',CONTACT)+'</fieldset>';
-      h+=field('notes','Anything else Jack should know? <small>(optional)</small>',{area:true,ph:'Pets, parking, problem areas, special requests…'});
+      h+=field('notes','Anything else Jack should know? <small>(optional)</small>',{area:true,ph:isCom()?'Rooms, problem areas, products or compliance needs, parking…':'Pets, parking, problem areas, special requests…'});
       h+='<label class="field" for="f_heard"><span class="lbl" style="margin:0">How did you find us? <small>(optional)</small></span><select id="f_heard" name="heard"><option value="">Choose…</option>'+HEARD.map(function(o){return '<option value="'+o[0]+'"'+(A.heard===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>';
     }
     if(s==='review'){
@@ -325,6 +353,15 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
   function reviewHtml(){
     function sec(title,go,rows){ rows=rows.filter(function(r){return r[1];}); return '<div class="rev"><h3><span>'+title+'</span><button type="button" data-goto="'+go+'">Edit</button></h3><dl>'+rows.map(function(r){ return '<div><dt>'+esc(r[0])+'</dt><dd>'+esc(r[1])+'</dd></div>'; }).join('')+'</dl></div>'; }
     var h='';
+    if(isCom()){
+      h+=sec('The clean',0,[['Service',svc().t]]);
+      h+=sec('Business',1,[['Business',A.business],['Kind',label(IND,A.industry)],['Address',[A.address,A.suburb,A.postcode].filter(Boolean).join(', ')],['Sites',label(SITES,A.sites)]]);
+      h+=sec('The space',2,[['Size',label(CSIZE,A.csize)],['How often',label(CFREQ,A.cfreq)],['When',label(WINDOW,A.window)],['Current',label(CURRENT,A.current)]]);
+      h+=sec('Timing',3,[['Start',A.date?fdate(A.date)+(A.flex?' · '+label(FLEX,A.flex).toLowerCase():''):'Not set'],['Access',label(CACCESS,A.access)]]);
+      h+=sec('Photos',4,[['Photos',photos.length?photos.length+' added':'None']]);
+      h+=sec('Your details',5,[['Name',A.name],['Role',A.role],['Mobile',A.phone],['Email',A.email],['Contact by',label(CONTACT,A.contact)],['Notes',A.notes]]);
+      return h;
+    }
     h+=sec('The clean',0,[['Service',svc().t]]);
     h+=sec('Property',1,[['Address',[A.address,A.suburb,A.postcode].filter(Boolean).join(', ')],['Booking as',label(WHO,A.who)+(A.who==='agent'&&A.agency?', '+A.agency:'')]]);
     h+=sec('Home',2,[['Type',label(PTYPE,A.ptype)],['Size',A.beds+(A.beds>=6?'+':'')+' bed, '+A.baths+(A.baths>=5?'+':'')+' bath, '+A.storeys+' storey'+(A.storeys>1?'s':'')],['How often',isReg()?label(FREQ,A.freq):''],['Days',isReg()?A.days.join(', '):''],['Furnished',needsState()?label(FURN,A.furnished):''],['Condition',needsState()?label(COND,A.condition):''],['Extras',A.extras.map(function(x){return label(EXTRAS,x);}).join(', ')||'None']]);
@@ -337,8 +374,8 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
     prog.style.width='100%'; bar.hidden=true;
     var first=(A.name.trim().split(/\s+/)[0]||'');
     app.innerHTML='<div class="done fade"><div class="tick">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>'+
-      '<h1>Thanks'+(first?', '+esc(first):'')+'. <em>Request received.</em></h1><p class="lead">Jack has your details for a '+esc(svc().t.toLowerCase())+(A.suburb?' in '+esc(A.suburb):'')+'.</p>'+
-      '<ol class="next"><li><b>Jack reviews your request</b>He\'ll text you if he needs anything else to quote accurately.</li><li><b>You get a written quote</b>With the full scope and price, by '+(A.contact==='email'&&A.email?'email':'text')+'.</li><li><b>Accept online to book</b>A 50% deposit locks in your date. The balance is due on the day.</li></ol>'+
+      '<h1>Thanks'+(first?', '+esc(first):'')+'. <em>Request received.</em></h1><p class="lead">Jack has your details for a '+esc(svc().t.toLowerCase())+(isCom()&&A.business?' for '+esc(A.business):'')+(A.suburb?' in '+esc(A.suburb):'')+'.</p>'+
+      (isCom()?'<ol class="next"><li><b>Jack reviews your enquiry</b>He\'ll be in touch to arrange a time to see the site.</li><li><b>Site walkthrough</b>Jack sees the space in person before quoting. No blind pricing.</li><li><b>A fixed-price proposal</b>Scoped to your site, with a set schedule and one point of contact.</li></ol>':'<ol class="next"><li><b>Jack reviews your request</b>He\'ll text you if he needs anything else to quote accurately.</li><li><b>You get a written quote</b>With the full scope and price, by '+(A.contact==='email'&&A.email?'email':'text')+'.</li><li><b>Accept online to book</b>A 50% deposit locks in your date. The balance is due on the day.</li></ol>')+
       '<div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn dark" href="sms:0468193772">Text Jack</a><a class="btn outline" href="https://bardonclean.au">Back to the website</a></div></div>';
     window.scrollTo(0,0);
   }

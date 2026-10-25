@@ -8,6 +8,7 @@
 import { store, json, checkAdmin } from "../../lib/core.mjs";
 import { cleanRequest, cleanManual, loadRequests, lines, rid, pid, ipKey, SERVICES, EXTRAS } from "../../lib/requests.mjs";
 import { notify, firstName } from "../../lib/notify.mjs";
+const CFREQ_L = (r) => (lines(r).find((x) => x[0] === "How often") || [])[1] || "";
 import { readRequest, readerOn } from "../../lib/scanreq.mjs";
 
 const PHOTO = /^[a-f0-9]{24}$/;
@@ -88,8 +89,8 @@ export default async (req) => {
   const S = SERVICES[r.service];
   const size = [r.beds != null ? `${r.beds} bed` : "", r.baths != null ? `${r.baths} bath` : ""].filter(Boolean).join(" ");
   await notify(s, {
-    type: "request", title: `New request: ${S.label}, ${r.suburb}`,
-    body: [`${r.name} · ${r.phone}`, [size, r.extras.length ? r.extras.map((x) => EXTRAS[x].toLowerCase()).join(", ") : ""].filter(Boolean).join(" · "), r.date ? `Date: ${r.date}` : "", r.photos.length ? `${r.photos.length} photo${r.photos.length > 1 ? "s" : ""}` : ""].filter(Boolean).join("\n"),
+    type: "request", title: `New request: ${S.label}${r.business ? ` for ${r.business}` : ""}, ${r.suburb}`,
+    body: [`${r.name} · ${r.phone}`, r.business ? [r.business, r.cfreq ? CFREQ_L(r) : ""].filter(Boolean).join(" · ") : "", [size, r.extras.length ? r.extras.map((x) => EXTRAS[x].toLowerCase()).join(", ") : ""].filter(Boolean).join(" · "), r.date ? `Date: ${r.date}` : "", r.photos.length ? `${r.photos.length} photo${r.photos.length > 1 ? "s" : ""}` : ""].filter(Boolean).join("\n"),
     tags: "inbox_tray", priority: 5, url: `/money/#/req/${r.id}`,
   });
 
