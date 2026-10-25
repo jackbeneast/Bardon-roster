@@ -68,7 +68,7 @@
     if(q){ v.quote_no=String(q.num); v.quote_link=origin+'/q/'+q.token; if(q.totals){ v.quote_total=money(q.totals.total); if(q.totals.deposit) v.deposit=money(q.totals.deposit); } if(q.validUntil) v.valid_until=day(q.validUntil); }
     if(inv){ v.invoice_no=String(inv.num); v.invoice_link=origin+'/i/'+inv.token; if(inv.totals) v.amount_due=money(inv.totals.due); if(inv.dueDate) v.due_date=day(inv.dueDate); if(inv.isDeposit&&inv.totals&&!v.deposit) v.deposit=money(inv.totals.total); }
     if(o.payment&&inv){ var P=inv.payments||[], i=P.map(function(x){return x.id;}).indexOf(o.payment.id), upTo=P.slice(0,i+1).reduce(function(a,x){return a+x.amt;},0);
-      v.paid=money(o.payment.amt); v.balance=money(Math.max(0,(inv.totals?inv.totals.total:0)-upTo)); v.receipt_link=origin+'/r/'+inv.token+'?p='+o.payment.id; }
+      v.paid=money(o.payment.amt); v.tip=money(o.payment.tip||0); v.received=money((o.payment.amt||0)+(o.payment.tip||0)); v.balance=money(Math.max(0,(inv.totals?inv.totals.total:0)-upTo)); v.receipt_link=origin+'/r/'+inv.token+'?p='+o.payment.id; }
     v.quote_form_link=origin+'/quote';
     if(o.reviewLink||data&&data.reviewLink) v.review_link=o.reviewLink||data.reviewLink;
     return v;

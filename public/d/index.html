@@ -247,8 +247,10 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
     d.items.forEach(function(i){ var a=i.qty*i.price;
       h+='<div class="item'+(i.special||(i.price<0&&/^Today-only special/.test(i.title||''))?' spi':'')+'"><div><div class="t">'+esc(i.title)+'</div>'+(i.qty!==1?'<div class="mob">'+i.qty+' × '+money(i.price)+'</div>':'')+(i.desc?'<div class="desc">'+rich(i.desc)+'</div>':'')+'</div><div class="q">'+i.qty+'</div><div class="p">'+money(i.price)+'</div><div class="a">'+money(a)+'</div></div>'; });
     h+='</div><div class="tot">'+(SP?'<div><span>Quoted price</span><span>'+money(t.list)+'</span></div><div class="spl"><span>Today-only special (−'+SP.pct+'%)</span><span>−'+money(t.off)+'</span></div>':'')+'<div><span>Subtotal</span><span>'+money(t.sub)+'</span></div>'+(d.gst?'<div><span>GST (10%)</span><span>'+money(t.gst)+'</span></div>':'')+'<div class="grand"><span>Total'+(d.gst?' incl. GST':'')+'</span><span>'+money(t.total)+'</span></div>';
-    (d.payments||[]).forEach(function(p){ h+='<div><span>Paid '+fdate(p.date)+(p.method?' · '+esc(p.method):'')+'</span><span>−'+money(p.amt)+'</span></div>'; });
+    (d.payments||[]).forEach(function(p){ if(p.amt>0) h+='<div><span>Paid '+fdate(p.date)+(p.method?' · '+esc(p.method):'')+'</span><span>−'+money(p.amt)+'</span></div>'; });
     if(!q&&t.paid>0) h+='<div class="due"><span>Amount due</span><span>'+money(t.due)+'</span></div>';
+    var tips=(d.payments||[]).reduce(function(a,p){return a+(p.tip||0);},0);
+    if(!q&&tips>0) h+='<div style="color:var(--meta)"><span>Plus your tip · thank you</span><span>'+money(tips)+'</span></div>';
     h+='</div>';
     if(q&&t.deposit>0) h+='<div class="callout">A '+d.depositPct+'% deposit of <b>'+money(t.deposit)+'</b> is required to book your service in.</div>';
     var rep='';
@@ -269,7 +271,7 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
       h+='</div></div>';
     }
     h+=rep;
-    if(!q&&(d.payments||[]).length) h+='<div class="btns noprint">'+d.payments.map(function(p,i){ return '<a class="btn outline" href="/r/'+esc(token)+'?p='+esc(p.id)+'">'+(d.payments.length>1?'Receipt '+(i+1)+' · '+money(p.amt):'View receipt')+'</a>'; }).join('')+'</div>';
+    if(!q&&(d.payments||[]).length) h+='<div class="btns noprint">'+d.payments.map(function(p,i){ return '<a class="btn outline" href="/r/'+esc(token)+'?p='+esc(p.id)+'">'+(d.payments.length>1?'Receipt '+(i+1)+' · '+money(p.amt+(p.tip||0)):'View receipt')+'</a>'; }).join('')+'</div>';
     if(d.terms) h+='<details class="terms"'+(params.has('terms')?' open':'')+'><summary>Service policies</summary><div class="desc" style="margin-top:10px">'+rich(d.terms)+'</div></details>';
     h+='<div class="foot"><span>'+esc(b.legal||b.name)+(b.abn?' · ABN '+esc(b.abn):'')+'</span><span>Questions? Text Jack on '+esc(b.sms||b.phone)+'</span></div>';
     h+='</div>';
@@ -292,21 +294,24 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
     if(d.kind!=='invoice'||!P.length){ err='No payment has been recorded on this invoice yet.'; render(); return; }
     var pid=params.get('p'), i=Math.max(0,P.map(function(x){return x.id;}).indexOf(pid)); if(!pid) i=P.length-1;
     var p=P[i], upTo=P.slice(0,i+1).reduce(function(a,x){return a+x.amt;},0), bal=Math.max(0,Math.round((t.total-upTo)*100)/100);
+    var tip=p.tip>0?p.tip:0, got=Math.round((p.amt+tip)*100)/100;
     var gst=d.gst&&t.total>0?Math.round(p.amt*t.gst/t.total*100)/100:0, no='R'+d.num+'-'+(i+1);
     document.title='Receipt '+no+' · Bardon Clean';
     var h='<div class="toolbar"><a class="who" href="/i/'+esc(token)+'" style="color:var(--terracotta-dark)">View invoice #'+d.num+'</a><button class="btn outline noprint" style="min-height:40px;padding:0 14px;font-size:14px" data-print>Save as PDF</button></div><div class="paper">';
     h+='<div class="head"><div class="brand">'+LOGO+'<div><b>'+esc(b.name)+'</b><small>'+esc(b.address)+'<br>'+esc(b.phone)+' · '+esc(b.email)+'<br>'+esc(b.web)+(b.abn?' · ABN '+esc(b.abn):'')+'</small></div></div>';
     h+='<div class="dtype"><h1>Payment <em>receipt</em></h1><div class="n">Receipt '+no+' · <span class="state paid">Paid</span></div></div></div>';
-    h+='<div class="paidbox"><span>Amount received</span><b>'+money(p.amt)+'</b><span>'+fdate(p.date)+(p.method?' · '+esc(p.method):'')+'</span></div>';
+    h+='<div class="paidbox"><span>Amount received</span><b>'+money(got)+'</b><span>'+fdate(p.date)+(p.method?' · '+esc(p.method):'')+'</span></div>';
     h+='<div class="meta"><div><div class="k">Received from</div><div class="v"><b>'+esc(d.client.name)+'</b>'+(d.client.contact?'\nAttn: '+esc(d.client.contact):'')+(d.client.address?'\n'+esc(d.client.address):'')+'</div>'+(d.site?'<div class="k" style="margin-top:12px">Property</div><div class="v">'+esc(d.site)+(d.suburb&&d.site.indexOf(d.suburb)<0?', '+esc(d.suburb):'')+'</div>':'')+'</div>';
     h+='<div class="facts"><div><span>Receipt</span><b>'+no+'</b></div><div><span>Date paid</span><b>'+fdate(p.date)+'</b></div><div><span>Paid by</span><b>'+esc(p.method||'—')+'</b></div><div><span>For invoice</span><b>#'+d.num+'</b></div>'+(d.serviceDate?'<div><span>Service date</span><b>'+fdate(d.serviceDate)+'</b></div>':'')+'</div></div>';
     h+='<div class="items"><div class="ihead rc"><span>Invoice #'+d.num+'</span><span>Amount</span></div>';
     d.items.forEach(function(it){ h+='<div class="item rc"><div><div class="t" style="font-size:15px">'+esc(it.title)+'</div></div><div class="a">'+money(it.qty*it.price)+'</div></div>'; });
     h+='</div><div class="tot"><div><span>Invoice total'+(d.gst?' incl. GST':'')+'</span><span>'+money(t.total)+'</span></div>';
-    P.slice(0,i+1).forEach(function(x,k){ h+='<div'+(k===i?' style="font-weight:600"':'')+'><span>Paid '+fdate(x.date)+(k===i?' (this receipt)':'')+'</span><span>−'+money(x.amt)+'</span></div>'; });
-    h+='<div class="grand"><span>'+(bal>0.005?'Balance owing':'Balance')+'</span><span>'+money(bal)+'</span></div></div>';
-    if(gst>0) h+='<p class="small" style="text-align:right">This payment includes GST of '+money(gst)+'.</p>';
-    h+='<div class="banner '+(bal>0.005?'note':'ok')+'">'+(bal>0.005?'Thank you for your payment. '+money(bal)+' remains on invoice #'+d.num+'.':'Thank you. Invoice #'+d.num+' is paid in full.')+'</div>';
+    P.slice(0,i+1).forEach(function(x,k){ if(x.amt>0||k===i) h+='<div'+(k===i?' style="font-weight:600"':'')+'><span>Paid '+fdate(x.date)+(k===i?' (this receipt)':'')+'</span><span>−'+money(x.amt)+'</span></div>'; });
+    h+='<div class="grand"><span>'+(bal>0.005?'Balance owing':'Balance')+'</span><span>'+money(bal)+'</span></div>';
+    if(tip) h+='<div style="margin-top:10px"><span>Applied to invoice #'+d.num+'</span><span>'+money(p.amt)+'</span></div><div><span>Your tip</span><span>'+money(tip)+'</span></div><div style="font-weight:600"><span>Total received</span><span>'+money(got)+'</span></div>';
+    h+='</div>';
+    if(gst>0) h+='<p class="small" style="text-align:right">This payment includes GST of '+money(gst)+(tip?'. No GST applies to the tip':'')+'.</p>';
+    h+='<div class="banner '+(bal>0.005?'note':'ok')+'">'+(bal>0.005?'Thank you for your payment. '+money(bal)+' remains on invoice #'+d.num+'.':'Thank you. Invoice #'+d.num+' is paid in full.')+(tip?' And thank you so much for the '+money(tip)+' tip. It\'s genuinely appreciated.':'')+'</div>';
     h+='<div class="foot"><span>'+esc(b.legal||b.name)+(b.abn?' · ABN '+esc(b.abn):'')+'</span><span>Questions? Text Jack on '+esc(b.sms||b.phone)+'</span></div></div>';
     app.innerHTML=h;
   }

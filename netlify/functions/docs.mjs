@@ -261,11 +261,26 @@ export default async (req) => {
     return json({ ok: true, sent: !!b.send, now: now.total });
   }
   if (b.action === "pay") {
-    const amt = Number(b.amt);
-    if (!(amt > 0)) return json({ error: "Enter the amount paid" }, 400);
-    const pid = await recordPayment(s, d, { amt, date: /^\d{4}-\d{2}-\d{2}$/.test(b.date) ? b.date : today(), method: b.method || "Bank transfer" });
+    // amt = what goes against the invoice; tip = any extra the client added on top.
+    const amt = r2(Number(b.amt) || 0), tip = r2(Number(b.tip) || 0);
+    if (amt < 0 || tip < 0) return json({ error: "Amounts can't be negative" }, 400);
+    if (!(amt > 0) && !(tip > 0)) return json({ error: "Enter the amount paid" }, 400);
+    const pid = await recordPayment(s, d, { amt, tip, date: /^\d{4}-\d{2}-\d{2}$/.test(b.date) ? b.date : today(), method: b.method || "Bank transfer" });
     delete d.flag; await saveDoc(s, d);
     return json({ ok: true, pid });
+  }
+  if (b.action === "tip") {
+    // Split a tip out of a payment already recorded: the total received stays the same,
+    // the tip comes off what counts against the invoice.
+    const p = (d.payments || []).find((x) => x.id === b.pid);
+    if (!p) return json({ error: "That payment isn't on this invoice" }, 404);
+    if (/card/i.test(p.method || "") && p.ref) return json({ error: "Card payments come straight from Stripe and can't be split" }, 400);
+    const got = r2(p.amt + (p.tip || 0)), tip = r2(Number(b.tip) || 0);
+    if (tip < 0 || tip > got + 0.005) return json({ error: `The tip can't be more than the ${got.toFixed(2)} received` }, 400);
+    p.amt = r2(got - tip);
+    if (tip > 0) p.tip = tip; else delete p.tip;
+    await saveDoc(s, d);
+    return json({ ok: true, pid: p.id });
   }
   if (b.action === "unpay") { d.payments = (d.payments || []).filter((p) => p.id !== b.pid); await saveDoc(s, d); return json({ ok: true }); }
   if (b.action === "invoice" && d.kind === "quote") {

@@ -492,12 +492,13 @@ function renderProfit(){
   var cats=Object.keys(x.cats).sort(function(a,b){return x.cats[b]-x.cats[a];});
   if(cats.length){ h+='<div class="neg"><span>Expenses &amp; outgoings'+(D.gstReg?' (ex GST)':'')+'</span><span>−'+money(x.otherCosts)+'</span></div>'; cats.forEach(function(c){ h+='<div class="sub2"><span>'+esc(c)+'</span><span>'+money(x.cats[c])+'</span></div>'; }); }
   else h+='<div class="neg"><span>Expenses &amp; outgoings <small style="color:var(--terracotta-dark)">none logged</small></span><span>$0.00</span></div>';
+  if(x.tips>0) h+='<div><span>Tips from clients <small style="color:var(--meta)">(no GST)</small></span><span>'+money(x.tips)+'</span></div>';
   h+='<div class="tot'+(loss?' loss':'')+'"><span>'+(loss?'Loss':'Profit')+'</span><span>'+money(x.profit)+'</span></div></div>';
   h+='<p class="hint">Before income tax. Revenue counts on each job\'s first day. Wages use actual hours where you\'ve logged them, otherwise rostered hours. Your own hours aren\'t costed.</p></div>';
   // GST
   if(D.gstReg) h+='<div class="card"><h2>GST <em>for BAS</em></h2><div class="pnl"><div><span>GST on your jobs</span><span>'+money(x.gstCollected)+'</span></div><div><span>GST credits on expenses</span><span>−'+money(x.gstPaid)+'</span></div><div class="tot"><span>Estimated GST to pay</span><span>'+money(x.gstNet)+'</span></div></div><p class="hint">Estimate from job prices and logged expenses. Your BAS figures come from your actual records, so check with your accountant.</p></div>';
   // Cash
-  h+='<div class="card"><h2>Cash <em>in</em></h2><div class="pnl"><div><span>Invoice payments received</span><span>'+money(x.cashIn)+'</span></div><div><span>Owed to you right now</span><span>'+money(D.owing)+'</span></div></div><p class="hint">From invoices in Quotes &amp; Invoices, including any Jobber history you\'ve imported.</p></div>';
+  h+='<div class="card"><h2>Cash <em>in</em></h2><div class="pnl"><div><span>Invoice payments received</span><span>'+money(x.cashIn)+'</span></div>'+(x.tips>0?'<div><span>Tips received</span><span>'+money(x.tips)+'</span></div>':'')+'<div><span>Owed to you right now</span><span>'+money(D.owing)+'</span></div></div><p class="hint">From invoices in Quotes &amp; Invoices, including any Jobber history you\'ve imported.</p></div>';
   // Trend
   h+=trend();
   // Jobs
@@ -640,6 +641,7 @@ function xeroCard(){
   if(!banks.length) h+='<p class="sub full" style="margin:-4px 0 0">No bank accounts found in Xero yet. Add one in Xero, then <button type="button" class="ghost" data-act="xaccts" style="display:inline;padding:0;min-height:0;text-decoration:underline">reload accounts from Xero</button>.</p>';
   h+='<label class="l full">Card payments land in <small>(Stripe pays out in batches, minus fees. A Stripe clearing account in Xero keeps it tidy.)</small><select name="cardBank">'+opts(banks,X.cardBank,false,'Same account as above')+'</select></label>';
   h+='<label class="l">Income account<select name="sales">'+opts(inc,X.sales,true)+'</select></label>';
+  h+='<label class="l">Tips account <small>(BAS Excluded)</small><select name="tips">'+opts(inc,X.tips||X.sales,true)+'</select></label>';
   h+='<label class="l">Send from <small>(earlier stays out)</small><input name="from" type="date" value="'+esc(X.from)+'"></label>';
   h+='</div><details style="margin-top:12px"><summary style="cursor:pointer;font:600 14px var(--sans);color:var(--dark)">Expense categories → Xero accounts</summary><p class="sub">Matched to Xero\'s standard accounts. Change any your accountant prefers.</p><div class="grid">';
   X.cats.forEach(function(c){ h+='<label class="l">'+esc(c)+'<select name="code" data-cat="'+esc(c)+'">'+opts(exps,X.codes[c]||'',true)+'</select></label>'; });
@@ -1009,7 +1011,7 @@ app.addEventListener('submit',function(e){
     priceQ=priceQ.then(function(){ return api('POST',f.id==='pf'?{action:'prices',prices:m}:{action:'prices',recur:m}); }); priceQ.then(function(){ Array.prototype.forEach.call(f.querySelectorAll('input'),function(i){ delete i.dataset.dirty; }); }).then(load).then(function(){ toast('Prices saved'); }).catch(function(x){ btn.disabled=false; btn.textContent='Save'; toast(x.message); }); return; }
   if(f.id==='xf'){ e.preventDefault(); var xe=f.querySelector('#xErr'), codes={}; Array.prototype.forEach.call(f.querySelectorAll('[data-cat]'),function(i){ codes[i.dataset.cat]=i.value; });
     btn.disabled=true; btn.textContent='Saving…';
-    xapi('POST',{action:'settings',bank:f.elements.bank.value,cardBank:f.elements.cardBank.value,sales:f.elements.sales.value,from:f.elements.from.value,codes:codes}).then(loadX).then(function(){ xMsg=null; toast('Xero settings saved'); }).catch(function(x){ btn.disabled=false; btn.textContent='Save Xero settings'; xe.textContent=x.message; xe.hidden=false; }); return; }
+    xapi('POST',{action:'settings',bank:f.elements.bank.value,cardBank:f.elements.cardBank.value,sales:f.elements.sales.value,tips:f.elements.tips.value,from:f.elements.from.value,codes:codes}).then(loadX).then(function(){ xMsg=null; toast('Xero settings saved'); }).catch(function(x){ btn.disabled=false; btn.textContent='Save Xero settings'; xe.textContent=x.message; xe.hidden=false; }); return; }
   if(f.id==='jf'){ e.preventDefault(); var err=f.querySelector('#jErr'); btn.disabled=true; btn.textContent='Connecting…';
     api('POST',{action:'jobberUrl',url:f.elements.url.value}).then(function(r){ toast(syncMsg(r)); return load(); }).catch(function(x){ btn.disabled=false; btn.textContent='Connect and sync'; err.textContent=x.message; err.hidden=false; }); return; }
   if(f.id==='pendf'){ e.preventDefault(); var ids=ticked(); if(!ids.length){ toast('Tick the jobs to add'); return; } btn.disabled=true; btn.textContent='Adding…';

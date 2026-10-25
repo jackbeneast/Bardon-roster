@@ -38,7 +38,7 @@ export default async (req) => {
     }
     const [roster, books, docs, expenses, set, jb] = await Promise.all([loadRoster(s), loadBooks(s), loadDocs(s), loadExpenses(s), loadSettings(s), loadJobber(s)]);
     const payments = [];
-    for (const d of docs) if (d.kind === "invoice") for (const p of d.payments || []) payments.push({ date: p.date, amt: p.amt, method: p.method, num: d.num, client: d.client?.name || "", doc: d.id });
+    for (const d of docs) if (d.kind === "invoice") for (const p of d.payments || []) payments.push({ date: p.date, amt: p.amt, tip: p.tip || 0, method: p.method, num: d.num, client: d.client?.name || "", doc: d.id });
     const owing = r2(docs.filter((d) => d.kind === "invoice" && d.state !== "draft" && d.state !== "paid").reduce((a, d) => a + d.totals.due, 0));
     return json({
       jobs: roster.jobs.filter((j) => !j.sample), team: roster.team, pay: roster.pay || null,

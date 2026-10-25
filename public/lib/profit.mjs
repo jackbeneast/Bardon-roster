@@ -137,10 +137,12 @@ export function pnl(D, from, to) {
   const rev = exGst(revInc), gstCollected = revInc - rev;
   const otherCosts = Object.values(cats).reduce((a, v) => a + v, 0);
   const costs = wages + sup + otherCosts;
+  // Tips clients add on top of an invoice: income, but not job revenue and no GST.
+  const tips = r2((D.payments || []).filter((p) => p.tip > 0 && p.date >= from && p.date <= to).reduce((a, p) => a + p.tip, 0));
   return {
     from, to, jobs, rev: r2(rev), revInc: r2(revInc), gstCollected: r2(gstCollected), gstPaid: r2(gstPaid), gstNet: r2(gstCollected - gstPaid),
-    wages: r2(wages), sup: r2(sup), hrs, cats, otherCosts: r2(otherCosts), costs: r2(costs), profit: r2(rev - costs),
-    margin: rev > 0 ? (rev - costs) / rev : null, perHour, overheads: r2(overheads), jobHrs, ohRate, unpriced: jobs.filter((j) => j.price == null), expCount: exps.length, fixedHits,
+    wages: r2(wages), sup: r2(sup), hrs, cats, otherCosts: r2(otherCosts), costs: r2(costs), profit: r2(rev + tips - costs), tips,
+    margin: rev > 0 ? (rev + tips - costs) / rev : null, perHour, overheads: r2(overheads), jobHrs, ohRate, unpriced: jobs.filter((j) => j.price == null), expCount: exps.length, fixedHits,
     cashIn: r2((D.payments || []).filter((p) => p.date >= from && p.date <= to).reduce((a, p) => a + p.amt, 0)),
   };
 }

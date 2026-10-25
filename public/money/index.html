@@ -529,7 +529,10 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     } else {
       h+='<div class="card"><h2>Payments</h2>';
       if(!(d.payments||[]).length) h+='<p class="sub" style="margin:0">None yet.'+(S.card?' Card payments are recorded automatically.':'')+'</p>';
-      (d.payments||[]).forEach(function(p){ h+='<div class="pay"><span>'+fdate(p.date)+' · '+esc(p.method)+'</span><span><b>'+money(p.amt)+'</b> <button class="ghost" data-receipt="'+p.id+'" style="margin-left:10px;padding:0">Receipt</button><button class="ghost" data-unpay="'+p.id+'" style="margin-left:8px;padding:0;color:var(--meta)">Remove</button></span></div>'; });
+      (d.payments||[]).forEach(function(p){ var stripe=/card/i.test(p.method||'')&&S.card;
+        h+='<div class="pay"><span>'+fdate(p.date)+' · '+esc(p.method)+(p.tip>0?'<br><small style="color:var(--meta)">'+money(p.amt)+' invoice + '+money(p.tip)+' tip</small>':'')+'</span><span><b>'+money(r2(p.amt+(p.tip||0)))+'</b> <button class="ghost" data-receipt="'+p.id+'" style="margin-left:10px;padding:0">Receipt</button>'+(stripe?'':'<button class="ghost" data-tip="'+p.id+'" style="margin-left:8px;padding:0">'+(p.tip>0?'Tip':'Add tip')+'</button>')+'<button class="ghost" data-unpay="'+p.id+'" style="margin-left:8px;padding:0;color:var(--meta)">Remove</button></span></div>'; });
+      var over=r2(d.totals.paid-d.totals.total);
+      if(over>0.005) h+='<div class="hint-card" style="margin-top:10px"><b>Paid '+money(over)+' more than the invoice.</b> If that\'s a tip, tap <b>Add tip</b> on the payment so it\'s kept apart from the invoice, the receipt thanks them, and Xero files it separately.</div>';
       if(d.quoteId){ var qd=docById(d.quoteId); if(qd) h+='<button class="alert" data-open="'+qd.id+'" style="margin-top:12px">From quote #'+qd.num+'</button>'; }
       if(reportLink(d)) h+='<a class="alert ok" href="'+esc(reportLink(d))+'" target="_blank" rel="noopener" style="margin-top:12px;display:block;text-decoration:none">Job report linked · '+fdate(jobFor(d).date,true)+'. It\'s in the message when you send this.</a>';
       else if(!d.isDeposit) h+='<p class="hint" style="margin-top:12px">No job report linked. Edit the invoice and pick the roster job to include it.</p>';
@@ -637,11 +640,12 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var P=d.payments||[], i=P.map(function(x){return x.id;}).indexOf(pid); if(i<0) return;
     var p=P[i], upTo=P.slice(0,i+1).reduce(function(a,x){return a+x.amt;},0), bal=Math.max(0,r2(d.totals.total-upTo));
     var l=location.origin+'/r/'+d.token+'?p='+p.id, fn=first(d.client.contact||d.client.name);
-    var msg='Hi '+fn+', thanks for your payment of '+money(p.amt)+' for invoice #'+d.num+'. '+(bal>0.005?money(bal)+' remains on the invoice. ':'It\'s now paid in full. ')+(d.isDeposit&&bal<=0.005?'Your booking is locked in. ':'')+'Here\'s your receipt: '+l+' Thanks, Jack, Bardon Clean';
-    var rid=bal>0.005?'receipt_part':d.isDeposit?'deposit_received':'receipt_full';
+    var tip=p.tip>0?p.tip:0, got=r2(p.amt+tip);
+    var msg='Hi '+fn+', thanks for your payment of '+money(got)+' for invoice #'+d.num+(tip?', including a '+money(tip)+' tip, which we really appreciate':'')+'. '+(bal>0.005?money(bal)+' remains on the invoice. ':'It\'s now paid in full. ')+(d.isDeposit&&bal<=0.005?'Your booking is locked in. ':'')+'Here\'s your receipt: '+l+' Thanks, Jack, Bardon Clean';
+    var rid=bal>0.005?'receipt_part':tip?'receipt_tip':d.isDeposit?'deposit_received':'receipt_full';
     msg=tplText(rid,d,{payment:p})||msg;
-    var subj='Receipt R'+d.num+'-'+(i+1)+' from Bardon Clean · '+money(p.amt);
-    var h='<h3>Send a <em>receipt</em></h3><p class="sub" style="margin:-6px 0 12px">'+money(p.amt)+' paid '+fdate(p.date)+' · '+esc(p.method)+'</p>'+tplPicker(rid,d)+'<label class="l">Message<textarea id="rmsg" style="min-height:160px">'+esc(msg)+'</textarea></label><div class="sendopt" style="margin-top:12px">'+
+    var subj='Receipt R'+d.num+'-'+(i+1)+' from Bardon Clean · '+money(got);
+    var h='<h3>Send a <em>receipt</em></h3><p class="sub" style="margin:-6px 0 12px">'+money(got)+' paid '+fdate(p.date)+' · '+esc(p.method)+(tip?' · incl. '+money(tip)+' tip':'')+'</p>'+tplPicker(rid,d)+'<label class="l">Message<textarea id="rmsg" style="min-height:160px">'+esc(msg)+'</textarea></label><div class="sendopt" style="margin-top:12px">'+
       '<a data-rv="sms" href="#"><span class="ic">✉</span><span>Text message<small>'+(d.client.phone?esc(d.client.phone):'Add the number in Messages')+'</small></span></a>'+
       '<a data-rv="email" href="#"><span class="ic">@</span><span>Email<small>'+(d.client.email?esc(d.client.email):'Add the address in Mail')+'</small></span></a>'+
       '<button data-rv="copy"><span class="ic">⧉</span><span>Copy message<small>Paste anywhere</small></span></button>'+
@@ -653,11 +657,33 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
       if(a.dataset.rv==='copy'){ e.preventDefault(); try{ navigator.clipboard.writeText(m).then(function(){toast('Message copied');}); }catch(x){ toast('Select the text and copy it'); } } });
   }
   function paySheet(d){
-    var h='<h3>Record a <em>payment</em></h3><form id="pf"><div class="grid"><label class="l">Amount<input name="amt" type="number" inputmode="decimal" step="0.01" value="'+d.totals.due.toFixed(2)+'"></label><label class="l">Date<input name="date" type="date" value="'+today()+'"></label><label class="l full">How they paid<select name="method"><option>Bank transfer</option><option>Card</option><option>Cash</option><option>Other</option></select></label></div><div class="err" id="perr" hidden></div><div class="actions"><button type="button" class="btn plain" data-close>Cancel</button><button class="btn primary grow" type="submit">Save payment</button></div></form>';
-    var s=sheet(h), f=s.querySelector('#pf');
-    f.onsubmit=function(e){ e.preventDefault(); var b=f.querySelector('.primary'); b.disabled=true;
-      api('POST','/api/docs',{action:'pay',id:d.id,amt:+f.elements.amt.value,date:f.elements.date.value,method:f.elements.method.value}).then(function(r){ closeSheet(); return load().then(function(){ toast('Payment recorded'); var nd=docById(d.id); if(nd&&r.pid) receiptSheet(nd,r.pid); }); })
-      .catch(function(x){ b.disabled=false; var er=s.querySelector('#perr'); er.textContent=x.message; er.hidden=false; }); };
+    var due=d.totals.due;
+    var h='<h3>Record a <em>payment</em></h3><form id="pf"><div class="grid"><label class="l">Amount received<input name="got" type="number" inputmode="decimal" step="0.01" value="'+due.toFixed(2)+'"></label><label class="l">Date<input name="date" type="date" value="'+today()+'"></label><label class="l">Tip included <small>(extra on top)</small><input name="tip" type="number" inputmode="decimal" step="0.01" min="0" value="0.00"></label><label class="l">How they paid<select name="method"><option>Bank transfer</option><option>Card</option><option>Cash</option><option>Other</option></select></label></div><p class="hint" id="psplit"></p><div class="err" id="perr" hidden></div><div class="actions"><button type="button" class="btn plain" data-close>Cancel</button><button class="btn primary grow" type="submit">Save payment</button></div></form>';
+    var s=sheet(h), f=s.querySelector('#pf'), touched=false;
+    function split(){ var got=r2(+f.elements.got.value||0), tip=r2(+f.elements.tip.value||0), inv=r2(got-tip), o=s.querySelector('#psplit');
+      o.innerHTML=tip>0?'<b>'+money(inv)+'</b> to invoice #'+d.num+' + <b>'+money(tip)+'</b> tip'+(inv<due-0.005?' · '+money(r2(due-inv))+' still owing':''):(got>due+0.005?'That\'s '+money(r2(got-due))+' more than owing. Is the extra a tip?':''); }
+    f.elements.got.addEventListener('input',function(){ if(!touched){ var x=r2((+f.elements.got.value||0)-due); f.elements.tip.value=(x>0.005?x:0).toFixed(2); } split(); });
+    f.elements.tip.addEventListener('input',function(){ touched=true; split(); });
+    split();
+    f.onsubmit=function(e){ e.preventDefault(); var er=s.querySelector('#perr'), got=r2(+f.elements.got.value||0), tip=r2(+f.elements.tip.value||0);
+      if(tip<0||tip>got+0.005){ er.textContent='The tip can\'t be more than the amount received.'; er.hidden=false; return; }
+      var b=f.querySelector('.primary'); b.disabled=true;
+      api('POST','/api/docs',{action:'pay',id:d.id,amt:r2(got-tip),tip:tip,date:f.elements.date.value,method:f.elements.method.value}).then(function(r){ closeSheet(); return load().then(function(){ toast(tip>0?'Payment and tip recorded':'Payment recorded'); var nd=docById(d.id); if(nd&&r.pid) receiptSheet(nd,r.pid); }); })
+      .catch(function(x){ b.disabled=false; er.textContent=x.message; er.hidden=false; }); };
+  }
+  // Split a tip out of a payment already recorded. The total received doesn't change.
+  function tipSheet(d,pid){
+    var p=(d.payments||[]).filter(function(x){return x.id===pid;})[0]; if(!p) return;
+    var got=r2(p.amt+(p.tip||0)), others=r2(d.totals.paid-p.amt), owe=r2(Math.max(0,d.totals.total-others)), guess=p.tip>0?p.tip:Math.max(0,r2(got-owe));
+    var h='<h3>Tip on this <em>payment</em></h3><p class="sub" style="margin:-6px 0 12px">'+money(got)+' received '+fdate(p.date)+' · '+esc(p.method)+'</p><form id="tf"><label class="l">Tip amount<input name="tip" type="number" inputmode="decimal" step="0.01" min="0" value="'+guess.toFixed(2)+'"></label><p class="hint" id="tsplit"></p><div class="err" id="terr" hidden></div><div class="actions"><button type="button" class="btn plain" data-close>Cancel</button><button class="btn primary grow" type="submit">Save</button></div></form>';
+    var s=sheet(h), f=s.querySelector('#tf');
+    function split(){ var t=r2(+f.elements.tip.value||0); s.querySelector('#tsplit').innerHTML=t>0?'<b>'+money(r2(got-t))+'</b> to invoice #'+d.num+' + <b>'+money(t)+'</b> tip':'No tip. All '+money(got)+' goes against the invoice.'; }
+    f.elements.tip.addEventListener('input',split); split();
+    f.onsubmit=function(e){ e.preventDefault(); var er=s.querySelector('#terr'), t=r2(+f.elements.tip.value||0);
+      if(t<0||t>got+0.005){ er.textContent='The tip can\'t be more than the '+money(got)+' received.'; er.hidden=false; return; }
+      var b=f.querySelector('.primary'); b.disabled=true;
+      api('POST','/api/docs',{action:'tip',id:d.id,pid:pid,tip:t}).then(function(){ closeSheet(); return load().then(function(){ toast(t>0?'Tip saved':'Tip removed'); var nd=docById(d.id); if(nd&&t>0) receiptSheet(nd,pid); }); })
+      .catch(function(x){ b.disabled=false; er.textContent=x.message; er.hidden=false; }); };
   }
 
   // ---------- Library and prices ----------
@@ -882,6 +908,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if((el=e.target.closest('[data-tab]'))){ tab=el.dataset.tab; lsSet('money_tab',tab); filter='all'; q=''; renderList(); return; }
     if((el=e.target.closest('[data-filter]'))){ filter=el.dataset.filter; renderList(); return; }
     if((el=e.target.closest('[data-libedit]'))){ libEdit(el.dataset.libedit); return; }
+    if((el=e.target.closest('[data-tip]'))){ var td=docById(route().id); if(td) tipSheet(td,el.dataset.tip); return; }
     if((el=e.target.closest('[data-receipt]'))){ var rd=docById(route().id); if(rd) receiptSheet(rd,el.dataset.receipt); return; }
     if((el=e.target.closest('[data-unpay]'))){ if(!el.dataset.sure){ el.dataset.sure=1; el.textContent='Tap to confirm'; return; } api('POST','/api/docs',{action:'unpay',id:route().id,pid:el.dataset.unpay}).then(load).then(function(){toast('Payment removed');}); return; }
     var card=e.target.closest('.item');
