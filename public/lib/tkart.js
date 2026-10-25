@@ -20,10 +20,11 @@
   var flat = poly('70,10 170,10 170,150 70,150', W);
 
   var A_ = {
-    tp1: svg(roll + poly(tail, W) + line(80,140,160,140,false,A) + '<text x="196" y="144" font-size="12" fill="'+A+'" text-anchor="end" font-family="sans-serif">clean edge</text>', 'Toilet roll with a neat sheet hanging down'),
-    tp2: svg(roll + poly('80,62 160,62 160,140 120,140 80,100', W) + poly('80,100 120,140 120,100', F) + arrow('M70 132 Q80 108 108 106'), 'Left corner folded in to the centre'),
-    tp3: svg(roll + poly('80,62 160,62 160,100 120,140 80,100', W) + poly('80,100 120,140 120,100', F) + poly('160,100 120,140 120,100', F) + arrow('M170 132 Q160 108 132 106'), 'Right corner folded in to make a point'),
-    tp4: svg(roll + poly('80,62 160,62 160,100 120,140 80,100', W) + poly('80,100 120,140 120,100', F) + poly('160,100 120,140 120,100', F) + spark(120,150) + spark(192,86), 'Finished point, creases pressed flat'),
+    tp1: svg(roll + poly('80,62 160,62 160,150 120,150 80,110', W) + poly('80,110 120,150 120,110', F) + arrow('M70 142 Q80 116 108 116'), 'Bottom-left corner folded up to the centre'),
+    tp2: svg(roll + poly('80,62 160,62 160,110 120,150 80,110', W) + poly('80,110 120,150 120,110', F) + poly('160,110 120,150 120,110', F) + arrow('M170 142 Q160 116 132 116'), 'Bottom-right corner folded up to make a point'),
+    tp3: svg(roll + poly('80,62 160,62 160,110 80,110', W) + poly('80,110 160,110 120,70', F) + poly('80,110 160,110 120,150', 'none', true) + arrow('M186 140 Q196 100 150 92'), 'Point folded straight up, covering the raw edges'),
+    tp4: svg(roll + poly('80,62 160,62 160,70 120,110 80,70', W) + poly('120,70 140,90 120,110 100,90', F) + poly('80,70 80,110 120,110', 'none', true) + poly('160,70 160,110 120,110', 'none', true) + arrow('M70 104 Q58 86 78 74') + arrow('M170 104 Q182 86 162 74'), 'Left and right corners folded behind: a diamond shows'),
+    tp5: svg(roll + poly('80,62 160,62 160,85 120,125 80,85', W) + poly('120,85 140,105 120,125 100,105', F) + arrow('M196 26 Q206 40 196 54') + spark(152,140) + spark(84,132), 'Paper rolled slightly so the diamond sits centred'),
 
     tw1: svg(flat + line(103,10,103,150,true) + line(137,10,137,150,true), 'Towel flat, face down, marked in thirds along its length'),
     tw2: svg(poly('103,10 170,10 170,150 103,150', W) + poly('103,10 137,10 137,150 103,150', F) + arrow('M58 80 Q70 58 112 70'), 'One long side folded in a third'),
