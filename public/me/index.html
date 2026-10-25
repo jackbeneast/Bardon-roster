@@ -218,6 +218,8 @@ function render(){
   if(v==='room') return renderRoom(r[1], r[2]);
   if(v==='wrap') return renderWrap(r[1]);
   if(v==='me') return renderMe();
+  if(v==='pay') return renderPay();
+  if(v==='slip') return renderSlip(r[1]);
   return renderToday();
 }
 
@@ -384,12 +386,16 @@ function renderWrap(id){
 
 // ---------- me ----------
 function renderMe(){
-  nav('me');
+  nav('me'); needPay();
   var m=member(PID), t=today(), d=parse(t), ws=addDays(t,-((d.getDay()+6)%7)), we=addDays(ws,6);
-  var costs=[]; try{ costs=shiftCosts(R.jobs.filter(real), R.team, R.pay, ws, we).filter(function(x){ return x.pid===PID; }); }catch(e){}
-  var hrs=costs.reduce(function(a,x){return a+x.hrs;},0), pay=costs.reduce(function(a,x){return a+x.pay;},0), payDay=addDays(we,2);
+  var est=estimate(ws,we), sl=paySlips(), last=sl[0];
   var h=editbar()+'<div class="row" style="margin-top:'+(ADMIN?'16px':'0')+'"><span class="av k" style="width:56px;height:56px;font-size:20px">'+esc(initial(m.name))+'</span><div><h1 style="margin:0;font-size:28px">'+esc(m.name)+'</h1><p class="sub">Bardon Clean team</p></div></div><div class="stack">';
-  h+='<div class="dark"><p class="lbl">This week · '+esc(fday(ws))+' – '+esc(fday(we))+'</p><div class="grid2"><div><p class="sub">Rostered hours</p><p class="pf" style="font-size:30px;margin-top:4px">'+(Math.round(hrs*100)/100)+'</p></div><div><p class="sub">Estimated pay</p><p class="pf" style="font-size:30px;margin-top:4px;color:var(--gold)">'+money(pay)+'</p></div></div><p class="sub">Before tax, from your rostered shifts. Paid the Tuesday after the week ends ('+esc(fday(payDay))+').</p></div>';
+  // My pay: the way in to the full pay history
+  h+='<a href="#/pay" class="dark" style="text-decoration:none"><div class="between"><p class="lbl">My pay</p><span style="color:var(--cd)">'+I.chev+'</span></div>';
+  if(last) h+='<div class="between" style="align-items:flex-end"><div><p class="sub">Last pay · '+esc(fday(last.paidOn))+'</p><p class="pf" style="font-size:34px;margin-top:2px">'+money(last.net)+'</p></div><div style="text-align:right"><p class="sub">This week, rostered</p><p class="pf" style="font-size:20px;margin-top:2px;color:var(--gold)">'+money(est.pay)+'</p></div></div><p class="sub">'+sl.length+' payslip'+(sl.length===1?'':'s')+' · hours, tax, super and every shift</p>';
+  else if(PAY&&PAY.loading) h+='<p class="sub">Loading your pays…</p>';
+  else h+='<div class="between" style="align-items:flex-end"><div><p class="sub">This week, rostered</p><p class="pf" style="font-size:30px;margin-top:2px;color:var(--gold)">'+money(est.pay)+'</p></div><p class="sub" style="text-align:right">'+(Math.round(est.hrs*100)/100)+' hrs rostered</p></div><p class="sub">'+(PAY&&PAY.none?'Tap to connect your payslips':'Your payslips show here after your first pay')+'</p>';
+  h+='</a>';
   var nx=nextJobs(12);
   h+='<div class="card tight"><div class="sec"><p class="lbl b">My shifts</p><p class="sub">24 hrs notice to change</p></div>';
   nx.forEach(function(j){ var s=shiftOf(j,PID), cs=cstate(j,PID), dd=parse(j.date);
@@ -402,6 +408,114 @@ function renderMe(){
     h+='</div>'; }
   h+='<a class="btn k" href="'+tel(C.contact.phone)+'">'+I.phone+'Call '+esc(C.contact.name||'Jack')+(C.contact.phone?' · '+esc(C.contact.phone):'')+'</a>';
   h+='<button class="ghost" data-act="notme" style="align-self:center">Not '+esc(first(m.name))+'? Change who this phone is</button>';
+  app.innerHTML=h+'</div>';
+}
+
+// ---------- pay ----------
+// PAY: null (not asked yet) | {loading} | {none} (no pay link on this phone) | {err} | {slips, employer, token}
+var PAY=null, PAYFOR='';
+function needPay(){
+  if(PAYFOR===PID&&PAY) return; PAYFOR=PID; PAY={loading:true};
+  var p;
+  if(ADMIN) p=api('GET','/api/staff').then(function(d){ var pr=(d.profiles||{})[PID]||{}; return {slips:(d.slips||[]).filter(function(x){return x.pid===PID;}), employer:d.employer, token:pr.token||''}; });
+  else { var t=ls('me_pay_'+PID); if(!t){ PAY={none:true}; return; }
+    p=api('GET','/api/staff?t='+encodeURIComponent(t)).then(function(d){ if(d.pid&&d.pid!==PID) throw new Error('mismatch'); return {slips:d.slips||[], employer:d.employer, token:t}; }); }
+  p.then(function(d){ d.slips.sort(function(a,b){ return b.periodEnd.localeCompare(a.periodEnd); }); PAY=d; },
+    function(e){ if(!ADMIN&&(e.status===404||e.message==='mismatch')){ ls('me_pay_'+PID,null); PAY={none:true,replaced:e.status===404}; } else PAY={err:e.message}; })
+   .then(function(){ var v=route()[0]; if(v==='me'||v==='pay'||v==='slip') render(); });
+}
+function paySlips(){ return (PAY&&PAY.slips)||[]; }
+function estimate(from,to){ var c=[]; try{ c=shiftCosts(R.jobs.filter(real), R.team, R.pay, from, to).filter(function(x){ return x.pid===PID; }); }catch(e){}
+  return {hrs:c.reduce(function(a,x){return a+x.hrs;},0), pay:c.reduce(function(a,x){return a+x.pay;},0), n:c.length}; }
+function fyStart(d){ var y=+d.slice(0,4), m=+d.slice(5,7); return (m>=7?y:y-1)+'-07-01'; }
+function hr(v){ return (Math.round(v*100)/100)+''; }
+function per(x){ var a=parse(x.periodStart), b=parse(x.periodEnd); return a.getDate()+(a.getMonth()!==b.getMonth()?' '+MON[a.getMonth()]:'')+' – '+b.getDate()+' '+MON[b.getMonth()]; }
+var KIND={wk:'Weekday',el:'Weekday early/late',sat:'Saturday',sun:'Sunday',ph:'Public holiday'};
+function payLink(x){ return PAY&&PAY.token?'/pay/'+PAY.token+(x?'#'+encodeURIComponent(x.num):''):''; }
+
+function renderPay(){
+  nav('me'); needPay();
+  var h=back('#/me','Me')+'<p class="lbl">'+esc(member(PID).name)+'</p><h1>My <em>pay</em></h1><div class="stack">';
+  if(PAY.loading){ app.innerHTML=h+'<div class="card sub">Loading your pays…</div></div>'; return; }
+  if(PAY.err){ app.innerHTML=h+'<div class="card"><p>'+esc(PAY.err)+'</p><button class="btn o" style="margin-top:12px" data-act="repay">Try again</button></div></div>'; return; }
+  var t=today(), d=parse(t), ws=addDays(t,-((d.getDay()+6)%7)), we=addDays(ws,6), est=estimate(ws,we);
+  var estCard='<div class="card" style="display:flex;flex-direction:column;gap:8px"><div class="between"><p class="lbl b">This week, rostered</p><p class="sub">'+esc(fday(ws))+' – '+esc(fday(we))+'</p></div><div class="between" style="align-items:flex-end"><p class="pf" style="font-size:28px">'+money(est.pay)+'</p><p class="sub">'+hr(est.hrs)+' hrs · '+est.n+' shift'+(est.n===1?'':'s')+'</p></div><p class="sub">An estimate before tax, from your rostered shifts at your rates. Your payslip uses your actual clocked hours. Paid '+esc(fday(addDays(we,2),true))+'.</p></div>';
+  if(PAY.none){
+    h+='<div class="dark"><p class="lbl">Connect your payslips</p><p style="line-height:1.6">'+(PAY.replaced?'Your pay link was replaced. ':'')+'Open the private pay link '+esc(C.contact.name||'Jack')+' texted you, once, on this phone. Your payslips will show here from then on.</p><a class="btn ol" href="'+tel(C.contact.phone)+'">'+I.phone+'Ask '+esc(C.contact.name||'Jack')+' for your link</a></div>'+estCard;
+    app.innerHTML=h+'</div>'; return; }
+  var sl=paySlips();
+  if(!sl.length){ app.innerHTML=h+estCard+'<div class="card sub">No payslips yet. They show here after your first pay day.</div></div>'; return; }
+  var last=sl[0], prev=sl[1];
+  // Last pay
+  h+='<a href="#/slip/'+last.id+'" class="dark" style="text-decoration:none"><div class="between"><p class="lbl">Last pay · '+esc(fday(last.paidOn,true))+'</p><span style="color:var(--cd)">'+I.chev+'</span></div><p class="pf" style="font-size:40px;line-height:1.1">'+money(last.net)+'</p>';
+  h+='<p class="sub">Into your account for '+esc(per(last))+' · '+hr(last.hrs)+' hrs</p>';
+  if(prev&&Math.abs(last.net-prev.net)<0.005) h+='<p class="sub">The same as the pay before.</p>';
+  else if(prev){ var dlt=last.net-prev.net; h+='<p class="sub" style="color:'+(dlt>=0?'var(--gold)':'var(--cd)')+'">'+(dlt>=0?'▲ ':'▼ ')+money(Math.abs(dlt))+(dlt>=0?' more':' less')+' than the pay before ('+hr(Math.abs(last.hrs-prev.hrs))+' hrs '+(last.hrs>=prev.hrs?'more':'fewer')+')</p>'; }
+  h+='<div class="grid2" style="grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid #3A3A3A;padding-top:10px"><div><p class="sub" style="font-size:12px">Gross</p><p style="font-weight:600">'+money(last.gross)+'</p></div><div><p class="sub" style="font-size:12px">Tax</p><p style="font-weight:600">'+money(last.tax)+'</p></div><div><p class="sub" style="font-size:12px">Super</p><p style="font-weight:600">'+money(last.sup)+'</p></div></div></a>';
+  h+=estCard;
+  // Trend
+  var tr=sl.slice(0,8).reverse(), mx=Math.max.apply(null,tr.map(function(x){return x.net;}).concat([1]));
+  if(tr.length>1){
+    h+='<div class="card" style="display:flex;flex-direction:column;gap:12px"><div class="between"><p class="lbl b">Your last '+tr.length+' pays</p><p class="sub">Net · tap a bar</p></div><div style="display:flex;align-items:flex-end;gap:6px;height:150px" role="list">';
+    tr.forEach(function(x){ var hh=Math.max(6,Math.round(x.net/mx*120)), isL=x.id===last.id;
+      h+='<a role="listitem" href="#/slip/'+x.id+'" aria-label="'+esc(per(x))+': '+money(x.net)+'" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;text-decoration:none;height:100%;min-width:0"><span style="font-size:10px;color:var(--body);white-space:nowrap">$'+Math.round(x.net)+'</span><span style="width:100%;max-width:34px;height:'+hh+'px;border-radius:6px 6px 2px 2px;background:'+(isL?'var(--tcd)':'var(--cd)')+'"></span><span style="font-size:10px;color:var(--body);white-space:nowrap">'+parse(x.periodEnd).getDate()+' '+MON[parse(x.periodEnd).getMonth()]+'</span></a>'; });
+    h+='</div></div>';
+  }
+  // Financial year
+  var fy=fyStart(t), fs=sl.filter(function(x){ return x.paidOn>=fy; }), T={g:0,t:0,n:0,s:0,h:0,o:0};
+  fs.forEach(function(x){ T.g+=x.gross; T.t+=x.tax; T.n+=x.net; T.s+=x.sup; T.h+=x.hrs; x.lines.forEach(function(l){ if(l.ot) T.o+=l.hrs; }); });
+  var fyEnd=(+fy.slice(0,4)+1);
+  h+='<div class="card" style="display:flex;flex-direction:column;gap:14px"><div class="between"><p class="lbl b">This financial year</p><p class="sub">1 Jul '+fy.slice(0,4)+' – 30 Jun '+fyEnd+'</p></div>';
+  h+='<div class="grid2"><div><p class="sub">Take-home pay</p><p class="pf" style="font-size:24px">'+money(T.n)+'</p></div><div><p class="sub">Hours paid</p><p class="pf" style="font-size:24px">'+hr(T.h)+'</p></div></div>';
+  var rows=[['Gross pay',money(T.g)],['Tax withheld (goes to the ATO for you)',money(T.t)],['Super paid on top',money(T.s)],['Pays',String(fs.length)]];
+  if(T.h) rows.push(['Average per hour, before tax',money(T.g/T.h)]);
+  if(T.o) rows.push(['Overtime hours',hr(T.o)]);
+  h+='<div>'+rows.map(function(r,i){ return '<div class="between" style="padding:9px 0;'+(i?'border-top:1px solid var(--cd)':'')+'"><p class="sub" style="font-size:15px">'+r[0]+'</p><p style="font-weight:600;white-space:nowrap">'+r[1]+'</p></div>'; }).join('')+'</div>';
+  // Where the money came from
+  var by={}, order=[]; fs.forEach(function(x){ x.lines.forEach(function(l){ if(!by[l.label]){ by[l.label]={h:0,a:0}; order.push(l.label); } by[l.label].h+=l.hrs; by[l.label].a+=l.amt; }); });
+  if(order.length>1){ order.sort(function(a,b){ return by[b].a-by[a].a; });
+    h+='<div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--cd);padding-top:12px"><p class="lbl b">Where it came from</p>';
+    order.forEach(function(k){ var pc=T.g?by[k].a/T.g*100:0; h+='<div><div class="between"><p style="font-size:14px">'+esc(k)+'</p><p style="font-size:14px;font-weight:600;white-space:nowrap">'+money(by[k].a)+'</p></div><div class="row" style="gap:8px;margin-top:4px"><div class="prog" style="height:6px"><i style="width:'+pc.toFixed(1)+'%"></i></div><p class="sub" style="font-size:12px;white-space:nowrap">'+hr(by[k].h)+' hrs</p></div></div>'; });
+    h+='</div>'; }
+  h+='</div>';
+  // Super
+  var unpaid=fs.filter(function(x){ return !x.superPaid; });
+  h+='<div class="card" style="display:flex;flex-direction:column;gap:8px"><p class="lbl b">Your super</p><div class="between" style="align-items:flex-end"><p class="pf" style="font-size:24px">'+money(T.s)+'</p><p class="sub">this financial year</p></div><p class="sub" style="font-size:15px">Paid by Bardon Clean on top of your pay: 12% of your ordinary hours'+(last.superFund?', into '+esc(last.superFund):'')+'. '+(unpaid.length?unpaid.length+' pay'+(unpaid.length===1?'\'s':'s\'')+' super still to go into your fund.':'All of it has gone into your fund.')+'</p></div>';
+  // All pays
+  h+='<div class="card tight"><div class="sec"><p class="lbl b">All my pays</p><p class="sub">'+sl.length+'</p></div>';
+  var mo='';
+  sl.forEach(function(x){ var pd=parse(x.paidOn), mk=FMON[pd.getMonth()]+' '+pd.getFullYear();
+    if(mk!==mo){ mo=mk; h+='<p class="lbl" style="padding:12px 0 4px;border-top:1px solid var(--cd)">'+esc(mk)+'</p>'; }
+    h+='<a class="ln" href="#/slip/'+x.id+'" style="padding:6px 0"><div style="flex:1"><p style="font-weight:600">'+esc(per(x))+'</p><p class="sub">Paid '+esc(fday(x.paidOn))+' · '+hr(x.hrs)+' hrs · '+x.shifts.length+' shift'+(x.shifts.length===1?'':'s')+'</p></div><p style="font-weight:600;white-space:nowrap">'+money(x.net)+'</p><span style="color:var(--body)">'+I.chev+'</span></a>'; });
+  h+='</div>';
+  h+='<div class="tint"><p class="lbl">Something not right?</p><p>Check your shifts on the payslip first, then call '+esc(C.contact.name||'Jack')+'. Pays are fixed in the next pay run.</p></div>';
+  app.innerHTML=h+'</div>';
+}
+
+function renderSlip(id){
+  nav('me'); needPay();
+  var sl=paySlips(), i=sl.findIndex(function(x){return x.id===id;}), x=sl[i];
+  if(!x){ if(PAY&&PAY.loading){ app.innerHTML='<div class="center">Loading…</div>'; return; } go('pay'); return; }
+  var newer=sl[i-1], older=sl[i+1], otPay=Math.round((x.gross-x.ordPay)*100)/100;
+  var h=back('#/pay','My pay')+'<p class="lbl">Payslip '+esc(x.num)+'</p><h1>'+esc(per(x))+'</h1><p class="sub" style="margin-top:6px">'+(x.cycle===2?'Fortnightly':'Weekly')+' pay · paid '+esc(fday(x.paidOn,true))+'</p><div class="stack">';
+  // Gross → net
+  var tp=x.gross?x.tax/x.gross*100:0;
+  h+='<div class="dark"><p class="lbl">Into your account</p><p class="pf" style="font-size:40px;line-height:1.1">'+money(x.net)+'</p><div style="display:flex;height:12px;border-radius:6px;overflow:hidden;margin-top:6px" role="img" aria-label="Of '+money(x.gross)+' gross, '+money(x.tax)+' was tax"><span style="flex:'+(100-tp)+';background:var(--gold)"></span><span style="flex:'+tp+';background:#6A6A6A"></span></div><div class="between"><p class="sub"><span style="display:inline-block;width:8px;height:8px;border-radius:4px;background:var(--gold);margin-right:6px"></span>Net '+money(x.net)+'</p><p class="sub"><span style="display:inline-block;width:8px;height:8px;border-radius:4px;background:#6A6A6A;margin-right:6px"></span>Tax '+money(x.tax)+'</p></div><p class="sub">From '+money(x.gross)+' gross for '+hr(x.hrs)+' hrs.'+(x.hrs?' That\'s '+money(x.gross/x.hrs)+' an hour before tax.':'')+'</p></div>';
+  // Earnings
+  h+='<div class="card" style="padding:10px 16px"><p class="lbl b" style="padding:4px 0 8px">How it adds up</p>';
+  x.lines.forEach(function(l){ h+='<div style="padding:10px 0;border-top:1px solid var(--cd)"><div class="between"><p style="font-weight:600">'+esc(l.label)+'</p><p style="font-weight:600;white-space:nowrap">'+money(l.amt)+'</p></div><p class="sub">'+hr(l.hrs)+' hrs × '+money(l.rate)+'</p></div>'; });
+  [['Gross pay',money(x.gross),0],['Tax withheld','−'+money(x.tax),0],['Net pay',money(x.net),1]].forEach(function(r){ h+='<div class="between" style="padding:10px 0;border-top:1px solid '+(r[2]?'var(--dark)':'var(--cd)')+'"><p'+(r[2]?' class="pf" style="font-size:18px"':' class="sub" style="font-size:15px"')+'>'+r[0]+'</p><p'+(r[2]?' class="pf" style="font-size:18px"':' style="font-weight:600"')+'>'+r[1]+'</p></div>'; });
+  h+='</div>';
+  // Shifts
+  if(x.shifts.length){ h+='<div class="card tight"><div class="sec"><p class="lbl b">Shifts on this pay</p><p class="sub">'+x.shifts.length+'</p></div>';
+    x.shifts.forEach(function(s2){ var dd=parse(s2.date), job=String(s2.job||'').replace(/ · (clocked|rostered)$/,''), src=(String(s2.job||'').match(/(clocked|rostered)$/)||[])[1];
+      h+='<div class="ln" style="padding:8px 0"><div style="width:44px;text-align:center;flex:none"><p class="sub" style="font-size:12px">'+DOW[dd.getDay()].slice(0,3).toUpperCase()+'</p><p class="pf" style="font-size:20px">'+dd.getDate()+'</p></div><div style="flex:1;min-width:0"><p style="font-weight:600">'+esc(KIND[s2.kind]||'Shift')+'</p><p class="sub">'+esc(job||'')+(src?(job?' · ':'')+(src==='clocked'?'your clocked hours':'rostered hours'):'')+'</p></div><p style="font-weight:600;white-space:nowrap">'+hr(s2.hrs)+' hrs</p></div>'; });
+    h+='<p class="sub" style="padding:4px 0 12px">Hours are after the 30-minute unpaid lunch on shifts over 4.5 hours.</p></div>'; }
+  // Super
+  h+='<div class="card" style="display:flex;flex-direction:column;gap:6px"><div class="between"><p class="lbl b">Super on this pay</p><span class="pill'+(x.superPaid?'':' g')+'">'+(x.superPaid?I.tick+'In your fund':'On its way')+'</span></div><p class="pf" style="font-size:24px">'+money(x.sup)+'</p><p class="sub">12% of '+money(x.ordPay)+' ordinary pay'+(otPay>0.004?' (overtime isn\'t counted)':'')+(x.superFund?' · '+esc(x.superFund):'')+(x.superNo?' · member '+esc(x.superNo):'')+'. Paid on top of your pay, not taken out of it.</p></div>';
+  if(payLink(x)) h+='<a class="btn o" href="'+payLink(x)+'" target="_blank" rel="noopener">Open the official payslip</a>';
+  h+='<div class="row">'+(older?'<a class="btn o" href="#/slip/'+older.id+'">'+I.left+'Older</a>':'')+(newer?'<a class="btn o" href="#/slip/'+newer.id+'">Newer'+I.chev+'</a>':'')+'</div>';
+  h+='<a class="btn k" href="'+tel(C.contact.phone)+'">'+I.phone+'Question about this pay? Call '+esc(C.contact.name||'Jack')+'</a>';
   app.innerHTML=h+'</div>';
 }
 
@@ -539,6 +653,7 @@ document.addEventListener('click',function(e){
   var r=route();
   if(t.dataset.act==='reload'){ err=''; R=null; render(); load(); return; }
   if(t.dataset.act==='notme'){ PID=''; ls('me_pid',null); go('who'); return; }
+  if(t.dataset.act==='repay'){ PAY=null; PAYFOR=''; render(); return; }
   if(t.dataset.who){ PID=t.dataset.who; ls('me_pid',PID); go(''); return; }
   if(t.dataset.cant){ CANT=t.dataset.cant; render(); return; }
   if(t.hasAttribute('data-cantx')){ CANT=''; render(); return; }
@@ -582,7 +697,8 @@ document.addEventListener('change',function(e){
 // ---------- start ----------
 (function(){
   var m=location.pathname.match(/^\/me\/([\w-]+)/)||location.search.match(/[?&]p=([\w-]+)/);
-  if(m){ PID=m[1]; ls('me_pid',PID); try{ history.replaceState(null,'','/me/'+location.hash); }catch(e){} }
+  var k=(location.search.match(/[?&]k=([a-f0-9]{24,64})/)||[])[1];
+  if(m){ PID=m[1]; ls('me_pid',PID); if(k) ls('me_pay_'+PID,k); try{ history.replaceState(null,'','/me/'+location.hash); }catch(e){} }
   else PID=ls('me_pid');
   try{ LOCAL=JSON.parse(sessionStorage.getItem('me_local')||'{}'); }catch(e){ LOCAL={}; }
   load();

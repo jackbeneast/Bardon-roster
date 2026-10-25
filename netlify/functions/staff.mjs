@@ -101,7 +101,7 @@ export default async (req) => {
     const roster = await loadRoster(s), m = roster.team.find((x) => x.id === pid);
     const slips = (await listAll(s, "slip/")).filter((x) => x.pid === pid).sort((a, b) => b.periodEnd.localeCompare(a.periodEnd))
       .map(({ token, taxPaid, superPaid, sentTo, source, taxAuto, ...x }) => ({ ...x, superPaid: !!superPaid }));
-    return json({ name: (m && m.name) || (slips[0] && slips[0].name) || "", employer: EMPLOYER, slips });
+    return json({ pid, name: (m && m.name) || (slips[0] && slips[0].name) || "", employer: EMPLOYER, slips });
   }
 
   if (!(await checkAdmin(s, req))) return json({ error: "Log in first" }, 401);

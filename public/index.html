@@ -1023,6 +1023,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     f.onsubmit=function(e){ e.preventDefault(); var n={}; ['meet','wear','bring','extra'].forEach(function(k){ n[k]=f.elements[k].value.trim(); }); save({info:n,team:state.team,jobs:state.jobs}, f.querySelector('.primary'), s.querySelector('#infoErr'), 'First-day info saved'); };
   }
   var teamPhotos=null;
+  var staffTok=null;
   function teamSheet(){
     if(teamPhotos===null){ teamPhotos={}; api('/api/teamphoto?list=1').then(function(d){ teamPhotos=d.photos||{}; if(document.getElementById('teamList')){ closeSheet(); teamSheet(); } }).catch(function(){}); }
     var h='<h3>Manage <em>team</em></h3><div id="teamList">', TP=teamPhotos||{};
@@ -1033,8 +1034,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       others.forEach(function(t){ var m=TP[t.id];
         h+='<div class="lrow" style="flex-wrap:wrap"><span style="display:flex;align-items:center;gap:10px">'+(m?'<img data-tpsrc="/api/teamphoto?p='+t.id+'&v='+m.v+'" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover">':'<span class="av" style="background:'+colour(t.id)+'">'+esc(initials(t.name))+'</span>')+'<span class="nm">'+esc(t.name.split(' ')[0])+'</span></span><span style="display:flex;gap:6px"><button type="button" class="btn outline" data-tph="'+t.id+'" style="min-height:38px;padding:0 12px">'+(m?'Change':'Add photo')+'</button>'+(m?'<button type="button" class="btn danger" data-tphx="'+t.id+'" style="min-height:0">Remove</button>':'')+'</span>'+(m?'<label class="tick" style="width:100%;padding:6px 0 0;font-size:14px"><input type="checkbox" data-tphok="'+t.id+'"'+(m.ok?' checked':'')+'>'+esc(t.name.split(' ')[0])+' is OK with clients seeing this</label>':'')+'</div>'; });
       h+='</div>'; }
-    if(others.length){ h+='<div class="lsec"><h4>Team app links</h4><p class="sub" style="margin:0 0 8px">Each person\'s own link to the team app: today\'s shift, clock in, their rooms and checklists, the toolkit. Send it once; they add it to their home screen.</p>';
-      others.forEach(function(t){ var u=location.origin+'/me/'+t.id, msg='Hi '+t.name.split(' ')[0]+', here\'s your Bardon Clean team app. Your shifts, the job brief, your rooms and checklists are all in here. Add it to your home screen: '+u+'\n\nJack';
+    if(others.length){ h+='<div class="lsec"><h4>Team app links</h4><p class="sub" style="margin:0 0 8px">Each person\'s own link to the team app: today\'s shift, clock in, their rooms and checklists, their payslips and the toolkit. It\'s private to them, so only send it to that person. Send it once; they add it to their home screen.</p>';
+      if(staffTok===null){ staffTok={}; api('/api/staff').then(function(d){ var o={}; Object.keys(d.profiles||{}).forEach(function(id){ if(d.profiles[id].token) o[id]=d.profiles[id].token; }); staffTok=o; if(document.getElementById('teamList')){ closeSheet(); teamSheet(); } }).catch(function(){}); }
+      others.forEach(function(t){ var u=location.origin+'/me/'+t.id+(staffTok[t.id]?'?k='+staffTok[t.id]:''), msg='Hi '+t.name.split(' ')[0]+', here\'s your Bardon Clean team app. Your shifts, the job brief, your rooms and checklists are all in here. Add it to your home screen: '+u+'\n\nJack';
         h+='<div class="lrow" style="flex-wrap:wrap"><span class="nm">'+esc(t.name.split(' ')[0])+'</span><span style="display:flex;gap:6px">'+(t.phone?'<a class="btn outline" href="'+smsHref(t.phone,msg)+'" style="min-height:38px;padding:0 12px">Text it</a>':'')+'<button type="button" class="btn outline" data-copyme="'+esc(u)+'" style="min-height:38px;padding:0 12px">Copy</button></span></div>'; });
       h+='</div>'; }
     h+='</div><form id="teamForm" class="fgrid" style="margin-top:16px" novalidate><label class="l" for="f_newname">Add a team member<input id="f_newname" name="name" placeholder="First name and last initial" required></label>';

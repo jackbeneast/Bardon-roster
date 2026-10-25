@@ -51,7 +51,7 @@ h1 em{font-style:italic;font-weight:500;color:var(--terracotta)}
   if(!t){ app.innerHTML='<div class="center">This link isn\'t complete. Ask Jack to send it again.</div>'; return; }
   cur=decodeURIComponent(location.hash.slice(1));
   fetch('/api/staff?t='+t,{cache:'no-store'}).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong.'); return d; }); })
-    .then(function(d){ D=d; show(); })
+    .then(function(d){ D=d; try{ if(d.pid) localStorage.setItem('me_pay_'+d.pid,t); }catch(e){} show(); })
     .catch(function(e){ app.innerHTML='<div class="center">'+esc(e.message)+'</div>'; });
 })();
 </script>
