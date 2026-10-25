@@ -116,6 +116,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .chips::-webkit-scrollbar{display:none}
 .chips button{flex:none;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--white);color:var(--dark);font:500 14px var(--sans);cursor:pointer;white-space:nowrap}
 .step .tm{margin-top:-4px}
+.sp{margin-top:10px;border-radius:12px;overflow:hidden;background:var(--cream);border:1px solid var(--line)}
+.sp svg,.sp img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
+.spe{display:flex;gap:12px;align-items:center;border-top:1px solid var(--cd);padding:10px 0}
+.spe .th{width:84px;flex:none;border-radius:8px;overflow:hidden;background:var(--cream);border:1px solid var(--line)}
+.spe .th svg,.spe .th img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
 .bul{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--cd);line-height:1.5}
 .bul:first-of-type{border-top:0}
 .bul i{width:7px;height:7px;border-radius:4px;background:var(--tcd);margin-top:8px;flex:none}
@@ -127,6 +132,7 @@ body.tour #app{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 <div class="tmbar hide" id="tmbar" role="region" aria-label="Running timers"><div class="in"></div></div>
 <nav class="nav hide" id="nav" aria-label="Main"><div class="in"></div></nav>
 <script src="/lib/checklists.js"></script>
+<script src="/lib/tkart.js"></script>
 <script type="module">
 import { shiftCosts } from '/lib/wages.mjs';
 var app=document.getElementById('app'), navEl=document.getElementById('nav');
@@ -604,6 +610,7 @@ function tmGet(id){ return TM.filter(function(x){ return x.id===id; })[0]||null;
 function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); if(sec<60) return sec+' sec'; var m=sec/60; return (m%1?m.toFixed(1).replace('.0',''):m)+' min'; }
 function clockOf(ms){ var t=Math.max(0,Math.ceil(ms/1000)), m=Math.floor(t/60), s2=t%60; return m+':'+pad(s2); }
 function tmLeft(r){ return r.done?'Done':clockOf(r.end-Date.now()); }
+function picOf(v){ if(!v) return ''; if(/^art:/.test(v)) return (window.TKART&&TKART.get(v.slice(4)))||''; return '<img src="'+img(v)+'" alt="" loading="lazy">'; }
 function stepT(x){ x=String(x||''); var m=x.match(/\s*\[(\d+(?:\.\d+)?)\s*(s|secs?|seconds?|m|mins?|minutes?)\]\s*$/i); if(!m) return {t:x,s:0}; var n=parseFloat(m[1]); return {t:x.slice(0,m.index).trim(), s:Math.round(/^s/i.test(m[2])?n:n*60)}; }
 function tmChip(id,label,s){ var r=tmGet(id); return '<button type="button" class="tm'+(r?(r.done?' done':' run'):'')+'" data-tm="'+esc(id)+'" data-tl="'+esc(String(label).slice(0,80))+'" data-ts="'+s+'" aria-label="'+(r?'Timer running':'Start a '+fmtDur(s)+' timer')+'">'+I.clock+'<span data-tmleft="'+esc(id)+'" data-tmdef="'+esc(fmtDur(s))+'">'+(r?tmLeft(r):fmtDur(s))+'</span></button>'; }
 function tmUnlock(){ try{ if(!AC){ var A=window.AudioContext||window.webkitAudioContext; if(A) AC=new A(); } if(AC&&AC.state==='suspended') AC.resume(); }catch(e){} }
@@ -677,7 +684,7 @@ function renderKit(){
     var gs=C.guides.filter(function(g){ if(g.sec!==sec.id) return false; if(!q) return true; return gtext(g).indexOf(q)>=0; });
     if(!gs.length&&!ADMIN) return; if(!gs.length&&q) return;
     h+='<div id="sec-'+sec.id+'" style="display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px"><div class="between"><p class="lbl b">'+esc(sec.title)+'</p>'+(ADMIN&&!q?'<a class="ed" href="#/edit/new-'+sec.id+'">+ Add</a>':'')+'</div>';
-    if(sec.id==='rooms') h+='<div class="grid2">'+gs.map(function(g){ return '<a class="gt" href="#/guide/'+g.id+'">'+esc(g.title)+(g.sub?'<span>'+esc(g.sub)+'</span>':'')+'</a>'; }).join('')+'</div>';
+    if(sec.id==='rooms'||sec.id==='premium') h+='<div class="grid2">'+gs.map(function(g){ return '<a class="gt" href="#/guide/'+g.id+'">'+esc(g.title)+(g.sub?'<span>'+esc(g.sub)+'</span>':'')+'</a>'; }).join('')+'</div>';
     else h+='<div class="card tight">'+gs.map(function(g){ return '<a class="ln" href="#/guide/'+g.id+'"><span>'+esc(g.title)+'</span>'+(g.sub?'<small>'+esc(g.sub)+'</small>':'')+'</a>'; }).join('')+'</div>';
     h+='</div>';
   });
@@ -702,7 +709,7 @@ function renderGuide(id){
   var kit=g.kit||[], nv=g.never||[];
   if(kit.length) h+='<div class="card" style="padding:12px 16px"><p class="lbl b" style="padding-bottom:6px">What you need</p>'+kit.map(function(x){ return '<div class="bul"><i></i><p>'+esc(x)+'</p></div>'; }).join('')+'</div>';
   if(g.steps.length){ var anyT=g.steps.some(function(x){ return stepT(x).s; });
-    h+='<div class="card" style="padding:10px 16px"><div class="between" style="padding:4px 0"><p class="lbl b">Step by step</p>'+(anyT?'<p class="sub" style="font-size:12px">Tap a time to start it</p>':'')+'</div>'+g.steps.map(function(x,i){ var st=stepT(x); return '<div class="step"><span class="n">'+(i+1)+'</span><p style="flex:1">'+esc(st.t)+'</p>'+(st.s?tmChip('g|'+g.id+'|'+i,st.t,st.s):'')+'</div>'; }).join('')+'</div>'; }
+    h+='<div class="card" style="padding:10px 16px"><div class="between" style="padding:4px 0"><p class="lbl b">Step by step</p>'+(anyT?'<p class="sub" style="font-size:12px">Tap a time to start it</p>':'')+'</div>'+g.steps.map(function(x,i){ var st=stepT(x); var pc=picOf((g.pics||[])[i]); return '<div class="step"><span class="n">'+(i+1)+'</span><div style="flex:1;min-width:0"><div style="display:flex;gap:10px;align-items:flex-start"><p style="flex:1">'+esc(st.t)+'</p>'+(st.s?tmChip('g|'+g.id+'|'+i,st.t,st.s):'')+'</div>'+(pc?'<div class="sp">'+pc+'</div>':'')+'</div></div>'; }).join('')+'</div>'; }
   if(nv.length) h+='<div class="dark"><p class="lbl">Never</p>'+nv.map(function(x){ return '<p style="line-height:1.6">'+I.cross+' '+esc(x)+'</p>'; }).join('')+'</div>';
   if(g.miss) h+='<div class="tint"><p class="lbl">Easy to miss</p><p style="line-height:1.6">'+esc(g.miss)+'</p></div>';
   if(!g.done.length&&!g.steps.length&&!g.body&&!(g.kit||[]).length) h+='<div class="card sub">Nothing written here yet.'+(ADMIN?' Tap Edit to add it.':'')+'</div>';
@@ -716,9 +723,9 @@ function renderEdit(id){
   nav('kit');
   var isNew=/^new-/.test(id||'');
   if(!DRAFT||DRAFT._for!==id){
-    var g=isNew?{id:'g'+Date.now().toString(36),sec:id.slice(4),title:'',sub:'',room:'',done:[],kit:[],never:[],product:'',dwell:'',time:'',steps:[],miss:'',body:'',good:'',bad:''}:guide(id);
+    var g=isNew?{id:'g'+Date.now().toString(36),sec:id.slice(4),title:'',sub:'',room:'',done:[],kit:[],never:[],pics:[],product:'',dwell:'',time:'',steps:[],miss:'',body:'',good:'',bad:''}:guide(id);
     if(!g){ go('kit'); return; }
-    DRAFT=JSON.parse(JSON.stringify(g)); DRAFT.kit=DRAFT.kit||[]; DRAFT.never=DRAFT.never||[]; DRAFT._for=id; DRAFT._new=isNew;
+    DRAFT=JSON.parse(JSON.stringify(g)); DRAFT.kit=DRAFT.kit||[]; DRAFT.never=DRAFT.never||[]; DRAFT.pics=(DRAFT.pics||[]).slice(); DRAFT._for=id; DRAFT._new=isNew;
   }
   var d=DRAFT;
   function f(n,label,hint,v){ return '<label class="f">'+label+(hint?' <small>'+hint+'</small>':'')+'<input class="t" name="'+n+'" value="'+esc(v)+'"></label>'; }
@@ -729,6 +736,8 @@ function renderEdit(id){
   h+='<div class="card" style="display:flex;flex-direction:column;gap:14px"><p class="lbl b">Your standard photos</p><div class="grid2">'+ph('good','This passes')+ph('bad','Redo this')+'</div></div>';
   h+='<div class="card" style="display:flex;flex-direction:column;gap:14px">'+ta('done','Done means','one per line',d.done.join('\n'))+ta('kit','What you need','products and tools, one per line. Name the exact product you use',d.kit.join('\n'),5)+f('product','Main product','optional',d.product)+f('dwell','Dwell time','',d.dwell)+f('time','Time','',d.time)+'</div>';
   h+='<div class="card" style="display:flex;flex-direction:column;gap:14px">'+ta('steps','Step by step','one per line. End a step with [5 min] or [30 sec] to give it a timer',d.steps.join('\n'),9)+ta('body','Extra explanation','optional',d.body,3)+ta('never','Never','optional, one per line',d.never.join('\n'),3)+ta('miss','Easy to miss','optional',d.miss,2)+'</div>';
+  if(d.steps.length){ h+='<div class="card" style="display:flex;flex-direction:column;gap:2px"><p class="lbl b">Step pictures</p><p class="sub" style="padding-bottom:6px">Optional. One per step, in step order. A photo of your own replaces the drawing.</p>'+d.steps.map(function(x,i){ var v=d.pics[i]||'', pc=picOf(v), bz=busy['sp'+i];
+      return '<div class="spe"><div class="th">'+(pc||'<div style="aspect-ratio:3/2"></div>')+'</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><p style="font-size:14px;line-height:1.4"><strong>'+(i+1)+'.</strong> '+esc(stepT(x).t)+'</p><div class="row" style="gap:12px"><button type="button" class="ghost" style="padding:4px 0;min-height:36px" data-sph="'+i+'">'+(bz?'Uploading…':v?'Replace':'Add photo')+'</button>'+(v?'<button type="button" class="ghost" style="padding:4px 0;min-height:36px" data-sphx="'+i+'">Remove</button>':'')+'</div></div></div>'; }).join('')+'</div>'; }
   h+='<p class="err hide" id="gerr"></p><div class="row"><a class="btn o" href="'+(d._new?'#/kit':'#/guide/'+d.id)+'">Cancel</a><button class="btn p" type="submit"'+(busy.save?' disabled':'')+'>'+(busy.save?'Saving…':'Save')+'</button></div>';
   if(!d._new) h+='<button type="button" class="ghost" data-delguide style="align-self:center;color:var(--tcd)">Delete this guide</button>';
   app.innerHTML=h+'</form>';
@@ -737,7 +746,7 @@ function renderEdit(id){
   form.querySelector('[name=sec]').onchange=function(){ readDraft(form); renderEdit(id); };
   form.onsubmit=function(e){ e.preventDefault(); readDraft(form);
     if(!d.title.trim()){ var er=document.getElementById('gerr'); er.textContent='Give it a title.'; er.classList.remove('hide'); return; }
-    var g={}; Object.keys(d).forEach(function(k){ if(k[0]!=='_') g[k]=d[k]; });
+    var g={}; Object.keys(d).forEach(function(k){ if(k[0]!=='_') g[k]=d[k]; }); g.pics=(d.pics||[]).slice(0,d.steps.length);
     var list=C.guides.slice(), i=list.findIndex(function(x){return x.id===g.id;}); if(i>=0) list[i]=g; else list.push(g);
     saveContent(Object.assign({},C,{guides:list}),'Guide saved').then(function(ok){ if(ok){ DRAFT=null; go('guide/'+g.id); } });
   };
@@ -862,6 +871,11 @@ document.addEventListener('click',function(e){
         .then(function(res){ return res.json().then(function(d){ if(!res.ok) throw new Error(d.error||'Upload failed'); DRAFT[k2]=d.id; }); })
         .catch(function(x){ toast(x.message); }).then(function(){ busy['ph'+k2]=false; render(); }); }); return; }
   if(t.dataset.phx){ DRAFT[t.dataset.phx]=''; render(); return; }
+  if(t.dataset.sph){ var si=+t.dataset.sph; pick(false,function(fl){ busy['sp'+si]=true; render();
+      shrink(fl[0],1400,false).then(function(r2){ return fetch('/api/teamapp?img=1',{method:'POST',headers:{'x-admin-key':key()},body:r2.full}); })
+        .then(function(res){ return res.json().then(function(d){ if(!res.ok) throw new Error(d.error||'Upload failed'); DRAFT.pics[si]=d.id; }); })
+        .catch(function(x){ toast(x.message); }).then(function(){ busy['sp'+si]=false; render(); }); }); return; }
+  if(t.dataset.sphx){ DRAFT.pics[+t.dataset.sphx]=''; render(); return; }
   if(t.hasAttribute('data-delguide')){ if(!t.dataset.sure){ t.dataset.sure='1'; t.textContent='Tap again to delete it for everyone'; return; }
     var id=DRAFT.id; saveContent(Object.assign({},C,{guides:C.guides.filter(function(g){return g.id!==id;})}),'Guide deleted').then(function(ok){ if(ok){ DRAFT=null; go('kit'); } }); return; }
   if(t.dataset.tmv){ var i2=+t.dataset.tmv, d2=+t.dataset.d, a2=TD[i2]; TD[i2]=TD[i2+d2]; TD[i2+d2]=a2; render(); return; }
