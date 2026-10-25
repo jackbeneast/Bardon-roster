@@ -156,8 +156,8 @@ function load(){
   return Promise.all([api('GET','/api/roster'), api('GET','/api/teamapp')]).then(function(r){
     R=r[0]; C=r[1].content; SECS=r[1].sections; ADMIN=!!r[1].admin; err='';
     if(PID && !member(PID)) PID='';
-    if(PID && !ADMIN && !ls('me_intro_'+PID) && !location.hash.replace(/^#\/?/,'')) { location.replace('#/intro'); }
-    render();
+    if(PID && !ADMIN && !tourSeen() && !location.hash.replace(/^#\/?/,'')) { location.replace('#/intro'); }
+    render(); tkStart();
   }).catch(function(e){ err=e.message; render(); });
 }
 function member(id){ return (R.team||[]).filter(function(t){return t.id===id;})[0]||null; }
@@ -188,10 +188,26 @@ function nextJobs(n){ var t=today(); return mine().filter(function(j){ return j.
 function upcomingWait(){ var t=today(), e=addDays(t,14); return mine().filter(function(j){ return j.date>=t&&j.date<=e&&cstate(j,PID)==='wait'; }); }
 function currentJob(){ var tj=todayJobs(); for(var i=0;i<tj.length;i++){ var L=liveOf(tj[i]); if(L.arrived[PID]&&!L.left[PID]) return tj[i]; } return tj[0]||null; }
 
+// ---------- team engagement (Jack's own visits never count) ----------
+var TK={sid:(Date.now().toString(36)+Math.random().toString(36).slice(2,10)).slice(0,20), shown:0, since:0, scr:{}, cur:'', curSince:0, acts:[], opened:false, last:0};
+function tkOn(){ return !!(R&&PID&&!ADMIN&&!key()); }
+function scrName(){ var v=route()[0]||''; return v===''?'today':(v==='edit'||v==='basics'||v==='tour')?'kit':v; }
+function tkFlush(){ var n=Date.now(); if(TK.cur&&TK.curSince){ TK.scr[TK.cur]=(TK.scr[TK.cur]||0)+(n-TK.curSince); TK.curSince=n; } if(TK.since){ TK.shown+=n-TK.since; TK.since=n; } }
+function tkScreen(){ tkFlush(); TK.cur=scrName(); if(document.visibilityState==='visible'){ TK.curSince=Date.now(); if(!TK.since) TK.since=Date.now(); } }
+function beacon(o){ var b=JSON.stringify(o); try{ if(navigator.sendBeacon&&navigator.sendBeacon('/api/teameng',new Blob([b],{type:'text/plain'}))) return; }catch(e){} try{ fetch('/api/teameng',{method:'POST',body:b,keepalive:true,headers:{'content-type':'text/plain'}}); }catch(e){} }
+function tkSend(ev){ if(!tkOn()) return; tkFlush(); var w=Math.min(screen.width||0,screen.height||0)||innerWidth;
+  beacon({pid:PID,sid:TK.sid,ev:ev,ms:TK.shown,scr:TK.scr,acts:TK.acts,dev:w>=900?'desktop':w>=600?'tablet':'mobile',home:!!standalone()}); TK.last=Date.now(); }
+function track(a){ if(!tkOn()) return; if(TK.acts.length<60) TK.acts.push({a:String(a).slice(0,80),at:new Date().toISOString()}); tkSend('beat'); }
+function tourEv(act,step,of){ if(!tkOn()) return; beacon({pid:PID,ev:'tour',act:act,step:step,of:of,v:tourV()}); }
+function tkStart(){ if(TK.opened||!tkOn()) return; TK.opened=true; tkScreen(); tkSend('open'); }
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden'){ tkFlush(); TK.since=0; TK.curSince=0; tkSend('beat'); } else { TK.since=Date.now(); TK.curSince=Date.now(); } });
+addEventListener('pagehide',function(){ tkFlush(); tkSend('beat'); });
+setInterval(function(){ if(document.visibilityState==='visible'&&TK.opened&&Date.now()-TK.last>=20000) tkSend('beat'); },20000);
+
 // ---------- routing ----------
 function route(){ return location.hash.replace(/^#\/?/,'').split('/').map(decodeURIComponent); }
 function go(h){ if(location.hash==='#/'+h) render(); else location.hash='#/'+h; }
-window.addEventListener('hashchange',function(){ FLAG=null; render(); window.scrollTo(0,0); });
+window.addEventListener('hashchange',function(){ FLAG=null; if(TK.opened) tkScreen(); render(); window.scrollTo(0,0); });
 
 function nav(active){
   var cj=currentJob(), jh=cj?'#/job/'+cj.id:'#/job';
@@ -212,10 +228,11 @@ function render(){
   var r=route(), v=r[0]||'';
   if(v==='edit') return ADMIN?renderEdit(r[1]):go('kit');
   if(v==='basics') return ADMIN?renderBasics():go('kit');
+  if(v==='tour') return ADMIN?renderTourEdit():go('kit');
   if(v==='guide') return renderGuide(r[1]);
   if(v==='kit') return renderKit();
+  if(v==='intro'&&(PID||ADMIN)) return renderIntro();
   if(v==='who'||!PID) return renderWho();
-  if(v==='intro') return renderIntro();
   if(v==='job') return renderJob(r[1]);
   if(v==='room') return renderRoom(r[1], r[2]);
   if(v==='wrap') return renderWrap(r[1]);
@@ -498,6 +515,7 @@ function renderPay(){
 function renderSlip(id){
   nav('me'); needPay();
   var sl=paySlips(), i=sl.findIndex(function(x){return x.id===id;}), x=sl[i];
+  if(x&&busy.lastSlip!==id){ busy.lastSlip=id; track('Viewed payslip: '+per(x)); }
   if(!x){ if(PAY&&PAY.loading){ app.innerHTML='<div class="center">Loading…</div>'; return; } go('pay'); return; }
   var newer=sl[i-1], older=sl[i+1], otPay=Math.round((x.gross-x.ordPay)*100)/100;
   var h=back('#/pay','My pay')+'<p class="lbl">Payslip '+esc(x.num)+'</p><h1>'+esc(per(x))+'</h1><p class="sub" style="margin-top:6px">'+(x.cycle===2?'Fortnightly':'Weekly')+' pay · paid '+esc(fday(x.paidOn,true))+'</p><div class="stack">';
@@ -524,28 +542,25 @@ function renderSlip(id){
 
 
 // ---------- welcome tour (first open on a phone, and from Me) ----------
-var TOUR=[
-  {k:'Welcome', t:'Welcome to the <em>team app</em>', b:['Everything you need for a shift, in one place.','No more scrolling back through texts for an address, a gate code or what the client asked for.','Here\'s a quick look around. It takes a minute.'], ic:I.home},
-  {k:'Shifts', t:'Your shifts, <em>confirmed</em> in one tap', b:['New shifts show on Today with I\'ll be there and Can\'t.','If you can\'t make it, Jack hears straight away.','All your upcoming shifts are on the Me tab.'], ic:I.job},
-  {k:'On the day', t:'On the day, the app <em>walks you through it</em>', b:['Read the job brief: address, getting in, parking, and what the client wants.','Clock in when you arrive.','Open your rooms and tick each step as you go. Take your after photos, then finish the room.','Flag anything: damage, a stain that won\'t shift, extra work, or supplies running low.','Wrap up and clock out before you leave.'], ic:I.clock},
-  {k:'Toolkit', t:'Never guess <em>how it\'s done</em>', b:['The Toolkit has how we clean every room, what "done" looks like, dwell times and what\'s easy to miss.','It also covers what to do if something goes wrong.','Jack keeps it up to date, so it\'s always the current standard.'], ic:I.kit},
-  {k:'Your pay', t:'Your pay, <em>all in one place</em>', b:['Every payslip: hours, rates, tax and super, shift by shift.','Your totals for the financial year.','An estimate of this week\'s pay from your rostered shifts.'], ic:I.me},
-  {k:'Home screen', t:'Put it on your <em>home screen</em>', b:[], ic:I.home, home:true}
-];
+function tourSteps(){ return ((C&&C.tour)||[]).filter(function(x){ return !x.off&&!(x.home&&standalone()); }); }
+function tourV(){ return String((C&&C.tourV)||1); }
+function tourSeen(){ return ls('me_intro_'+PID)===tourV(); }
+function ital(t){ return esc(t).replace(/\*([^*]+)\*/g,'<em>$1</em>'); }
 var TI=0;
 function standalone(){ try{ return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone; }catch(e){ return false; } }
 function renderIntro(){
   navEl.classList.add('hide');
-  var steps=TOUR.filter(function(x){ return !(x.home&&standalone()); });
+  var steps=tourSteps(); if(!steps.length){ ls('me_intro_'+PID,tourV()); go(''); return; }
+  if(TI===0&&!busy.tourStarted){ busy.tourStarted=true; tourEv('start',0,steps.length); }
   if(TI>=steps.length) TI=steps.length-1;
   var st=steps[TI], m=member(PID), last=TI===steps.length-1;
   var h='<div style="min-height:calc(100vh - 60px);display:flex;flex-direction:column;gap:20px">';
   h+='<div class="between" style="align-items:center"><div class="row" style="gap:6px" aria-label="Step '+(TI+1)+' of '+steps.length+'">'+steps.map(function(x,i){ return '<span style="width:'+(i===TI?'22px':'8px')+';height:8px;border-radius:4px;background:'+(i<=TI?'var(--tcd)':'var(--cd)')+'"></span>'; }).join('')+'</div>'+(last?'':'<button class="ghost" data-tour="done">Skip</button>')+'</div>';
-  h+='<div style="width:72px;height:72px;border-radius:20px;background:var(--dark);color:var(--gold);display:flex;align-items:center;justify-content:center;margin-top:12px">'+st.ic.replace('class="ic"','width="34" height="34"')+'</div>';
-  h+='<div><p class="lbl">'+(TI===0&&m?'Hi '+esc(first(m.name)):esc(st.k))+'</p><h1 style="margin-top:8px">'+st.t+'</h1></div>';
+  h+='<div style="width:72px;height:72px;border-radius:20px;background:var(--dark);color:var(--gold);display:flex;align-items:center;justify-content:center;margin-top:12px">'+(I[st.ic]||I.home).replace('class="ic"','width="34" height="34"')+'</div>';
+  h+='<div><p class="lbl">'+(TI===0&&m?'Hi '+esc(first(m.name)):esc(st.k))+'</p><h1 style="margin-top:8px">'+ital(st.t)+'</h1></div>';
   if(st.home){
     var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
-    h+='<p style="font-size:16px;line-height:1.6">So it opens like any other app, straight to your shifts.</p>';
+    h+=st.b.map(function(x){ return '<p style="font-size:16px;line-height:1.6">'+esc(x)+'</p>'; }).join('');
     h+='<div class="card" style="padding:6px 16px">'+(ios?[['1','Tap the Share button at the bottom of Safari (the square with an arrow).'],['2','Scroll down and tap Add to Home Screen.'],['3','Tap Add.']]:[['1','Tap the ⋮ menu at the top of Chrome.'],['2','Tap Add to Home screen.'],['3','Tap Add.']]).map(function(x){ return '<div class="step"><span class="n">'+x[0]+'</span><p>'+x[1]+'</p></div>'; }).join('')+'</div>';
     if(ios) h+='<p class="sub">Not in Safari? Copy this page\'s link and open it in Safari first.</p>';
   } else h+='<div style="display:flex;flex-direction:column;gap:12px">'+st.b.map(function(x){ return '<div class="row" style="align-items:flex-start"><span style="width:8px;height:8px;border-radius:4px;background:var(--tcd);margin-top:9px;flex:none"></span><p style="font-size:16px;line-height:1.6">'+esc(x)+'</p></div>'; }).join('')+'</div>';
@@ -558,7 +573,7 @@ var Q='';
 function renderKit(){
   nav('kit');
   var q=Q.trim().toLowerCase();
-  var h=(PID?editbar():'')+'<div class="between" style="margin-top:'+(ADMIN&&PID?'16px':'0')+'"><div><h1>Toolkit</h1><p class="sub" style="margin-top:6px;font-size:15px">Don\'t remember it. Look it up.</p></div>'+(ADMIN?'<a class="ed" href="#/basics">Focus &amp; rules</a>':'')+'</div><div class="stack">';
+  var h=(PID?editbar():'')+'<div class="between" style="margin-top:'+(ADMIN&&PID?'16px':'0')+'"><div><h1>Toolkit</h1><p class="sub" style="margin-top:6px;font-size:15px">Don\'t remember it. Look it up.</p></div>'+(ADMIN?'<div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end"><a class="ed" href="#/basics">Focus &amp; rules</a><a class="ed" href="#/tour">Welcome tour</a></div>':'')+'</div><div class="stack">';
   h+='<label class="search">'+I.search+'<span class="hide">Search the toolkit</span><input type="search" id="q" value="'+esc(Q)+'" placeholder="Search, e.g. grout, oven, gloves" autocomplete="off"></label>';
   if(ADMIN&&C.starter) h+='<div class="tint"><p class="lbl">Starter content</p><p>This is a first draft from your SOPs. Tap any guide, then Edit, to make it yours. Add product names and your own photos.</p></div>';
   SECS.forEach(function(sec){
@@ -580,6 +595,7 @@ function renderKit(){
 function renderGuide(id){
   nav('kit');
   var g=guide(id); if(!g){ go('kit'); return; }
+  if(busy.lastGuide!==id){ busy.lastGuide=id; track('Opened guide: '+g.title); }
   var h=back(history.length>1?'javascript:history.back()':'#/kit','Back')+'<div class="between"><p class="lbl">'+esc((SECS.filter(function(s){return s.id===g.sec;})[0]||{}).title||'Toolkit')+'</p>'+(ADMIN?'<a class="ed" href="#/edit/'+g.id+'">Edit</a>':'')+'</div><h1>'+esc(g.title)+'</h1><div class="stack">';
   if(g.good||g.bad) h+='<div class="grid2">'+(g.good?'<div style="display:flex;flex-direction:column;gap:6px"><img class="std" src="'+img(g.good)+'" alt="Done right"><p style="font-weight:600;font-size:13px">'+I.tick+' This passes</p></div>':'')+(g.bad?'<div style="display:flex;flex-direction:column;gap:6px"><img class="std" src="'+img(g.bad)+'" alt="Needs redoing"><p style="font-weight:600;font-size:13px;color:var(--tcd)">'+I.cross+' Redo this</p></div>':'')+'</div>';
   if(g.done.length) h+='<div class="dark"><p class="lbl">Done means</p>'+g.done.map(function(x){ return '<p style="line-height:1.6">'+esc(x)+'</p>'; }).join('')+'</div>';
@@ -642,6 +658,31 @@ function renderBasics(){
     saveContent(Object.assign({},C,{focus:{title:E.ft.value,body:E.fb.value,guide:E.fg.value},rules:E.rules.value.split('\n').map(function(x){return x.trim();}).filter(Boolean),contact:{name:E.cn.value,phone:E.cp.value}}),'Saved').then(function(ok){ if(ok) go('kit'); });
   };
 }
+var TD=null;
+function renderTourEdit(){
+  nav('kit');
+  if(!TD) TD=JSON.parse(JSON.stringify(C.tour||[]));
+  var IC=[['home','House'],['job','Clipboard'],['clock','Clock'],['kit','Book'],['me','Person'],['phone','Phone'],['flag','Flag'],['cam','Camera']];
+  var h=back('#/kit','Toolkit')+'<h1>Welcome <em>tour</em></h1><p class="sub" style="margin-top:8px">What new team members see the first time they open the app. Put a word in *asterisks* to show it in italics.</p><form id="tf" class="stack" novalidate>';
+  TD.forEach(function(st,i){
+    h+='<div class="card" style="display:flex;flex-direction:column;gap:12px'+(st.off?';opacity:.6':'')+'"><div class="between"><p class="lbl b">Step '+(i+1)+(st.home?' · add to home screen':'')+'</p><div class="row" style="gap:4px">'+(!st.home&&i>0?'<button type="button" class="ed" data-tmv="'+i+'" data-d="-1" aria-label="Move up">↑</button>':'')+(!st.home&&TD[i+1]&&!TD[i+1].home?'<button type="button" class="ed" data-tmv="'+i+'" data-d="1" aria-label="Move down">↓</button>':'')+'</div></div>';
+    h+='<div class="grid2"><label class="f">Small label<input class="t" data-tf="k" data-i="'+i+'" value="'+esc(st.k)+'"></label><label class="f">Icon<select class="t" data-tf="ic" data-i="'+i+'">'+IC.map(function(x){ return '<option value="'+x[0]+'"'+(st.ic===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select></label></div>';
+    h+='<label class="f">Headline<input class="t" data-tf="t" data-i="'+i+'" value="'+esc(st.t)+'"></label>';
+    h+='<label class="f">'+(st.home?'Text above the steps':'Points')+' <small>one per line</small><textarea class="t" rows="'+Math.max(3,st.b.length+1)+'" data-tf="b" data-i="'+i+'">'+esc(st.b.join('\n'))+'</textarea></label>';
+    if(st.home) h+='<p class="sub">The iPhone and Android steps are added automatically, and this step is skipped for anyone who has already added the app.</p>';
+    h+='<div class="row" style="gap:16px"><label class="it" style="border:0;min-height:44px;padding:0"><input type="checkbox" data-toff="'+i+'"'+(st.off?'':' checked')+'><span>Show this step</span></label>'+(st.home?'':'<button type="button" class="ghost" data-tdel="'+i+'" style="margin-left:auto;color:var(--tcd)">Delete</button>')+'</div></div>';
+  });
+  h+='<button type="button" class="btn o" data-tadd>+ Add a step</button>';
+  h+='<div class="card" style="display:flex;flex-direction:column;gap:10px"><label class="it" style="border:0;padding:0"><input type="checkbox" id="tagain"><span>Show the tour again to everyone next time they open the app</span></label><p class="sub">Tick this after a big change. Otherwise only people who haven\'t seen it yet get the new version.</p></div>';
+  h+='<p class="sub">Save first, then Preview to see it the way the team does.</p><div class="row"><a class="btn o" href="#/intro">Preview</a><button class="btn p" type="submit"'+(busy.save?' disabled':'')+'>'+(busy.save?'Saving…':'Save')+'</button></div>';
+  h+='<button type="button" class="ghost" data-treset style="align-self:center;color:var(--tcd)">Back to the starter tour</button>';
+  app.innerHTML=h+'</form>';
+  var f=document.getElementById('tf');
+  f.oninput=function(e){ var el=e.target, i=+el.dataset.i; if(!el.dataset.tf||!TD[i]) return; TD[i][el.dataset.tf]=el.dataset.tf==='b'?el.value.split('\n').map(function(x){return x.trim();}).filter(Boolean):el.value; };
+  f.onchange=function(e){ var el=e.target; if(el.dataset.tf==='ic'){ TD[+el.dataset.i].ic=el.value; return; } if(el.dataset.toff!==undefined){ var st=TD[+el.dataset.toff]; if(el.checked) delete st.off; else st.off=true; renderTourEdit(); } };
+  f.onsubmit=function(e){ e.preventDefault(); var again=document.getElementById('tagain').checked;
+    saveContent(Object.assign({},C,{tour:TD,tourV:(+C.tourV||1)+(again?1:0)}),again?'Saved. Everyone sees it next time':'Tour saved').then(function(ok){ if(ok){ TD=null; render(); } }); };
+}
 function saveContent(next,msg){
   busy.save=true; render();
   return api('PUT','/api/teamapp',{content:next}).then(function(d){ C=d.content; busy.save=false; toast(msg); return true; })
@@ -671,7 +712,7 @@ function roomPhotos(j,room,files){
     return shrink(f,1600,true).then(function(r){ return fetch(q+'&stage=bin&tl='+r.thumb.size,{method:'POST',headers:hd,body:new Blob([r.thumb,r.full],{type:'application/octet-stream'})}); })
       .then(function(res){ return res.json().then(function(d){ if(!res.ok||!d.id) throw new Error(d.error||'Upload failed'); ids.push(d.id); }); }).then(one); }
   one().then(function(){ return api('POST',q+'&stage=add',{ids:ids,room:room,kind:'after'}); })
-    .then(function(d){ takeLive(d,j.id); busy.photo=''; toast(ids.length+' photo'+(ids.length===1?'':'s')+' added'); render(); })
+    .then(function(d){ takeLive(d,j.id); busy.photo=''; toast(ids.length+' photo'+(ids.length===1?'':'s')+' added'); track('Added '+ids.length+' photo'+(ids.length===1?'':'s')+' · '+room); render(); })
     .catch(function(e){ busy.photo=''; render(); toast(e.message||'Photo didn\'t upload. Try again.'); });
 }
 
@@ -687,17 +728,17 @@ document.addEventListener('click',function(e){
   var r=route();
   if(t.dataset.act==='reload'){ err=''; R=null; render(); load(); return; }
   if(t.dataset.act==='notme'){ PID=''; ls('me_pid',null); go('who'); return; }
-  if(t.dataset.tour){ var tv=t.dataset.tour; if(tv==='next'){ TI++; render(); window.scrollTo(0,0); } else if(tv==='back'){ TI=Math.max(0,TI-1); render(); } else { ls('me_intro_'+PID,'1'); TI=0; go(''); } return; }
+  if(t.dataset.tour){ var tv=t.dataset.tour, n=tourSteps().length; if(tv==='next'){ TI++; tourEv('step',TI,n); render(); window.scrollTo(0,0); } else if(tv==='back'){ TI=Math.max(0,TI-1); render(); } else { tourEv(TI>=n-1?'done':'skip',TI,n); ls('me_intro_'+PID,tourV()); TI=0; busy.tourStarted=false; go(ADMIN?'tour':''); } return; }
   if(t.dataset.act==='repay'){ PAY=null; PAYFOR=''; render(); return; }
-  if(t.dataset.who){ PID=t.dataset.who; ls('me_pid',PID); TI=0; go(!ADMIN&&!ls('me_intro_'+PID)?'intro':''); return; }
+  if(t.dataset.who){ PID=t.dataset.who; ls('me_pid',PID); TI=0; go(!ADMIN&&!tourSeen()?'intro':''); setTimeout(tkStart,50); return; }
   if(t.dataset.cant){ CANT=t.dataset.cant; render(); return; }
   if(t.hasAttribute('data-cantx')){ CANT=''; render(); return; }
   if(t.dataset.reply){ var jid=t.dataset.j, v=t.dataset.reply, why=document.getElementById('cantwhy');
     t.disabled=true; t.textContent='Sending…';
-    api('POST','/api/confirm',{jobId:jid,personId:PID,status:v,reason:why?why.value:''}).then(function(d){ (R.confirms[jid]=R.confirms[jid]||{})[PID]=d.confirm; CANT=''; toast(v==='yes'?'Confirmed. Thanks!':'Jack has been told'); render(); })
+    api('POST','/api/confirm',{jobId:jid,personId:PID,status:v,reason:why?why.value:''}).then(function(d){ (R.confirms[jid]=R.confirms[jid]||{})[PID]=d.confirm; CANT=''; toast(v==='yes'?'Confirmed. Thanks!':'Jack has been told'); var cj=jobById(jid); track((v==='yes'?'Confirmed shift ':'Said they can\'t make ')+(cj?fday(cj.date):'')); render(); })
       .catch(function(x){ toast(x.message); render(); }); return; }
   if(t.dataset.clock){ var j=jobById(t.dataset.j); if(!j) return; busy.clock=true; render();
-    live(j,{action:t.dataset.clock==='in'?'arrive':'leave'},t.dataset.clock==='in'?'Clocked in':'Clocked out. Thanks!').catch(function(x){ toast(x.message); }).then(function(){ busy.clock=false; render(); }); return; }
+    live(j,{action:t.dataset.clock==='in'?'arrive':'leave'},t.dataset.clock==='in'?'Clocked in':'Clocked out. Thanks!').then(function(d){ track(t.dataset.clock==='in'?'Clocked in':'Clocked out'); return d; }).catch(function(x){ toast(x.message); }).then(function(){ busy.clock=false; render(); }); return; }
   if(t.hasAttribute('data-photo')){ var jp=jobById(r[1]), room=r[2]; if(jp) pick(true,function(fl){ roomPhotos(jp,room,fl); }); return; }
   if(t.hasAttribute('data-flagopen')){ FLAG={k:'damage',n:''}; render(); return; }
   if(t.hasAttribute('data-flagx')){ FLAG=null; render(); return; }
@@ -705,10 +746,10 @@ document.addEventListener('click',function(e){
     if(!n){ toast('Add a short note'); return; } FLAG={k:k,n:n}; busy.flag=true; render();
     var labels={damage:'Damage',stain:'Can\'t get clean',extra:'Extra work'};
     var body=k==='supply'?{action:'supply',title:n.slice(0,80)}:{action:'flag',title:(labels[k]+' · '+rm).slice(0,120),detail:n};
-    live(jf,body,'Sent to '+(C.contact.name||'Jack')).then(function(){ FLAG=null; },function(x){ toast(x.message); }).then(function(){ busy.flag=false; render(); }); return; }
+    live(jf,body,'Sent to '+(C.contact.name||'Jack')).then(function(){ FLAG=null; track((k==='supply'?'Low on supplies: ':'Flagged: ')+n.slice(0,50)); },function(x){ toast(x.message); }).then(function(){ busy.flag=false; render(); }); return; }
   if(t.hasAttribute('data-roomdone')){ var jr=jobById(r[1]); busy.room=true; render();
-    live(jr,{action:'room',room:r[2],status:'d'},r[2]+' done').catch(function(x){ toast(x.message); }).then(function(){ busy.room=false; render(); window.scrollTo(0,document.body.scrollHeight); }); return; }
-  if(t.hasAttribute('data-finish')){ var jd=jobById(r[1]); t.disabled=true; live(jd,{action:'finish'},'Jack knows it\'s ready').catch(function(x){ toast(x.message); }).then(render); return; }
+    live(jr,{action:'room',room:r[2],status:'d'},r[2]+' done').then(function(d){ var st=roomStat(jr,r[2]); track('Finished '+r[2]+' ('+st.n+'/'+st.total+' ticked, '+st.photos.length+' photo'+(st.photos.length===1?'':'s')+')'); return d; }).catch(function(x){ toast(x.message); }).then(function(){ busy.room=false; render(); window.scrollTo(0,document.body.scrollHeight); }); return; }
+  if(t.hasAttribute('data-finish')){ var jd=jobById(r[1]); t.disabled=true; live(jd,{action:'finish'},'Jack knows it\'s ready').then(function(d){ track('Marked the job ready'); return d; }).catch(function(x){ toast(x.message); }).then(render); return; }
   if(t.dataset.ph){ var k2=t.dataset.ph; pick(false,function(fl){ busy['ph'+k2]=true; render();
       shrink(fl[0],1400,false).then(function(r2){ return fetch('/api/teamapp?img=1',{method:'POST',headers:{'x-admin-key':key()},body:r2.full}); })
         .then(function(res){ return res.json().then(function(d){ if(!res.ok) throw new Error(d.error||'Upload failed'); DRAFT[k2]=d.id; }); })
@@ -716,6 +757,10 @@ document.addEventListener('click',function(e){
   if(t.dataset.phx){ DRAFT[t.dataset.phx]=''; render(); return; }
   if(t.hasAttribute('data-delguide')){ if(!t.dataset.sure){ t.dataset.sure='1'; t.textContent='Tap again to delete it for everyone'; return; }
     var id=DRAFT.id; saveContent(Object.assign({},C,{guides:C.guides.filter(function(g){return g.id!==id;})}),'Guide deleted').then(function(ok){ if(ok){ DRAFT=null; go('kit'); } }); return; }
+  if(t.dataset.tmv){ var i2=+t.dataset.tmv, d2=+t.dataset.d, a2=TD[i2]; TD[i2]=TD[i2+d2]; TD[i2+d2]=a2; render(); return; }
+  if(t.dataset.tdel){ if(!t.dataset.sure){ t.dataset.sure='1'; t.textContent='Tap again to delete'; return; } TD.splice(+t.dataset.tdel,1); render(); return; }
+  if(t.hasAttribute('data-tadd')){ var hi=TD.findIndex(function(x){return x.home;}); TD.splice(hi<0?TD.length:hi,0,{k:'New step',ic:'home',t:'A new *step*',b:[]}); render(); return; }
+  if(t.hasAttribute('data-treset')){ if(!t.dataset.sure){ t.dataset.sure='1'; t.textContent='Tap again: this replaces your tour'; return; } TD=null; var cc=Object.assign({},C); delete cc.tour; saveContent(cc,'Back to the starter tour').then(function(){ render(); }); return; }
   if(t.hasAttribute('data-reset')){ if(!t.dataset.sure){ t.dataset.sure='1'; t.textContent='Tap again: this replaces all your guides, focus and rules'; return; }
     api('POST','/api/teamapp',{action:'reset'}).then(function(d){ C=d.content; toast('Back to the starter content'); go('kit'); }).catch(function(x){ toast(x.message); }); return; }
 });
