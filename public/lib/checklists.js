@@ -919,6 +919,19 @@
     for (var i=0;i<KEYS.length;i++) if (KEYS[i][0].test(r)) return C[KEYS[i][1]];
     return r ? C['_general'] : [];
   }
+  // Items that wait on a product get a timer (seconds). Starting points:
+  // Jack sets his own from the team app (Toolkit → Timers), which overrides these.
+  var TIMES = { k_ovtreat:1200, k_filtsoak:900, k_mwsteam:180, b_spray:300, b_tgel:300, pw_tgel:300, wc_tgel:300, b_shsil:600, b_ceil:600 };
+  var OVR = {};
+  function secsOf(id){ if (Object.prototype.hasOwnProperty.call(OVR, id)) return Math.round(OVR[id]*60); return TIMES[id]||0; }
+  function setTimers(t){ OVR = (t && typeof t==='object') ? t : {}; }
+  // Every item that has (or could have) a timer: [{id,t,room,s,def}]
+  function timed(){
+    var out=[], seen={};
+    Object.keys(C).forEach(function(room){ if (room==='Granny flat'||room==='_general') return; C[room].forEach(function(sec){ sec[1].forEach(function(i){
+      if (seen[i[0]] || !(TIMES[i[0]] || OVR[i[0]]!=null)) return; seen[i[0]]=1; out.push({ id:i[0], t:i[1], room:room, s:secsOf(i[0]), def:TIMES[i[0]]||0 }); }); }); });
+    return out;
+  }
   var NAMES ={ regular:'Regular clean', deep:'Deep clean', presale:'Pre-sale clean', bond:'Bond clean' };
   function kindOf(service){
     var s = String(service||'').toLowerCase();
@@ -942,11 +955,11 @@
   function sectionsFor(room, service){
     var k = kindOf(service);
     return listOf(room).map(function(s){
-      return { title:s[0], items:s[1].filter(function(i){ return applies(i[2], k); }).map(function(i){ return { id:i[0], t:i[1] }; }) };
+      return { title:s[0], items:s[1].filter(function(i){ return applies(i[2], k); }).map(function(i){ var o={ id:i[0], t:i[1] }, sx=secsOf(i[0]); if (sx) o.s=sx; return o; }) };
     }).filter(function(s){ return s.items.length; });
   }
   function itemsFor(room, service){
     return sectionsFor(room, service).reduce(function(a,s){ return a.concat(s.items); }, []);
   }
-  window.CHECKLISTS = { sectionsFor:sectionsFor, itemsFor:itemsFor, kindOf:kindOf, name:function(service){ return NAMES[kindOf(service)]; } };
+  window.CHECKLISTS = { sectionsFor:sectionsFor, itemsFor:itemsFor, kindOf:kindOf, name:function(service){ return NAMES[kindOf(service)]; }, setTimers:setTimers, timed:timed };
 })();
