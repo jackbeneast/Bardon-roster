@@ -95,10 +95,10 @@ export default async (req) => {
     const kudos = [], since = new Date(Date.now() - 30 * 864e5).toISOString();
     await Promise.all((await s.list("kudos/")).map(async (k) => { const v = await s.get(k); if (v && v.at >= since) kudos.push(v); }));
     kudos.sort((a, b) => b.at.localeCompare(a.at));
-    const out = { team, jobs, info: roster.info || {}, confirms, acks, live, access, kudos, admin, adminSet: await adminIsSet(s), savedAt: roster.savedAt || "" };
+    // Pay settings (rates, cycle) are shared so the team app can estimate each person's pay.
+    const out = { team, jobs, info: roster.info || {}, confirms, acks, live, access, kudos, admin, adminSet: await adminIsSet(s), savedAt: roster.savedAt || "", pay: roster.pay || null };
     if (admin) {
       out.agents = roster.agents || [];
-      out.pay = roster.pay || null;
       const keys = await s.list("req/");
       out.requests = (await Promise.all(keys.map((k) => s.get(k)))).filter((r) => r && r.agentId).sort((a, b) => a.at.localeCompare(b.at)); // agent booking requests only; quote-form requests live in Quotes & Invoices
       // Unread count for the activity bell.

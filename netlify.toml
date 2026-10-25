@@ -84,3 +84,9 @@
   from = "/contract"
   to = "/contract/index.html"
   status = 200
+
+# Team app: /me (remembers who you are) and /me/<team id> (a personal link)
+[[redirects]]
+  from = "/me/*"
+  to = "/me/index.html"
+  status = 200
