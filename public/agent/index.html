@@ -73,6 +73,13 @@ button.card:hover{border-color:#C9BBAC}
 .back{background:none;border:0;color:var(--terracotta-dark);font-weight:600;padding:6px 0}
 section.blk{margin-top:24px}
 section.blk>h2{font-size:20px;margin-bottom:10px}
+.h2i{width:32px;height:32px;border-radius:10px;background:var(--cream-dark,#EDE6DE);color:var(--terracotta-dark,#A55830);display:inline-flex;align-items:center;justify-content:center;flex:none}
+section.blk>h2{display:flex;align-items:center;gap:10px}
+.gl-grid .gi{display:inline-flex;vertical-align:-2px;margin-right:5px;color:var(--gold,#F4B942);font-style:normal}
+ul.prep li,.std li.si{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start;padding-left:0;border-left:0}
+.prep li .bcb,.std li.si .bcb{margin-top:1px}
+.std li.si::before{display:none}
+
 .bk .bk-when{margin-top:6px}
 .bk .bk-when b{display:block;font:700 23px/1.2 var(--serif);color:var(--dark)}
 .bk .bk-when span{display:block;font-size:15px;color:var(--dark);margin-top:2px}
@@ -134,6 +141,7 @@ section.blk>h2{font-size:20px;margin-bottom:10px}
 .vp-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .photos img{width:100%;height:100%;object-fit:cover;display:block}
 .gl-house{background:var(--white);border-radius:8px;padding:10px 4px 2px;margin:14px 0 4px}
+.glance.done .gl-house .house{max-width:250px;margin:0 auto 4px}
 .flag{border-left:3px solid var(--gold);background:var(--white);border-radius:0 8px 8px 0;padding:10px 12px;font-size:14px;margin-bottom:8px}
 .flag b{display:block;color:var(--dark);font-weight:600}
 .checks{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:14px;color:var(--dark)}
@@ -484,7 +492,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     if(tab==='today'){
       if(mode==='agent') h+=heroHtml(L,d);
       else h+='<div class="intro"><h1>On site <em>today</em></h1><p>'+DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]+'. Updates as the team works through each area.</p></div>';
-      if(mode==='agent') h+='<section class="blk"><h2>On site <em>today</em></h2><p class="sub" style="margin:-4px 0 0">'+DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]+'. Updates as the team finishes each area.</p>';
+      if(mode==='agent') h+='<section class="blk"><h2>'+hi('pin')+'<span>On site <em>today</em></span></h2><p class="sub" style="margin:-4px 0 0">'+DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]+'. Updates as the team finishes each area.</p>';
       h+=L.today.length?'<div class="list">'+L.today.map(function(j){return card(j,'today');}).join('')+'</div>':'<div class="empty sp">'+spotArt('calendar')+'No cleans at your listings today.'+(L.upcoming.length?' The next one is '+fmtDay(L.upcoming[0].date)+'.':'')+'</div>';
       if(mode==='agent') h+='</section>'+credSec();
     } else if(tab==='messages'){
@@ -507,7 +515,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
   // ---- contractor details agents need on file ----
   function credSec(){
     var bz=data.biz||{};
-    return '<section class="blk"><h2>For your <em>files</em></h2><div class="panel"><div class="cred">'+
+    return '<section class="blk"><h2>'+hi('clipboard')+'<span>For your <em>files</em></span></h2><div class="panel"><div class="cred">'+
       '<div><span>Business</span><b>'+esc(bz.legal||'Jack East T/A Bardon Clean')+'</b></div>'+
       '<div><span>ABN</span><b>'+esc(bz.abn||'46 426 437 394')+'</b></div>'+
       '<div><span>Public liability</span><b>$20 million</b></div>'+
@@ -550,7 +558,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
   function gstOf(b){ return b.items.some(function(x){return x.gst;}); }
   function moneyLine(j){ var b=j.billing; if(!b) return ''; return '<div class="money"><span><b>'+money(b.price)+'</b> <span class="sub">'+(gstOf(b)?'inc GST':'')+'</span></span>'+billTag(b)+'</div>'; }
   function billSec(j){
-    var b=j.billing, h='<section class="blk"><h2>Price &amp; <em>billing</em></h2><div class="panel">';
+    var b=j.billing, h='<section class="blk"><h2>'+hi('receipt')+'<span>Price &amp; <em>billing</em></span></h2><div class="panel">';
     if(!b) return h+'<p class="sub" style="margin:0;font-size:14px">The quote and invoices appear here as soon as Jack sends them, so you always know where billing stands.</p></div></section>';
     h+='<div class="bsum"><div><span>Price</span><b>'+money(b.price)+'</b><small>'+(gstOf(b)?'inc GST':'&nbsp;')+'</small></div><div><span>Paid</span><b>'+money(b.paid)+'</b></div><div><span>Owing</span><b class="'+(b.owing>0.004?'due':'')+'">'+money(b.owing)+'</b></div></div>';
     h+=b.items.map(function(x){ var meta=docState(x)+' · '+money(x.total)+(x.kind==='invoice'&&x.due>0.004&&x.dueDate&&x.state!=='paid'?' · due '+fmtDay(x.dueDate):'');
@@ -666,7 +674,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
   var ENTRY=['Someone will be home','Keys in a lockbox','Keys hidden on site','Collect keys from the agent','Other'];
   function accessSec(j){
     var c=(data.client||{}), a=c.access;
-    var h='<section class="blk"><h2>How do we <em>get in?</em></h2><div class="panel">';
+    var h='<section class="blk"><h2>'+hi('key')+'<span>How do we <em>get in?</em></span></h2><div class="panel">';
     if(a && !accEdit){
       h+='<dl class="accsum">'+[['Getting in',[a.entry,a.entryNote].filter(Boolean).join(', ')],['Parking',a.parking],['Pets',a.pets],['Anything else',a.notes]].filter(function(r){return r[1];}).map(function(r){ return '<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>'; }).join('')+'</dl>';
       h+='<p class="sub" style="margin:12px 0 0">Thanks, the team will see this on the day.</p><div class="actions" style="margin-top:10px"><button type="button" class="btn outline" data-accedit>Change details</button></div>';
@@ -687,6 +695,12 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
   // Anything I need to fix? What does it cost? What happens next? Can I trust you?
   function kindOfSvc(s){ s=String(s||''); return /bond|lease|vacate/i.test(s)?'bond':/pre.?sale/i.test(s)?'presale':/deep/i.test(s)?'deep':/regular/i.test(s)?'regular':'other'; }
   function phaseOf(j){ var L=j.live; if(L.done||(j.date<today()&&!Object.keys(L.arrived||{}).length&&!Object.keys(L.rooms||{}).length)) return 'done'; if(Object.keys(L.arrived||{}).length||Object.keys(L.rooms||{}).length) return 'live'; return 'booked'; }
+  // Bespoke icons beside headings, stats and lists (shared set in /lib/bcart.js).
+  function hi(k){ return window.BCART?'<span class="h2i" aria-hidden="true">'+BCART.icon(k,18)+'</span>':''; }
+  var GI={'Finished':'check','Areas':'home','Checks done':'clipboard','Photos':'camera','Notes for you':'flag','Locked up':'key','Team arrived':'team','Est. finish':'timer','Team arrives':'clock','Finishing around':'timer','Team':'team'};
+  function gi(t){ return window.BCART&&GI[t]?'<i class="gi" aria-hidden="true">'+BCART.icon(GI[t],13,2)+'</i>':''; }
+  function pi(t,raw){ if(!window.BCART) return ''; var k=raw?t:/power|water/i.test(t)?'bolt':/pet|alarm/i.test(t)?'paw':/valuable|paper/i.test(t)?'key':/bring/i.test(t)?'bucket':/styl|photo/i.test(t)?'camera':/moving|keys back/i.test(t)?'key':/inspect/i.test(t)?'clipboard':/comes up|not right|out of place|message/i.test(t)?'chat':/keep|this way/i.test(t)?'leaf':'check';
+    return BCART.badge(k,30); }
   function CL(){ return window.CHECKLISTS; }
   function roomItems(j,r){ return CL()?CL().itemsFor(r,j.service):[]; }
   function roomTicked(j,r){ var t=(j.live.ticked||{})[r]; return t&&t.length?t:[]; }
@@ -710,7 +724,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
         ['Photos',L.photos.length||'—'],
         ['Notes for you',notes?notes:'None'],
         ['Locked up',lk?clock(lk):'—']
-      ].map(function(x){ return '<div><span>'+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
+      ].map(function(x){ return '<div><span>'+gi(x[0])+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
       if(notes) h+='<button type="button" class="gl-note" data-goto="attention">'+notes+' thing'+(notes>1?'s':'')+' worth knowing'+(kindOfSvc(j.service)==='presale'?' before buyers walk through':'')+' ›</button>';
     } else if(ph==='live'){
       h+='<div class="gl-top"><span class="dot" aria-hidden="true"></span><div><span class="gl-k">Cleaning now</span><b>'+p.done+' of '+j.rooms.length+' areas done</b></div></div>';
@@ -721,7 +735,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
         ['Est. finish',fmtTime(L.eta||j.end)],
         ['Checks done',totalChecks(j)||'—'],
         ['Notes for you',notes?notes:'None']
-      ].map(function(x){ return '<div><span>'+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
+      ].map(function(x){ return '<div><span>'+gi(x[0])+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
       if(j.readyBy) h+='<p class="gl-p">On track to be ready for <b>'+esc(j.readyBy)+'</b>.</p>';
     } else {
       h+='<div class="gl-top"><span class="tick cal" aria-hidden="true">✓</span><div><span class="gl-k">Booked and confirmed</span><b>'+esc(longDay(j.date))+'</b></div></div>';
@@ -731,7 +745,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
         ['Finishing around',fmtTime(j.end)],
         ['Areas',j.rooms.length],
         ['Team',j.team.length?j.team.map(function(t){return t.name;}).join(', '):'Confirmed soon']
-      ].map(function(x){ return '<div><span>'+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
+      ].map(function(x){ return '<div><span>'+gi(x[0])+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
       if(j.days&&j.days.length>1) h+='<p class="gl-p">'+j.days.length+' days: '+j.days.map(function(x){ return esc(fmtDay(x.date)); }).join(', ')+'</p>';
       if(j.readyBy) h+='<p class="gl-p">Ready for <b>'+esc(j.readyBy)+'</b>.</p>';
     }
@@ -775,7 +789,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
       L.push(['We bring everything','All equipment and products. Nothing for you to buy or leave out.']);
       if(k==='presale') L.push(['Styling comes after us','Book your stylist for after the clean, and the photographer after styling.']);
       if(k==='bond') L.push(['Moving out first','The clean goes best once furniture and belongings are out.']);
-      return '<section class="blk"><h2>Before we <em>arrive</em></h2><div class="panel"><ul class="prep">'+L.map(function(x){ return '<li><b>'+x[0]+'</b>'+x[1]+'</li>'; }).join('')+'</ul></div></section>';
+      return '<section class="blk"><h2>'+hi('home')+'<span>Before we <em>arrive</em></span></h2><div class="panel"><ul class="prep">'+L.map(function(x){ return '<li>'+pi(x[0])+'<div><b>'+x[0]+'</b>'+x[1]+'</div></li>'; }).join('')+'</ul></div></section>';
     }
     if(ph!=='done') return '';
     if(k==='presale'){
@@ -791,7 +805,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
       L.push(['Keeping it this way','Run the bathroom fan after showers and wipe benches daily to hold the finish longer.']);
       L.push(['Anything not right?','Message Jack and we\'ll look at it.']);
     }
-    return '<section class="blk"><h2>What happens <em>next</em></h2><div class="panel"><ul class="prep">'+L.map(function(x){ return '<li><b>'+x[0]+'</b>'+x[1]+'</li>'; }).join('')+'</ul></div></section>';
+    return '<section class="blk"><h2>'+hi('calendar')+'<span>What happens <em>next</em></span></h2><div class="panel"><ul class="prep">'+L.map(function(x){ return '<li>'+pi(x[0])+'<div><b>'+x[0]+'</b>'+x[1]+'</div></li>'; }).join('')+'</ul></div></section>';
   }
 
   // ---- 5. Who's looking after the home ----
@@ -803,9 +817,9 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     ['A team that\'s looked after','Paid above award, with overtime on bigger jobs.']
   ];
   function trustSec(j){
-    var h='<section class="blk"><h2>Who\'s looking after <em>the home</em></h2><div class="panel">';
+    var h='<section class="blk"><h2>'+hi('shield')+'<span>Who\'s looking after <em>the home</em></span></h2><div class="panel">';
     if(j.team.length) h+=j.team.map(function(t){ var a=j.live.arrived[t.id]; return '<div class="person">'+(t.photo?'<img class="av" style="object-fit:cover;padding:0" alt="" src="'+esc(t.photo)+'">':'<span class="av">'+esc(initial(t.name))+'</span>')+'<div><b>'+esc(t.name)+(t.owner?' <span class="sub">· owner</span>':'')+'</b><span class="sub">'+(a?'Arrived '+clock(a):(j.date>=today()?'Starts '+fmtTime(j.start):'On this clean'))+'</span></div></div>'; }).join('')+'<hr>';
-    h+='<ul class="std">'+STANDARDS.map(function(x){ return '<li><b>'+x[0]+'</b>'+x[1]+'</li>'; }).join('')+'</ul>';
+    h+='<ul class="std">'+STANDARDS.map(function(x,i){ return '<li class="si">'+pi(['shield','cloth','spray','flask','team'][i]||'check',1)+'<div><b>'+x[0]+'</b>'+x[1]+'</div></li>'; }).join('')+'</ul>';
     var bz=data.biz||{};
     h+='<p class="sub" style="margin:12px 0 0">'+esc(bz.legal||'Jack East T/A Bardon Clean')+' · ABN '+esc(bz.abn||'46 426 437 394')+'</p>';
     return h+'</div></section>';
@@ -813,7 +827,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
 
   // ---- vendor: feedback and booking again ----
   function feedbackCard(){
-    var c=(data.client||{}), fb=c.feedback, h='<section class="blk"><h2>How did we <em>go?</em></h2><div class="panel">';
+    var c=(data.client||{}), fb=c.feedback, h='<section class="blk"><h2>'+hi('heart')+'<span>How did we <em>go?</em></span></h2><div class="panel">';
     if(fb) h+='<p style="margin:0;font-size:15px">'+(fb.mood==='happy'?'Thank you. Jack will pass that on to the team.':'Thanks for letting us know. Jack will be in touch.')+'</p>';
     else {
       h+='<div class="fbtn" role="group"><button type="button" data-fb="happy" aria-pressed="'+(fbMode==='happy')+'">Really happy</button><button type="button" data-fb="issue" aria-pressed="'+(fbMode==='issue')+'">Something\'s not right</button></div>';
@@ -824,7 +838,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
   }
   function againCard(){
     var c=(data.client||{}), moving=c.kind==='presale'||c.kind==='bond', svc={presale:'presale',bond:'bond',deep:'deep',regular:'regular'}[c.kind]||'';
-    var h='<section class="blk"><h2>Book <em>again</em></h2><div class="panel again">';
+    var h='<section class="blk"><h2>'+hi('regular')+'<span>Book <em>again</em></span></h2><div class="panel again">';
     if(moving) h+='<a class="btn primary" href="/quote?service=movein&src=client-link">Moving? Get your new place cleaned</a>';
     h+='<a class="btn '+(moving?'outline':'primary')+'" href="/quote?src=client-link'+(svc&&!moving?'&service='+svc:'')+'">Book another clean</a>';
     if(c.kind!=='regular') h+='<a class="btn outline" href="/quote?service=regular&src=client-link">Ask about regular cleans</a>';
@@ -851,7 +865,13 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     h+='<div class="wrap rep" style="padding-bottom:60px">';
     h+='<div class="intro"><span class="eyebrow">'+esc(j.service||'Clean')+(j.dayT?' · Day '+j.dayN+' of '+j.dayT:'')+'</span><h1>'+esc(j.address||j.suburb)+'</h1><p>'+esc([j.address?j.suburb:'',fmtDay(j.date)].filter(Boolean).join(' · '))+'</p>'+(standalone&&data.agent?'<p>Arranged by '+esc(data.agent.name)+(data.agent.agency?', '+esc(data.agent.agency):'')+'</p>':'')+'</div>';
 
+    // Room by room. Once the clean is done, the before and after photos lead the page.
+    var roomsH='<section class="blk" id="photos"><h2>'+hi(ph==='done'?'camera':'clipboard')+'<span>'+(ph==='booked'?'What we\'ll <em>clean</em>':ph==='done'?'Before <em>&amp;</em> after':'Where we\'re <em>up to</em>')+'</span></h2>'+
+      (ph==='booked'?'<p class="sub sec-sub">Every area has its own checklist. The team ticks each item off on the day, and you\'ll see them here.</p>':
+       ph==='done'?'<p class="sub sec-sub">Photos from every area. Open one to see each check the team ticked.</p>':'<p class="sub sec-sub">Each area fills in as the team finishes it.</p>')+
+      '<div class="rooms">'+j.rooms.map(function(r){ return roomCard(j,r,ph); }).join('')+'</div></section>';
     h+=glance(j,p,ph);
+    if(ph==='done') h+=roomsH;
     if(L.updated && ph==='live') h+='<p class="updated">Last update '+clock(L.updated)+'. This page updates itself.</p>';
 
     if(V && ph==='done') h+=feedbackCard();
@@ -859,23 +879,19 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     if(V && ph==='booked') h+=bookingCard(j);
     if(V && ph==='booked') h+=accessSec(j);
 
-    // Room by room
-    h+='<section class="blk"><h2>'+(ph==='booked'?'What we\'ll <em>clean</em>':ph==='done'?'What we <em>cleaned</em>':'Where we\'re <em>up to</em>')+'</h2>'+
-      (ph==='booked'?'<p class="sub sec-sub">Every area has its own checklist. The team ticks each item off on the day, and you\'ll see them here.</p>':
-       ph==='done'?'<p class="sub sec-sub">Photos from every area. Open one to see each check the team ticked.</p>':'<p class="sub sec-sub">Each area fills in as the team finishes it.</p>')+
-      '<div class="rooms">'+j.rooms.map(function(r){ return roomCard(j,r,ph); }).join('')+'</div></section>';
+    if(ph!=='done') h+=roomsH;
     if(ph==='live') h+=tourBlock(L);
 
-    if(ph!=='booked') h+='<section class="blk" id="attention"><h2>For your <em>attention</em></h2>'+(L.flags.length?'<p class="sub sec-sub">Things the team noticed that are worth knowing'+(kindOfSvc(j.service)==='presale'?' before buyers walk through':'')+'.</p>'+L.flags.map(function(f){return '<div class="flag"><b>'+esc(f.t)+'</b>'+esc(f.d)+(f.at?'<span class="sub">Noted '+clock(f.at)+'</span>':'')+'</div>';}).join(''):'<div class="panel sub">Nothing flagged. The team notes anything you should know, such as wear or marks that won\'t come out.</div>')+'</section>';
+    if(ph!=='booked') h+='<section class="blk" id="attention"><h2>'+hi('flag')+'<span>For your <em>attention</em></span></h2>'+(L.flags.length?'<p class="sub sec-sub">Things the team noticed that are worth knowing'+(kindOfSvc(j.service)==='presale'?' before buyers walk through':'')+'.</p>'+L.flags.map(function(f){return '<div class="flag"><b>'+esc(f.t)+'</b>'+esc(f.d)+(f.at?'<span class="sub">Noted '+clock(f.at)+'</span>':'')+'</div>';}).join(''):'<div class="panel sub">Nothing flagged. The team notes anything you should know, such as wear or marks that won\'t come out.</div>')+'</section>';
 
     if(ph!=='booked'){
       var lk=Object.keys(data.lock), nl=Object.keys(L.lock||{}).length;
-      h+='<section class="blk"><h2>Lock-up &amp; <em>handover</em></h2><div class="panel"><ul class="checks">'+lk.map(function(k){return '<li class="'+(L.lock[k]?'':'no')+'"><span>'+esc(data.lock[k])+'</span>'+(L.lock[k]?'<time>'+clock(L.lock[k])+'</time>':'')+'</li>';}).join('')+'</ul>'+(nl<lk.length?'<p class="sub" style="margin:10px 0 0">The team ticks each of these off before leaving.</p>':'<p class="sub" style="margin:10px 0 0">Checked and ticked off by the team before leaving.</p>')+'</div></section>';
+      h+='<section class="blk"><h2>'+hi('key')+'<span>Lock-up &amp; <em>handover</em></span></h2><div class="panel"><ul class="checks">'+lk.map(function(k){return '<li class="'+(L.lock[k]?'':'no')+'"><span>'+esc(data.lock[k])+'</span>'+(L.lock[k]?'<time>'+clock(L.lock[k])+'</time>':'')+'</li>';}).join('')+'</ul>'+(nl<lk.length?'<p class="sub" style="margin:10px 0 0">The team ticks each of these off before leaving.</p>':'<p class="sub" style="margin:10px 0 0">Checked and ticked off by the team before leaving.</p>')+'</div></section>';
     }
 
     h+=billSec(j);
     h+=nextSteps(j,ph);
-    if(ph==='live') h+='<section class="blk"><h2>Progress</h2><div class="panel"><ol class="tl">'+STEPS.map(function(s,i){ if(i===0) return ''; var hit=i<=p.step; return '<li class="'+(hit?'hit':'')+(i===p.step&&!L.done&&p.step>0?' now':'')+(i===4?' last':'')+'"><span>'+s+'</span><time>'+(hit?whenAt(p.times[i]):'')+'</time></li>'; }).join('')+'</ol></div></section>';
+    if(ph==='live') h+='<section class="blk"><h2>'+hi('clock')+'<span>Progress</span></h2><div class="panel"><ol class="tl">'+STEPS.map(function(s,i){ if(i===0) return ''; var hit=i<=p.step; return '<li class="'+(hit?'hit':'')+(i===p.step&&!L.done&&p.step>0?' now':'')+(i===4?' last':'')+'"><span>'+s+'</span><time>'+(hit?whenAt(p.times[i]):'')+'</time></li>'; }).join('')+'</ol></div></section>';
     h+=trustSec(j);
     if(V && ph==='done') h+=againCard();
 
@@ -914,7 +930,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
   document.addEventListener('click',function(e){ var g=e.target.closest('[data-goto]'); if(!g) return; var t=document.getElementById(g.dataset.goto); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); });
   document.addEventListener('click',function(e){ var a=e.target.closest('a[data-gi]'); if(!a) return; e.preventDefault(); lbOpen(+a.dataset.gi); });
   function tourBlock(L){ var tv=L.tour||[]; if(!tv.length) return '';
-    return '<section class="blk"><h2>Property <em>tour</em></h2><div class="tour">'+tv.map(function(v,i){ return '<button type="button" class="tv" data-tv="'+i+'" aria-label="Played walkthrough video: '+esc(v.title)+'"><i class="pl" aria-hidden="true"></i><span style="margin:0;color:inherit"><b>'+esc(v.title)+'</b><span>'+(v.secs?vlen(v.secs)+' · ':'')+'Walkthrough video</span></span></button>'; }).join('')+'</div></section>';
+    return '<section class="blk"><h2>'+hi('video')+'<span>Property <em>tour</em></span></h2><div class="tour">'+tv.map(function(v,i){ return '<button type="button" class="tv" data-tv="'+i+'" aria-label="Played walkthrough video: '+esc(v.title)+'"><i class="pl" aria-hidden="true"></i><span style="margin:0;color:inherit"><b>'+esc(v.title)+'</b><span>'+(v.secs?vlen(v.secs)+' · ':'')+'Walkthrough video</span></span></button>'; }).join('')+'</div></section>';
   }
   // Walkthrough video player: full screen, outside the page that refreshes itself,
   // so the 30-second refresh never interrupts a video.
