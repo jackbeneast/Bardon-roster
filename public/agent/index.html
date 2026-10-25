@@ -223,6 +223,7 @@ body.app footer{margin-bottom:8px}
 .chat{display:grid;gap:4px;margin-top:16px}
 .chat .day{text-align:center;font:500 12px/1 var(--sans);color:var(--meta);margin:14px 0 6px}
 .chat .sys{text-align:center;font-size:13px;color:var(--meta);margin:8px 0}
+.chat .sys svg{width:120px;height:auto;display:block;margin:0 auto 4px}
 .bb{text-align:left;max-width:82%;padding:10px 13px;border-radius:18px;font-size:15px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
 .bb.me{justify-self:end;background:var(--dark);color:var(--cream);border-bottom-right-radius:6px}
 .bb.jk{justify-self:start;background:var(--white);color:var(--dark);border:1px solid var(--line);border-bottom-left-radius:6px}
@@ -274,6 +275,9 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
 .gl-p{margin:0;font-size:14px;color:#D8D0C7}.gl-p b{color:#fff;font-weight:600}
 .gl-note{display:block;width:100%;text-align:left;border:0;border-radius:8px;background:rgba(244,185,66,.16);color:#F7D58C;font:600 14px/1.4 var(--sans);padding:10px 12px}
 .rooms{display:grid;gap:12px}
+.rh-t{display:flex;align-items:center;gap:10px;min-width:0}.rh-t .bcb{flex:none}
+.ct-t{display:flex;gap:12px;align-items:flex-start;min-width:0}.ct-t .bcb{flex:none;margin-top:2px}
+.empty.sp{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;border-style:solid;padding:14px 18px 20px}.empty.sp svg{width:130px;height:auto}
 .room{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:12px}
 .rhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .rhead h3{font-size:18px}
@@ -330,6 +334,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
 <script src="/lib/checklists.js"></script>
 <script src="/lib/demo.js"></script>
 <script src="/lib/house.js"></script>
+<script src="/lib/bcart.js"></script>
 <script>
 (function(){
   var path=location.pathname, mode, cred='';
@@ -439,9 +444,10 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
   function chips(j){
     return '<div class="team">'+j.team.map(function(p){ var a=j.live.arrived[p.id]; return '<span class="chip"><span class="av">'+esc(initial(p.name))+'</span>'+esc(p.name)+(a?' <span class="t">· in '+clock(a)+'</span>':'')+'</span>'; }).join('')+'</div>';
   }
+  function spotArt(k){ return window.BCART?'<div aria-hidden="true">'+BCART.spot(k)+'</div>':''; }
   function card(j, kind){
     var p=prog(j), L=j.live, ac=j.actual||{}, place=esc(j.address||j.suburb||'Property');
-    var h='<button class="card" data-open="'+esc(j.id)+'"><div class="ctop"><div><h3>'+place+'</h3><div class="sub">'+esc([j.address?j.suburb:'',j.service].filter(Boolean).join(' · '))+(mode==='admin'&&j.client?' · '+esc(j.client):'')+'</div></div><span class="pill '+p.cls+'">'+esc(p.label)+'</span></div>';
+    var h='<button class="card" data-open="'+esc(j.id)+'"><div class="ctop"><div class="ct-t">'+(window.BCART?BCART.badge(BCART.serviceKey(j.service),40,p.cls==='on'?'dark':''):'')+'<div style="min-width:0"><h3>'+place+'</h3><div class="sub">'+esc([j.address?j.suburb:'',j.service].filter(Boolean).join(' · '))+(mode==='admin'&&j.client?' · '+esc(j.client):'')+'</div></div></div><span class="pill '+p.cls+'">'+esc(p.label)+'</span></div>';
     if(kind==='upcoming'){
       h+='<div class="facts"><div class="fact"><span>Date</span><b>'+fmtDay(j.date)+(j.dayT?' · Day '+j.dayN+' of '+j.dayT:'')+'</b></div><div class="fact"><span>Start</span><b>'+fmtTime(j.start)+'</b></div><div class="fact"><span>Est. finish</span><b>'+fmtTime(L.eta||j.end)+'</b></div></div>';
     } else if(kind==='reports'){
@@ -479,17 +485,17 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
       if(mode==='agent') h+=heroHtml(L,d);
       else h+='<div class="intro"><h1>On site <em>today</em></h1><p>'+DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]+'. Updates as the team works through each area.</p></div>';
       if(mode==='agent') h+='<section class="blk"><h2>On site <em>today</em></h2><p class="sub" style="margin:-4px 0 0">'+DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]+'. Updates as the team finishes each area.</p>';
-      h+=L.today.length?'<div class="list">'+L.today.map(function(j){return card(j,'today');}).join('')+'</div>':'<div class="empty">No cleans at your listings today.'+(L.upcoming.length?' The next one is '+fmtDay(L.upcoming[0].date)+'.':'')+'</div>';
+      h+=L.today.length?'<div class="list">'+L.today.map(function(j){return card(j,'today');}).join('')+'</div>':'<div class="empty sp">'+spotArt('calendar')+'No cleans at your listings today.'+(L.upcoming.length?' The next one is '+fmtDay(L.upcoming[0].date)+'.':'')+'</div>';
       if(mode==='agent') h+='</section>'+credSec();
     } else if(tab==='messages'){
       h+=chatView();
     } else if(tab==='upcoming'){
       h+='<div class="intro"><h1>Coming <em>up</em></h1><p>Booked cleans across your listings.</p></div>';
-      h+=L.upcoming.length?'<div class="list">'+L.upcoming.map(function(j){return card(j,'upcoming');}).join('')+'</div>':'<div class="empty">Nothing booked yet.'+(mode==='agent'?' Use Book to request a clean.':'')+'</div>';
+      h+=L.upcoming.length?'<div class="list">'+L.upcoming.map(function(j){return card(j,'upcoming');}).join('')+'</div>':'<div class="empty sp">'+spotArt('keys')+'Nothing booked yet.'+(mode==='agent'?' Use Book to request a clean.':'')+'</div>';
     } else if(tab==='reports'){
       h+='<div class="intro"><h1>Handover <em>reports</em></h1><p>Photos, lock-up and anything worth knowing before buyers walk through.</p></div>';
       if(mode==='agent') h+=reportSum(L.reports);
-      h+=L.reports.length?'<div class="list">'+L.reports.map(function(j){return card(j,'reports');}).join('')+'</div>':'<div class="empty">Finished cleans will appear here.</div>';
+      h+=L.reports.length?'<div class="list">'+L.reports.map(function(j){return card(j,'reports');}).join('')+'</div>':'<div class="empty sp">'+spotArt('camera')+'Finished cleans will appear here.</div>';
     } else if(tab==='book') h+=bookForm();
     if(tab!=='messages') h+='<footer>Bardon Clean · Jack East · <b style="user-select:all">'+JACK+'</b><br>'+(demoAud?'A sample of the portal. Real agents see only their own listings.':mode==='admin'?'Preview only. Agents see just the jobs tagged to them.':'This link is private to you. To show a vendor, open the clean and tap Share with the vendor.')+'</footer>';
     swap(main,h);
@@ -565,7 +571,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
   function dayLabel(s){ var d=new Date(s), n=new Date(), y=new Date(); y.setDate(n.getDate()-1);
     return d.toDateString()===n.toDateString()?'Today':d.toDateString()===y.toDateString()?'Yesterday':DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]; }
   function threadHtml(msgs){
-    if(!msgs.length) return '<div class="sys">No messages yet. Ask about a listing, send access details, or line up your next clean.</div>';
+    if(!msgs.length) return '<div class="sys">'+spotArt('message')+'No messages yet. Ask about a listing, send access details, or line up your next clean.</div>';
     var h='', last='', prev=null;
     msgs.forEach(function(m,i){
       var dk=new Date(m.at).toDateString(); if(dk!==last){ h+='<div class="day">'+esc(dayLabel(m.at))+'</div>'; last=dk; prev=null; }
@@ -737,9 +743,9 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     var L=j.live, x=L.rooms[r], s=(x&&x.s)||'w', ps=L.photos.filter(function(q){return q.room===r;});
     var bef=ps.filter(function(q){return q.kind==='before';}), aft=ps.filter(function(q){return q.kind==='after';});
     var items=roomItems(j,r), tk=roomTicked(j,r), n=roomChecks(j,r);
-    var h='<article class="room"><div class="rhead"><div><h3>'+esc(r)+'</h3><span class="sub">'+
+    var h='<article class="room"><div class="rhead"><div class="rh-t">'+(window.BCART?BCART.badge(BCART.areaKey(r),36,s==='d'?'gold':''):'')+'<div><h3>'+esc(r)+'</h3><span class="sub">'+
       (s==='d'?'Done '+clock(x.at):s==='p'?'Started '+clock(x.at):ph==='booked'?(items.length?items.length+' checks on the list':'On the list'):'To do')+
-      (s!=='w'&&n?' · '+n+' checks':'')+'</span></div>'+
+      (s!=='w'&&n?' · '+n+' checks':'')+'</span></div></div>'+
       '<span class="st '+s+'">'+(s==='d'?'Done':s==='p'?'In progress':ph==='booked'?'Included':'To do')+'</span></div>';
     // Lead with the first after photo (or a before if that's all there is); the rest sit in the strip.
     var hero=aft.length?[aft[0],'After']:bef.length?[bef[0],'Before']:null;

@@ -110,7 +110,9 @@ details.rate{margin-top:22px;border-top:0;padding-top:0;background:var(--cream);
 details.rate summary{font-size:17px}
 details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var(--meta);margin-top:2px}
 .rate .rlist{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:12px}
-.rate .rlist li{border-top:1px solid var(--line);padding-top:12px}
+.rate .rlist li{border-top:1px solid var(--line);padding-top:12px;display:grid;grid-template-columns:auto 1fr;gap:0 12px;align-items:start}
+.rate .rlist li>span.ri{width:34px;height:34px;border-radius:9px;background:var(--cream);color:var(--terracotta-dark);display:flex;align-items:center;justify-content:center}
+.rate .rlist li>.rt{grid-column:2}
 .rate .rlist b{display:block;font:700 15px/1.3 var(--serif);color:var(--dark);margin-bottom:2px}
 .rate .rlist li::marker{content:none}
 .rate .rlab{margin-top:14px;background:var(--white);border-radius:8px;padding:12px 14px;color:var(--dark)}
@@ -166,7 +168,8 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
 .pick .days button,.pick .later{min-height:46px;padding:0 14px;border-radius:8px;border:1.5px solid #CFC5BA;background:#fff;font:500 15px var(--sans);color:var(--dark);cursor:pointer}
 .pick .later{width:100%;margin-top:14px;font-size:14px;color:var(--meta)}
 .pick button[aria-pressed="true"]{background:var(--dark);border-color:var(--dark);color:#fff}
-</style></head><body>
+</style><script src="/lib/bcart.js"></script>
+</head><body>
 <div class="wrap" id="app"><div class="center">Loading…</div></div>
 <script>
 (function(){
@@ -198,7 +201,7 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
     ]; })();
   var TICK='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
   var NOTE='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>';
-  function roomIcon(x){ for(var i=0;i<RI.length;i++) if(RI[i][0].test(x)) return RI[i][1]; return ''; }
+  function roomIcon(x){ if(window.BCART){ var bk=BCART.areaKey(x); if(bk!=='sparkle') return BCART.icon(bk,20); } for(var i=0;i<RI.length;i++) if(RI[i][0].test(x)) return RI[i][1]; return ''; }
   function rich(t){
     var L=String(t||'').split('\n'), h='', inList=false, inRoom=false;
     function isB(x){ return /^\s*[-•*]\s+/.test(x||''); }
@@ -222,15 +225,16 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
     return fetch(url,{method:method,headers:h,body:body?JSON.stringify(body):undefined,cache:'no-store'}).then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong'); return d; }); });
   }
 
+  function RIC(k){ return window.BCART?'<span class="ri" aria-hidden="true">'+BCART.icon(k,18)+'</span>':''; }
   // "What's in your quote": shown on every quote, collapsed. Same story as bardonclean.au/our-rates/.
   var RATE='<details class="terms rate"'+'{OPEN}'+'><summary>What\'s in your quote<small>Why our rates sit where they do</small></summary><div class="desc">'+
     '<div class="rlab"><b>Your labour estimate</b><br>The labour behind this quote is forecast from our extensive experience with these cleans. Done properly, a full top-to-bottom kitchen can take 5 to 6 hours, and a large bathroom 3 hours or more. We work detailed and slow, and we don\'t rush to fit a price.</div>'+
     '<ul class="rlist">'+
-    '<li><b>A properly paid team</b>Cleaning is hard physical labour. We pay above award, with overtime on bigger jobs.</li>'+
-    '<li><b>Full insurance</b>$20 million public liability, WorkCover, professional indemnity, income protection, and property and equipment insurance. If something is damaged or someone is hurt in your home, it\'s covered.</li>'+
-    '<li><b>Clean equipment, every home</b>Every tool is cleaned before and after each job. On our specialty cleans every microfibre cloth is brand new and retired after use, because even washed cloths hold dust and fibres. No cross-contamination from other properties.</li>'+
-    '<li><b>Systems and testing</b>Written processes and checklists for every clean, and products tested constantly. The same result whichever cleaner arrives.</li>'+
-    '<li><b>The costs you don\'t see</b>Super and leave, training, insurance premiums, equipment replacement, new microfibre, vehicle and travel, booking and admin, accounting and compliance.</li>'+
+    '<li>'+RIC('team')+'<div class="rt"><b>A properly paid team</b>Cleaning is hard physical labour. We pay above award, with overtime on bigger jobs.</div></li>'+
+    '<li>'+RIC('shield')+'<div class="rt"><b>Full insurance</b>$20 million public liability, WorkCover, professional indemnity, income protection, and property and equipment insurance. If something is damaged or someone is hurt in your home, it\'s covered.</div></li>'+
+    '<li>'+RIC('cloth')+'<div class="rt"><b>Clean equipment, every home</b>Every tool is cleaned before and after each job. On our specialty cleans every microfibre cloth is brand new and retired after use, because even washed cloths hold dust and fibres. No cross-contamination from other properties.</div></li>'+
+    '<li>'+RIC('clipboard')+'<div class="rt"><b>Systems and testing</b>Written processes and checklists for every clean, and products tested constantly. The same result whichever cleaner arrives.</div></li>'+
+    '<li>'+RIC('receipt')+'<div class="rt"><b>The costs you don\'t see</b>Super and leave, training, insurance premiums, equipment replacement, new microfibre, vehicle and travel, booking and admin, accounting and compliance.</div></li>'+
     '</ul><p class="rmore">The full breakdown, including questions worth asking any cleaner: <a href="https://www.bardonclean.au/our-rates/" style="color:var(--terracotta-dark)">bardonclean.au/our-rates</a></p></div></details>';
   var STATE={draft:'Draft',sent:'Awaiting response',viewed:'Awaiting response',accepted:'Accepted',declined:'Declined',expired:'Expired',paid:'Paid','part-paid':'Part paid',overdue:'Overdue'};
 

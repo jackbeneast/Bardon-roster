@@ -443,7 +443,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 .addarea input{flex:1;margin:0!important}
 .addarea button{flex:none;min-height:46px;border-radius:6px;border:0;background:var(--terracotta);color:#fff;font:600 14px var(--sans);padding:0 16px;cursor:pointer}
 .lsec h4 .ed{float:right;background:none;border:0;color:var(--terracotta-dark);font:600 12px var(--sans);letter-spacing:0;text-transform:none;text-decoration:underline;cursor:pointer;padding:0}
-</style><script src="/lib/teamgate.js"></script></head><body>
+.pempty svg,.spot-h svg{width:132px;height:auto;display:block;margin:0 auto 6px}.spot-h{text-align:center;padding:14px 0 4px}
+</style><script src="/lib/teamgate.js"></script><script src="/lib/bcart.js"></script></head><body>
 <div id="app"></div>
 <script src="/lib/confirm.js"></script>
 <script src="/lib/sms.js"></script>
@@ -585,6 +586,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     return state.jobs.filter(function(j){ if(j.date<s||j.date>e) return false; if(id==='all') return true; if(id==='open') return !(j.staff||[]).length; return (j.staff||[]).indexOf(id)>=0; }).length;
   }
 
+  function hubSpot(k){ return window.BCART?'<span aria-hidden="true">'+BCART.spot(k)+'</span>':''; }
   function jobCard(j){
           var h='', tag = canEdit?'button':'div';
           var un = !(j.staff||[]).length;
@@ -1873,7 +1875,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(past.length){ h+='<div class="sect"><span>Yesterday, not marked ready</span></div>'; past.forEach(function(j){ h+=quickCard(j,''); }); }
     if(l) h+='<div class="sect"><span>Leads and people waiting</span></div>'+l;
     if(o) h+='<div class="sect"><span>When you get a minute</span></div>'+o;
-    if(!u&&!l&&!o) h+='<p class="sub" style="margin:14px 0 0">Nothing else needs you. Quote and invoice opens are in the activity log (the bell).</p>';
+    if(!u&&!l&&!o) h+='<div class="spot-h">'+hubSpot('allclear')+'</div><p class="sub" style="margin:4px 0 0;text-align:center">Nothing else needs you. Quote and invoice opens are in the activity log (the bell).</p>';
     h+='<div class="sect"><span>Tomorrow · '+fmtDay(addDays(today,1))+'</span><span>'+tm.length+'</span></div>';
     h+=tm.length?miniList(tm):'<p class="sub">Nothing booked.</p>';
     h+=wagesCard();
@@ -1905,7 +1907,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var all=cands.candidates||[], by={}; all.forEach(function(c){ (by[c.stage]||(by[c.stage]=[])).push(c); });
     h+='<div class="ptabs" role="group" aria-label="Stage">'+HSTAGE.map(function(x){ return '<button type="button" data-htab="'+x[0]+'" aria-pressed="'+(hireTab===x[0])+'">'+x[1]+'<span>'+((by[x[0]]||[]).length)+'</span></button>'; }).join('')+'</div>';
     var list=by[hireTab]||[];
-    if(!list.length) h+='<div class="pempty">'+{applied:'No new applicants. Share your careers page link to get some.',screened:'Nobody screened and waiting on a trial.',trial:'No trial shifts booked.',onboarding:'Nobody onboarding right now.',active:'Hired people show here once they\'re fully set up.'}[hireTab]+'</div>';
+    if(!list.length) h+='<div class="pempty">'+hubSpot(hireTab==='active'?'team':'message')+{applied:'No new applicants. Share your careers page link to get some.',screened:'Nobody screened and waiting on a trial.',trial:'No trial shifts booked.',onboarding:'Nobody onboarding right now.',active:'Hired people show here once they\'re fully set up.'}[hireTab]+'</div>';
     list.forEach(function(c){ h+=candCard(c); });
     if(hireTab==='applied' && (by.no||[]).length) h+='<details class="olds"><summary>Not a fit ('+by.no.length+')</summary>'+by.no.map(candCard).join('')+'</details>';
     h+='<div class="hint-card" style="margin-top:14px"><strong>Your careers page:</strong> '+esc(location.origin)+'/jobs<br><button type="button" class="btn outline" data-copyjobs style="margin-top:10px;min-height:42px">Copy link</button></div>';
@@ -2015,7 +2017,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<div class="ptabs" role="group" aria-label="Stage">'+tabs.map(function(x){ return '<button type="button" data-ptab="'+x[0]+'" aria-pressed="'+(pipeTab===x[0])+'">'+x[1]+'<span>'+x[2]+'</span></button>'; }).join('')+'</div>';
     var list=S[pipeTab]||[];
     if(pipeTab==='new' && rq.length){ h+='<div class="sect"><span>Agent booking requests</span><span>'+rq.length+'</span></div>'; rq.forEach(function(r){ h+=reqCard(r); }); if(list.length) h+='<div class="sect"><span>Website enquiries</span><span>'+list.length+'</span></div>'; }
-    if(!list.length && !(pipeTab==='new'&&rq.length)) h+='<div class="pempty">'+{new:'No new enquiries waiting for a quote.',quoted:'No quotes waiting on a reply.',booked:'Nothing booked ahead.',done:'No finished jobs from the last 30 days to follow up.'}[pipeTab]+'</div>';
+    if(!list.length && !(pipeTab==='new'&&rq.length)) h+='<div class="pempty">'+hubSpot({new:'message',quoted:'message',booked:'calendar',done:'allclear'}[pipeTab])+{new:'No new enquiries waiting for a quote.',quoted:'No quotes waiting on a reply.',booked:'Nothing booked ahead.',done:'No finished jobs from the last 30 days to follow up.'}[pipeTab]+'</div>';
     list.forEach(function(c){ h+=pCard(pipeTab,c); });
     if(pipeTab==='quoted' && pipe.lost.length) h+='<details class="olds"><summary>Declined or expired, last 60 days ('+pipe.lost.length+')</summary>'+pipe.lost.map(function(c){ return '<div class="pcard dim"><div class="pt"><h3>'+esc(c.name)+'</h3><span class="amt">'+money0(c.total)+'</span></div><div class="pm">Quote #'+esc(c.num)+' · '+(c.why==='declined'?'Declined':'Expired')+'</div><div class="pact"><a href="/money/#/doc/'+c.doc+'">Open</a>'+txt(c,'quote_revised','Text')+(c.why==='expired'?spBtn(c):'')+'</div></div>'; }).join('')+'</details>';
     if(pipeTab==='new') h+='<div class="pact" style="display:flex;margin-top:6px"><a class="btn outline" style="flex:1;display:flex;align-items:center;justify-content:center;text-decoration:none" href="/money/#/edit/new-quote">New quote for a phone enquiry</a></div>';
@@ -2366,7 +2368,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(obReady===false) h+='<div class="warn"><strong>Mobile Message isn\'t connected.</strong> Texts will open on your own phone instead of going from the business number.</div>';
     h+='<button type="button" class="btn primary" data-obadd style="width:100%;margin:6px 0 14px">+ Add a new starter</button>';
     var ppl=OB.people||[];
-    if(!ppl.length) h+='<div class="pempty">Nobody onboarding. Add a new starter, or book a trial from Pipeline → Hiring.</div>';
+    if(!ppl.length) h+='<div class="pempty">'+hubSpot('team')+'Nobody onboarding. Add a new starter, or book a trial from Pipeline → Hiring.</div>';
     ppl.forEach(function(p){ var st=p.status, n=obDone(st).filter(Boolean).length, mob=obMob(p);
       h+='<div class="pcard"><div class="pt"><h3>'+esc(p.name)+'</h3><span class="amt">'+n+'/4</span></div><div class="pm">'+(st.shift?'First shift '+fmtDay(parse(st.shift.date))+', '+fmtTime(st.shift.start)+(st.shift.suburb?' · '+esc(st.shift.suburb):''):p.trialDate?'Trial '+fmtDay(parse(p.trialDate))+' · not on the roster yet':'No shift date yet')+'<br><b style="color:var(--dark)">Next:</b> '+esc(obNext(p))+'</div><div class="pchips">'+obChips(st)+'</div>';
       h+='<div class="pact"><button type="button" class="go" data-obopen="'+p.id+'">Open</button>'+(mob?'<a href="/messages/#/t/'+mob+'?name='+encodeURIComponent(p.name)+'">Messages</a><a href="tel:'+mob+'">Call</a>':'')+'</div></div>'; });

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Icons &amp; Drawings</title><meta name="robots" content="noindex">
+<link rel="icon" href="/icons/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--tc:#C06B3C;--tcd:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cd:#EDE6DE;--body:#4A4A4A;--white:#fff;--gold:#F4B942;--line:#E4DBD1;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--dark);font:15px/1.5 Inter,-apple-system,sans-serif}
+main{max-width:960px;margin:0 auto;padding:24px 16px 60px}
+h1{font:500 30px/1.15 "Playfair Display",Georgia,serif;margin:0}h1 em{color:var(--tcd)}
+h2{font:600 12px/1.4 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;margin:32px 0 12px}
+.sub{color:var(--body);margin:8px 0 0}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.c{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12px;color:var(--body);text-align:center}
+.c svg.bci{color:var(--dark)}
+.s{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.s .c{padding:16px}.s .c svg{width:100%;height:auto;max-width:220px}
+.t{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.t .c svg{width:100%;height:auto}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+</style></head><body><main>
+<h1>Icons &amp; <em>drawings</em></h1>
+<p class="sub">The Bardon Clean set used across the hub, the team app and client pages.</p>
+<h2>Badges</h2><div class="row" id="badges"></div>
+<h2>Line icons</h2><div class="g" id="icons"></div>
+<h2>Spot illustrations</h2><div class="s" id="spots"></div>
+<h2>Toolkit drawings</h2><div class="t" id="tk"></div>
+</main>
+<script src="/lib/bcart.js"></script><script src="/lib/tkart.js"></script>
+<script>
+document.getElementById('badges').innerHTML=['kitchen','bath','bed','living','presale','bond','deep','regular','flask','shield'].map(function(k,i){ return BCART.badge(k,48,i%3===1?'dark':i%5===4?'gold':''); }).join('');
+document.getElementById('icons').innerHTML=BCART.icons.map(function(k){ return '<div class="c">'+BCART.icon(k,30)+'<span>'+k+'</span></div>'; }).join('');
+document.getElementById('spots').innerHTML=BCART.spots.map(function(k){ return '<div class="c">'+BCART.spot(k)+'<span>'+k+'</span></div>'; }).join('');
+if(window.TKART&&TKART.heroes) document.getElementById('tk').innerHTML=TKART.heroes.map(function(k){ return '<div class="c">'+TKART.get(k)+'<span>'+k+'</span></div>'; }).join('');
+</script></body></html>

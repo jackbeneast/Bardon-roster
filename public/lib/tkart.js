@@ -177,6 +177,42 @@
       rect(264,96,46,8,F,1) + rect(268,104,38,82,W,2) + path('M287 96 L287 82 L278 82', 'none', 3, CHROME) +
       dot(1,199,160) + dot(2,79,108) + dot(3,139,176), 'Laundry: spots that get missed')
   };
+
+  // ───────────── Science drawings (guide hero pictures) ─────────────
+  function hv(body,label){ return '<svg viewBox="0 0 320 190" role="img" aria-label="'+label+'" xmlns="http://www.w3.org/2000/svg" font-family="Inter,-apple-system,sans-serif">'+body+'</svg>'; }
+  function tx(x,y,t,o){ o=o||{}; return '<text x="'+x+'" y="'+y+'" font-size="'+(o.s||11)+'" font-weight="'+(o.w||500)+'" fill="'+(o.c||D)+'" text-anchor="'+(o.a||'middle')+'">'+t+'</text>'; }
+  var PHC=['#B8412E','#C8553D','#D4693A','#DE8537','#E6A236','#E9BF3C','#C9C64A','#8FB55A','#5FA36B','#4C9A86','#3F8DA0','#3D7DB0','#4569B4','#5558AE','#62489F'];
+  var phBar='', x0=20, cw=280/15;
+  for (var pi=0; pi<15; pi++) phBar+='<rect x="'+(x0+pi*cw).toFixed(1)+'" y="58" width="'+(cw+.5).toFixed(1)+'" height="30" fill="'+PHC[pi]+'"/>'+tx((x0+pi*cw+cw/2).toFixed(1),77,pi,{c:'#fff',s:10.5,w:600});
+  function phx(v){ return (x0+v*cw+cw/2).toFixed(1); }
+  function mark(v,label,row){ var x=phx(v), y=row?150:118; return '<path d="M'+x+' 92 L'+x+' '+(y-12)+'" stroke="'+D+'" stroke-width="1.2" stroke-dasharray="2 3"/><circle cx="'+x+'" cy="'+(y-12)+'" r="3" fill="'+D+'"/>'+tx(x,y,label,{s:10.5}); }
+  var H_ = {
+    phscale: hv(
+      '<rect x="20" y="58" width="280" height="30" rx="8" fill="none"/>' + '<clipPath id="phc"><rect x="20" y="58" width="280" height="30" rx="8"/></clipPath><g clip-path="url(#phc)">'+phBar+'</g>' +
+      tx(20,30,'ACID',{a:'start',w:700,s:11.5,c:'#B8412E'}) + tx(160,30,'NEUTRAL',{w:700,s:11.5,c:'#5FA36B'}) + tx(300,30,'ALKALINE',{a:'end',w:700,s:11.5,c:'#5558AE'}) +
+      tx(20,46,'← stronger',{a:'start',s:10,c:'var(--body)'}) + tx(300,46,'stronger →',{a:'end',s:10,c:'var(--body)'}) +
+      mark(2.5,'Vinegar',0) + mark(8.3,'Bicarb',0) + mark(12.5,'Bleach',0) + mark(7,'Water',1) +
+      tx(160,182,'Each step is 10× stronger than the one next to it',{s:10.5,c:'var(--body)'}), 'The pH scale from 0, strong acid, to 14, strong alkaline, with 7 neutral'),
+    phsoil: hv(
+      [[0,'ACID','#B8412E','Limescale','Water spots','Soap scum','Rust'],[1,'NEUTRAL','#5FA36B','Dust','Fingerprints','Light dirt','Daily wipes'],[2,'ALKALINE','#5558AE','Grease','Burnt food','Body oils','Hand marks']].map(function(c){ var x=10+c[0]*102;
+        return '<rect x="'+x+'" y="10" width="96" height="170" rx="12" fill="'+W+'" stroke="'+F+'" stroke-width="2"/><rect x="'+x+'" y="10" width="96" height="34" rx="12" fill="'+c[2]+'"/><rect x="'+x+'" y="32" width="96" height="12" fill="'+c[2]+'"/>' +
+          tx(x+48,32,c[1],{c:'#fff',w:700,s:11.5}) + tx(x+48,62,'Lifts',{s:10,c:'var(--body)'}) + [3,4,5,6].map(function(k,i){ return '<circle cx="'+(x+12)+'" cy="'+(84+i*26)+'" r="3" fill="'+c[2]+'"/>'+tx(x+20,88+i*26,c[k],{a:'start',s:10.5}); }).join(''); }).join(''),
+      'Which mess each type lifts: acid for minerals, neutral for everyday dirt, alkaline for grease'),
+    sinner: hv(
+      '<circle cx="110" cy="95" r="80" fill="'+F+'"/>' +
+      '<path d="M110 95 L110 15 A80 80 0 0 1 190 95 Z" fill="'+A+'"/><path d="M110 95 L190 95 A80 80 0 0 1 110 175 Z" fill="'+G+'"/><path d="M110 95 L110 175 A80 80 0 0 1 30 95 Z" fill="'+D+'"/><path d="M110 95 L30 95 A80 80 0 0 1 110 15 Z" fill="'+W+'" stroke="'+F+'" stroke-width="2"/>' +
+      tx(140,58,'Chemistry',{c:'#fff',w:600}) + tx(140,72,'the product',{c:'#fff',s:9.5}) + tx(140,124,'Time',{w:600}) + tx(140,138,'dwell',{s:9.5}) +
+      tx(80,124,'Scrubbing',{c:'#fff',w:600}) + tx(80,138,'agitation',{c:'#fff',s:9.5}) + tx(80,58,'Heat',{w:600}) + tx(80,72,'warm water',{s:9.5}) +
+      tx(206,70,'Less of one?',{a:'start',w:600,s:12}) + tx(206,88,'Add more of',{a:'start',s:11}) + tx(206,103,'another.',{a:'start',s:11}) + tx(206,128,'Gentle product?',{a:'start',s:10,c:'var(--body)'}) + tx(206,142,'Give it more time.',{a:'start',s:10,c:'var(--body)'}),
+      'Four things that clean: chemistry, time, heat and scrubbing. Less of one needs more of another'),
+    dilute: hv(
+      [[0,'Too weak','Dirt stays',0.25],[1,'Label rate','Clean, no residue',0.55],[2,'Too strong','Sticky, streaky film',0.95]].map(function(c){ var x=20+c[0]*100, h=110*c[3];
+        return '<path d="M'+(x+14)+' 30 h52 v118 a8 8 0 0 1 -8 8 h-36 a8 8 0 0 1 -8 -8 z" fill="'+W+'" stroke="'+D+'" stroke-width="2"/>' +
+          '<rect x="'+(x+16)+'" y="'+(154-h).toFixed(0)+'" width="48" height="'+h.toFixed(0)+'" rx="6" fill="'+A+'" opacity="'+(0.25+c[3]*0.7).toFixed(2)+'"/>' +
+          tx(x+40,172,c[1],{w:600}) + tx(x+40,186,c[2],{s:9.5,c:'var(--body)'}) + (c[0]===1?spark(x+70,30):''); }).join(''),
+      'Dilution: too weak leaves dirt, the label rate cleans, too strong leaves a sticky film')
+  };
+  for (var hk in H_) A_[hk] = H_[hk];
   for (var pk in P_) A_[pk] = P_[pk].pass;
   for (var mk in M_) A_[mk] = M_[mk];
 
@@ -186,6 +222,7 @@
     pair: function(k){ return P_[k] || null; },
     pairs: Object.keys(P_),
     map: function(k){ return M_[k] || ''; },
-    maps: Object.keys(M_)
+    maps: Object.keys(M_),
+    heroes: Object.keys(H_)
   };
 })();

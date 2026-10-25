@@ -50,6 +50,13 @@ p{margin:0}
 .tile{display:flex;align-items:center;gap:14px;background:var(--white);border:1px solid var(--line);border-radius:16px;padding:14px 16px;text-decoration:none;color:var(--dark);min-height:72px}
 .tile .num{width:44px;height:44px;border-radius:12px;background:var(--cream);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--tcd);flex:none}
 .tile .num.ok{background:var(--dark);color:var(--cream)}
+.tile .num .bci{color:var(--tcd)}
+.sh{display:flex;align-items:center;gap:10px}.sh .bcb{width:30px!important;height:30px!important;border-radius:9px!important}
+.gt .gi{color:var(--tcd);margin-bottom:6px;display:block}
+.ln .li{color:var(--tcd);display:inline-flex;flex:none}
+.spot-e{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:8px 8px 18px}.spot-e svg{width:150px;height:auto}
+.hero{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:12px}.hero svg,.hero img{display:block;width:100%;height:auto;border-radius:10px}
+.gb{display:inline-flex;align-items:center;gap:8px}
 .tile b{display:block;font-weight:600;font-size:16px}
 .tile small{display:block;font-size:13px;color:var(--body);margin-top:2px}
 .tile .chev{margin-left:auto;color:var(--body)}
@@ -150,6 +157,7 @@ body.tour #app{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 <nav class="nav hide" id="nav" aria-label="Main"><div class="in"></div></nav>
 <script src="/lib/checklists.js"></script>
 <script src="/lib/tkart.js"></script>
+<script src="/lib/bcart.js"></script>
 <script type="module">
 import { shiftCosts } from '/lib/wages.mjs';
 var app=document.getElementById('app'), navEl=document.getElementById('nav');
@@ -323,8 +331,8 @@ function shiftCard(j){
 function roomTiles(j){
   var rs=myRooms(j), h='';
   rs.forEach(function(r,i){ var st=roomStat(j,r);
-    h+='<a class="tile" href="#/room/'+j.id+'/'+encodeURIComponent(r)+'"><span class="num'+(st.done?' ok':'')+'">'+(st.done?I.tick:(i+1))+'</span><span><b>'+esc(r)+'</b><small>'+(st.done?'Done · '+st.photos.length+' photo'+(st.photos.length===1?'':'s'):st.n+' of '+st.total+' steps'+(st.photos.length?' · '+st.photos.length+' photo'+(st.photos.length===1?'':'s'):''))+'</small></span><span class="chev">'+I.chev+'</span></a>'; });
-  if(!rs.length) h+='<div class="card sub">No rooms assigned to you yet. Ask Jack which areas are yours.</div>';
+    h+='<a class="tile" href="#/room/'+j.id+'/'+encodeURIComponent(r)+'"><span class="num'+(st.done?' ok':'')+'">'+(st.done?I.tick:(bcArea(r,24)||(i+1)))+'</span><span><b>'+esc(r)+'</b><small>'+(st.done?'Done · '+st.photos.length+' photo'+(st.photos.length===1?'':'s'):st.n+' of '+st.total+' steps'+(st.photos.length?' · '+st.photos.length+' photo'+(st.photos.length===1?'':'s'):''))+'</small></span><span class="chev">'+I.chev+'</span></a>'; });
+  if(!rs.length) h+=bcSpot('allclear','','No rooms assigned to you yet. Ask Jack which areas are yours.');
   return h;
 }
 function teamCard(j){
@@ -355,7 +363,7 @@ function renderToday(){
     h+='<div class="between" style="margin-top:6px"><h3>Your rooms today</h3><a href="#/job/'+j.id+'" style="font-size:14px;font-weight:500">Read the brief</a></div>'+roomTiles(j)+teamCard(j);
   } else {
     var nx=nextJobs(1)[0];
-    h+='<div class="card"><p class="lbl">Today</p><p style="margin-top:6px;font-size:16px">No shift today.</p></div>';
+    h+=bcSpot('calendar','No shift today','Enjoy the day off.'+(nx?' Your next shift is below.':''));
     if(nx) h+=shiftCard(nx);
   }
   h+=kudosCard()+focusCard();
@@ -366,7 +374,7 @@ function renderToday(){
 function renderJob(id){
   nav('job');
   var j=id?jobById(id):currentJob()||nextJobs(1)[0];
-  if(!j){ app.innerHTML='<h1>No <em>job</em></h1><p class="sub" style="margin-top:8px">You don\'t have a shift coming up. Check the Me tab for your shifts.</p>'; return; }
+  if(!j){ app.innerHTML='<h1>No <em>job</em></h1><div class="stack">'+bcSpot('calendar','','You don\'t have a shift coming up. Check the Me tab for your shifts.')+'</div>'; return; }
   var s=shiftOf(j,PID), a=access(j), dn=days(j), di=dn.indexOf(j), rs=myRooms(j), ar=guide('arrive');
   var h=back('#/','Today')+'<p class="lbl">'+esc(j.service||'Clean')+(dn.length>1?' · Day '+(di+1)+' of '+dn.length:'')+' · '+esc(fday(j.date))+'</p><h1>Before you <em>go in</em></h1><div class="stack">';
   h+='<div class="card" style="display:flex;align-items:center;gap:12px"><div style="flex:1"><p style="font-weight:600;font-size:16px">'+esc([j.address,j.suburb].filter(Boolean).join(', ')||'Address to come')+'</p><p class="sub">Be there at '+ftime(s.start)+', not later'+(s.end?' · finish '+ftime(s.end):'')+'</p></div>'+(j.address||j.suburb?'<a class="btn k sm" href="'+maps(j)+'" target="_blank" rel="noopener">'+I.pin+'Map</a>':'')+'</div>';
@@ -383,7 +391,7 @@ function renderJob(id){
       h+='<div class="row" style="align-items:flex-start"><span style="width:28px;height:28px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;'+(cur?'background:var(--tcd);color:#fff':past?'background:var(--cd)':'border:1.5px solid var(--body)')+'">'+(past&&!cur?I.tick:(i+1))+'</span><div><p style="font-weight:600">'+esc(fday(d.date))+(cur?' · this shift':'')+'</p><p class="sub">'+esc(ppl||'Team to come')+'</p></div></div>'; });
     h+='</div>';
   }
-  h+='<div class="card tight"><div class="sec"><p class="lbl b">Your rooms</p></div>'+(rs.length?rs.map(function(r){ var st=roomStat(j,r); return '<a class="ln" href="#/room/'+j.id+'/'+encodeURIComponent(r)+'"><span>'+esc(r)+'</span><small>'+(st.done?'Done':st.n+'/'+st.total)+'</small></a>'; }).join(''):'<p class="sub" style="padding:0 0 12px">Ask Jack which areas are yours.</p>')+'</div>';
+  h+='<div class="card tight"><div class="sec"><p class="lbl b">Your rooms</p></div>'+(rs.length?rs.map(function(r){ var st=roomStat(j,r); return '<a class="ln" href="#/room/'+j.id+'/'+encodeURIComponent(r)+'"><span class="li">'+bcArea(r,20)+'</span><span>'+esc(r)+'</span><small>'+(st.done?'Done':st.n+'/'+st.total)+'</small></a>'; }).join(''):'<p class="sub" style="padding:0 0 12px">Ask Jack which areas are yours.</p>')+'</div>';
   if(ar&&ar.steps.length){ var k='arr|'+j.id, got=LOCAL[k]||{};
     h+='<div class="card tight"><div class="sec"><p class="lbl b">Set up before you start</p></div>'+ar.steps.map(function(t,i){ return '<label class="it'+(got[i]?' on':'')+'"><input type="checkbox" data-local="'+k+'" data-i="'+i+'"'+(got[i]?' checked':'')+'><span>'+esc(t)+'</span></label>'; }).join('')+'</div>'; }
   var L=liveOf(j);
@@ -432,7 +440,7 @@ function renderWrap(id){
   h+='<div class="card tight"><div class="sec"><p class="lbl b">Your rooms</p></div>';
   var left=0;
   rs.forEach(function(r){ var st=roomStat(j,r); if(!st.done) left++;
-    h+='<a class="ln" href="#/room/'+j.id+'/'+encodeURIComponent(r)+'"><span class="av'+(st.done?' k':'')+'" style="width:26px;height:26px">'+(st.done?I.tick:'')+'</span><span style="font-weight:600">'+esc(r)+'</span><small>'+st.n+'/'+st.total+' · '+st.photos.length+' photo'+(st.photos.length===1?'':'s')+'</small></a>'; });
+    h+='<a class="ln" href="#/room/'+j.id+'/'+encodeURIComponent(r)+'"><span class="av'+(st.done?' k':'')+'" style="width:26px;height:26px">'+(st.done?I.tick:bcArea(r,16))+'</span><span style="font-weight:600">'+esc(r)+'</span><small>'+st.n+'/'+st.total+' · '+st.photos.length+' photo'+(st.photos.length===1?'':'s')+'</small></a>'; });
   h+='</div>';
   var lv=guide('leave');
   if(lv&&lv.steps.length){ var k='lv|'+j.id, got=LOCAL[k]||{};
@@ -470,7 +478,7 @@ function renderMe(){
   h+='<div class="card tight"><div class="sec"><p class="lbl b">My shifts</p><p class="sub">24 hrs notice to change</p></div>';
   nx.forEach(function(j){ var s=shiftOf(j,PID), cs=cstate(j,PID), dd=parse(j.date);
     h+='<div class="ln" style="padding:8px 0"><div style="width:44px;text-align:center;flex:none"><p class="sub" style="font-size:12px">'+DOW[dd.getDay()].slice(0,3).toUpperCase()+'</p><p class="pf" style="font-size:20px">'+dd.getDate()+'</p></div><a href="#/job/'+j.id+'" style="flex:1;text-decoration:none;color:var(--dark)"><p style="font-weight:600">'+esc(j.service||'Clean')+(j.suburb?' · '+esc(j.suburb):'')+'</p><p class="sub">'+ftime(s.start)+'–'+ftime(s.end)+'</p></a>'+(cs==='yes'?'<span class="pill">Confirmed</span>':cs==='no'?'<span class="pill n">Can\'t</span>':'<button class="pill g" style="border:0;cursor:pointer;min-height:36px" data-reply="yes" data-j="'+j.id+'">Confirm</button>')+'</div>'; });
-  if(!nx.length) h+='<p class="sub" style="padding:0 0 12px">No shifts coming up yet.</p>';
+  if(!nx.length) h+='<div class="spot-e" style="padding-top:0">'+(window.BCART?BCART.spot('calendar'):'')+'<p class="sub">No shifts coming up yet.</p></div>';
   h+='</div>';
   var ks=(R.kudos||[]).filter(function(x){ return (x.staff||[]).indexOf(PID)>=0; });
   if(ks.length){ h+='<div class="card" style="display:flex;flex-direction:column;gap:10px"><p class="lbl b">Kind words from clients</p>';
@@ -690,6 +698,12 @@ function renderTimersEdit(){
 
 // ---------- toolkit ----------
 var Q='';
+function bci(n,s){ return window.BCART?BCART.icon(n,s||20):''; }
+function bcArea(r,s){ return window.BCART?BCART.area(r,s||22):''; }
+function bcSpot(k,title,sub){ return '<div class="card spot-e">'+(window.BCART?BCART.spot(k):'')+(title?'<p style="font-weight:600;font-size:16px">'+title+'</p>':'')+(sub?'<p class="sub">'+sub+'</p>':'')+'</div>'; }
+var SECIC={rooms:'rooms',premium:'star',tasks:'clipboard',surfaces:'layers',science:'flask',kit:'bucket',services:'tag',how:'team',safety:'shield',wrong:'alert'};
+var GIC={tpfold:'toilet',towelfold:'bath',teatowel:'cloth',cushions:'living',bedfinish:'bed',bathfinish:'bath',kitchenfinish:'kitchen',livingfinish:'living',lines:'vacuum',entryfinish:'door',ph:'ph',soilmatch:'drop',acids:'flask',alkalis:'flask',neutral:'drop',sinner:'sparkle',dilution:'spray',residue:'sponge',disinfect:'shield',bleach:'alert',microfibre:'cloth',testspot:'eye',labels:'receipt'};
+function guideIcon(g){ return GIC[g.id]||(g.sec==='rooms'?(window.BCART?BCART.areaKey(g.title):'sparkle'):SECIC[g.sec]||'sparkle'); }
 function gtext(g){ return [g.title,g.sub,g.body,g.miss,g.product,g.dwell].concat(g.steps||[],g.done||[],g.kit||[],g.never||[],g.spots||[]).join(' ').toLowerCase(); }
 function renderKit(){
   nav('kit');
@@ -705,12 +719,12 @@ function renderKit(){
   SECS.forEach(function(sec){
     var gs=C.guides.filter(function(g){ if(g.sec!==sec.id) return false; if(!q) return true; return gtext(g).indexOf(q)>=0; });
     if(!gs.length&&!ADMIN) return; if(!gs.length&&q) return;
-    h+='<div id="sec-'+sec.id+'" style="display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px"><div class="between"><p class="lbl b">'+esc(sec.title)+'</p>'+(ADMIN&&!q?'<a class="ed" href="#/edit/new-'+sec.id+'">+ Add</a>':'')+'</div>';
-    if(sec.id==='rooms'||sec.id==='premium') h+='<div class="grid2">'+gs.map(function(g){ return '<a class="gt" href="#/guide/'+g.id+'">'+esc(g.title)+(g.sub?'<span>'+esc(g.sub)+'</span>':'')+'</a>'; }).join('')+'</div>';
+    h+='<div id="sec-'+sec.id+'" style="display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px"><div class="between"><div class="sh">'+(window.BCART?BCART.badge(SECIC[sec.id]||'sparkle',30,sec.id==='science'?'dark':''):'')+'<p class="lbl b">'+esc(sec.title)+'</p></div>'+(ADMIN&&!q?'<a class="ed" href="#/edit/new-'+sec.id+'">+ Add</a>':'')+'</div>';
+    if(sec.id==='rooms'||sec.id==='premium'||sec.id==='science') h+='<div class="grid2">'+gs.map(function(g){ return '<a class="gt" href="#/guide/'+g.id+'"><span class="gi">'+bci(guideIcon(g),24)+'</span>'+esc(g.title)+(g.sub?'<span>'+esc(g.sub)+'</span>':'')+'</a>'; }).join('')+'</div>';
     else h+='<div class="card tight">'+gs.map(function(g){ return '<a class="ln" href="#/guide/'+g.id+'"><span>'+esc(g.title)+'</span>'+(g.sub?'<small>'+esc(g.sub)+'</small>':'')+'</a>'; }).join('')+'</div>';
     h+='</div>';
   });
-  if(q&&!C.guides.some(function(g){ return gtext(g).indexOf(q)>=0; })) h+='<div class="card sub">Nothing for “'+esc(Q)+'”. Try another word, or call '+esc(C.contact.name||'Jack')+'.</div>';
+  if(q&&!C.guides.some(function(g){ return gtext(g).indexOf(q)>=0; })) h+=bcSpot('beaker','Nothing for “'+esc(Q)+'”','Try another word, or call '+esc(C.contact.name||'Jack')+'.');
   if(C.rules&&C.rules.length) h+='<div class="tint"><p class="lbl">The non-negotiables</p>'+C.rules.map(function(r){ return '<p style="line-height:1.6">'+esc(r)+'</p>'; }).join('')+'</div>';
   h+='<a class="btn k" href="'+tel(C.contact.phone)+'">'+I.phone+'Call '+esc(C.contact.name||'Jack')+(C.contact.phone?' · '+esc(C.contact.phone):'')+'</a>';
   app.innerHTML=h+'</div>';
@@ -722,13 +736,14 @@ function renderGuide(id){
   nav('kit');
   var g=guide(id); if(!g){ go('kit'); return; }
   if(busy.lastGuide!==id){ busy.lastGuide=id; track('Opened guide: '+g.title); }
-  var h=back(history.length>1?'javascript:history.back()':'#/kit','Back')+'<div class="between"><p class="lbl">'+esc((SECS.filter(function(s){return s.id===g.sec;})[0]||{}).title||'Toolkit')+'</p>'+(ADMIN?'<a class="ed" href="#/edit/'+g.id+'">Edit</a>':'')+'</div><h1>'+esc(g.title)+'</h1><div class="stack">';
+  var h=back(history.length>1?'javascript:history.back()':'#/kit','Back')+'<div class="between"><p class="lbl gb">'+(window.BCART?BCART.badge(guideIcon(g),28):'')+esc((SECS.filter(function(s){return s.id===g.sec;})[0]||{}).title||'Toolkit')+'</p>'+(ADMIN?'<a class="ed" href="#/edit/'+g.id+'">Edit</a>':'')+'</div><h1>'+esc(g.title)+'</h1><div class="stack">';
+  if(g.hero){ var hp=picOf(g.hero); if(hp) h+='<div class="hero">'+hp+'</div>'; }
   if(g.good||g.bad) h+='<div class="grid2">'+(g.good?'<div style="display:flex;flex-direction:column;gap:6px"><img class="std" src="'+img(g.good)+'" alt="Done right"><p style="font-weight:600;font-size:13px">'+I.tick+' This passes</p></div>':'')+(g.bad?'<div style="display:flex;flex-direction:column;gap:6px"><img class="std" src="'+img(g.bad)+'" alt="Needs redoing"><p style="font-weight:600;font-size:13px;color:var(--tcd)">'+I.cross+' Redo this</p></div>':'')+'</div>';
   if(g.done.length) h+='<div class="dark"><p class="lbl">Done means</p>'+g.done.map(function(x){ return '<p style="line-height:1.6">'+esc(x)+'</p>'; }).join('')+'</div>';
   h+=pairsHtml(g);
   var facts=[['Product',g.product],['Dwell time',g.dwell],['Time',g.time]].filter(function(x){return x[1];});
   if(facts.length) h+='<div class="grid2">'+facts.map(function(x){ return '<div class="card" style="padding:14px'+(facts.length===3&&x[0]==='Time'?';grid-column:1/-1':'')+'"><p class="lbl">'+x[0]+'</p><p style="margin-top:6px;font-weight:600">'+esc(x[1])+'</p></div>'; }).join('')+'</div>';
-  if(g.body) h+='<p style="font-size:16px;line-height:1.65">'+esc(g.body)+'</p>';
+  if(g.body) h+=String(g.body).split(/\n\s*\n/).map(function(x){ return x.trim()?'<p style="font-size:16px;line-height:1.65">'+esc(x.trim())+'</p>':''; }).join('');
   var kit=g.kit||[], nv=g.never||[];
   if(kit.length) h+='<div class="card" style="padding:12px 16px"><p class="lbl b" style="padding-bottom:6px">What you need</p>'+kit.map(function(x){ return '<div class="bul"><i></i><p>'+esc(x)+'</p></div>'; }).join('')+'</div>';
   if(g.steps.length){ var anyT=g.steps.some(function(x){ return stepT(x).s; });
@@ -750,7 +765,7 @@ function renderEdit(id){
   if(!DRAFT||DRAFT._for!==id){
     var g=isNew?{id:'g'+Date.now().toString(36),sec:id.slice(4),title:'',sub:'',room:'',done:[],kit:[],never:[],pics:[],product:'',dwell:'',time:'',steps:[],miss:'',body:'',good:'',bad:'',map:'',spots:[],pairs:[]}:guide(id);
     if(!g){ go('kit'); return; }
-    DRAFT=JSON.parse(JSON.stringify(g)); DRAFT.kit=DRAFT.kit||[]; DRAFT.never=DRAFT.never||[]; DRAFT.pics=(DRAFT.pics||[]).slice(); DRAFT.spots=DRAFT.spots||[]; DRAFT.pairs=(DRAFT.pairs||[]).slice(); DRAFT.map=DRAFT.map||''; DRAFT._for=id; DRAFT._new=isNew;
+    DRAFT=JSON.parse(JSON.stringify(g)); DRAFT.kit=DRAFT.kit||[]; DRAFT.never=DRAFT.never||[]; DRAFT.pics=(DRAFT.pics||[]).slice(); DRAFT.spots=DRAFT.spots||[]; DRAFT.pairs=(DRAFT.pairs||[]).slice(); DRAFT.map=DRAFT.map||''; DRAFT.hero=DRAFT.hero||''; DRAFT._for=id; DRAFT._new=isNew;
   }
   var d=DRAFT;
   function f(n,label,hint,v){ return '<label class="f">'+label+(hint?' <small>'+hint+'</small>':'')+'<input class="t" name="'+n+'" value="'+esc(v)+'"></label>'; }
@@ -760,9 +775,10 @@ function renderEdit(id){
   h+='<div class="card" style="display:flex;flex-direction:column;gap:14px">'+f('title','Title','',d.title)+'<label class="f">Section<select class="t" name="sec">'+SECS.map(function(s){ return '<option value="'+s.id+'"'+(s.id===d.sec?' selected':'')+'>'+esc(s.title)+'</option>'; }).join('')+'</select></label>'+f('sub','Small label','e.g. All services, 2 min',d.sub)+(d.sec==='rooms'?f('room','Shows on these rooms\' checklists','words separated by | e.g. bath|ensuite',d.room):'')+'</div>';
   h+='<div class="card" style="display:flex;flex-direction:column;gap:14px"><p class="lbl b">Your standard photos</p><div class="grid2">'+ph('good','This passes')+ph('bad','Redo this')+'</div></div>';
   h+='<div class="card" style="display:flex;flex-direction:column;gap:14px">'+ta('done','Done means','one per line',d.done.join('\n'))+ta('kit','What you need','products and tools, one per line. Name the exact product you use',d.kit.join('\n'),5)+f('product','Main product','optional',d.product)+f('dwell','Dwell time','',d.dwell)+f('time','Time','',d.time)+'</div>';
-  h+='<div class="card" style="display:flex;flex-direction:column;gap:14px">'+ta('steps','Step by step','one per line. End a step with [5 min] or [30 sec] to give it a timer',d.steps.join('\n'),9)+ta('body','Extra explanation','optional',d.body,3)+ta('never','Never','optional, one per line',d.never.join('\n'),3)+ta('miss','Easy to miss','optional',d.miss,2)+'</div>';
+  h+='<div class="card" style="display:flex;flex-direction:column;gap:14px">'+ta('steps','Step by step','one per line. End a step with [5 min] or [30 sec] to give it a timer',d.steps.join('\n'),9)+ta('body','Extra explanation','optional. Leave a blank line between paragraphs',d.body,d.body&&d.body.length>300?8:3)+ta('never','Never','optional, one per line',d.never.join('\n'),3)+ta('miss','Easy to miss','optional',d.miss,2)+'</div>';
   if(window.TKART){ var MN={mkitchen:'Kitchen',mbath:'Bathroom',mtoilet:'Toilet',mbed:'Bedroom',mliving:'Living room',mhall:'Hallway and stairs',mlaundry:'Laundry'};
     h+='<div class="card" style="display:flex;flex-direction:column;gap:14px"><p class="lbl b">Drawings</p><p class="sub" style="margin-top:-8px">The standard: pick the pass and redo drawings that fit this guide.</p><div>'+TKART.pairs.map(function(k){ var x=TKART.pair(k), on=d.pairs.indexOf('art:'+k)>=0; return '<label class="it"><input type="checkbox" name="pair" value="art:'+k+'"'+(on?' checked':'')+'><span>'+esc(x.k)+'</span></label>'; }).join('')+'</div>';
+    h+='<label class="f">Picture at the top<select class="t" name="hero"><option value="">None</option>'+(TKART.heroes||[]).map(function(k){ return '<option value="art:'+k+'"'+(d.hero==='art:'+k?' selected':'')+'>'+esc({phscale:'pH scale',phsoil:'Which mess each type lifts',sinner:'Four things that clean',dilute:'Dilution'}[k]||k)+'</option>'; }).join('')+'</select></label>'+(d.hero&&/^art:/.test(d.hero)?'<div class="hero">'+picOf(d.hero)+'</div>':'');
     h+='<label class="f">Easy-to-miss map<select class="t" name="map"><option value="">None</option>'+TKART.maps.map(function(k){ return '<option value="art:'+k+'"'+(d.map==='art:'+k?' selected':'')+'>'+esc(MN[k]||k)+'</option>'; }).join('')+'</select></label>';
     if(d.map){ h+='<div class="hmap">'+TKART.map(d.map.slice(4))+'</div>'+ta('spots','What each number is','one per line, in number order. Shows instead of the Easy to miss text',d.spots.join('\n'),5); }
     h+='</div>'; }
@@ -774,6 +790,7 @@ function renderEdit(id){
   var form=document.getElementById('gf');
   form.oninput=function(){ readDraft(form); };
   form.querySelector('[name=sec]').onchange=function(){ readDraft(form); renderEdit(id); };
+  if(form.elements.hero) form.elements.hero.onchange=function(){ readDraft(form); renderEdit(id); };
   if(form.elements.map) form.elements.map.onchange=function(){ readDraft(form); renderEdit(id); };
   form.onsubmit=function(e){ e.preventDefault(); readDraft(form);
     if(!d.title.trim()){ var er=document.getElementById('gerr'); er.textContent='Give it a title.'; er.classList.remove('hide'); return; }
@@ -785,6 +802,7 @@ function renderEdit(id){
 function readDraft(form){ var E=form.elements, d=DRAFT; ['title','sub','product','dwell','time','body','miss'].forEach(function(k){ d[k]=E[k].value; }); d.sec=E.sec.value; if(E.room) d.room=E.room.value;
   d.done=E.done.value.split('\n').map(function(x){return x.trim();}).filter(Boolean); d.steps=E.steps.value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
   d.kit=E.kit.value.split('\n').map(function(x){return x.trim();}).filter(Boolean); d.never=E.never.value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
+  if(E.hero) d.hero=E.hero.value;
   if(E.map){ d.map=E.map.value; d.pairs=Array.prototype.filter.call(form.querySelectorAll('[name=pair]'),function(c){return c.checked;}).map(function(c){return c.value;}); }
   if(E.spots) d.spots=E.spots.value.split('\n').map(function(x){return x.trim();}).filter(Boolean); }
 function renderBasics(){
