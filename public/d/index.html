@@ -65,7 +65,7 @@ body{margin:0;background:var(--cream);color:var(--body);font:400 15px/1.6 var(--
 .desc ul.tk li{display:flex;gap:8px;align-items:flex-start;padding:2px 0;line-height:1.45}
 .desc ul.tk li svg{color:#3F7A4A;flex:none;margin-top:3px}
 .desc .ex{display:flex;gap:8px;align-items:flex-start;background:var(--cream);border-radius:8px;padding:10px 12px;color:var(--dark)}
-.desc .ex svg{color:var(--terracotta);flex:none;margin-top:4px}
+.desc .ex svg{color:var(--meta);flex:none;margin-top:3px}
 .tot{margin-left:auto;max-width:320px;margin-top:16px;font-variant-numeric:tabular-nums}
 .tot div{display:flex;justify-content:space-between;gap:14px;padding:6px 0;font-size:14px;color:var(--dark)}
 .tot .grand{border-top:2px solid var(--dark);margin-top:6px;padding-top:12px;font:700 22px/1.2 var(--serif)}
@@ -197,7 +197,7 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
       [/extra|add-on|optional/i, sv('<path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/>')]
     ]; })();
   var TICK='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
-  var NOT='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var NOTE='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>';
   function roomIcon(x){ for(var i=0;i<RI.length;i++) if(RI[i][0].test(x)) return RI[i][1]; return ''; }
   function rich(t){
     var L=String(t||'').split('\n'), h='', inList=false, inRoom=false;
@@ -208,7 +208,7 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
       if(inList){ h+='</ul>'; inList=false; if(inRoom){ h+='</div>'; inRoom=false; } }
       if(!x.trim()) continue;
       if(isB(L[i+1]) && x.length<70){ var ic=roomIcon(x); if(ic){ var n=0; for(var k=i+1;k<L.length&&isB(L[k]);k++) n++; h+='<div class="rm"><div class="rmh"><span class="ri">'+ic+'</span><h4>'+esc(x.trim())+'</h4><span class="rn">'+n+' item'+(n===1?'':'s')+'</span></div>'; inRoom=true; } else h+='<h4>'+esc(x.trim())+'</h4>'; }
-      else if(/aren't included|are not included|isn't included|not included|excluded/i.test(x)) h+='<p class="ex">'+NOT+'<span>'+esc(x)+'</span></p>';
+      else if(/included|excluded|\bonly\b|ground floor|safe reach/i.test(x)&&/window|glass|track|external|internal/i.test(x)) h+='<p class="ex">'+NOTE+'<span>'+esc(x)+'</span></p>';
       else h+='<p>'+esc(x)+'</p>';
     }
     if(inList) h+='</ul>';
