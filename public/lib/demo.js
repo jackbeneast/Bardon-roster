@@ -56,11 +56,11 @@
 
   var CFG = {
     sell: {
-      address: 'Sample: 7 Latrobe Tce', suburb: 'Paddington', service: 'Pre-sale clean', readyBy: 'Photography 9am tomorrow', kind: 'presale',
+      address: 'Sample: 7 Latrobe Tce', suburb: 'Paddington', service: 'Pre-sale clean', readyBy: 'Photography 9am tomorrow', kind: 'presale', beds: 3, baths: 2,
       flags: [{ id: 'f1', t: 'Scuff marks on the hallway wall', d: 'Light scuffs at hand height that won\'t wipe off without lifting the paint. A touch-up would help before photos.', after: 1 }]
     },
     rent: {
-      address: 'Sample: Unit 4, 12 Park Rd', suburb: 'Milton', service: 'Bond clean', readyBy: 'Bond inspection Friday', kind: 'bond',
+      address: 'Sample: Unit 4, 12 Park Rd', suburb: 'Milton', service: 'Bond clean', readyBy: 'Bond inspection Friday', kind: 'bond', beds: 2, baths: 1,
       flags: [{ id: 'f1', t: 'Carpet stain in bedroom 2', d: 'Treated twice. It has lightened but hasn\'t lifted fully. A carpet steam clean would be the next step if the agent raises it.', after: 2 }]
     }
   };
@@ -69,7 +69,7 @@
   function job(cfg, id, phase, step, dayOffset, rep){
     var date = day(dayOffset || 0);
     var j = { id: id, date: phase === 'before' ? day(1) : date, start: '08:00', end: '14:30',
-      address: cfg.address, suburb: cfg.suburb, service: cfg.service, readyBy: cfg.readyBy, rooms: ROOMS.slice(), team: TEAM.slice(),
+      address: cfg.address, suburb: cfg.suburb, service: cfg.service, readyBy: cfg.readyBy, beds: cfg.beds, baths: cfg.baths, rooms: ROOMS.slice(), team: TEAM.slice(),
       live: { arrived: {}, rooms: {}, flags: [], photos: [], lock: {}, eta: '', done: '', updated: '', checks: {}, ticked: {} } };
     if (phase === 'before') return j;
     var L = j.live, n = phase === 'done' ? ROOMS.length : Math.min(step, ROOMS.length);
@@ -114,7 +114,7 @@
         { id: 'c1', dir: 'in', via: 'portal', text: 'Re 21 Example St: Vendor loved the report. They\'re replacing the oven seal before photos, thanks for flagging it.', at: at(day(-1), '16:12') },
         { id: 'c2', dir: 'out', text: 'Great to hear. Photos are all in the report if the photographer wants a look first.', at: at(day(-1), '16:20') },
         { id: 'c3', dir: 'in', via: 'portal', text: 'Re 7 Latrobe Tce: Keys are in the lockbox by the side gate. Photographer is booked 9am tomorrow.', at: at(day(0), '07:34') },
-        { id: 'c4', dir: 'out', text: 'Got them, thanks. Team is on site now. You\'ll see each room tick off as it\'s done.', at: at(day(0), '07:58') }
+        { id: 'c4', dir: 'out', text: 'Got them, thanks. Team is on site now. You\'ll see each area fill in as it\'s done.', at: at(day(0), '07:58') }
       ] };
       var out = Object.assign(base, { mode: 'agent', agent: { name: 'Sample agent', agency: 'Demo listings' }, chat: saved.chat, jobs: [
         Object.assign(job(CFG.sell, 'demo-live', 'day', step, 0, REPORTS.deep || R('presale')), { billing: bill(690, true, false) }),

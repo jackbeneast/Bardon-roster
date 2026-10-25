@@ -133,6 +133,7 @@ section.blk>h2{font-size:20px;margin-bottom:10px}
 .vp-stage{flex:1;min-height:0;position:relative;padding-bottom:env(safe-area-inset-bottom,0px)}
 .vp-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .photos img{width:100%;height:100%;object-fit:cover;display:block}
+.gl-house{background:var(--white);border-radius:8px;padding:10px 4px 2px;margin:14px 0 4px}
 .flag{border-left:3px solid var(--gold);background:var(--white);border-radius:0 8px 8px 0;padding:10px 12px;font-size:14px;margin-bottom:8px}
 .flag b{display:block;color:var(--dark);font-weight:600}
 .checks{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:14px;color:var(--dark)}
@@ -328,6 +329,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
 
 <script src="/lib/checklists.js"></script>
 <script src="/lib/demo.js"></script>
+<script src="/lib/house.js"></script>
 <script>
 (function(){
   var path=location.pathname, mode, cred='';
@@ -475,8 +477,8 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     var d=new Date(), h='';
     if(tab==='today'){
       if(mode==='agent') h+=heroHtml(L,d);
-      else h+='<div class="intro"><h1>On site <em>today</em></h1><p>'+DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]+'. Updates as the team works through each room.</p></div>';
-      if(mode==='agent') h+='<section class="blk"><h2>On site <em>today</em></h2><p class="sub" style="margin:-4px 0 0">'+DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]+'. Updates as the team finishes each room.</p>';
+      else h+='<div class="intro"><h1>On site <em>today</em></h1><p>'+DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]+'. Updates as the team works through each area.</p></div>';
+      if(mode==='agent') h+='<section class="blk"><h2>On site <em>today</em></h2><p class="sub" style="margin:-4px 0 0">'+DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]+'. Updates as the team finishes each area.</p>';
       h+=L.today.length?'<div class="list">'+L.today.map(function(j){return card(j,'today');}).join('')+'</div>':'<div class="empty">No cleans at your listings today.'+(L.upcoming.length?' The next one is '+fmtDay(L.upcoming[0].date)+'.':'')+'</div>';
       if(mode==='agent') h+='</section>'+credSec();
     } else if(tab==='messages'){
@@ -690,13 +692,14 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
 
   // ---- 1. At a glance: the whole answer in one card ----
   function glance(j,p,ph){
-    var L=j.live, ac=j.actual||{}, notes=L.flags.length, h='<div class="glance '+ph+'">';
+    var L=j.live, ac=j.actual||{}, notes=L.flags.length, h='<div class="glance '+ph+'">', hs=window.BCHouse?BCHouse.svg(j,Object.keys(data.lock||{})):''; if(hs) hs='<div class="gl-house">'+hs+'</div>';
     if(ph==='done'){
       h+='<div class="gl-top"><span class="tick" aria-hidden="true">✓</span><div><span class="gl-k">'+(j.readyBy?'Ready for':'Finished')+'</span><b>'+esc(j.readyBy||('Finished '+(L.done?clock(L.done):fmtDay(j.date))))+'</b></div></div>';
       var lk=lockedAt(L);
+      h+=hs;
       h+='<div class="gl-grid">'+[
         ['Finished',L.done?clock(L.done)+(new Date(L.done).toDateString()!==new Date().toDateString()?', '+fmtDay(iso(new Date(L.done))):''):(ac.out?clock(ac.out):fmtDay(j.date))],
-        ['Rooms',p.done+' of '+j.rooms.length],
+        ['Areas',p.done+' of '+j.rooms.length],
         ['Checks done',totalChecks(j)||'—'],
         ['Photos',L.photos.length||'—'],
         ['Notes for you',notes?notes:'None'],
@@ -704,7 +707,8 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
       ].map(function(x){ return '<div><span>'+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
       if(notes) h+='<button type="button" class="gl-note" data-goto="attention">'+notes+' thing'+(notes>1?'s':'')+' worth knowing'+(kindOfSvc(j.service)==='presale'?' before buyers walk through':'')+' ›</button>';
     } else if(ph==='live'){
-      h+='<div class="gl-top"><span class="dot" aria-hidden="true"></span><div><span class="gl-k">Cleaning now</span><b>'+p.done+' of '+j.rooms.length+' rooms done</b></div></div>';
+      h+='<div class="gl-top"><span class="dot" aria-hidden="true"></span><div><span class="gl-k">Cleaning now</span><b>'+p.done+' of '+j.rooms.length+' areas done</b></div></div>';
+      h+=hs;
       h+='<div class="bar"><i style="width:'+p.pct+'%"></i></div>';
       h+='<div class="gl-grid">'+[
         ['Team arrived',ac.in?clock(ac.in):'—'],
@@ -715,10 +719,11 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
       if(j.readyBy) h+='<p class="gl-p">On track to be ready for <b>'+esc(j.readyBy)+'</b>.</p>';
     } else {
       h+='<div class="gl-top"><span class="tick cal" aria-hidden="true">✓</span><div><span class="gl-k">Booked and confirmed</span><b>'+esc(longDay(j.date))+'</b></div></div>';
+      h+=hs;
       h+='<div class="gl-grid">'+[
         ['Team arrives',fmtTime(j.start)],
         ['Finishing around',fmtTime(j.end)],
-        ['Rooms',j.rooms.length],
+        ['Areas',j.rooms.length],
         ['Team',j.team.length?j.team.map(function(t){return t.name;}).join(', '):'Confirmed soon']
       ].map(function(x){ return '<div><span>'+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
       if(j.days&&j.days.length>1) h+='<p class="gl-p">'+j.days.length+' days: '+j.days.map(function(x){ return esc(fmtDay(x.date)); }).join(', ')+'</p>';
@@ -849,9 +854,9 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     if(V && ph==='booked') h+=accessSec(j);
 
     // Room by room
-    h+='<section class="blk"><h2>'+(ph==='booked'?'What we\'ll <em>clean</em>':'Room by <em>room</em>')+'</h2>'+
-      (ph==='booked'?'<p class="sub sec-sub">Every room has its own checklist. The team ticks each item off on the day, and you\'ll see them here.</p>':
-       ph==='done'?'<p class="sub sec-sub">Drag across a photo to compare before and after. Open a room to see every check the team ticked.</p>':'<p class="sub sec-sub">Each room ticks over as the team finishes it.</p>')+
+    h+='<section class="blk"><h2>'+(ph==='booked'?'What we\'ll <em>clean</em>':'Area by <em>area</em>')+'</h2>'+
+      (ph==='booked'?'<p class="sub sec-sub">Every area has its own checklist. The team ticks each item off on the day, and you\'ll see them here.</p>':
+       ph==='done'?'<p class="sub sec-sub">Drag across a photo to compare before and after. Open an area to see every check the team ticked.</p>':'<p class="sub sec-sub">Each area fills in as the team finishes it.</p>')+
       '<div class="rooms">'+j.rooms.map(function(r){ return roomCard(j,r,ph); }).join('')+'</div></section>';
     if(ph==='live') h+=tourBlock(L);
 
