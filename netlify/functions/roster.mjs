@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { store, json, loadRoster, loadConfirms, loadAcks, loadAllLive, bookingLive, checkAdmin, adminIsSet } from "../../lib/core.mjs";
+import { teamSession, needLogin } from "../../lib/teamauth.mjs";
 
 // Wage-estimate settings: pay cycle, rates, lunch rule, extra public holidays.
 function cleanPay(p) {
@@ -78,6 +79,9 @@ export default async (req) => {
 
   if (req.method === "GET") {
     const roster = await loadRoster(s);
+    // Nothing is readable without Jack's password or a team passcode login.
+    const me = admin ? null : await teamSession(s, req, roster);
+    if (!admin && !me) return json({ error: "Log in with your mobile number and passcode.", teamLogin: true, adminSet: await adminIsSet(s) }, 401);
     // Every real job gets a private client link. Backfill older jobs once.
     if (admin && roster.jobs.some((j) => !j.sample && !j.share)) {
       roster.jobs.forEach((j) => { if (!j.sample && !j.share) j.share = randomBytes(18).toString("hex"); });
@@ -96,7 +100,7 @@ export default async (req) => {
     await Promise.all((await s.list("kudos/")).map(async (k) => { const v = await s.get(k); if (v && v.at >= since) kudos.push(v); }));
     kudos.sort((a, b) => b.at.localeCompare(a.at));
     // Pay settings (rates, cycle) are shared so the team app can estimate each person's pay.
-    const out = { team, jobs, info: roster.info || {}, confirms, acks, live, access, kudos, admin, adminSet: await adminIsSet(s), savedAt: roster.savedAt || "", pay: roster.pay || null };
+    const out = { team, jobs, info: roster.info || {}, confirms, acks, live, access, kudos, admin, me: me ? me.pid : "", adminSet: await adminIsSet(s), savedAt: roster.savedAt || "", pay: roster.pay || null };
     if (admin) {
       out.agents = roster.agents || [];
       const keys = await s.list("req/");

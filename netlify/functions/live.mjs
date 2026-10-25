@@ -1,4 +1,5 @@
 import { store, json, loadRoster, loadBooking, loadConfirms, checkAdmin, roomsOf, LOCK, shiftOf } from "../../lib/core.mjs";
+import { teamSession, needLogin } from "../../lib/teamauth.mjs";
 import { autoWrap, clockedHours } from "../../lib/clock.mjs";
 import { paySet } from "../../public/lib/wages.mjs";
 import { notify, firstName, where, fmtTime, clockNow } from "../../lib/notify.mjs";
@@ -15,6 +16,12 @@ export default async (req) => {
   const admin = await checkAdmin(s, req);
   const owner = roster.team.find((t) => t.owner);
   let pid = String(b.personId || "");
+  if (!admin) {
+    const me = await teamSession(s, req, roster);
+    if (!me) return needLogin(json);
+    if (pid && pid !== me.pid) return json({ error: "You're logged in as someone else. Log out and back in as yourself." }, 403);
+    pid = me.pid;
+  }
   const onJob = (id) => (job.staff || []).includes(id);
   if (!admin && !onJob(pid)) return json({ error: "Only the team on this job can update it." }, 403);
   if (admin && !pid) pid = owner ? owner.id : "admin";

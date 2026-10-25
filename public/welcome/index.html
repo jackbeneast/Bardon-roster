@@ -96,9 +96,9 @@ a{color:var(--terracotta-dark)}
   }
   app.addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b||busy) return;
-    if(b.hasAttribute('data-ack')){ busy=true; b.textContent='Saving…'; post('/api/ack',{personId:D.teamId}).then(function(){ busy=false; return load(); }).catch(function(x){ busy=false; b.textContent='Got it'; alert(x.message); }); }
+    if(b.hasAttribute('data-ack')){ busy=true; b.textContent='Saving…'; post('/api/ack',{personId:D.teamId,w:t}).then(function(){ busy=false; return load(); }).catch(function(x){ busy=false; b.textContent='Got it'; alert(x.message); }); }
     if(b.dataset.conf){
-      var body={jobId:D.shift.jobId,personId:D.teamId,status:b.dataset.conf};
+      var body={jobId:D.shift.jobId,personId:D.teamId,status:b.dataset.conf,w:t};
       if(b.dataset.conf==='no'){ var r=window.prompt('Sorry to hear that. What\'s the reason? (Jack will see this)'); if(r===null) return; body.reason=r; }
       busy=true; b.textContent='Saving…';
       post('/api/confirm',body).then(function(){ busy=false; if(body.status==='no') alert('Thanks for letting Jack know. He\'ll be in touch.'); return load(); }).catch(function(x){ busy=false; alert(x.message); load(); });

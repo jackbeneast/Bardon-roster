@@ -443,7 +443,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 .addarea input{flex:1;margin:0!important}
 .addarea button{flex:none;min-height:46px;border-radius:6px;border:0;background:var(--terracotta);color:#fff;font:600 14px var(--sans);padding:0 16px;cursor:pointer}
 .lsec h4 .ed{float:right;background:none;border:0;color:var(--terracotta-dark);font:600 12px var(--sans);letter-spacing:0;text-transform:none;text-decoration:underline;cursor:pointer;padding:0}
-</style></head><body>
+</style><script src="/lib/teamgate.js"></script></head><body>
 <div id="app"></div>
 <script src="/lib/confirm.js"></script>
 <script src="/lib/sms.js"></script>
@@ -2041,6 +2041,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     ['Hiring and team admin',[
       ['Old hiring guide','Replaced by Tools → Onboarding. Kept for reference.','https://claude.ai/artifact/5CSV5aC3GxW4vS5i8QyDxY'],
       ['Team & pay','Profiles, pay runs, payslips, super and tax.','/team/'],
+      ['Team passcodes','Set, reset and unlock each person\'s 4-digit login.','/passcodes/'],
       ['Day One Team Manual','What a new starter needs on their first shift.','https://claude.ai/code/artifact/7c89d3b7-4c7c-4fe8-ba34-1f5ddb07ffda'],
       ['Team platform','Training, standards, SOPs and checklists.','https://claude.ai/artifact/S8HC3VN7JXqdqe3GNs5GmH'],
       ['Old form submissions','Before the hub: Netlify → bardon-onboarding and bardon-contract → Forms.','https://app.netlify.com']]],
@@ -2448,7 +2449,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var supN=allSupplies().length;
     var obN=OB?(OB.people||[]).length:0;
     h+='<div class="sect"><span>Team</span></div><div class="menu" style="margin-top:0"><button type="button" data-view="onboard">'+IC.team+'Onboarding new starters'+(obN?' ('+obN+')':'')+'<span class="chev">›</span></button><a href="/?v=pipeline#hiring">'+IC.funnel+'Hiring: applicants and trials<span class="chev">›</span></a><a href="/me/#/kit">'+IC.text+'Team app: toolkit, focus &amp; rules<span class="chev">›</span></a><a href="/me/#/who">'+IC.team+'Team app: see it as a cleaner<span class="chev">›</span></a><a href="/teamengage/">'+IC.bell+'Team app: who\'s using it<span class="chev">›</span></a><a href="/me/#/tour">'+IC.text+'Team app: welcome tour<span class="chev">›</span></a></div>';
-    h+='<div class="sect"><span>Roster</span></div><div class="menu" style="margin-top:0">'+it('confirms',IC.tick,'Shift confirmations')+'<button type="button" data-view="regulars">'+IC.roster+'Regular clients<span class="chev">›</span></button><button type="button" data-view="contracts">'+IC.text+'Employment contracts<span class="chev">›</span></button>'+it('restock',IC.tick,'Restock list'+(supN?' ('+supN+')':''))+'<a href="/team/">'+IC.team+'Team profiles &amp; pay runs<span class="chev">›</span></a><a href="/team/#/run">'+IC.plus+'Run pay<span class="chev">›</span></a><button type="button" data-view="wages">'+IC.grid+'Wage estimate<span class="chev">›</span></button>'+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'</div>';
+    h+='<div class="sect"><span>Roster</span></div><div class="menu" style="margin-top:0">'+it('confirms',IC.tick,'Shift confirmations')+'<a href="/passcodes/">'+IC.team+'Team passcodes<span class="chev">›</span></a>'+'<button type="button" data-view="regulars">'+IC.roster+'Regular clients<span class="chev">›</span></button><button type="button" data-view="contracts">'+IC.text+'Employment contracts<span class="chev">›</span></button>'+it('restock',IC.tick,'Restock list'+(supN?' ('+supN+')':''))+'<a href="/team/">'+IC.team+'Team profiles &amp; pay runs<span class="chev">›</span></a><a href="/team/#/run">'+IC.plus+'Run pay<span class="chev">›</span></a><button type="button" data-view="wages">'+IC.grid+'Wage estimate<span class="chev">›</span></button>'+it('team',IC.team,'Manage team')+it('copy',IC.text,'Copy roster to text')+it('info',IC.info,'First-day info')+'</div>';
     h+='<div class="sect"><span>Notifications</span></div><div class="menu" style="margin-top:0"><button type="button" data-view="activity">'+IC.bell+'Activity'+(state.actUnread?' ('+state.actUnread+' new)':'')+'<span class="chev">›</span></button>'+it('notify',IC.bell,'Phone notifications'+(state.notifyOn?'':' (off)'))+'</div>';
     TOOLS.forEach(function(g){ h+='<div class="sect"><span>'+esc(g[0])+'</span></div><div class="tl2" style="margin-top:0">'+g[1].map(toolRow).join('')+'</div>'; });
     h+='<details class="olds"><summary>Design files and old drafts ('+OLD.length+')</summary><div class="tl2">'+OLD.map(function(o){return toolRow([o[0],'',o[1]]);}).join('')+'</div></details>';

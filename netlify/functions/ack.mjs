@@ -1,4 +1,5 @@
 import { store, json, loadRoster, checkAdmin } from "../../lib/core.mjs";
+import { teamSession, needLogin, welcomePerson } from "../../lib/teamauth.mjs";
 import { notify, firstName } from "../../lib/notify.mjs";
 
 // A team member taps "Got it" on their first-day info.
@@ -9,8 +10,15 @@ export default async (req) => {
   const roster = await loadRoster(s);
   const person = roster.team.find((t) => t.id === b.personId);
   if (!person) return json({ error: "Not on the team list. Refresh the page." }, 404);
+  const admin = await checkAdmin(s, req);
+  if (!admin) {
+    const me = await teamSession(s, req, roster);
+    const wp = me ? "" : await welcomePerson(s, b.w);
+    if (!me && !wp) return needLogin(json);
+    if ((me ? me.pid : wp) !== person.id) return json({ error: "You can only do this for yourself." }, 403);
+  }
   if (b.clear) {
-    if (!(await checkAdmin(s, req))) return json({ error: "Only Jack can reset this" }, 401);
+    if (!admin) return json({ error: "Only Jack can reset this" }, 401);
     await s.del(`ack/${person.id}`);
     return json({ ok: true });
   }

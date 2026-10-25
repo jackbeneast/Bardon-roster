@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { store, json, loadRoster, loadBooking, daysOf, checkAdmin, roomsOf } from "../../lib/core.mjs";
+import { teamSession, needLogin } from "../../lib/teamauth.mjs";
 
 const MAX = 5 * 1024 * 1024;
 const TMAX = 400 * 1024;
@@ -32,7 +33,13 @@ export default async (req) => {
   const job = roster.jobs.find((x) => x.id === u.searchParams.get("job"));
   if (!job) return json({ error: "That job isn't on the roster any more." }, 404);
   const admin = await checkAdmin(s, req);
-  const pid = u.searchParams.get("person") || "";
+  let pid = u.searchParams.get("person") || "";
+  if (!admin) {
+    const me = await teamSession(s, req, roster);
+    if (!me) return needLogin(json);
+    if (pid && pid !== me.pid) return json({ error: "You're logged in as someone else. Log out and back in as yourself." }, 403);
+    pid = me.pid;
+  }
   if (!admin && !(job.staff || []).includes(pid)) return json({ error: "Only the team on this job can add photos." }, 403);
   const stage = u.searchParams.get("stage") || "";
 

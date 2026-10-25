@@ -6,6 +6,7 @@
 //   POST { action: "reset" } (admin) back to the starter content
 import { randomBytes } from "node:crypto";
 import { store, json, checkAdmin } from "../../lib/core.mjs";
+import { teamSession, needLogin } from "../../lib/teamauth.mjs";
 import { SECTIONS, DEFAULT, cleanContent, loadContent } from "../../lib/teamapp.mjs";
 
 export default async (req) => {
@@ -19,7 +20,9 @@ export default async (req) => {
       if (!buf) return new Response("Not found", { status: 404 });
       return new Response(buf, { headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=31536000, immutable" } });
     }
-    return json({ sections: SECTIONS, content: await loadContent(s), admin: await checkAdmin(s, req) });
+    const admin = await checkAdmin(s, req);
+    if (!admin && !(await teamSession(s, req))) return needLogin(json);
+    return json({ sections: SECTIONS, content: await loadContent(s), admin });
   }
 
   if (!(await checkAdmin(s, req))) return json({ error: "Only Jack can change this. Log in to the hub on this phone first." }, 401);
