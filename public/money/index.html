@@ -86,6 +86,10 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .item .tools{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;border-top:1px solid var(--cream-dark);padding-top:6px}
 .item .tools button{background:none;border:0;font:500 13px var(--sans);color:var(--meta);padding:8px 8px;cursor:pointer;min-height:36px}
 .item .tools button.rm{color:var(--terracotta-dark);margin-left:auto}
+.pri{border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px;background:var(--white)}
+.pri .pg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pri .tools{display:flex;justify-content:flex-end;margin-top:6px}
+.pri .tools button{background:none;border:0;font:500 13px var(--sans);color:var(--terracotta-dark);padding:8px;cursor:pointer;min-height:36px}
 .addrow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .totals{margin-top:14px;font-variant-numeric:tabular-nums}
 .totals div{display:flex;justify-content:space-between;padding:5px 0;font-size:15px;color:var(--dark)}
@@ -182,7 +186,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     return fetch(url,{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
       .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok){ var e=new Error(d.error||'Something went wrong. Try again.'); e.status=r.status; throw e; } return d; }); });
   }
-  function totals(d){ var sub=r2((d.items||[]).reduce(function(a,i){return a+(+i.qty||1)*(+i.price||0);},0)), gst=d.gst?r2(sub*.1):0, total=r2(sub+gst), paid=r2((d.payments||[]).reduce(function(a,p){return a+p.amt;},0)); return {sub:sub,gst:gst,total:total,paid:paid,due:r2(Math.max(0,total-paid)),deposit:d.kind==='quote'&&d.depositPct?r2(total*d.depositPct/100):0}; }
+  function totals(d){ var sub=r2((d.items||[]).reduce(function(a,i){return a+(+i.qty||1)*(+i.price||0);},0)), gst=d.gst?r2(sub*.1):0, total=r2(sub+gst), paid=r2((d.payments||[]).reduce(function(a,p){return a+p.amt;},0)), prior=d.kind==='invoice'?r2((d.prior||[]).reduce(function(a,p){return a+(+p.amt||0);},0)):0; return {sub:sub,gst:gst,total:total,paid:paid,prior:prior,due:r2(Math.max(0,total-paid-prior)),deposit:d.kind==='quote'&&d.depositPct?r2(total*d.depositPct/100):0}; }
   function docById(id){ for(var i=0;i<S.docs.length;i++) if(S.docs[i].id===id) return S.docs[i]; return null; }
   function jobFor(d){ var jid=d.jobId; if(!jid&&d.quoteId){ var q=docById(d.quoteId); jid=q&&q.jobId; } return jid?S.jobs.filter(function(j){return j.id===jid;})[0]||null:null; }
   function reportLink(d){ var j=d.kind==='invoice'&&!d.isDeposit?jobFor(d):null; return j&&j.share?location.origin+'/v/'+j.share:''; }
@@ -260,7 +264,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   function match(d,f){ var s=d.state; if(f==='all') return true; if(f==='open') return s==='sent'||s==='viewed'; if(f==='closed') return s==='expired'||s==='declined'; if(f==='unpaid') return s!=='paid'&&s!=='draft'; return s===f; }
   function rows(list){
     if(!list.length) return '<div class="empty">'+(tab==='quote'?'No quotes here yet.':'No invoices here yet.')+'</div>';
-    return list.map(function(d){ var t=d.totals, amt=d.kind==='invoice'&&d.state!=='paid'&&t.paid>0?money(t.due)+' due':money(t.total);
+    return list.map(function(d){ var t=d.totals, amt=d.kind==='invoice'&&d.state!=='paid'&&(t.paid>0||t.prior>0)?money(t.due)+' due':money(t.total);
       return '<button class="row" data-open="'+d.id+'"><span class="c">#'+d.num+' · '+esc(d.client.name||'No client yet')+'</span><span class="a">'+amt+'</span><span class="m">'+esc([d.site||d.suburb, d.service].filter(Boolean).join(' · ')||'—')+'<br>'+(d.kind==='invoice'&&d.dueDate&&d.state!=='paid'&&d.state!=='draft'?'Due '+fdate(d.dueDate):fdate(d.issued))+'</span><span style="text-align:right"><span class="pill '+d.state+'">'+(LABEL[d.state]||d.state)+'</span></span></button>'; }).join('');
   }
 
@@ -307,6 +311,10 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     h+='<div class="addrow"><button class="btn plain grow" data-act="fromlib">+ From saved items</button><button class="btn plain grow" data-act="additem">+ Blank item</button></div>';
     h+='<div class="totals" id="totals">'+totalsHtml(d)+'</div>';
     h+='<label class="check"><input type="checkbox" data-f="gst"'+(d.gst?' checked':'')+'>Add GST (10%) on top</label></div>';
+    if(!isQ){ d.prior=d.prior||[];
+      h+='<div class="card"><h2>Already <em>paid</em></h2><p class="sub" style="margin:0">Money the client paid before this invoice, like a deposit. The invoice shows the full amount, then takes this off so they see what\'s left to pay.</p><div id="prior">'+priorHtml(d)+'</div>';
+      h+='<div class="addrow"><button class="btn plain grow" data-act="addprior">+ Add a payment already made</button></div>';
+      h+='<p class="hint">Enter the amount they paid, including GST. It isn\'t counted as new money in your books or Xero. If it came in and isn\'t recorded anywhere in the hub, use Record payment instead.</p></div>'; }
     if(isQ&&S.costs) h+='<div class="card" id="pcheck">'+checkHtml(d)+'</div>';
 
     // Details
@@ -316,10 +324,20 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     h+='<label class="l full">Note to client <small>(optional)</small><textarea data-f="notes" placeholder="e.g. Access via the lockbox. We\'ll text when we\'re on the way.">'+esc(d.notes)+'</textarea></label></div>';
     h+='<label class="check"><input type="checkbox" data-f="showTerms"'+(d.showTerms?' checked':'')+'>Include your service policies</label></div>';
 
-    h+='<div class="bar"><div class="in"><div class="sum">'+(isQ?'Quote total':'Invoice total')+'<b id="barTotal">'+money(totals(d).total)+'</b></div><button class="btn primary" data-act="save" style="min-width:140px">'+(existing?'Save changes':'Save')+'</button></div></div>';
+    h+='<div class="bar"><div class="in"><div class="sum"><span id="barLbl">'+barLbl(d)+'</span><b id="barTotal">'+money(barAmt(d))+'</b></div><button class="btn primary" data-act="save" style="min-width:140px">'+(existing?'Save changes':'Save')+'</button></div></div>';
     app.innerHTML=h;
     autosize();
   }
+  function barLbl(d){ return d.kind==='quote'?'Quote total':totals(d).prior>0?'Balance due':'Invoice total'; }
+  function barAmt(d){ var t=totals(d); return d.kind==='invoice'&&t.prior>0?t.due:t.total; }
+  function priorHtml(d){
+    if(!(d.prior||[]).length) return '';
+    return d.prior.map(function(p,k){
+      return '<div class="pri" data-pi="'+k+'"><div class="pg"><label class="l">Amount paid <small>incl. GST</small><input type="number" inputmode="decimal" step="0.01" min="0" data-pr="amt" value="'+esc(p.amt)+'" placeholder="250.00"></label><label class="l">Date paid<input type="date" data-pr="date" value="'+esc(p.date)+'"></label></div>'+
+        '<label class="l" style="margin-top:10px">Shown as <small>(optional)</small><input data-pr="note" value="'+esc(p.note)+'" placeholder="e.g. Deposit, invoice #259"></label><div class="tools"><button data-rmprior>Remove</button></div></div>';
+    }).join('');
+  }
+  function redrawPrior(){ var el=document.getElementById('prior'); if(el) el.innerHTML=priorHtml(draft); redrawTotals(); }
   function itemsHtml(d){
     if(!d.items.length) return '<div class="empty" style="margin-top:0">No items yet. Use Fill in price and scope, pick a saved item, or add a blank one.</div>';
     return d.items.map(function(it,i){
@@ -329,8 +347,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
         '<div class="tools">'+(i>0?'<button data-mv="-1">↑ Up</button>':'')+(i<d.items.length-1?'<button data-mv="1">↓ Down</button>':'')+'<button data-save-lib>Save to library</button><button class="rm" data-rm>Remove</button></div></div>';
     }).join('');
   }
-  function totalsHtml(d){ var t=totals(d); return '<div><span>Subtotal</span><span>'+money(t.sub)+'</span></div>'+(d.gst?'<div><span>GST</span><span>'+money(t.gst)+'</span></div>':'')+'<div class="g"><span>Total</span><span>'+money(t.total)+'</span></div>'+(d.kind==='quote'&&t.deposit>0?'<div style="color:var(--meta);font-size:14px"><span>Deposit ('+d.depositPct+'%)</span><span>'+money(t.deposit)+'</span></div>':''); }
-  function redrawTotals(){ redrawCheck(); var el=document.getElementById('totals'); if(el) el.innerHTML=totalsHtml(draft); var b=document.getElementById('barTotal'); if(b) b.textContent=money(totals(draft).total); }
+  function totalsHtml(d){ var t=totals(d); return '<div><span>Subtotal</span><span>'+money(t.sub)+'</span></div>'+(d.gst?'<div><span>GST</span><span>'+money(t.gst)+'</span></div>':'')+'<div class="g"><span>Total</span><span>'+money(t.total)+'</span></div>'+(d.kind==='invoice'?(d.prior||[]).filter(function(p){return +p.amt>0;}).map(function(p){ return '<div style="color:var(--meta)"><span>Paid previously'+(p.note?' · '+esc(p.note):'')+'</span><span>−'+money(+p.amt)+'</span></div>'; }).join('')+(t.prior>0?'<div style="font-weight:700"><span>Balance due</span><span>'+money(t.due)+'</span></div>':''):'')+(d.kind==='quote'&&t.deposit>0?'<div style="color:var(--meta);font-size:14px"><span>Deposit ('+d.depositPct+'%)</span><span>'+money(t.deposit)+'</span></div>':''); }
+  function redrawTotals(){ redrawCheck(); var el=document.getElementById('totals'); if(el) el.innerHTML=totalsHtml(draft); var b=document.getElementById('barTotal'); if(b) b.textContent=money(barAmt(draft)); var bl=document.getElementById('barLbl'); if(bl) bl.textContent=barLbl(draft); }
   function redrawItems(){ document.getElementById('items').innerHTML=itemsHtml(draft); redrawTotals(); autosize(); }
   function autosize(){ Array.prototype.forEach.call(app.querySelectorAll('textarea'),function(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight+2,520)+'px'; }); }
   function setPath(o,p,v){ var k=p.split('.'); if(k.length>1) o[k[0]][k[1]]=v; else o[p]=v; }
@@ -471,6 +489,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     btn.disabled=true; btn.textContent='Saving…';
     var body={kind:d.kind,client:d.client,site:d.site,suburb:d.suburb,service:d.service,beds:d.beds,baths:d.baths,issued:d.issued,validUntil:d.validUntil,dueDate:d.dueDate,serviceDate:d.serviceDate,
       items:d.items.map(function(i){return {title:i.title,desc:i.desc,qty:+i.qty||1,price:+i.price||0};}),gst:d.gst,depositPct:+d.depositPct||0,notes:d.notes,showTerms:d.showTerms,jobId:d.jobId||'',est:d.est||null};
+    if(d.kind==='invoice'){ var tp=totals(d); if(tp.prior>tp.total+0.005){ btn.disabled=false; btn.textContent='Save'; toast('Already paid is more than the invoice total'); return; }
+      body.prior=(d.prior||[]).filter(function(p){return +p.amt>0;}).map(function(p){return {id:p.id||'',amt:r2(+p.amt),date:p.date||today(),note:p.note||''};}); }
     api('POST','/api/docs',{action:'save',id:d.id||'',doc:body}).then(function(r){ dirty=false; draft=null; return (d.reqId?api('POST','/api/request',{action:'status',id:d.reqId,status:'quoted',quoteId:r.id}).catch(function(){}):Promise.resolve()).then(load).then(function(){ go('doc/'+r.id); toast('Saved'); }); })
       .catch(function(e){ btn.disabled=false; btn.textContent='Save'; toast(e.message); });
   }
@@ -528,10 +548,11 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
       h+='</div>';
     } else {
       h+='<div class="card"><h2>Payments</h2>';
-      if(!(d.payments||[]).length) h+='<p class="sub" style="margin:0">None yet.'+(S.card?' Card payments are recorded automatically.':'')+'</p>';
+      (d.prior||[]).forEach(function(p){ h+='<div class="pay"><span>'+fdate(p.date)+' · Paid previously'+(p.note?' ('+esc(p.note)+')':'')+'<br><small style="color:var(--meta)">Shown on the invoice. Edit the invoice to change it.</small></span><span><b>'+money(p.amt)+'</b></span></div>'; });
+      if(!(d.payments||[]).length&&!(d.prior||[]).length) h+='<p class="sub" style="margin:0">None yet.'+(S.card?' Card payments are recorded automatically.':'')+'</p>';
       (d.payments||[]).forEach(function(p){ var stripe=/card/i.test(p.method||'')&&S.card;
         h+='<div class="pay"><span>'+fdate(p.date)+' · '+esc(p.method)+(p.tip>0?'<br><small style="color:var(--meta)">'+money(p.amt)+' invoice + '+money(p.tip)+' tip</small>':'')+'</span><span><b>'+money(r2(p.amt+(p.tip||0)))+'</b> <button class="ghost" data-receipt="'+p.id+'" style="margin-left:10px;padding:0">Receipt</button>'+(stripe?'':'<button class="ghost" data-tip="'+p.id+'" style="margin-left:8px;padding:0">'+(p.tip>0?'Tip':'Add tip')+'</button>')+'<button class="ghost" data-unpay="'+p.id+'" style="margin-left:8px;padding:0;color:var(--meta)">Remove</button></span></div>'; });
-      var over=r2(d.totals.paid-d.totals.total);
+      var over=r2(d.totals.paid+(d.totals.prior||0)-d.totals.total);
       if(over>0.005) h+='<div class="hint-card" style="margin-top:10px"><b>Paid '+money(over)+' more than the invoice.</b> If that\'s a tip, tap <b>Add tip</b> on the payment so it\'s kept apart from the invoice, the receipt thanks them, and Xero files it separately.</div>';
       if(d.quoteId){ var qd=docById(d.quoteId); if(qd) h+='<button class="alert" data-open="'+qd.id+'" style="margin-top:12px">From quote #'+qd.num+'</button>'; }
       if(reportLink(d)) h+='<a class="alert ok" href="'+esc(reportLink(d))+'" target="_blank" rel="noopener" style="margin-top:12px;display:block;text-decoration:none">Job report linked · '+fdate(jobFor(d).date,true)+'. It\'s in the message when you send this.</a>';
@@ -887,6 +908,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(!draft) { if(t.dataset.p){ var pr=t.closest('.prow'), v=function(k){return +pr.querySelector('[data-p="'+k+'"]').value||0;}; pr.querySelector('[data-ex]').textContent='3 bed 2 bath: '+money(r2(v('base')+v('bed')*3+v('bath')*2))+' + GST'; } return; }
     if(t.dataset.est){ draft.est=draft.est||{}; draft.est[t.dataset.est]=t.value; dirty=true; redrawCheck(); return; }
     if(t.dataset.f){ var val=t.type==='checkbox'?t.checked:t.value; setPath(draft,t.dataset.f,val); dirty=true; if(t.dataset.f==='depositPct'||t.dataset.f==='gst') redrawTotals(); if(t.dataset.f==='serviceDate'){ var pc=document.getElementById('pcheck'); if(pc) pc.innerHTML=checkHtml(draft); } return; }
+    if(t.dataset.pr){ var pr2=t.closest('[data-pi]'), k=+pr2.dataset.pi; draft.prior[k][t.dataset.pr]=t.value; dirty=true; if(t.dataset.pr==='amt'||t.dataset.pr==='note') redrawTotals(); return; }
     if(t.dataset.it){ var card=t.closest('.item'), i=+card.dataset.i; draft.items[i][t.dataset.it]=t.value; if(t.dataset.it==='title'||t.dataset.it==='desc') delete draft.items[i].auto; dirty=true; if(t.dataset.it==='qty'||t.dataset.it==='price'){ card.querySelector('[data-lt]').textContent=money((+draft.items[i].qty||0)*(+draft.items[i].price||0)); redrawTotals(); } }
   });
   app.addEventListener('change',function(e){
@@ -911,6 +933,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if((el=e.target.closest('[data-tip]'))){ var td=docById(route().id); if(td) tipSheet(td,el.dataset.tip); return; }
     if((el=e.target.closest('[data-receipt]'))){ var rd=docById(route().id); if(rd) receiptSheet(rd,el.dataset.receipt); return; }
     if((el=e.target.closest('[data-unpay]'))){ if(!el.dataset.sure){ el.dataset.sure=1; el.textContent='Tap to confirm'; return; } api('POST','/api/docs',{action:'unpay',id:route().id,pid:el.dataset.unpay}).then(load).then(function(){toast('Payment removed');}); return; }
+    if(draft&&e.target.closest('[data-rmprior]')){ draft.prior.splice(+e.target.closest('[data-pi]').dataset.pi,1); dirty=true; redrawPrior(); return; }
     var card=e.target.closest('.item');
     if(card&&draft){ var i=+card.dataset.i;
       if(e.target.closest('[data-rm]')){ draft.items.splice(i,1); dirty=true; redrawItems(); return; }
@@ -942,6 +965,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(a==='imp-reset'){ IMP=null; render(); return; }
     if(a==='autofill'){ autofill(); return; }
     if(a==='fromlib'){ libSheet(); return; }
+    if(a==='addprior'){ draft.prior=draft.prior||[]; draft.prior.push({amt:'',date:today(),note:'Deposit'}); dirty=true; redrawPrior(); var ps=app.querySelectorAll('.pri'), lp=ps[ps.length-1]; if(lp){ lp.scrollIntoView({behavior:'smooth',block:'center'}); lp.querySelector('input').focus(); } return; }
     if(a==='additem'){ draft.items.push({title:'',desc:'',qty:1,price:''}); dirty=true; redrawItems(); var all=app.querySelectorAll('.item'); var last=all[all.length-1]; if(last){ last.scrollIntoView({behavior:'smooth',block:'center'}); last.querySelector('input').focus(); } return; }
     if(a==='save'){ saveDraft(el); return; }
     if(a==='send'&&d){ sendSheet(d,false); return; }

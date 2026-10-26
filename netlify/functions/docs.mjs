@@ -4,7 +4,7 @@ import { store, json, checkAdmin, loadRoster } from "../../lib/core.mjs";
 import {
   loadSettings, cleanSettings, cleanDoc, loadDocs, findByToken, saveDoc, newDoc,
   recordPayment, addJobFromQuote, publicView, fillJobberQuote, totals, statusOf, today, addDays, depositDesc, reportFor, freeDates,
-  specialLive, bakeSpecial,
+  specialLive, bakeSpecial, id,
 } from "../../lib/docs.mjs";
 import { loadTemplates, fill } from "../../lib/templates.mjs";
 import { sendSms, auMobile, mmReady } from "../../lib/mm.mjs";
@@ -286,23 +286,26 @@ export default async (req) => {
   if (b.action === "invoice" && d.kind === "quote") {
     // Invoice from a quote: "full" = everything, "balance" = total minus deposits paid.
     const t = totals(d);
-    let items = d.items;
+    const items = d.items;
+    let prior = [];
+    // Balance invoice: the full job, with the deposit acknowledged as already paid.
     if (b.mode === "balance" && d.depositInvoice) {
       const dep = await s.get(`doc/${d.depositInvoice}`);
       const paid = dep ? totals(dep).paid : 0;
-      if (paid > 0) items = [...d.items, { title: `Less deposit paid (invoice #${dep.num})`, desc: "", qty: 1, price: -r2(d.gst ? paid / 1.1 : paid) }];
+      const last = dep && (dep.payments || []).length ? dep.payments[dep.payments.length - 1].date : today();
+      if (paid > 0) prior = [{ id: id("c"), amt: paid, date: last, note: `Deposit (invoice #${dep.num})` }];
     }
     const inv = await newDoc(s, set, {
       kind: "invoice", status: "draft", quoteId: d.id, quoteNum: d.num, jobId: d.jobId || "", client: d.client, site: d.site, suburb: d.suburb,
       service: d.service, beds: d.beds, baths: d.baths, serviceDate: d.serviceDate, issued: today(),
-      dueDate: addDays(today(), set.invoiceDueDays || 0), gst: d.gst, items, notes: "", showTerms: false,
+      dueDate: addDays(today(), set.invoiceDueDays || 0), gst: d.gst, items, prior, notes: "", showTerms: false,
     });
     await saveDoc(s, inv);
     (d.invoices ||= []).push(inv.id); await saveDoc(s, d);
     return json({ ok: true, id: inv.id, total: t.total });
   }
   if (b.action === "duplicate") {
-    const c = await newDoc(s, set, { ...cleanDoc(d, null), kind: b.kind === "invoice" ? "invoice" : d.kind, issued: today(), validUntil: "", dueDate: "", serviceDate: "" });
+    const c = await newDoc(s, set, { ...cleanDoc(d, null), prior: [], kind: b.kind === "invoice" ? "invoice" : d.kind, issued: today(), validUntil: "", dueDate: "", serviceDate: "" });
     if (c.kind === "quote") c.validUntil = addDays(c.issued, set.quoteValidDays || 30); else c.dueDate = addDays(c.issued, set.invoiceDueDays || 0);
     await saveDoc(s, c);
     return json({ ok: true, id: c.id });

@@ -2507,7 +2507,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       c.next=c.jobs.filter(function(r){return r.last>=t;}).map(function(r){return r.j.date;}).sort()[0]||'';
       c.lastDone=(c.jobs.filter(function(r){return r.last<t;})[0]||{j:{}}).j.date||'';
       c.billed=0; c.paid=0; c.owing=0;
-      c.docs.forEach(function(d){ if(d.kind!=='invoice'||d.state==='draft') return; c.billed+=d.totals.total; c.paid+=d.totals.paid; c.owing+=d.totals.due; });
+      c.docs.forEach(function(d){ if(d.kind!=='invoice'||d.state==='draft') return; c.billed+=d.totals.total-(d.totals.prior||0); c.paid+=d.totals.paid; c.owing+=d.totals.due; });
       c.hay=[c.name,c.phones.join(' '),c.emails.join(' '),c.addrs.join(' '),c.jobs.map(function(r){return r.j.service;}).join(' '),c.docs.map(function(d){return '#'+d.num;}).join(' ')].join(' ').toLowerCase();
       return c; }).sort(function(a,b){ return (b.next||b.lastDone||'').localeCompare(a.next||a.lastDone||'') || a.name.localeCompare(b.name); });
   }
