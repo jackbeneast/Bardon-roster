@@ -8,7 +8,8 @@
 //   POST { action: "unlock", pid }    -> clear wrong-try lockout
 //   POST { action: "clear", pid }     -> remove their passcode (they can't log in)
 import { store, json, checkAdmin, loadRoster } from "../../lib/core.mjs";
-import { login, logout, teamSession, setPin, clearPin, unlock, pinStatus, weakPin, randomPin } from "../../lib/teamauth.mjs";
+import { login, logout, teamSession, setPin, clearPin, unlock, pinStatus, weakPin, randomPin, pinMatches } from "../../lib/teamauth.mjs";
+import { sendSms } from "../../lib/mm.mjs";
 
 export default async (req) => {
   const s = await store(), u = new URL(req.url);
@@ -29,13 +30,23 @@ export default async (req) => {
 
   if (b.action === "logout") { await logout(s, req); return json({ ok: true }); }
 
-  if (b.action === "set" || b.action === "unlock" || b.action === "clear") {
+  if (b.action === "set" || b.action === "unlock" || b.action === "clear" || b.action === "send") {
     if (!(await checkAdmin(s, req))) return json({ error: "Only Jack can change passcodes" }, 401);
     const roster = await loadRoster(s);
     const t = roster.team.find((x) => x.id === b.pid && !x.owner);
     if (!t) return json({ error: "That person isn't on the team" }, 404);
     if (b.action === "unlock") { await unlock(s, t.id); return json({ ok: true }); }
     if (b.action === "clear") { await clearPin(s, t.id); return json({ ok: true }); }
+    if (b.action === "send") {
+      // Texted from the business number via Mobile Message, never Jack's phone.
+      if (!(await pinMatches(s, t.id, b.pin))) return json({ error: "That passcode is out of date. Create a new one." }, 400);
+      if (!t.phone) return json({ error: "No mobile number on file for them." }, 400);
+      const first = String(t.name || "").split(" ")[0];
+      const msg = `Hi ${first}, your Bardon Clean team passcode is ${b.pin}. Log in at https://bardon-roster.netlify.app/me with your mobile number and this passcode. Keep it to yourself.`;
+      const r = await sendSms(t.phone, msg, "passcode", { name: t.name });
+      if (!r.ok) return json({ error: r.error }, r.status || 502);
+      return json({ ok: true, sent: true });
+    }
     const pin = b.pin ? String(b.pin) : randomPin(t.phone);
     const bad = weakPin(pin, t.phone);
     if (bad) return json({ error: bad }, 400);

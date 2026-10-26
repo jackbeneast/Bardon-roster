@@ -49,7 +49,7 @@ input{font:inherit;font-size:18px;letter-spacing:.4em;text-align:center;width:11
       else meta.push(esc(t.phone));
       if(st.lastLogin) meta.push('Last login '+ago(st.lastLogin)); else if(st.set) meta.push('Hasn\'t logged in yet');
       var h='<div class="card" data-id="'+esc(t.id)+'"><div class="top"><div><div class="nm">'+esc(t.name)+'</div><div class="meta">'+meta.join(' · ')+'</div></div>'+tag+'</div>';
-      if(shownPin[t.id]) h+='<div class="pin"><div class="meta">New passcode for '+esc(t.name.split(' ')[0])+'. Send it to them now; it won\'t be shown again.</div><b>'+esc(shownPin[t.id])+'</b><div class="row"><a href="sms:'+esc(t.phone)+'?&body='+encodeURIComponent('Hi '+t.name.split(' ')[0]+', your Bardon Clean team passcode is '+shownPin[t.id]+'. Log in at https://bardon-roster.netlify.app/me with your mobile number and this passcode. Keep it to yourself.')+'"><button type="button" class="p">Text it to '+esc(t.name.split(' ')[0])+'</button></a><button type="button" data-a="hide">Done</button></div></div>';
+      if(shownPin[t.id]) h+='<div class="pin"><div class="meta">New passcode for '+esc(t.name.split(' ')[0])+'. Send it to them now; it won\'t be shown again.</div><b>'+esc(shownPin[t.id])+'</b><div class="row"><button type="button" class="p" data-a="send">Text it to '+esc(t.name.split(' ')[0])+'</button><button type="button" data-a="hide">Done</button></div></div>';
       h+='<div class="row"><button type="button" class="p" data-a="random">'+(st.set?'New random passcode':'Create passcode')+'</button><input type="text" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="Choose a passcode"><button type="button" data-a="choose">Use this</button>';
       if(st.locked) h+='<button type="button" data-a="unlock">Unlock</button>';
       if(st.set) h+='<button type="button" data-a="clear">Turn off login</button>';
@@ -64,10 +64,11 @@ input{font:inherit;font-size:18px;letter-spacing:.4em;text-align:center;width:11
     var body={pid:id};
     if(a==='random') body.action='set';
     else if(a==='choose'){ var v=c.querySelector('input').value; if(v.length!==4){ er.textContent='Type 4 digits.'; return; } body.action='set'; body.pin=v; }
+    else if(a==='send'){ body.action='send'; body.pin=shownPin[id]; }
     else if(a==='unlock') body.action='unlock';
     else if(a==='clear'){ if(!confirm('Turn off their login? They won\'t be able to see the roster until you create a new passcode.')) return; body.action='clear'; }
     b.disabled=true; er.textContent='';
-    api('POST',body).then(function(d){ if(d.pin) shownPin[id]=d.pin; return load(); }).catch(function(x){ b.disabled=false; er.textContent=x.message; });
+    api('POST',body).then(function(d){ if(d.sent){ b.textContent='Sent ✓'; return; } if(d.pin) shownPin[id]=d.pin; return load(); }).catch(function(x){ b.disabled=false; er.textContent=x.message; });
   });
   load();
 })();
