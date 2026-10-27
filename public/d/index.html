@@ -166,6 +166,31 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
   .item .mob{display:none}
   .ihead{display:grid;grid-template-columns:1fr 50px 90px 90px}
 }
+.pkg{display:grid;gap:12px}
+.pkc{position:relative;border:1.5px solid var(--line);border-radius:12px;padding:16px;background:var(--white);cursor:pointer;break-inside:avoid-page}
+.pkc.sel{border:2px solid var(--terracotta);box-shadow:0 0 0 3px rgba(192,107,60,.12)}
+.pkc .pkt{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start}
+.pkc .rad{width:22px;height:22px;border-radius:50%;border:2px solid #CFC5BA;margin-top:4px;flex:none}
+.pkc.sel .rad{border-color:var(--terracotta);background:radial-gradient(circle,var(--terracotta) 0 5px,transparent 6px)}
+.pkc .nm{font:700 21px/1.15 var(--serif);color:var(--dark)}
+.pkc .bd{display:inline-block;margin-left:8px;vertical-align:3px;font:600 10.5px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;background:var(--gold);color:var(--dark);border-radius:999px;padding:5px 8px}
+.pkc .bl{display:block;font-size:14px;color:var(--body);margin-top:4px}
+.pkc .pp{text-align:right;font:700 21px/1.1 var(--serif);color:var(--dark);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pkc .pp small{display:block;font:400 11.5px var(--sans);color:var(--meta);margin-top:3px}
+.pkc ul.tk{list-style:none;padding:0;margin:12px 0 0}
+.pkc ul.tk li{display:flex;gap:8px;align-items:flex-start;padding:2px 0;font-size:14px;line-height:1.45;color:var(--dark)}
+.pkc ul.tk li svg{color:#3F7A4A;flex:none;margin-top:3px}
+.pkc details{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.pkc summary{cursor:pointer;font:600 14px var(--sans);color:var(--terracotta-dark);padding:4px 0}
+@media (max-width:560px){.pkc .pkt{grid-template-columns:auto 1fr}.pkc .pp{grid-column:2;text-align:left;margin-top:-2px}.pkc .pp small{display:inline;margin-left:6px}}
+.adds{display:grid;gap:8px;margin-top:6px}
+.adds label{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer}
+.adds input{width:20px;height:20px;min-height:0;margin:2px 0 0;accent-color:var(--terracotta)}
+.adds b{display:block;font:600 15px var(--sans);color:var(--dark)}
+.adds small{display:block;font-size:13px;color:var(--meta);margin-top:2px}
+.adds .ap{font:600 14px var(--sans);color:var(--dark);white-space:nowrap;text-align:right}
+.adds .ap.ask{font-weight:500;color:var(--meta);font-size:12.5px;white-space:normal;max-width:110px}
+@media print{.pkc details{display:none}.adds{display:none}}
 .pick{margin:0 0 16px}
 .pick .wk{font:600 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--meta);margin:12px 0 6px}
 .pick .days{display:flex;flex-wrap:wrap;gap:8px}
@@ -241,6 +266,41 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
     '<li>'+RIC('clipboard')+'<div class="rt"><b>Systems and testing</b>Written processes and checklists for every clean, and products tested constantly. The same result whichever cleaner arrives.</div></li>'+
     '<li>'+RIC('receipt')+'<div class="rt"><b>The costs you don\'t see</b>Super and leave, training, insurance premiums, equipment replacement, new microfibre, vehicle and travel, booking and admin, accounting and compliance.</div></li>'+
     '</ul><p class="rmore">The full breakdown, including questions worth asking any cleaner: <a href="https://www.bardonclean.au/our-rates/" style="color:var(--terracotta-dark)">bardonclean.au/our-rates</a></p></div></details>';
+  // ---- Package options: the client picks a package (and any add-ons) before accepting ----
+  var PK={pick:'',add:{}};
+  function pkTier(){ var T=data.packages.tiers; return T.filter(function(t){return t.key===PK.pick;})[0]||T.filter(function(t){return t.rec;})[0]||T[0]; }
+  function pkAdds(t){ var inc=t.inc||[]; return data.packages.addons.filter(function(a){ return inc.indexOf(a.id)<0; }); }
+  function pkCalc(key,withAdds){
+    var d=data, T=d.packages.tiers, t=T.filter(function(x){return x.key===key;})[0]||pkTier(), r=function(v){return Math.round(v*100)/100;};
+    var list=t.price+(d.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
+    if(withAdds) pkAdds(t).forEach(function(a){ if(PK.add[a.id]&&a.price>0) list+=a.price; });
+    list=r(list); var sp=d.special&&!d.special.baked?d.special.pct:0, off=sp?r(list*sp/100):0, sub=r(list-off), gst=d.gst?r(sub*.1):0, total=r(sub+gst);
+    return {list:list,off:off,sub:sub,gst:gst,total:total,was:off?r(list+(d.gst?r(list*.1):0)):total,deposit:d.depositPct?r(total*d.depositPct/100):0};
+  }
+  function inc(v){ return Math.round(v*(data.gst?1.1:1)*100)/100; }
+  function pkHtml(open){
+    var d=data, t=pkTier(), x=pkCalc(t.key,true), can=d.state==='sent'||d.state==='viewed'||d.state==='draft';
+    var h='<div class="pkg" role="radiogroup" aria-label="Packages">'+d.packages.tiers.map(function(p){ var sel=p.key===t.key, c=pkCalc(p.key,false);
+      return '<div class="pkc'+(sel?' sel':'')+'" data-pk="'+esc(p.key)+'" role="radio" aria-checked="'+sel+'" tabindex="0"><div class="pkt"><span class="rad" aria-hidden="true"></span><div><span class="nm">'+esc(p.name)+'</span>'+(p.rec?'<span class="bd">Recommended</span>':'')+(p.blurb?'<span class="bl">'+esc(p.blurb)+'</span>':'')+'</div><div class="pp">'+(c.off?'<s style="font:400 13px var(--sans);color:var(--meta);display:block">'+money(c.was)+'</s>':'')+money(c.total)+'<small>'+(d.gst?'incl. GST':'')+'</small></div></div>'+
+        '<ul class="tk">'+String(p.points||'').split('\n').filter(Boolean).map(function(l){ return '<li>'+TICK+'<span>'+esc(l)+'</span></li>'; }).join('')+'</ul>'+
+        (p.desc?'<details data-pkd="'+esc(p.key)+'"'+(open[p.key]?' open':'')+'><summary>Everything included, area by area</summary><div class="desc">'+rich(p.desc)+'</div></details>':'')+'</div>'; }).join('')+'</div>';
+    var A=pkAdds(t);
+    if(A.length&&can) h+='<h3 class="bkh" style="margin-top:22px">Add to your '+esc(t.name)+' package <span style="text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></h3><div class="adds">'+A.map(function(a){ var f=String(a.desc||'').split('\n').map(function(l){return l.replace(/^\s*-\s*/,'');}).filter(Boolean); return '<label><input type="checkbox" data-add="'+esc(a.id)+'"'+(PK.add[a.id]?' checked':'')+'><span><b>'+esc(a.title)+'</b><small>'+esc(f.join(' · '))+'</small></span><span class="ap'+(a.price>0?'':' ask')+'">'+(a.price>0?'+'+money(inc(a.price)):'Priced to your home')+'</span></label>'; }).join('')+'</div><p class="small">Add-ons marked "priced to your home" aren\'t charged yet. Jack will confirm the price with you before the clean.</p>';
+    if((d.items||[]).length){ h+='<h3 class="bkh" style="margin-top:22px">Also on this quote</h3>'; d.items.forEach(function(i){ var a=i.qty*i.price; h+='<div class="bki"><div class="bkt"><span>'+esc(i.title)+'</span><span>'+money(a)+'</span></div>'+(i.desc?'<div class="desc">'+rich(i.desc)+'</div>':'')+'</div>'; }); }
+    h+='<div class="tot"><div><span>'+esc(t.name)+' package'+(d.packages.size?' · '+esc(d.packages.size):'')+'</span><span>'+money(t.price)+'</span></div>';
+    A.forEach(function(a){ if(PK.add[a.id]&&a.price>0) h+='<div><span>'+esc(a.title)+'</span><span>'+money(a.price)+'</span></div>'; });
+    (d.items||[]).forEach(function(i){ h+='<div><span>'+esc(i.title)+'</span><span>'+money(i.qty*i.price)+'</span></div>'; });
+    if(x.off) h+='<div class="spl"><span>Today-only special (−'+d.special.pct+'%)</span><span>−'+money(x.off)+'</span></div>';
+    h+='<div><span>Subtotal</span><span>'+money(x.sub)+'</span></div>'+(d.gst?'<div><span>GST (10%)</span><span>'+money(x.gst)+'</span></div>':'')+'<div class="grand"><span>Total'+(d.gst?' incl. GST':'')+'</span><span>'+money(x.total)+'</span></div></div>';
+    if(x.deposit>0) h+='<div class="callout">A '+d.depositPct+'% deposit of <b>'+money(x.deposit)+'</b> is required to book your '+esc(t.name)+' package in.</div>';
+    return h;
+  }
+  function pkRedraw(){
+    var w=document.getElementById('pkwrap'); if(!w) return; var open={};
+    Array.prototype.forEach.call(w.querySelectorAll('details[data-pkd]'),function(x){ if(x.open) open[x.dataset.pkd]=1; });
+    w.innerHTML=pkHtml(open);
+    var t=pkTier(), x=pkCalc(t.key,true), b=document.querySelector('#acc .primary'); if(b&&!b.disabled) b.textContent='Accept '+t.name+' · '+money(x.total);
+  }
   var STATE={draft:'Draft',sent:'Awaiting response',viewed:'Awaiting response',accepted:'Accepted',declined:'Declined',expired:'Expired',paid:'Paid','part-paid':'Part paid',overdue:'Overdue'};
 
   function render(){
@@ -260,14 +320,17 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
     if(d.serviceDate) h+='<div><span>Service date</span><b>'+fdate(d.serviceDate,true)+'</b></div>';
     if(d.quoteNum) h+='<div><span>For quote</span><b>#'+d.quoteNum+'</b></div>';
     var SP=q&&d.special&&!d.special.baked&&t.off>0?d.special:null;
-    h+='<div><span>'+(q?'Total':'Amount due')+'</span><b>'+(SP?'<s style="font-weight:400;color:var(--meta);margin-right:6px">'+money(t.was)+'</s>':'')+money(q?t.total:t.due)+'</b></div></div></div>';
+    var PKM=q&&d.packages&&d.packages.tiers&&d.packages.tiers.length;
+    if(PKM&&!PK.pick) PK.pick=(d.packages.tiers.filter(function(x){return x.rec;})[0]||d.packages.tiers[0]).key;
+    if(PKM) h+='<div><span>Packages from</span><b>'+money(Math.min.apply(null,d.packages.tiers.map(function(x){return pkCalc(x.key,false).total;})))+'</b></div></div></div>';
+    else h+='<div><span>'+(q?'Total':'Amount due')+'</span><b>'+(SP?'<s style="font-weight:400;color:var(--meta);margin-right:6px">'+money(t.was)+'</s>':'')+money(q?t.total:t.due)+'</b></div></div></div>';
 
     if(params.has('paid')&&!q) h+='<div class="banner ok">Thank you. Your card payment has gone through'+(t.due>0.005?'':', and this invoice is now paid')+'.</div>';
     else if(st==='paid') h+='<div class="banner ok">'+(d.isDeposit?'Deposit received. Your booking is confirmed. Thank you.':'Paid in full. Thank you.')+'</div>';
     else if(d.isDeposit) h+='<div class="banner warn"><b>Deposit due '+((d.dueDate||d.issued)<=tdy?'today':fdate(d.dueDate))+'.</b> Your booking is tentative until this deposit is paid. Pay '+money(t.due)+' to lock in '+(d.serviceDate?fdate(d.serviceDate,true):'your clean')+'.</div>';
     else if(st==='overdue') h+='<div class="banner warn">This invoice was due '+fdate(d.dueDate)+'. Please pay '+money(t.due)+' at your earliest convenience.</div>';
     else if(!q&&t.due>0.005){ var dd=d.dueDate||d.issued; h+='<div class="banner warn"><b>Payment due '+(dd<=tdy?'today':fdate(dd))+'.</b> Please pay '+money(t.due)+' by bank transfer'+(d.card&&st!=='draft'?' or card':'')+'. Details below.</div>'; }
-    if(q&&st==='accepted') h+='<div class="banner ok">Accepted'+(d.acceptedName&&!/^(Marked by|Approved in) /.test(d.acceptedName)?' by '+esc(d.acceptedName):'')+' on '+fdate((function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);})(new Date(d.acceptedAt)))+'. Thank you. Jack will be in touch to confirm the details.</div>';
+    if(q&&st==='accepted') h+='<div class="banner ok">Accepted'+(d.acceptedName&&!/^(Marked by|Approved in) /.test(d.acceptedName)?' by '+esc(d.acceptedName):'')+' on '+fdate((function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);})(new Date(d.acceptedAt)))+(d.pkChosen?', '+esc(d.pkChosen)+' package':'')+'. Thank you. Jack will be in touch to confirm the details.</div>';
     if(SP&&(st==='sent'||st==='viewed')) h+='<div class="offer"><div class="ey">Today only · '+SP.pct+'% off</div><h2>Book today and <em>save '+money(t.was-t.total)+'</em></h2><p>Accept this quote before midnight tonight and your price drops by '+SP.pct+'%. After that it returns to the original quote.</p><div class="px"><s>'+money(t.was)+'</s><b>'+money(t.total)+'</b><span>incl. GST</span></div><div class="cd" id="spcd" data-end="'+esc(SP.ends)+'" aria-live="off"></div><a class="btn go noprint" href="#acc">Lock in today\'s price</a></div>';
     if(q&&d.special&&d.special.baked) h+='<div class="banner gold">Booked on the today-only '+d.special.pct+'% special. The saving is shown on your quote below.</div>';
     if(q&&st==='expired') h+='<div class="banner warn">This quote expired on '+fdate(d.validUntil)+'. Call Jack on '+esc(b.phone)+' for an updated quote.</div>';
@@ -285,7 +348,8 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
         '<div><span>Balance on completion</span><b>'+money(Q.balance)+'</b></div></div>'+
         (Q.token?'<div class="btns noprint"><a class="btn outline" href="/q/'+esc(Q.token)+'">View the full quote</a></div>':'')+'</div></div>';
     }
-    h+='<div class="items"><div class="ihead"><span>Description</span><span>Qty</span><span>Unit price</span><span>Amount</span></div>';
+    if(PKM) h+='<div class="sect"><h2>'+hi('sparkle')+'<span>Choose your <em>package</em></span></h2><p class="small" style="margin:-4px 0 14px">Three ways to book your '+esc(String(d.service||'clean').toLowerCase())+(d.packages.size?' for this '+esc(d.packages.size)+' home':'')+'. Tap one to see its total, and open any package to see every area it covers.</p><div id="pkwrap">'+pkHtml({})+'</div></div>';
+    else { h+='<div class="items"><div class="ihead"><span>Description</span><span>Qty</span><span>Unit price</span><span>Amount</span></div>';
     d.items.forEach(function(i){ var a=i.qty*i.price;
       h+='<div class="item'+(i.special||(i.price<0&&/^Today-only special/.test(i.title||''))?' spi':'')+'"><div><div class="t">'+esc(i.title)+'</div>'+(i.qty!==1?'<div class="mob">'+i.qty+' × '+money(i.price)+'</div>':'')+(i.desc?'<div class="desc">'+rich(i.desc)+'</div>':'')+'</div><div class="q">'+i.qty+'</div><div class="p">'+money(i.price)+'</div><div class="a">'+money(a)+'</div></div>'; });
     h+='</div><div class="tot">'+(SP?'<div><span>Quoted price</span><span>'+money(t.list)+'</span></div><div class="spl"><span>Today-only special (−'+SP.pct+'%)</span><span>−'+money(t.off)+'</span></div>':'')+'<div><span>Subtotal</span><span>'+money(t.sub)+'</span></div>'+(d.gst?'<div><span>GST (10%)</span><span>'+money(t.gst)+'</span></div>':'')+'<div class="grand"><span>Total'+(d.gst?' incl. GST':'')+'</span><span>'+money(t.total)+'</span></div>';
@@ -294,8 +358,8 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
     if(!q&&(t.paid>0||t.prior>0)) h+='<div class="due"><span>Amount due</span><span>'+money(t.due)+'</span></div>';
     var tips=(d.payments||[]).reduce(function(a,p){return a+(p.tip||0);},0);
     if(!q&&tips>0) h+='<div style="color:var(--meta)"><span>Plus your tip · thank you</span><span>'+money(tips)+'</span></div>';
-    h+='</div>';
-    if(q&&t.deposit>0) h+='<div class="callout">A '+d.depositPct+'% deposit of <b>'+money(t.deposit)+'</b> is required to book your service in.</div>';
+    h+='</div>'; }
+    if(q&&t.deposit>0&&!PKM) h+='<div class="callout">A '+d.depositPct+'% deposit of <b>'+money(t.deposit)+'</b> is required to book your service in.</div>';
     var rep='';
     if(!q&&d.report) rep+='<div class="sect noprint"><h2>'+hi('camera')+'<span>Your job <em>report</em></span></h2><div class="panel"><p style="margin:0 0 4px;color:var(--dark)">'+(d.report.done?'Your clean was signed off '+fdate((function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);})(new Date(d.report.done)),true)+'.':'Follow your clean room by room.')+(d.report.photos?' '+d.report.photos+' before and after photos.':'')+'</p><div class="btns"><a class="btn dark" href="/v/'+esc(d.report.share)+'">View job report</a></div></div></div>';
     if(!q&&d.report) rep+='<div class="printonly" style="margin-top:12px;font-size:13px">Job report: '+esc(location.origin)+'/v/'+esc(d.report.share)+'</div>';
@@ -303,7 +367,7 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
     if(d.notes) h+='<div class="callout" style="border-left-color:var(--dark);background:var(--cream)">'+lines(d.notes)+'</div>';
 
     // ---- Act on it ----
-    if(q&&(st==='sent'||st==='viewed')) h+='<div class="sect noprint"><h2>'+hi('check')+'<span>'+(SP?'Lock in <em>today\'s price</em>':'Happy to <em>go ahead?</em>')+'</span></h2><div class="panel"><form id="acc">'+(d.pickDates?datePicker(d.pickDates):'')+'<label class="l" for="an">Your full name<input id="an" autocomplete="name" required placeholder="As it should appear on the booking"></label><div class="btns"><button class="btn primary" type="submit">'+(SP?'Accept at '+money(t.total):'Accept quote')+'</button><a class="btn dark" href="tel:+61'+esc(b.phone.replace(/\D/g,'').replace(/^0/,''))+'">Call Jack</a></div><div class="err" id="accErr" hidden></div><p class="small">'+(d.terms?'By accepting, you agree to the service policies below.':'By accepting, you\'re booking the service described above.')+(t.deposit>0?' You\'ll then get a deposit invoice to pay and lock in your booking.':'')+'</p></form></div></div>';
+    if(q&&(st==='sent'||st==='viewed')) h+='<div class="sect noprint"><h2>'+hi('check')+'<span>'+(SP?'Lock in <em>today\'s price</em>':'Happy to <em>go ahead?</em>')+'</span></h2><div class="panel"><form id="acc">'+(d.pickDates?datePicker(d.pickDates):'')+'<label class="l" for="an">Your full name<input id="an" autocomplete="name" required placeholder="As it should appear on the booking"></label><div class="btns"><button class="btn primary" type="submit">'+(PKM?'Accept '+esc(pkTier().name)+' · '+money(pkCalc(pkTier().key,true).total):SP?'Accept at '+money(t.total):'Accept quote')+'</button><a class="btn dark" href="tel:+61'+esc(b.phone.replace(/\D/g,'').replace(/^0/,''))+'">Call Jack</a></div><div class="err" id="accErr" hidden></div><p class="small">'+(d.terms?'By accepting, you agree to the service policies below.':'By accepting, you\'re booking the service described above.')+(t.deposit>0?' You\'ll then get a deposit invoice to pay and lock in your booking.':'')+'</p></form></div></div>';
     if(q&&st==='accepted'&&d.depositLink&&d.depositLink.state!=='paid') h+='<div class="sect noprint"><h2>'+hi('money')+'<span>Pay your <em>deposit</em></span></h2><div class="panel"><p style="margin:0 0 4px;color:var(--dark)">Deposit invoice #'+d.depositLink.num+': <b>'+money(d.depositLink.due)+'</b></p><div class="btns"><a class="btn primary" href="/i/'+esc(d.depositLink.token)+'">View and pay deposit</a></div></div></div>';
     if(!q&&t.due>0.005){
       var pd=d.dueDate||d.issued;
@@ -361,6 +425,8 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
   }
 
   app.addEventListener('click',function(e){
+    var pc0=e.target.closest('[data-pk]');
+    if(pc0&&!e.target.closest('details')){ PK.pick=pc0.dataset.pk; pkRedraw(); return; }
     var c=e.target.closest('[data-copy]'); if(c){ copy(c.dataset.copy,c.dataset.label); return; }
     if(e.target.closest('[data-print]')){ var dt=document.querySelector('details.terms'); if(dt) dt.open=true; window.print(); return; }
     var pc=e.target.closest('[data-card]'); if(pc){ pc.disabled=true; pc.textContent='Opening secure payment…';
@@ -378,14 +444,18 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
     return h;
   }
   app.addEventListener('click',function(e){ var b=e.target.closest('[data-day]'); if(!b) return; pickedDate=b.dataset.day; Array.prototype.forEach.call(document.querySelectorAll('[data-day]'),function(x){ x.setAttribute('aria-pressed', x===b); }); var er=document.getElementById('accErr'); if(er) er.hidden=true; });
+  app.addEventListener('change',function(e){ var a=e.target.closest('[data-add]'); if(!a) return; PK.add[a.dataset.add]=a.checked; pkRedraw(); });
+  app.addEventListener('keydown',function(e){ var p=e.target.closest&&e.target.closest('[data-pk]'); if(p&&e.target===p&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); PK.pick=p.dataset.pk; pkRedraw(); var n=document.querySelector('[data-pk="'+p.dataset.pk+'"]'); if(n) n.focus(); } });
   app.addEventListener('submit',function(e){
     if(e.target.id!=='acc') return; e.preventDefault();
     var n=document.getElementById('an').value.trim(), btn=e.target.querySelector('.primary'), er=document.getElementById('accErr');
     if(document.querySelector('[data-day]') && !pickedDate){ er.textContent='Pick a day for your clean, or tap the option to arrange it with Jack.'; er.hidden=false; return; }
     if(n.length<2){ er.textContent='Type your name to accept.'; er.hidden=false; return; }
     btn.disabled=true; btn.textContent='Accepting…';
-    api('POST','/api/docs',{action:'accept',t:token,name:n,date:pickedDate&&pickedDate!=='later'?pickedDate:''}).then(load).then(function(){ window.scrollTo(0,0); toast('Quote accepted. Thank you.'); })
-      .catch(function(x){ btn.disabled=false; btn.textContent='Accept quote'; er.textContent=x.message; er.hidden=false; });
+    var body={action:'accept',t:token,name:n,date:pickedDate&&pickedDate!=='later'?pickedDate:''};
+    if(data.packages){ body.pkg=pkTier().key; body.add=Object.keys(PK.add).filter(function(k){ return PK.add[k]&&pkAdds(pkTier()).some(function(a){return a.id===k;}); }); }
+    api('POST','/api/docs',body).then(load).then(function(){ window.scrollTo(0,0); toast('Quote accepted. Thank you.'); })
+      .catch(function(x){ btn.disabled=false; btn.textContent='Accept quote'; if(data.packages) pkRedraw(); er.textContent=x.message; er.hidden=false; });
   });
 
   function load(){

@@ -150,6 +150,18 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .verdict{margin-top:12px;border-radius:8px;padding:11px 13px;font-size:14px;line-height:1.4}
 .verdict b{display:block;font:600 15px var(--sans);margin-bottom:2px}
 .verdict.bad{background:#FBEBD9;color:#8A4A1F}.verdict.warn{background:#FCEFD0;color:#5E4510}.verdict.ok{background:#E6EFE3;color:#2F5A35}
+.tier{border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px;background:var(--white)}
+.tier.rec{border:2px solid var(--terracotta);background:var(--tint)}
+.tier .th{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.tier .th b{font:700 18px var(--serif);color:var(--dark)}
+.tier .recb{border:1px solid var(--line);background:var(--white);border-radius:999px;padding:6px 10px;font:600 12px var(--sans);color:var(--meta);cursor:pointer;min-height:34px}
+.tier .recb[aria-pressed="true"]{background:var(--terracotta);border-color:var(--terracotta);color:#fff}
+.tier .pts{font-size:13px;color:var(--body);margin:6px 0 0}
+.pkh{font:600 15px var(--sans);color:var(--dark);margin:18px 0 4px}
+.pkpick{display:grid;gap:8px;margin-top:10px}
+.pkpick button{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font:inherit;color:var(--dark);cursor:pointer}
+.pkpick button[aria-pressed="true"]{border:2px solid var(--terracotta);background:var(--tint)}
+.pkpick b{font:600 15px var(--sans)}.pkpick small{display:block;color:var(--meta);font-size:12.5px}
 .pay{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--cream-dark);font-size:14px;color:var(--dark)}
 </style></head><body>
 <div id="app"><div class="center">Loading…</div></div>
@@ -186,7 +198,15 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     return fetch(url,{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
       .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok){ var e=new Error(d.error||'Something went wrong. Try again.'); e.status=r.status; throw e; } return d; }); });
   }
-  function totals(d){ var sub=r2((d.items||[]).reduce(function(a,i){return a+(+i.qty||1)*(+i.price||0);},0)), gst=d.gst?r2(sub*.1):0, total=r2(sub+gst), paid=r2((d.payments||[]).reduce(function(a,p){return a+p.amt;},0)), prior=d.kind==='invoice'?r2((d.prior||[]).reduce(function(a,p){return a+(+p.amt||0);},0)):0; return {sub:sub,gst:gst,total:total,paid:paid,prior:prior,due:r2(Math.max(0,total-paid-prior)),deposit:d.kind==='quote'&&d.depositPct?r2(total*d.depositPct/100):0}; }
+  // Package options: three tiers on pre-sale and deep clean quotes (lib/docs.mjs has the server side).
+  var PKG=['Pre-sale clean','Deep clean'];
+  function pkLive(d){ return !!(d&&d.kind==='quote'&&d.pk&&!d.pk.baked&&d.pk.tiers&&d.pk.tiers.length); }
+  function pkTier(d,k){ var T=d.pk.tiers; return T.filter(function(t){return t.key===k;})[0]||T.filter(function(t){return t.key===d.pk.pick;})[0]||T.filter(function(t){return t.rec;})[0]||T[0]; }
+  function pkChosen(d){ return d&&d.pk&&d.pk.baked?d.pk.tiers.filter(function(t){return t.key===d.pk.pick;})[0]||null:null; }
+  function pkHours(t,beds,baths){ return Math.round(((+t.base||0)+(+t.bed||0)*(+beds||0)+(+t.bath||0)*(+baths||0))*2)/2; }
+  function effItems(d){ if(!pkLive(d)) return d.items||[]; var t=pkTier(d); return [{qty:1,price:+t.price||0}].concat(d.items||[]); }
+  function pkTotal(d,k){ var x={kind:d.kind,gst:d.gst,depositPct:d.depositPct,items:d.items,pk:{tiers:d.pk.tiers,pick:k}}; return totals(x).total; }
+  function totals(d){ var sub=r2(effItems(d).reduce(function(a,i){return a+(+i.qty||1)*(+i.price||0);},0)), gst=d.gst?r2(sub*.1):0, total=r2(sub+gst), paid=r2((d.payments||[]).reduce(function(a,p){return a+p.amt;},0)), prior=d.kind==='invoice'?r2((d.prior||[]).reduce(function(a,p){return a+(+p.amt||0);},0)):0; return {sub:sub,gst:gst,total:total,paid:paid,prior:prior,due:r2(Math.max(0,total-paid-prior)),deposit:d.kind==='quote'&&d.depositPct?r2(total*d.depositPct/100):0}; }
   function docById(id){ for(var i=0;i<S.docs.length;i++) if(S.docs[i].id===id) return S.docs[i]; return null; }
   function jobFor(d){ var jid=d.jobId; if(!jid&&d.quoteId){ var q=docById(d.quoteId); jid=q&&q.jobId; } return jid?S.jobs.filter(function(j){return j.id===jid;})[0]||null:null; }
   function reportLink(d){ var j=d.kind==='invoice'&&!d.isDeposit?jobFor(d):null; return j&&j.share?location.origin+'/v/'+j.share:''; }
@@ -222,6 +242,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(r.v==='edit') return renderEdit(r.id);
     if(r.v==='doc'){ renderDoc(r.id); if(r.sub==='preview'&&!document.getElementById('scrim')){ var pd=docById(r.id); if(pd) previewSheet(pd); } return; }
     if(r.v==='library') return renderLibrary();
+    if(r.v==='packages') return renderPackages();
     if(r.v==='settings') return renderSettings();
     if(r.v==='import') return renderImport();
     if(r.v==='req') return renderReq(r.id);
@@ -257,7 +278,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(list.length>5) h+='<input class="search" type="search" placeholder="Search client, address or number" value="'+esc(q)+'" data-search>';
     var shown=list.filter(function(d){ return match(d,filter) && (!q || (d.num+' '+d.client.name+' '+d.site+' '+d.suburb).toLowerCase().indexOf(q.toLowerCase())>=0); });
     var more=shown.length>LIMIT; h+='<div class="list" id="rows">'+rows(shown.slice(0,LIMIT))+'</div>'+(more?'<button class="btn outline" style="width:100%;margin-top:10px" data-act="more">Show '+(shown.length-LIMIT)+' more</button>':'');
-    h+='<div class="menu"><button data-go="library">Saved items, scope and prices<span class="chev">›</span></button><button data-go="settings">Business, bank and numbering<span class="chev">›</span></button><button data-go="import">Import from Jobber<span class="chev">›</span></button></div>';
+    h+='<div class="menu"><button data-go="library">Saved items, scope and prices<span class="chev">›</span></button><button data-go="packages">Package options and hours<span class="chev">›</span></button><button data-go="settings">Business, bank and numbering<span class="chev">›</span></button><button data-go="import">Import from Jobber<span class="chev">›</span></button></div>';
     h+='<div class="bar"><div class="in"><button class="btn primary grow" data-new="quote">+ New quote</button><button class="btn outline grow" data-new="invoice">+ New invoice</button></div></div>';
     app.innerHTML=h;
   }
@@ -281,6 +302,9 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
       else { var d=docById(id); if(!d){ go('list'); return; } draft=JSON.parse(JSON.stringify(d)); }
     }
     var d=draft, isQ=d.kind==='quote', existing=!!d.id;
+    // New pre-sale and deep clean quotes offer packages by default; older quotes keep what they had.
+    if(d.pkWant===undefined) d.pkWant=isQ&&PKG.indexOf(d.service)>=0&&!(d.pk&&d.pk.baked)&&(existing?pkLive(d):true);
+    if(d.pkWant&&!d.pk) buildPk();
     var h=topbar(existing?'#/doc/'+d.id:'#/list')+'<h1>'+(existing?title(d):'New <em>'+d.kind+'</em>')+'</h1>';
     if(existing&&d.state!=='draft') h+='<p class="sub">Already sent. Changes show on the client\'s link straight away.</p>';
 
@@ -303,11 +327,17 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     h+='<label class="l">Bedrooms<select data-f="beds"><option value="">–</option>'+[1,2,3,4,5,6,7].map(function(n){return '<option'+(String(n)===String(d.beds)?' selected':'')+'>'+n+'</option>';}).join('')+'</select></label>';
     h+='<label class="l">Bathrooms<select data-f="baths"><option value="">–</option>'+[1,2,3,4,5].map(function(n){return '<option'+(String(n)===String(d.baths)?' selected':'')+'>'+n+'</option>';}).join('')+'</select></label></div>';
     var pr=S.settings.prices[d.service];
-    h+='<button class="btn dark" style="width:100%;margin-top:12px" data-act="autofill">Fill in price and scope</button>';
-    h+='<p class="hint">'+(pr&&(pr.base||pr.bed||pr.bath)?'Uses your '+esc(d.service.toLowerCase())+' price: '+money(pr.base)+' + '+money(pr.bed)+' per bedroom + '+money(pr.bath)+' per bathroom.':'No price saved for '+esc(d.service.toLowerCase())+' yet. Set it under Saved items, scope and prices, or type the price below.')+(isQ&&d.serviceDate?' Accepted quotes with a service date go straight onto the roster.':'')+'</p></div>';
+    if(isQ&&PKG.indexOf(d.service)>=0&&!(d.pk&&d.pk.baked)) h+='<label class="check"><input type="checkbox" data-pkwant'+(d.pkWant?' checked':'')+'>Offer package options (Essential, Signature, Complete)</label>';
+    if(d.pkWant) h+='</div>';
+    else { h+='<button class="btn dark" style="width:100%;margin-top:12px" data-act="autofill">Fill in price and scope</button>';
+    h+='<p class="hint">'+(pr&&(pr.base||pr.bed||pr.bath)?'Uses your '+esc(d.service.toLowerCase())+' price: '+money(pr.base)+' + '+money(pr.bed)+' per bedroom + '+money(pr.bath)+' per bathroom.':'No price saved for '+esc(d.service.toLowerCase())+' yet. Set it under Saved items, scope and prices, or type the price below.')+(isQ&&d.serviceDate?' Accepted quotes with a service date go straight onto the roster.':'')+'</p></div>'; }
+    if(d.pk&&d.pk.baked&&pkChosen(d)) h+='<div class="hint-card"><b>They chose the '+esc(pkChosen(d).name)+' package.</b> It\'s locked in as the line items below.</div>';
+
+    // Packages
+    if(d.pkWant) h+='<div class="card" id="pkcard">'+pkHtml(d)+'</div>';
 
     // Items
-    h+='<div class="card"><div class="hrow"><h2>Line <em>items</em></h2></div><div id="items">'+itemsHtml(d)+'</div>';
+    h+='<div class="card"><div class="hrow"><h2>'+(d.pkWant?'Other line <em>items</em>':'Line <em>items</em>')+'</h2></div>'+(d.pkWant?'<p class="sub" style="margin:-6px 0 0">Added on top of whichever package they choose. Most package quotes need none.</p>':'')+'<div id="items">'+itemsHtml(d)+'</div>';
     h+='<div class="addrow"><button class="btn plain grow" data-act="fromlib">+ From saved items</button><button class="btn plain grow" data-act="byarea">+ Price by area</button><button class="btn plain grow" data-act="additem">+ Blank item</button></div>';
     h+='<div class="totals" id="totals">'+totalsHtml(d)+'</div>';
     h+='<label class="check"><input type="checkbox" data-f="gst"'+(d.gst?' checked':'')+'>Add GST (10%) on top</label></div>';
@@ -328,7 +358,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     app.innerHTML=h;
     autosize();
   }
-  function barLbl(d){ return d.kind==='quote'?'Quote total':totals(d).prior>0?'Balance due':'Invoice total'; }
+  function barLbl(d){ return pkLive(d)?pkTier(d).name+' total':d.kind==='quote'?'Quote total':totals(d).prior>0?'Balance due':'Invoice total'; }
   function barAmt(d){ var t=totals(d); return d.kind==='invoice'&&t.prior>0?t.due:t.total; }
   function priorHtml(d){
     if(!(d.prior||[]).length) return '';
@@ -339,6 +369,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   }
   function redrawPrior(){ var el=document.getElementById('prior'); if(el) el.innerHTML=priorHtml(draft); redrawTotals(); }
   function itemsHtml(d){
+    if(!d.items.length&&d.pkWant) return '';
     if(!d.items.length) return '<div class="empty" style="margin-top:0">No items yet. Use Fill in price and scope, pick a saved item, or add a blank one.</div>';
     return d.items.map(function(it,i){
       return '<div class="item" data-i="'+i+'"><label class="l">Item<input data-it="title" value="'+esc(it.title)+'" placeholder="e.g. Pre-sale clean | 4 bed 2 bath"></label>'+
@@ -347,7 +378,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
         '<div class="tools">'+(i>0?'<button data-mv="-1">↑ Up</button>':'')+(i<d.items.length-1?'<button data-mv="1">↓ Down</button>':'')+'<button data-save-lib>Save to library</button><button class="rm" data-rm>Remove</button></div></div>';
     }).join('');
   }
-  function totalsHtml(d){ var t=totals(d); return '<div><span>Subtotal</span><span>'+money(t.sub)+'</span></div>'+(d.gst?'<div><span>GST</span><span>'+money(t.gst)+'</span></div>':'')+'<div class="g"><span>Total</span><span>'+money(t.total)+'</span></div>'+(d.kind==='invoice'?(d.prior||[]).filter(function(p){return +p.amt>0;}).map(function(p){ return '<div style="color:var(--meta)"><span>Paid previously'+(p.note?' · '+esc(p.note):'')+'</span><span>−'+money(+p.amt)+'</span></div>'; }).join('')+(t.prior>0?'<div style="font-weight:700"><span>Balance due</span><span>'+money(t.due)+'</span></div>':''):'')+(d.kind==='quote'&&t.deposit>0?'<div style="color:var(--meta);font-size:14px"><span>Deposit ('+d.depositPct+'%)</span><span>'+money(t.deposit)+'</span></div>':''); }
+  function totalsHtml(d){ var t=totals(d); return (pkLive(d)?d.pk.tiers.map(function(x){ return '<div'+(x.key===pkTier(d).key?' style="font-weight:600"':' style="color:var(--meta)"')+'><span>'+esc(x.name)+' package'+(x.rec?' · recommended':'')+'</span><span>'+money(pkTotal(d,x.key))+(d.gst?' inc':'')+'</span></div>'; }).join('')+'<div style="font-size:13px;color:var(--meta);padding-top:2px"><span>Totals below use '+esc(pkTier(d).name)+'</span><span></span></div>':'')+'<div><span>Subtotal</span><span>'+money(t.sub)+'</span></div>'+(d.gst?'<div><span>GST</span><span>'+money(t.gst)+'</span></div>':'')+'<div class="g"><span>Total</span><span>'+money(t.total)+'</span></div>'+(d.kind==='invoice'?(d.prior||[]).filter(function(p){return +p.amt>0;}).map(function(p){ return '<div style="color:var(--meta)"><span>Paid previously'+(p.note?' · '+esc(p.note):'')+'</span><span>−'+money(+p.amt)+'</span></div>'; }).join('')+(t.prior>0?'<div style="font-weight:700"><span>Balance due</span><span>'+money(t.due)+'</span></div>':''):'')+(d.kind==='quote'&&t.deposit>0?'<div style="color:var(--meta);font-size:14px"><span>Deposit ('+d.depositPct+'%)</span><span>'+money(t.deposit)+'</span></div>':''); }
   function redrawTotals(){ redrawCheck(); var el=document.getElementById('totals'); if(el) el.innerHTML=totalsHtml(draft); var b=document.getElementById('barTotal'); if(b) b.textContent=money(barAmt(draft)); var bl=document.getElementById('barLbl'); if(bl) bl.textContent=barLbl(draft); }
   function redrawItems(){ document.getElementById('items').innerHTML=itemsHtml(draft); redrawTotals(); autosize(); }
   function autosize(){ Array.prototype.forEach.call(app.querySelectorAll('textarea'),function(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight+2,520)+'px'; }); }
@@ -485,14 +516,87 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   function saveDraft(btn){
     var d=draft;
     if(!d.client.name.trim()){ toast('Add the client\'s name first'); var f=app.querySelector('[data-f="client.name"]'); if(f) f.focus(); return; }
-    if(!d.items.length){ toast('Add at least one item'); return; }
+    if(d.pkWant&&!pkLive(d)){ toast('Pick bedrooms and bathrooms to build the packages'); return; }
+    if(!d.items.length&&!pkLive(d)){ toast('Add at least one item'); return; }
     btn.disabled=true; btn.textContent='Saving…';
     var body={kind:d.kind,client:d.client,site:d.site,suburb:d.suburb,service:d.service,beds:d.beds,baths:d.baths,issued:d.issued,validUntil:d.validUntil,dueDate:d.dueDate,serviceDate:d.serviceDate,
       items:d.items.map(function(i){return {title:i.title,desc:i.desc,qty:+i.qty||1,price:+i.price||0};}),gst:d.gst,depositPct:+d.depositPct||0,notes:d.notes,showTerms:d.showTerms,jobId:d.jobId||'',est:d.est||null};
+    if(!(d.pk&&d.pk.baked)) body.pk=d.pkWant?d.pk:null;
     if(d.kind==='invoice'){ var tp=totals(d); if(tp.prior>tp.total+0.005){ btn.disabled=false; btn.textContent='Save'; toast('Already paid is more than the invoice total'); return; }
       body.prior=(d.prior||[]).filter(function(p){return +p.amt>0;}).map(function(p){return {id:p.id||'',amt:r2(+p.amt),date:p.date||today(),note:p.note||''};}); }
     api('POST','/api/docs',{action:'save',id:d.id||'',doc:body}).then(function(r){ dirty=false; draft=null; return (d.reqId?api('POST','/api/request',{action:'status',id:d.reqId,status:'quoted',quoteId:r.id}).catch(function(){}):Promise.resolve()).then(load).then(function(){ go('doc/'+r.id); toast('Saved'); }); })
       .catch(function(e){ btn.disabled=false; btn.textContent='Save'; toast(e.message); });
+  }
+
+  // ---------- Package options ----------
+  // Three tiers built from beds and baths: hours from your package settings x your hourly rate.
+  // Clients see the package price only, never the hours or the rate.
+  function pkSet(){ return S.settings.pk||{rate:110,svc:{}}; }
+  function extrasLib(){ return S.settings.library.filter(function(l){return /^extra:/i.test(l.title);}); }
+  function xName(t){ return String(t||'').replace(/^extra:\s*/i,'').replace(/^./,function(c){return c.toUpperCase();}); }
+  function buildPk(){
+    var d=draft, P=pkSet(), T=P.svc[d.service]||[];
+    if(!T.length||!(+d.beds)||!(+d.baths)){ d.pk=null; return false; }
+    var offered=d.pk?d.pk.addons.map(function(a){return a.id;}):null, rec=d.pk?(d.pk.tiers.filter(function(t){return t.rec;})[0]||{}).key:'';
+    d.pk={tiers:T.map(function(t){ var h=pkHours(t,d.beds,d.baths); return {key:t.key,name:t.name,rec:rec?t.key===rec:!!t.rec,blurb:t.blurb,points:t.points,desc:sizeScope(t.desc,d.beds,d.baths),inc:(t.inc||[]).slice(),hrs:h,price:r2(h*P.rate)}; }),
+      addons:extrasLib().filter(function(l){ return !offered||offered.indexOf(l.id)>=0; }).map(function(l){ return {id:l.id,title:l.title,desc:l.desc,price:+l.price||0}; }),
+      pick:'', manual:false};
+    return true;
+  }
+  function pkHtml(d){
+    var P=pkSet(), g=d.gst?1.1:1;
+    var h='<div class="hrow"><h2>Package <em>options</em></h2><a href="#/packages" class="ghost" style="font-size:13px">Package settings</a></div>';
+    if(!pkLive(d)) return h+'<div class="hint-card">Pick bedrooms and bathrooms above and the three packages build themselves.</div>';
+    h+='<p class="sub" style="margin:-6px 0 4px">Hours × '+money(P.rate)+'/hr ex GST. The client sees each package\'s price, never the hours or your rate. Change the hours or price on any package for this quote.</p>';
+    d.pk.tiers.forEach(function(t,i){
+      h+='<div class="tier'+(t.rec?' rec':'')+'" data-ti="'+i+'"><div class="th"><b>'+esc(t.name)+'</b><button type="button" class="recb" data-pkrec="'+i+'" aria-pressed="'+!!t.rec+'">'+(t.rec?'★ Recommended':'Make recommended')+'</button></div>';
+      h+='<div class="grid" style="grid-template-columns:1fr 1fr"><label class="l">Hours <small>all staff</small><input type="number" inputmode="decimal" step="0.5" min="0" data-pkh="'+i+'" value="'+esc(t.hrs)+'"></label><label class="l">Price <small>ex GST</small><input type="number" inputmode="decimal" step="5" min="0" data-pkp="'+i+'" value="'+esc(t.price)+'"></label></div>';
+      h+='<p class="hint" data-pkinc="'+i+'">Client sees '+money(r2(t.price*g))+(d.gst?' inc GST':'')+'</p><p class="pts">'+esc(String(t.points||'').split('\n').filter(Boolean).join(' · '))+'</p></div>';
+    });
+    var X=extrasLib(), on={}; d.pk.addons.forEach(function(a){ on[a.id]=a; });
+    h+='<h3 class="pkh">Add-ons they can tick</h3><p class="sub" style="margin:0 0 4px">Anything a package already covers is hidden for that package. No price yet shows as "priced to your home" and comes to you as a request. Set prices under <a href="#/library">Saved items</a>.</p>';
+    h+=X.map(function(l){ var a=on[l.id], pr=a?a.price:(+l.price||0); return '<label class="check"><input type="checkbox" data-pkadd="'+esc(l.id)+'"'+(a?' checked':'')+'><span>'+esc(xName(l.title))+' <small style="color:var(--meta)">'+(pr>0?money(pr)+' ex GST':'no price yet')+'</small></span></label>'; }).join('');
+    h+='<div class="addrow"><button class="btn plain grow" data-act="pkbuild">Rebuild from beds and baths</button></div>';
+    if(d.pk.manual) h+='<p class="hint">You\'ve adjusted prices on this quote. Changing beds or baths won\'t overwrite them until you tap Rebuild.</p>';
+    return h;
+  }
+  function redrawPk(){ var c=document.getElementById('pkcard'); if(c&&draft) c.innerHTML=pkHtml(draft); redrawTotals(); }
+  function pkIncLine(i){ var t=draft.pk.tiers[i], el=app.querySelector('[data-pkinc="'+i+'"]'); if(el) el.textContent='Client sees '+money(r2(t.price*(draft.gst?1.1:1)))+(draft.gst?' inc GST':''); }
+
+  // Package settings: the hourly rate and, per service, each tier's hours formula and scope.
+  function renderPackages(){
+    var P=JSON.parse(JSON.stringify(pkSet())), X=extrasLib();
+    var h=topbar('#/library')+'<h1>Package <em>options</em></h1><p class="sub">Pre-sale and deep clean quotes offer these three packages. Hours = base + per bedroom + per bathroom, rounded to the half hour, then × your rate. Every quote can still be adjusted.</p>';
+    h+='<div class="card"><h2>Your <em>rate</em></h2><label class="l">Hourly rate <small>ex GST, for working out package prices</small><input type="number" inputmode="decimal" step="1" min="1" id="pkrate" value="'+esc(P.rate)+'"></label><p class="hint">Only used inside the hub. Clients never see it.</p></div>';
+    PKG.forEach(function(svc){
+      h+='<div class="card"><h2>'+esc(svc)+'</h2>';
+      (P.svc[svc]||[]).forEach(function(t,i){
+        var pre=pkHours(t,3,2);
+        h+='<div class="tier" data-svc="'+esc(svc)+'" data-ti="'+i+'"><div class="th"><b>'+esc(t.name)+'</b><label class="check" style="margin:0;font-size:13px"><input type="radio" name="rec-'+esc(svc)+'" data-k="rec"'+(t.rec?' checked':'')+'>Recommended</label></div>';
+        h+='<label class="l">Name<input data-k="name" value="'+esc(t.name)+'"></label>';
+        h+='<div class="grid3" style="margin-top:10px"><label class="l">Base hrs<input type="number" inputmode="decimal" step="0.25" min="0" data-k="base" value="'+esc(t.base)+'"></label><label class="l">Per bed<input type="number" inputmode="decimal" step="0.25" min="0" data-k="bed" value="'+esc(t.bed)+'"></label><label class="l">Per bath<input type="number" inputmode="decimal" step="0.25" min="0" data-k="bath" value="'+esc(t.bath)+'"></label></div>';
+        h+='<p class="hint" data-ex>3 bed 2 bath: '+pre+' hrs · '+money(r2(pre*P.rate))+' + GST</p>';
+        h+='<label class="l" style="margin-top:10px">One-line summary <small>under the name</small><input data-k="blurb" value="'+esc(t.blurb)+'"></label>';
+        h+='<label class="l" style="margin-top:10px">Highlights <small>one per line, shown on the package card</small><textarea data-k="points">'+esc(t.points)+'</textarea></label>';
+        h+='<details class="working"><summary>Full scope, area by area</summary><label class="l">Scope <small>"- " starts a bullet. "Bedrooms ({beds})" fills in the count.</small><textarea data-k="desc" style="min-height:220px">'+esc(t.desc)+'</textarea></label></details>';
+        h+='<details class="working"><summary>Extras this package already covers</summary><p class="hint" style="margin-top:0">These are hidden as add-ons when the client picks this package.</p>'+X.map(function(l){ return '<label class="check"><input type="checkbox" data-inc="'+esc(l.id)+'"'+((t.inc||[]).indexOf(l.id)>=0?' checked':'')+'>'+esc(xName(l.title))+'</label>'; }).join('')+'</details></div>';
+      });
+      h+='</div>';
+    });
+    h+='<div class="bar"><div class="in"><div class="sum">Package settings<b>Pre-sale · Deep</b></div><button class="btn primary" data-act="savepk" style="min-width:140px">Save</button></div></div>';
+    app.innerHTML=h;
+    autosize();
+  }
+  function collectPk(){
+    var P=JSON.parse(JSON.stringify(pkSet())); P.rate=+document.getElementById('pkrate').value||P.rate;
+    Array.prototype.forEach.call(app.querySelectorAll('.tier[data-svc]'),function(b){
+      var t=P.svc[b.dataset.svc][+b.dataset.ti];
+      ['name','blurb','points','desc'].forEach(function(k){ t[k]=b.querySelector('[data-k="'+k+'"]').value; });
+      ['base','bed','bath'].forEach(function(k){ t[k]=+b.querySelector('[data-k="'+k+'"]').value||0; });
+      t.rec=b.querySelector('[data-k="rec"]').checked;
+      t.inc=Array.prototype.filter.call(b.querySelectorAll('[data-inc]'),function(c){return c.checked;}).map(function(c){return c.dataset.inc;});
+    });
+    return P;
   }
 
   // ---------- Saved items picker ----------
@@ -549,6 +653,11 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     else h+='<li class="'+(d.state==='paid'?'on':'')+'"><span>Paid in full</span><span>'+(d.state==='paid'&&d.payments.length?fdate(d.payments[d.payments.length-1].date):'')+'</span></li>';
     h+='</ul></div>';
 
+    if(isQ&&pkLive(d)&&d.state!=='accepted'){
+      var cur=pkTier(d);
+      h+='<div class="card"><h2>Package <em>options</em></h2><p class="sub" style="margin:-6px 0 0">The client picks one when they accept online. If they tell you instead, tap their choice, then mark it accepted.</p><div class="pkpick">'+d.pk.tiers.map(function(t){ return '<button type="button" data-pkpick="'+esc(t.key)+'" aria-pressed="'+(t.key===cur.key)+'"><span><b>'+esc(t.name)+(t.rec?' · recommended':'')+'</b><small>'+esc(t.blurb||'')+'</small></span><b>'+money(pkTotal(d,t.key))+'</b></button>'; }).join('')+'</div><p class="hint">Totals above use '+esc(cur.name)+(d.pk.pick?', the one you noted.':', the recommended one.')+'</p></div>';
+    }
+    if(isQ&&pkChosen(d)) h+='<div class="hint-card"><b>They chose the '+esc(pkChosen(d).name)+' package'+((d.pk.add||[]).length?' with '+d.pk.add.length+' add-on'+(d.pk.add.length===1?'':'s'):'')+'.</b> The roster job notes say what\'s in it.</div>';
     if(isQ){
       h+='<div class="card"><h2>Next <em>steps</em></h2>';
       if(d.state==='accepted'){
@@ -732,6 +841,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     SERVICES.filter(function(s){return s!=='Other';}).forEach(function(s){ var p=st.prices[s]||{}; var ex=r2((+p.base||0)+(+p.bed||0)*3+(+p.bath||0)*2);
       h+='<div class="prow" data-svc="'+esc(s)+'"><b>'+esc(s)+'</b><div class="grid3" style="margin-top:6px"><label class="l">Base<input type="number" inputmode="decimal" step="0.01" data-p="base" value="'+(p.base||'')+'" placeholder="0"></label><label class="l">Per bedroom<input type="number" inputmode="decimal" step="0.01" data-p="bed" value="'+(p.bed||'')+'" placeholder="0"></label><label class="l">Per bathroom<input type="number" inputmode="decimal" step="0.01" data-p="bath" value="'+(p.bath||'')+'" placeholder="0"></label></div><label class="l" style="margin-top:8px;font-size:12px">Extra line under the size <small>(optional)</small><input data-p="hrs" value="'+esc(p.hrs||'')+'" placeholder="e.g. Allow a full day on site."></label><p class="hint" data-ex>3 bed 2 bath: '+money(ex)+' + GST</p></div>'; });
     h+='</div><button class="btn primary" style="width:100%;margin-top:12px" data-act="saveprices">Save prices</button></div>';
+    h+='<div class="menu"><button data-go="packages">Package options and hours <small style="color:var(--meta);font-weight:400">· pre-sale and deep</small><span class="chev">›</span></button></div>';
     h+='<div class="card"><div class="hrow"><h2>Items and <em>scope</em></h2><button class="btn plain" style="min-height:40px" data-libedit="">+ New</button></div><div class="lib">'+st.library.map(function(l){ return '<button data-libedit="'+l.id+'"><b>'+esc(l.title)+(l.price?' · '+money(l.price):'')+'</b><span>'+esc(sizeScope(l.desc,'','').replace(/\n/g,' · '))+'</span>'+(l.service?'<span class="tag">Scope for '+esc(l.service.toLowerCase())+'</span>':'')+'</button>'; }).join('')+'</div><p class="hint">Link an item to a service and it fills in with that service\'s price and size.</p></div>';
     h+='<div class="card"><h2>Service <em>policies</em></h2><p class="hint" style="margin-top:-6px">Shown at the end of quotes. Start a line with "- " for a bullet.</p><textarea id="terms" style="min-height:240px">'+esc(st.terms)+'</textarea><button class="btn primary" style="width:100%;margin-top:10px" data-act="saveterms">Save policies</button></div>';
     app.innerHTML=h; autosize();
@@ -923,9 +1033,14 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(t.id==='jrText'&&JR){ JR.text=t.value; }
     if(t.dataset.jr&&JR&&JR.p){ JR.p[t.dataset.jr]=t.value; }
     if(t.tagName==='TEXTAREA'){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight+2,520)+'px'; }
+    if(!draft&&route().v==='packages'&&t.dataset.k&&/^(base|bed|bath)$/.test(t.dataset.k)){ var tb=t.closest('.tier'), rate=+(document.getElementById('pkrate')||{}).value||pkSet().rate, hh=pkHours({base:tb.querySelector('[data-k="base"]').value,bed:tb.querySelector('[data-k="bed"]').value,bath:tb.querySelector('[data-k="bath"]').value},3,2); tb.querySelector('[data-ex]').textContent='3 bed 2 bath: '+hh+' hrs · '+money(r2(hh*rate))+' + GST'; return; }
     if(!draft) { if(t.dataset.p){ var pr=t.closest('.prow'), v=function(k){return +pr.querySelector('[data-p="'+k+'"]').value||0;}; pr.querySelector('[data-ex]').textContent='3 bed 2 bath: '+money(r2(v('base')+v('bed')*3+v('bath')*2))+' + GST'; } return; }
+    if(t.dataset.pkh!==undefined&&pkLive(draft)){ var ti=draft.pk.tiers[+t.dataset.pkh]; ti.hrs=+t.value||0; ti.price=r2(ti.hrs*pkSet().rate); var pi=app.querySelector('[data-pkp="'+t.dataset.pkh+'"]'); if(pi) pi.value=ti.price; draft.pk.manual=true; dirty=true; pkIncLine(+t.dataset.pkh); redrawTotals(); return; }
+    if(t.dataset.pkp!==undefined&&pkLive(draft)){ draft.pk.tiers[+t.dataset.pkp].price=+t.value||0; draft.pk.manual=true; dirty=true; pkIncLine(+t.dataset.pkp); redrawTotals(); return; }
     if(t.dataset.est){ draft.est=draft.est||{}; draft.est[t.dataset.est]=t.value; dirty=true; redrawCheck(); return; }
-    if(t.dataset.f){ var val=t.type==='checkbox'?t.checked:t.value; setPath(draft,t.dataset.f,val); dirty=true; if(t.dataset.f==='depositPct'||t.dataset.f==='gst') redrawTotals(); if(t.dataset.f==='serviceDate'){ var pc=document.getElementById('pcheck'); if(pc) pc.innerHTML=checkHtml(draft); } return; }
+    if(t.dataset.f){ var val=t.type==='checkbox'?t.checked:t.value; setPath(draft,t.dataset.f,val); dirty=true;
+      if(t.dataset.f==='service'&&draft.kind==='quote'&&!(draft.pk&&draft.pk.baked)){ if(PKG.indexOf(val)<0){ draft.pkWant=false; draft.pk=null; } else { if(!draft.id) draft.pkWant=true; if(draft.pkWant){ draft.pk=null; buildPk(); } } }
+      if((t.dataset.f==='beds'||t.dataset.f==='baths')&&draft.pkWant){ if(draft.pk&&draft.pk.manual) toast('Tap Rebuild to reprice the packages for this size'); else { buildPk(); redrawPk(); } } if(t.dataset.f==='depositPct'||t.dataset.f==='gst') redrawTotals(); if(t.dataset.f==='serviceDate'){ var pc=document.getElementById('pcheck'); if(pc) pc.innerHTML=checkHtml(draft); } return; }
     if(t.dataset.pr){ var pr2=t.closest('[data-pi]'), k=+pr2.dataset.pi; draft.prior[k][t.dataset.pr]=t.value; dirty=true; if(t.dataset.pr==='amt'||t.dataset.pr==='note') redrawTotals(); return; }
     if(t.dataset.it){ var card=t.closest('.item'), i=+card.dataset.i; draft.items[i][t.dataset.it]=t.value; if(t.dataset.it==='title'||t.dataset.it==='desc') delete draft.items[i].auto; dirty=true; if(t.dataset.it==='qty'||t.dataset.it==='price'){ card.querySelector('[data-lt]').textContent=money((+draft.items[i].qty||0)*(+draft.items[i].price||0)); redrawTotals(); } }
   });
@@ -935,6 +1050,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(t.dataset.jr&&JR&&JR.p){ JR.p[t.dataset.jr]=t.value; return; }
     if(t.dataset.jrshots!==undefined&&JR){ jrShots(t.files); t.value=''; return; }
     if(draft&&t.dataset.f==='service'){ renderEdit(); }
+    if(draft&&t.dataset.pkwant!==undefined){ draft.pkWant=t.checked; draft.pk=null; if(t.checked) buildPk(); dirty=true; renderEdit(); return; }
+    if(draft&&t.dataset.pkadd&&pkLive(draft)){ var lid=t.dataset.pkadd, L=extrasLib().filter(function(l){return l.id===lid;})[0]; draft.pk.addons=draft.pk.addons.filter(function(a){return a.id!==lid;}); if(t.checked&&L) draft.pk.addons.push({id:L.id,title:L.title,desc:L.desc,price:+L.price||0}); dirty=true; return; }
     if(draft&&t.type==='checkbox'&&t.dataset.f){ setPath(draft,t.dataset.f,t.checked); redrawTotals(); }
   });
   app.addEventListener('click',function(e){
@@ -958,8 +1075,12 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
       if((el=e.target.closest('[data-mv]'))){ var j=i+(+el.dataset.mv), x=draft.items[i]; draft.items[i]=draft.items[j]; draft.items[j]=x; dirty=true; redrawItems(); return; }
       if(e.target.closest('[data-save-lib]')){ var it=draft.items[i]; if(!it.title){ toast('Give the item a name first'); return; } var n=JSON.parse(JSON.stringify(S.settings)); n.library.push({id:'l'+Date.now().toString(36),title:it.title,desc:it.desc,price:+it.price||0,service:''}); saveSettings(n,'Saved to library').catch(function(x){toast(x.message);}); return; }
     }
+    if((el=e.target.closest('[data-pkrec]'))&&pkLive(draft)){ draft.pk.tiers.forEach(function(t,i){ t.rec=i===+el.dataset.pkrec; }); dirty=true; redrawPk(); return; }
+    if((el=e.target.closest('[data-pkpick]'))){ var pd=docById(route().id); if(!pd) return; el.disabled=true; api('POST','/api/docs',{action:'pkpick',id:pd.id,pkg:el.dataset.pkpick}).then(load).then(function(){ toast('Noted. Mark it accepted when you\'re ready.'); }).catch(function(x){ el.disabled=false; toast(x.message); }); return; }
     if(!(el=e.target.closest('[data-act]'))) return;
     var a=el.dataset.act, d=docById(route().id);
+    if(a==='pkbuild'&&draft){ draft.pk=draft.pk?{tiers:draft.pk.tiers,addons:draft.pk.addons}:null; if(draft.pk) draft.pk.tiers.forEach(function(t){ delete t.price; }); var ok=buildPk(); redrawPk(); toast(ok?'Packages rebuilt for '+draft.beds+' bed '+draft.baths+' bath':'Pick bedrooms and bathrooms first'); return; }
+    if(a==='savepk'){ var np=JSON.parse(JSON.stringify(S.settings)); np.pk=collectPk(); el.disabled=true; saveSettings(np,'Package settings saved').then(function(){ return load(); }).then(function(){ el.disabled=false; }).catch(function(x){ el.disabled=false; toast(x.message); }); return; }
     if(a==='usetarget'){ useTarget(); return; }
     if(a==='targets'){ targetsSheet(); return; }
     if(a==='refresh'){ load().then(function(){ toast('Up to date'); }); return; }
@@ -1007,7 +1128,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
   window.addEventListener('beforeunload',function(e){ if(dirty){ e.preventDefault(); e.returnValue=''; } });
 
   load();
-  setInterval(function(){ if(document.visibilityState==='visible'&&!draft&&!document.getElementById('scrim')&&route().v!=='settings'&&route().v!=='library') load(); },60000);
+  setInterval(function(){ if(document.visibilityState==='visible'&&!draft&&!document.getElementById('scrim')&&route().v!=='settings'&&route().v!=='library'&&route().v!=='packages') load(); },60000);
 })();
 </script>
 </body></html>

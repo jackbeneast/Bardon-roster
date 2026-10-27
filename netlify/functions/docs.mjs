@@ -4,7 +4,7 @@ import { store, json, checkAdmin, loadRoster } from "../../lib/core.mjs";
 import {
   loadSettings, cleanSettings, cleanDoc, loadDocs, findByToken, saveDoc, newDoc,
   recordPayment, addJobFromQuote, publicView, fillJobberQuote, totals, statusOf, today, addDays, depositDesc, reportFor, freeDates,
-  specialLive, bakeSpecial, id,
+  specialLive, bakeSpecial, id, bakePackage, unbakePackage, pkLive, effItems,
 } from "../../lib/docs.mjs";
 import { loadTemplates, fill } from "../../lib/templates.mjs";
 import { sendSms, auMobile, mmReady } from "../../lib/mm.mjs";
@@ -83,7 +83,7 @@ export default async (req) => {
           const tq = totals(q);
           out.quote = {
             num: q.num, token: q.token, acceptedAt: q.acceptedAt || "", service: q.service || "", site: q.site || "", serviceDate: q.serviceDate || d.serviceDate || "",
-            items: (q.items || []).filter((i) => !/deposit/i.test(i.title || "") || (+i.price || 0) !== 0).map(({ title, desc, qty, price }) => ({ title, desc, qty, price })),
+            items: effItems(q).filter((i) => !/deposit/i.test(i.title || "") || (+i.price || 0) !== 0).map(({ title, desc, qty, price }) => ({ title, desc, qty, price })),
             gst: q.gst, sub: tq.sub, gstAmt: tq.gst, total: tq.total, depositPct: q.depositPct || 0,
             balance: r2(Math.max(0, tq.total - out.totals.total)),
           };
@@ -130,6 +130,8 @@ export default async (req) => {
       if (!free.includes(b.date)) return json({ error: "That day has just been booked. Please pick another." }, 409);
       q.serviceDate = b.date; q.datePicked = true;
     }
+    // Package quotes: lock in the package and add-ons they picked (default: the recommended one).
+    const pkT = bakePackage(q, String(b.pkg || ""), b.add);
     const special = bakeSpecial(q);
     q.status = "accepted"; q.acceptedAt = new Date().toISOString(); q.acceptedName = name;
     q.flag = "accepted"; q.flagAt = q.acceptedAt;
@@ -142,7 +144,7 @@ export default async (req) => {
     const tq = totals(q);
     await notify(s, {
       type: "quote_accept", title: `${label(q)} accepted`,
-      body: `${money(tq.total)}${q.site ? " · " + q.site : ""}${q.serviceDate ? `\nClean ${fmtDay(q.serviceDate)}${q.datePicked ? " (they picked it)" : ""}${q.jobId ? ", added to the roster" : ""}` : "\nNo date yet, add it to the roster"}${special ? `\nBooked on the today-only ${q.special.pct}% special` : ""}${q.depositInvoice ? `\n${q.depositPct}% deposit invoice drafted, ready for you to send` : ""}`,
+      body: `${money(tq.total)}${pkT ? ` · ${pkT.name} package` : ""}${q.site ? " · " + q.site : ""}${q.serviceDate ? `\nClean ${fmtDay(q.serviceDate)}${q.datePicked ? " (they picked it)" : ""}${q.jobId ? ", added to the roster" : ""}` : "\nNo date yet, add it to the roster"}${special ? `\nBooked on the today-only ${q.special.pct}% special` : ""}${q.depositInvoice ? `\n${q.depositPct}% deposit invoice drafted, ready for you to send` : ""}`,
       tags: "tada", priority: 5, url: `/money/#/doc/${q.id}`,
     });
     return json({ ok: true });
@@ -210,18 +212,26 @@ export default async (req) => {
       if (roster.jobs.some((j) => j.id === d.jobId)) return json({ ok: true, jobId: d.jobId });
       d.jobId = ""; // the job was deleted from the roster, so make a new one
     }
-    if (d.status !== "accepted") { bakeSpecial(d); d.status = "accepted"; d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; await draftDeposit(s, set, d); }
+    if (d.status !== "accepted") { bakePackage(d, String(b.pkg || "")); bakeSpecial(d); d.status = "accepted"; d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; await draftDeposit(s, set, d); }
     d.jobId = await addJobFromQuote(s, d, { date: b.date, start: b.start, end: b.end });
     for (const iid of [d.depositInvoice, ...(d.invoices || [])].filter(Boolean)) { const x = await s.get(`doc/${iid}`); if (x && !x.serviceDate) { x.serviceDate = d.serviceDate; await saveDoc(s, x); } }
     await saveDoc(s, d);
     return json({ ok: true, jobId: d.jobId });
   }
+  if (b.action === "pkpick" && d.kind === "quote") {
+    // Jack noting which package the client went with (by text or phone) before he marks it accepted.
+    if (!pkLive(d)) return json({ error: "This quote has no package options to choose from." }, 409);
+    if (!d.pk.tiers.some((t) => t.key === b.pkg)) return json({ error: "Pick one of the packages" }, 400);
+    d.pk.pick = b.pkg; await saveDoc(s, d);
+    return json({ ok: true });
+  }
   if (b.action === "confirmed") { d.confirmedAt = new Date().toISOString(); await saveDoc(s, d); return json({ ok: true }); }
   if (b.action === "sent") { if (d.status === "draft") d.status = "sent"; d.sentAt ||= new Date().toISOString(); await saveDoc(s, d); return json({ ok: true }); }
   if (b.action === "seen") { delete d.flag; delete d.flagAt; await saveDoc(s, d); return json({ ok: true }); }
   if (b.action === "status" && d.kind === "quote" && ["accepted", "declined", "sent"].includes(b.status)) {
+    if (b.status === "sent" && d.status === "accepted") unbakePackage(d);
     d.status = b.status;
-    if (b.status === "accepted") { bakeSpecial(d); d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; await draftDeposit(s, set, d); try { d.jobId = (await addJobFromQuote(s, d)) || d.jobId; } catch {} }
+    if (b.status === "accepted") { bakePackage(d, String(b.pkg || "")); bakeSpecial(d); d.acceptedAt ||= new Date().toISOString(); d.acceptedName ||= "Marked by Jack"; await draftDeposit(s, set, d); try { d.jobId = (await addJobFromQuote(s, d)) || d.jobId; } catch {} }
     await saveDoc(s, d); return json({ ok: true, depositId: d.depositInvoice || "" });
   }
   if (b.action === "deposit" && d.kind === "quote") {
@@ -286,7 +296,7 @@ export default async (req) => {
   if (b.action === "invoice" && d.kind === "quote") {
     // Invoice from a quote: "full" = everything, "balance" = total minus deposits paid.
     const t = totals(d);
-    const items = d.items;
+    const items = effItems(d);
     let prior = [];
     // Balance invoice: the full job, with the deposit acknowledged as already paid.
     if (b.mode === "balance" && d.depositInvoice) {
