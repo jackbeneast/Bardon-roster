@@ -166,6 +166,8 @@ function gaps(pid){
   return g;
 }
 function fyStart(d){ var y=+d.slice(0,4), m=+d.slice(5,7); return (m>=7?y:y-1)+'-07-01'; }
+// Gross paid to them earlier this financial year, before this pay period (for working holiday maker brackets).
+function priorGross(pid,start,paidOn){ var f=fyStart(paidOn||start), g=0; slipsOf(pid).forEach(function(x){ if(x.paidOn>=f && x.periodEnd<start) g+=+x.gross||0; }); return g; }
 function ytd(pid){ var f=fyStart(today()), t={gross:0,tax:0,net:0,sup:0,hrs:0,n:0}; slipsOf(pid).forEach(function(x){ if(x.paidOn>=f){ t.gross+=x.gross; t.tax+=x.tax; t.net+=x.net; t.sup+=x.sup; t.hrs+=x.hrs; t.n++; } }); return t; }
 function payLink(pid){ var p=prof(pid); return p.token?location.origin+'/pay/'+p.token:''; }
 function runs(){
@@ -203,13 +205,13 @@ function startRun(start){
     if(x.left && !S.slips.some(function(s){return s.pid===x.id&&s.periodEnd===per.end;})) return;
     var old=S.slips.filter(function(s){return s.pid===x.id&&s.periodStart===per.start&&s.periodEnd===per.end;})[0];
     var sh=old?old.shifts.map(function(s){return Object.assign({},s);}):rosterShifts(x.id,per);
-    var c=old?P.calc({shifts:old.shifts,periodStart:per.start,cycle:per.cycle,level:old.level,tft:prof(x.id).tft,rates:paySet().rates}):null;
+    var c=old?P.calc({shifts:old.shifts,periodStart:per.start,cycle:per.cycle,level:old.level,tft:prof(x.id).tft,rates:paySet().rates,ytdGross:priorGross(x.id,per.start,old.paidOn)}):null;
     ppl[x.id]={on:sh.length>0, shifts:sh, taxOv:old&&c&&old.tax!==c.taxAuto?String(old.tax):'', old:old||null};
   });
   RUN={start:per.start,end:per.end,cycle:per.cycle,paidOn:(function(){ var o=S.slips.filter(function(s){return s.periodEnd===per.end;})[0]; return o?o.paidOn:today(); })(),ppl:ppl,saving:false,err:''};
 }
 function personCalc(pid){
-  var x=RUN.ppl[pid], p=prof(pid), c=P.calc({shifts:x.shifts,periodStart:RUN.start,cycle:RUN.cycle,level:p.level||'1',tft:p.tft||'2',rates:paySet().rates});
+  var x=RUN.ppl[pid], p=prof(pid), c=P.calc({shifts:x.shifts,periodStart:RUN.start,cycle:RUN.cycle,level:p.level||'1',tft:p.tft||'2',rates:paySet().rates,ytdGross:priorGross(pid,RUN.start,RUN.paidOn)});
   var ov=x.taxOv.trim(), tax=ov!==''&&isFinite(parseFloat(ov))&&parseFloat(ov)>=0?r2(parseFloat(ov)):c.taxAuto;
   c.tax=Math.min(tax,c.gross); c.net=r2(c.gross-c.tax); return c;
 }
@@ -413,7 +415,7 @@ function renderRun(){
   });
   if(!ids.length) h+='<div class="empty" style="margin-top:14px">No team members to pay.</div>';
   h+='<div class="err" id="rerr"'+(RUN.err?'':' hidden')+'>'+esc(RUN.err)+'</div>';
-  h+='<p class="hint">Rates: your pay settings in the hub, or the award minimum for their level if that\'s higher. Tax uses the ATO weekly withholding formula; it doesn\'t include HELP. Super is 12% of ordinary pay, due within 7 days of payday.</p>';
+  h+='<p class="hint">Rates: your pay settings in the hub, or the award minimum for their level if that\'s higher. Tax uses the ATO weekly withholding formula; it doesn\'t include HELP. Working holiday makers are taxed 15% up to $45,000 paid this financial year, then 30%. Super is 12% of ordinary pay, due within 7 days of payday.</p>';
   h+='<div class="bar"><div class="in"><div class="sum">'+on.length+' to pay · tax '+money(tot.tax)+' · super '+money(tot.sup)+'<b>'+money(tot.net)+'</b></div><button class="btn primary" id="saveRun"'+(on.length&&!RUN.saving?'':' disabled')+'>'+(RUN.saving?'Saving…':'Save '+on.length+' payslip'+(on.length===1?'':'s'))+'</button></div></div>';
   app.innerHTML=h;
   app.querySelector('#paidOn').onchange=function(){ RUN.paidOn=this.value; };

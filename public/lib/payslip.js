@@ -6,6 +6,7 @@
 //    Mon–Sat 175% of base for the first 2 hrs then 225%, Sunday 225%, public holiday 275%
 //    (or your normal rate for that day if higher).
 //  - PAYG: ATO weekly withholding formula (Schedule 1) from 1 July 2026. No HELP.
+//    Working holiday makers: Schedule 15 (15% up to $45,000 a year), see tax() below.
 //  - Super 12% of ordinary time earnings (overtime excluded).
 (function(){
   var AWARD={1:[33.85,47.39,60.93,74.47],2:[34.96,48.95,62.93,76.92],3:[36.81,51.54,66.26,80.99]};
@@ -30,8 +31,13 @@
   function award(level){ var a=AWARD[level]||AWARD[1], base=a[0]/1.25; return {wk:a[0],el:r2(base*1.40),sat:a[1],sun:a[2],ph:a[3],ot1:r2(base*1.75),ot2:r2(base*2.25),otSun:r2(base*2.25),otPh:r2(base*2.75)}; }
   function rates(level, mine){ var A=award(level), m=Object.assign({},DEF,mine||{}), R={}; ['wk','el','sat','sun','ph'].forEach(function(k){ R[k]=Math.max(+m[k]||0,A[k]); }); return R; }
   function weeklyTax(gross,scale){ var x=Math.floor(gross)+0.99, row=(SC[scale]||SC[2]).filter(function(r){return x<r[0];})[0]; return Math.max(0,Math.round(row[1]*x-row[2])); }
-  // Scale 4: working holiday maker (visa 417/462), 15% on earnings up to $45,000 a year.
-  function tax(gross,scale,cycle){ if(+scale===4) return Math.round(gross*0.15); return cycle===2?weeklyTax(gross/2,scale)*2:weeklyTax(gross,scale); }
+  // Scale 4: working holiday maker (visa 417/462), ATO Schedule 15 for registered WHM employers (2026–27):
+  // 15% up to $45,000 paid this financial year, 30% to $135,000, 37% to $190,000, 45% above.
+  // prior = gross already paid to them this financial year, so the bracket is right as the year adds up.
+  var WHM=[[45000,.15],[135000,.30],[190000,.37],[Infinity,.45]];
+  function whmYear(v){ var t=0, lo=0; WHM.forEach(function(b){ if(v>lo){ t+=(Math.min(v,b[0])-lo)*b[1]; } lo=b[0]; }); return t; }
+  function whmTax(gross,prior){ var x=Math.floor(gross), p=Math.max(0,+prior||0); return Math.max(0,Math.round(whmYear(p+x)-whmYear(p))); }
+  function tax(gross,scale,cycle,prior){ if(+scale===4) return whmTax(gross,prior); return cycle===2?weeklyTax(gross/2,scale)*2:weeklyTax(gross,scale); }
 
   // shifts: [{date, hrs, kind}] inside the period. Returns {lines, gross, ordPay, hrs, otHrs, sup, taxAuto}
   function calc(o){
@@ -65,7 +71,7 @@
     var gross=0, ordPay=0, h=0, otH=0;
     lines.forEach(function(l){ gross+=l.amt; h+=l.hrs; if(l.ot) otH+=l.hrs; else ordPay+=l.amt; });
     gross=r2(gross); ordPay=r2(ordPay);
-    return {lines:lines, gross:gross, ordPay:ordPay, hrs:r2(h), otHrs:r2(otH), sup:r2(ordPay*0.12), taxAuto:tax(gross,+o.tft||2,cycle), reasons:reasons};
+    return {lines:lines, gross:gross, ordPay:ordPay, hrs:r2(h), otHrs:r2(otH), sup:r2(ordPay*0.12), taxAuto:tax(gross,+o.tft||2,cycle,o.ytdGross), reasons:reasons};
   }
 
   function html(x, E){
