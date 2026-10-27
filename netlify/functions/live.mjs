@@ -110,6 +110,19 @@ export default async (req) => {
       if (b.value && !L.rooms[b.room]) L.rooms[b.room] = { s: "p", by: doer(b.room), at: now };
       break;
     }
+    case "items": { // bulk ticks: { rooms: { Kitchen: [ids] }, value } — tick all / clear all
+      const map = b.rooms && typeof b.rooms === "object" ? b.rooms : {};
+      const rs = Object.keys(map).filter((r) => roomsOf(job).includes(r));
+      if (!rs.length) return json({ error: "Unknown room" }, 400);
+      for (const room of rs) {
+        const ids = (Array.isArray(map[room]) ? map[room] : []).map((x) => str(x, 24)).filter((id) => /^[a-z]_[a-z]{2,16}$/.test(id)).slice(0, 400);
+        const r = (L.items[room] ||= {});
+        for (const id of ids) { if (b.value) { if (!r[id]) r[id] = { by: doer(room), at: now }; } else delete r[id]; }
+        if (!Object.keys(r).length) delete L.items[room];
+        if (b.value && ids.length && !L.rooms[room]) L.rooms[room] = { s: "p", by: doer(room), at: now };
+      }
+      break;
+    }
     case "flag": {
       const t = str(b.title, 120);
       if (!t) return json({ error: "Add a short title" }, 400);

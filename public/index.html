@@ -299,6 +299,10 @@ footer{margin-top:30px;font-size:12px;color:var(--meta)}
 .csec .ok{color:#2F5A35}
 .citem{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--cream-dark);font-size:15px;line-height:1.35;color:var(--dark);cursor:pointer}
 .citem input{width:22px;height:22px;flex:none;margin:0;accent-color:#2F5A35}
+.clbulk{display:flex;gap:8px;margin:10px 0 0}.clbulk .btn{flex:1;min-height:44px}
+.cstick{border:0;background:none;font:600 13px var(--sans);color:var(--terracotta-dark);text-decoration:underline;padding:0 10px 0 0;cursor:pointer}
+.phtools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}.phtools .btn{flex:1;min-height:44px}
+.thumb.ai span{background:rgba(47,90,53,.9)}
 .citem.on span{color:var(--meta);text-decoration:line-through}
 .cbar{height:6px;border-radius:3px;background:var(--cream-dark);overflow:hidden;margin:10px 0 4px}
 .cbar i{display:block;height:100%;background:#2F5A35}
@@ -1241,19 +1245,26 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   // Photos: add a batch, then sort into rooms and before/after
   var phSel={}, phTab=null, phKind='before';
   function phUnsorted(L){ return L.photos.filter(function(p){return !p.room||!p.kind;}); }
+  function phAi(L){ return L.photos.filter(function(p){return p.ai&&p.room&&p.kind;}); }
+  // Sorting views run in the order the photos were taken, so befores and each room sit together
+  function phChrono(a){ return a.map(function(p,i){return [p,i];}).sort(function(x,y){ var a1=x[0].tk||x[0].at||'', b1=y[0].tk||y[0].at||''; return a1<b1?-1:a1>b1?1:x[1]-y[1]; }).map(function(x){return x[0];}); }
   function phSrc(j,p,full){ return '/api/photo?j='+encodeURIComponent(p.j||j.id)+'&p='+p.id+(full?'':'&s=t'); }
-  function phList(j,L){ var u=phUnsorted(L), t=phTab||(u.length?'sort':'all'); return {tab:t, list:(t==='sort'?u:L.photos).slice().reverse(), uns:u}; }
+  function phList(j,L){ var u=phUnsorted(L), a=phAi(L), t=phTab||(u.length?'sort':a.length?'ai':'all'); if(t==='ai'&&!a.length) t=u.length?'sort':'all';
+    return {tab:t, list:t==='sort'?phChrono(u):t==='ai'?phChrono(a):L.photos.slice().reverse(), uns:u, ai:a}; }
   function photoSec(j,L){
     var v=phList(j,L), h='<div class="lsec" id="phsec"><h4>Photos</h4><p class="sub" style="margin:0 0 8px">Add as many as you like, then sort them into rooms.</p>';
     h+='<label class="btn primary" id="ph_btn" style="display:flex;align-items:center;justify-content:center;cursor:pointer" for="ph_file">'+(liveBusy?esc(liveBusy):'Add photos')+'</label>';
     if(L.photos.length){
       var ids={}; L.photos.forEach(function(p){ids[p.id]=1;}); Object.keys(phSel).forEach(function(k){ if(!ids[k]) delete phSel[k]; });
-      h+='<div class="kindsw phtabs" style="margin:12px 0 0"><button type="button" data-phtab="sort" aria-pressed="'+(v.tab==='sort')+'">To sort <span>'+v.uns.length+'</span></button><button type="button" data-phtab="all" aria-pressed="'+(v.tab==='all')+'">All photos <span>'+L.photos.length+'</span></button></div>';
+      h+='<div class="kindsw phtabs" style="margin:12px 0 0"><button type="button" data-phtab="sort" aria-pressed="'+(v.tab==='sort')+'">To sort <span>'+v.uns.length+'</span></button>'+(v.ai.length?'<button type="button" data-phtab="ai" aria-pressed="'+(v.tab==='ai')+'">Check <span>'+v.ai.length+'</span></button>':'')+'<button type="button" data-phtab="all" aria-pressed="'+(v.tab==='all')+'">All <span>'+L.photos.length+'</span></button></div>';
+      if(v.tab==='sort'&&v.uns.length&&canEdit) h+='<div class="phtools"><button type="button" class="btn yes" data-phauto'+(phAutoBusy?' disabled':'')+'>'+(phAutoBusy?esc(phAutoBusy):'Auto-sort '+v.uns.length+' for me')+'</button></div><p class="sub" style="margin:4px 0 0">Claude files each photo into an area and before or after. Anything it isn\'t sure of stays here. You check the rest under Check.</p>';
+      if(v.tab==='ai') h+='<div class="phtools"><button type="button" class="btn yes" data-phok>All look right</button></div><p class="sub" style="margin:4px 0 0">Scroll through. Tap the circles on any that are wrong and re-file them below, then tap All look right.</p>';
       if(!v.list.length) h+='<p class="sub" style="margin:10px 0 0">All sorted ✓</p>';
       else {
-        h+='<p class="sub" style="margin:8px 0 0">Tap a photo to see it big and sort it. Tap the circles to pick several at once.</p><div class="thumbs">';
-        v.list.forEach(function(p){ var lb=p.room&&p.kind?esc(p.room)+' · '+(p.kind==='before'?'Before':'After'):'To sort';
-          h+='<button type="button" class="thumb'+(p.room&&p.kind?'':' uns')+'" data-ph="'+p.id+'" aria-pressed="'+(!!phSel[p.id])+'" aria-label="'+lb+'"><img loading="lazy" decoding="async" alt="" src="'+phSrc(j,p)+'"><span>'+lb+'</span><i aria-hidden="true">✓</i></button>'; });
+        h+='<p class="sub" style="margin:8px 0 0">Tap a photo to see it big and sort it. Tap the circles to pick several, or pick the first and last of a run and tap Select between.</p>';
+        h+='<div class="phtools"><button type="button" class="btn outline" data-phall>Select all '+v.list.length+'</button></div><div class="thumbs">';
+        v.list.forEach(function(p){ var lb=p.room&&p.kind?esc(p.room)+' · '+(p.kind==='before'?'Before':'After'):p.room?esc(p.room)+' · ?':p.kind?(p.kind==='before'?'Before':'After')+' · ?':'To sort';
+          h+='<button type="button" class="thumb'+(p.room&&p.kind?(p.ai?' ai':''):' uns')+'" data-ph="'+p.id+'" aria-pressed="'+(!!phSel[p.id])+'" aria-label="'+lb+'"><img loading="lazy" decoding="async" alt="" src="'+phSrc(j,p)+'"><span>'+lb+'</span><i aria-hidden="true">✓</i></button>'; });
         h+='</div>';
       }
     }
@@ -1262,7 +1273,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   function phBar(j){
     var n=Object.keys(phSel).length; if(!n) return '';
-    var h='<div class="sbar"><div class="sbtop"><b>'+n+' selected</b><span><button type="button" data-phall>Select all</button><button type="button" data-phnone>Clear</button></span></div>';
+    var h='<div class="sbar"><div class="sbtop"><b>'+n+' selected</b><span>'+(n>=2?'<button type="button" data-phrange>Select between</button>':'')+'<button type="button" data-phall>Select all</button><button type="button" data-phnone>Clear</button></span></div>';
     h+='<div class="kindsw" style="margin:0 0 8px"><button type="button" data-phk="before" aria-pressed="'+(phKind==='before')+'">Before</button><button type="button" data-phk="after" aria-pressed="'+(phKind==='after')+'">After</button></div>';
     h+='<div class="rgrid sgrid">'+roomsOf(j).map(function(r){return '<button type="button" data-phroom="'+esc(r)+'">'+esc(r)+'</button>';}).join('')+'</div>';
     h+='<button type="button" class="btn danger" data-phdel style="width:100%;margin-top:8px;min-height:40px">Delete '+n+' photo'+(n>1?'s':'')+'</button></div>';
@@ -1350,6 +1361,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(b.dataset.phtab){ phTab=b.dataset.phtab; phSel={}; drawLive(); return true; }
     if(b.hasAttribute('data-phall')){ phList(j,liveOf(j)).list.forEach(function(p){phSel[p.id]=1;}); drawLive(); return true; }
     if(b.hasAttribute('data-phnone')){ phSel={}; drawLive(); return true; }
+    if(b.hasAttribute('data-phrange')){ var rl=phList(j,liveOf(j)).list, ix=[]; rl.forEach(function(p,i){ if(phSel[p.id]) ix.push(i); }); if(ix.length>1) for(var ri=ix[0];ri<=ix[ix.length-1];ri++) phSel[rl[ri].id]=1; drawLive(); return true; }
+    if(b.hasAttribute('data-phauto')){ phAutoRun({jobId:liveOpen.jobId,pid:liveOpen.pid}); return true; }
+    if(b.hasAttribute('data-phok')){ b.disabled=true; var okIds=phAi(liveOf(j)).map(function(p){return p.id;}); phReq('POST','ok',{ids:okIds}).then(function(){ phSel={}; phTab=null; drawLive(); toast(okIds.length+' confirmed'); }).catch(function(e){ b.disabled=false; toast(e.message); }); return true; }
     if(b.dataset.phk){ phKind=b.dataset.phk; phRedrawBar(); return true; }
     if(b.dataset.phroom){ var ids=Object.keys(phSel), room=b.dataset.phroom, kd=phKind; b.disabled=true;
       phReq('POST','tag',{ids:ids,room:room,kind:kd}).then(function(){ phSel={}; drawLive(); toast(ids.length+' photo'+(ids.length>1?'s':'')+' → '+room+' · '+(kd==='before'?'Before':'After')); })
@@ -1373,8 +1387,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var h='<button type="button" class="clk" data-clback style="margin:0 0 8px">‹ All updates</button><h3>'+esc(room)+' <em>checklist</em></h3>';
     h+='<p class="sub" style="margin:-6px 0 0">'+esc(CHECKLISTS.name(j.service))+' · '+esc(j.address||j.client||'')+'</p>';
     h+='<div class="cbar"><i style="width:'+(items.length?Math.round(n/items.length*100):0)+'%"></i></div><p class="sub" style="margin:0 0 4px">'+n+' of '+items.length+' done. Work top to bottom.</p>';
-    CHECKLISTS.sectionsFor(room,j.service).forEach(function(sec){ var sd=sec.items.filter(function(i){return got[i.id];}).length;
-      h+='<div class="csec"><span>'+esc(sec.title)+'</span><span'+(sd===sec.items.length?' class="ok"':'')+'>'+sd+'/'+sec.items.length+'</span></div>';
+    if(canEdit&&items.length) h+='<div class="clbulk"><button type="button" class="btn yes" data-clall'+(n===items.length?' disabled':'')+'>Tick all '+items.length+'</button><button type="button" class="btn outline" data-clnone'+(n?'':' disabled')+'>Clear all</button></div><p class="sub" style="margin:4px 0 0">Tick all, then untick anything you didn\'t do. Unticked items don\'t show on the client\'s report.</p>';
+    CHECKLISTS.sectionsFor(room,j.service).forEach(function(sec,si){ var sd=sec.items.filter(function(i){return got[i.id];}).length;
+      h+='<div class="csec"><span>'+esc(sec.title)+'</span><span'+(sd===sec.items.length?' class="ok"':'')+'>'+(canEdit&&sd<sec.items.length?'<button type="button" class="cstick" data-clsec="'+si+'">Tick these</button>':'')+sd+'/'+sec.items.length+'</span></div>';
       sec.items.forEach(function(i){ var on=!!got[i.id], by=on&&member(got[i.id].by);
       h+='<label class="citem'+(on?' on':'')+'"><input type="checkbox" data-ci="'+i.id+'"'+(on?' checked':'')+'><span>'+esc(i.t)+(by&&canEdit?' <small style="color:var(--meta);text-decoration:none">· '+esc(by.name.split(' ')[0])+'</small>':'')+'</span></label>'; }); });
     var aft=L.photos.filter(function(p){return p.room===room&&p.kind==='after';}).length, needPh=!aft&&!canEdit;
@@ -1480,6 +1495,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       var who=canEdit&&(j.staff||[]).length?'<span class="asg">'+(j.staff||[]).map(function(x){ var mm=member(x); return mm?'<button type="button" class="chip" data-asg="'+esc(r)+'" data-who="'+x+'" aria-pressed="'+asg.includes(x)+'">'+esc(mm.name.split(' ')[0])+'</button>':''; }).join('')+'</span>'
         :asg.length?'<br><span class="ds"'+(mine?' style="color:var(--terracotta-dark);font-weight:600"':'')+'>'+(mine?'Yours':'')+(mine&&asg.length>1?' with ':'')+esc(asg.filter(function(x){return !mine||x!==pid;}).map(function(x){var mm=member(x);return mm?mm.name.split(' ')[0]:'';}).filter(Boolean).join(' & '))+'</span>':'';
       h+='<div class="lrow'+(canEdit?' wrap':'')+'"><span><span class="nm">'+esc(r)+'</span>'+(canEdit?'':who)+(pd?'<br><span class="ds">Saving…</span>':by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+(rer?'<br><span class="ds" style="color:var(--terracotta-dark);font-weight:600">Didn\'t save: '+esc(rer)+'. Tap again.</span>':'')+(ci.length?'<br><button type="button" class="clk'+(cd===ci.length?' ok':'')+'" data-cl="'+esc(r)+'">Checklist '+cd+'/'+ci.length+' ›</button>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span>'+(canEdit?who:'')+'</div>'; });
+    if(canEdit){ var tot=0, tk=0; roomsOf(j).forEach(function(r){ var ii=CHECKLISTS.itemsFor(r,j.service); tot+=ii.length; tk+=ii.filter(function(i){return L.items[r]&&L.items[r][i.id];}).length; });
+      if(tot&&tk<tot) h+='<button type="button" class="btn outline" data-clevery style="width:100%;margin-top:10px">Tick every checklist ('+tk+'/'+tot+' done)</button><p class="sub" style="margin:4px 0 0">Then open an area and untick what you didn\'t do.</p>'; }
     h+='</div>'+photoSec(j,L)+tourSec(j,L);
     h+='<div class="lsec"><h4>Notes for the agent</h4><p class="sub" style="margin:0 0 8px">Anything they should know before photos or buyers: damage, mould, broken fittings, stains that won\'t shift.</p>';
     L.flags.forEach(function(f){ h+='<div class="flagi"><span><b>'+esc(f.t)+'</b>'+esc(f.d)+'</span><button type="button" class="btn danger" data-unflag="'+f.id+'" style="min-height:0">Remove</button></div>'; });
@@ -1538,6 +1555,14 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(b.dataset.asg){ var jj=state.jobs.find(function(x){return x.id===liveOpen.jobId;}), cur=(liveOf(jj).assign[b.dataset.asg]||[]).slice(), w=b.dataset.who, ix=cur.indexOf(w); if(ix>=0) cur.splice(ix,1); else cur.push(w); livePost({action:'assign',room:b.dataset.asg,who:cur},b); return; }
     if(b.dataset.arr){ livePost({action:'arrive',who:b.dataset.arr,undo:!!b.dataset.undo},b); return; }
     if(b.dataset.leave){ livePost({action:'leave',who:b.dataset.leave,undo:!!b.dataset.undo},b).then(function(){ if(!b.dataset.undo) toast('Clocked off. Thanks!'); }); return; }
+    if(b.hasAttribute('data-clall')||b.hasAttribute('data-clnone')||b.dataset.clsec!=null){ var cj=state.jobs.find(function(x){return x.id===liveOpen.jobId;}), crm=liveOpen.room, on=!b.hasAttribute('data-clnone');
+      var cids=(b.dataset.clsec!=null?CHECKLISTS.sectionsFor(crm,cj.service)[+b.dataset.clsec].items:CHECKLISTS.itemsFor(crm,cj.service)).map(function(i){return i.id;}), cm={}; cm[crm]=cids;
+      liveOpen.keepTop=1; livePost({action:'items',rooms:cm,value:on},b).then(function(ok){ if(ok) toast(on?cids.length+' ticked':'Cleared'); }); return; }
+    if(b.hasAttribute('data-clevery')){ var ej=state.jobs.find(function(x){return x.id===liveOpen.jobId;}), em={}, en=0;
+      roomsOf(ej).forEach(function(r){ var ii=CHECKLISTS.itemsFor(r,ej.service).map(function(i){return i.id;}); if(ii.length){ em[r]=ii; en+=ii.length; } });
+      if(!en){ toast('No checklists on this job'); return; }
+      if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent='Tap again to tick all '+en+' items'; return; }
+      livePost({action:'items',rooms:em,value:true},b).then(function(ok){ if(ok) toast('All '+en+' ticked. Open an area to untick what you didn\'t do.'); }); return; }
     if(b.dataset.cl!=null){ liveOpen.room=b.dataset.cl; liveOpen.keepTop=0; drawLive(); return; }
     if(b.hasAttribute('data-clback')){ liveOpen.room=null; drawLive(); return; }
     if(b.dataset.clnext){ liveOpen.room=b.dataset.clnext; liveOpen.keepTop=0; drawLive(); return; }
@@ -1570,6 +1595,32 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     });
   }
   function showUp(){ var el=document.getElementById('uppill'); if(!upState){ if(el) el.remove(); return; } if(!el){ el=document.createElement('div'); el.id='uppill'; el.className='uppill'; el.setAttribute('role','status'); document.body.appendChild(el); } el.innerHTML='<i></i>'+esc(upState); }
+  // Auto-sort: Claude sorts the job's unsorted photos 6 at a time, one batch after another
+  // (each batch re-reads the job, so uploads can carry on at the same time).
+  var phAutoBusy=false, phAutoAgain=false, phAutoTried={};
+  function phAutoRun(ctx, quiet){
+    if(!canEdit||!ctx) return; if(phAutoBusy){ phAutoAgain=true; return; }
+    var k=key(), hd={'content-type':'application/json'}; if(k) hd['x-admin-key']=k;
+    var url='/api/photo?job='+encodeURIComponent(ctx.jobId)+'&person='+encodeURIComponent(ctx.pid||'')+'&stage=auto';
+    var j0=state.jobs.find(function(x){return x.id===ctx.jobId;}); if(!j0) return;
+    var todo=phChrono(phUnsorted(liveOf(j0))).filter(function(p){ return !phAutoTried[p.id]; }).map(function(p){return p.id;});
+    if(!todo.length){ if(!quiet) toast('Nothing left to auto-sort. Sort the rest by hand.'); return; }
+    var total=todo.length, done=0, sorted=0, fails=0;
+    function tick(){ phAutoBusy='Sorting '+Math.min(done,total)+' of '+total+'…'; upState='Auto-sorting photos · '+Math.min(done,total)+' of '+total+'…'; showUp(); var bt=document.querySelector('[data-phauto]'); if(bt){ bt.textContent=phAutoBusy; bt.disabled=true; } }
+    function finish(msg){ phAutoBusy=false; upState=null; showUp(); if(liveOpen&&liveOpen.jobId===ctx.jobId){ phTab=null; drawLive(); } if(msg) toast(msg);
+      if(phAutoAgain){ phAutoAgain=false; phAutoRun(ctx,true); } }
+    function next(){
+      if(!todo.length){ var jj=state.jobs.find(function(x){return x.id===ctx.jobId;}), left=jj?phUnsorted(liveOf(jj)).length:0;
+        finish(sorted+' sorted'+(left?', '+left+' left for you':'')+(sorted?'. Check them under Check.':'')); return; }
+      var ids=todo.splice(0,6); ids.forEach(function(id){ phAutoTried[id]=1; });
+      fetch(url,{method:'POST',headers:hd,body:JSON.stringify({ids:ids})}).then(function(r){ return r.json().catch(function(){return {error:'Auto-sort failed ('+r.status+')'};}).then(function(d){ if(!r.ok) throw Object.assign(new Error(d.error||'Auto-sort failed'),{off:d.off}); return d; }); })
+        .then(function(d){ takeLive(d,ctx.jobId); sorted+=d.sorted||0; done+=ids.length; fails=0; if(liveOpen&&liveOpen.jobId===ctx.jobId&&!document.querySelector('.pv')) drawLive(); tick(); next(); })
+        .catch(function(e){ if(e.off){ finish(e.message); return; } ids.forEach(function(id){ delete phAutoTried[id]; });
+          if(++fails>=3){ finish('Auto-sort stopped: '+e.message+'. '+sorted+' sorted so far. Tap Auto-sort to carry on.'); return; }
+          todo=ids.concat(todo); setTimeout(next,2500); });
+    }
+    tick(); next();
+  }
   // Photos are shrunk one at a time (keeps iPhone memory low), uploaded up to three at once,
   // then added to the job in small batches. room/kind '' = to sort.
   function uploadPhotos(files, room, kind, ctx, onDone){
@@ -1577,7 +1628,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var k=key(), hd={}; if(k) hd['x-admin-key']=k;
     var q='/api/photo?job='+encodeURIComponent(lo.jobId)+'&person='+encodeURIComponent(lo.pid);
     var total=files.length, nextI=0, sent=0, added=0, failed=0, lastErr='', pending=[], flushing=null, label=room?room+' '+kind:'photos';
-    var decoding=Promise.resolve(), inflight=0;
+    var decoding=Promise.resolve(), inflight=0, taken={};
     function progress(){ liveBusy='Uploading '+Math.min(sent+1,total)+' of '+total+'…'; upState='Uploading '+label+' · '+Math.min(sent+1,total)+' of '+total+'…'; showUp(); var bt=document.getElementById('ph_btn'); if(bt) bt.textContent=liveBusy; }
     function shrinkQueued(f){ var p=decoding.then(function(){ return shrink(f); }); decoding=p.catch(function(){}); return p; }
     function post(r){ var body=new Blob([r.thumb,r.full],{type:'application/octet-stream'});
@@ -1589,7 +1640,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     function flush(force){
       if(flushing) return flushing.then(function(){ return flush(force); });
       if(!pending.length || (!force && pending.length<5)) return Promise.resolve();
-      var ids=pending.splice(0,pending.length), b={ids:ids}; if(room){ b.room=room; b.kind=kind; }
+      var ids=pending.splice(0,pending.length), b={ids:ids,taken:{}}; ids.forEach(function(id){ if(taken[id]) b.taken[id]=taken[id]; }); if(room){ b.room=room; b.kind=kind; }
       var h2={'content-type':'application/json'}; if(k) h2['x-admin-key']=k;
       function go(){ return fetch(q+'&stage=add',{method:'POST',headers:h2,body:JSON.stringify(b)}).then(function(res){ return res.json().catch(function(){ return {error:'Saving failed ('+res.status+')'}; }).then(function(d){ if(!res.ok||!d.live) throw new Error(d.error||'Saving failed'); return d; }); }); }
       flushing=go().catch(function(){ return new Promise(function(ok){setTimeout(ok,1500);}).then(go); })
@@ -1601,7 +1652,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     function worker(){
       if(nextI>=files.length) return Promise.resolve();
       var f=files[nextI++];
-      return sendOne(f).then(function(id){ pending.push(id); }, function(e){ failed++; lastErr=e.message; })
+      return sendOne(f).then(function(id){ pending.push(id); if(f.lastModified) taken[id]=f.lastModified; }, function(e){ failed++; lastErr=e.message; })
         .then(function(){ sent++; progress(); return flush(false); }).then(worker);
     }
     liveBusy='Preparing '+total+' photo'+(total>1?'s':'')+'…'; upState=liveBusy; showUp(); var bt=document.getElementById('ph_btn'); if(bt) bt.textContent=liveBusy;
@@ -1609,7 +1660,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       liveBusy=false; upState=null; showUp(); if(onDone) onDone();
       if(liveOpen) drawLive(); else if(!document.getElementById('scrim')) render();
       if(!added) toast('Photos didn\'t upload'+(lastErr?': '+lastErr:'')+'. Check your signal and try again.');
-      else toast(failed? added+' added, '+failed+' didn\'t upload. Add those again.' : added+' photo'+(added>1?'s':'')+' added'+(room?' · '+room:'. Now sort them into rooms.'));
+      else toast(failed? added+' added, '+failed+' didn\'t upload. Add those again.' : added+' photo'+(added>1?'s':'')+' added'+(room?' · '+room:canEdit?'. Auto-sorting them now.':'. Now sort them into rooms.'));
+      if(added&&!room&&canEdit) phAutoRun(lo,true);
     });
   }
 
