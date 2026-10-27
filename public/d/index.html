@@ -216,7 +216,7 @@ details.rate summary small{display:block;font:400 13px/1.5 var(--sans);color:var
       if(inList){ h+='</ul>'; inList=false; if(inRoom){ h+='</div>'; inRoom=false; } }
       if(!x.trim()) continue;
       if(isB(L[i+1]) && x.length<70){ var ic=roomIcon(x); if(ic){ var n=0; for(var k=i+1;k<L.length&&isB(L[k]);k++) n++; h+='<div class="rm"><div class="rmh"><span class="ri">'+ic+'</span><h4>'+esc(x.trim())+'</h4><span class="rn">'+n+' item'+(n===1?'':'s')+'</span></div>'; inRoom=true; } else h+='<h4>'+esc(x.trim())+'</h4>'; }
-      else if(/included|excluded|\bonly\b|ground floor|safe reach/i.test(x)&&/window|glass|track|external|internal/i.test(x)) h+='<p class="ex">'+NOTE+'<span>'+esc(x)+'</span></p>';
+      else if((/included|excluded|\bonly\b|ground floor|safe reach/i.test(x)&&/window|glass|track|external|internal/i.test(x))||/^(not included|we clean all|allow around)/i.test(x)) h+='<p class="ex">'+NOTE+'<span>'+esc(x)+'</span></p>';
       else h+='<p>'+esc(x)+'</p>';
     }
     if(inList) h+='</ul>';

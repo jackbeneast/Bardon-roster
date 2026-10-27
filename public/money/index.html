@@ -308,7 +308,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 
     // Items
     h+='<div class="card"><div class="hrow"><h2>Line <em>items</em></h2></div><div id="items">'+itemsHtml(d)+'</div>';
-    h+='<div class="addrow"><button class="btn plain grow" data-act="fromlib">+ From saved items</button><button class="btn plain grow" data-act="additem">+ Blank item</button></div>';
+    h+='<div class="addrow"><button class="btn plain grow" data-act="fromlib">+ From saved items</button><button class="btn plain grow" data-act="byarea">+ Price by area</button><button class="btn plain grow" data-act="additem">+ Blank item</button></div>';
     h+='<div class="totals" id="totals">'+totalsHtml(d)+'</div>';
     h+='<label class="check"><input type="checkbox" data-f="gst"'+(d.gst?' checked':'')+'>Add GST (10%) on top</label></div>';
     if(!isQ){ d.prior=d.prior||[];
@@ -502,6 +502,24 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     var s=sheet(h);
     s.querySelector('[data-libq]').oninput=function(){ s.querySelector('#libList').innerHTML=libRows(L,this.value); };
     s.addEventListener('click',function(e){ var b=e.target.closest('[data-addlib]'); if(!b) return; var l=L.filter(function(x){return x.id===b.dataset.addlib;})[0]; draft.items.push({title:l.title,desc:sizeScope(l.desc,draft.beds,draft.baths),qty:1,price:l.price||''}); dirty=true; closeSheet(); redrawItems(); toast('Added '+l.title); });
+  }
+  // ---------- Price by area: tick the areas, add them all as separate line items ----------
+  function areaHrs(desc){ var m=/allow around (\d+(?:\.\d+)?) (hour|minute)/i.exec(desc||''); return m?(m[2].toLowerCase()==='minute'?(+m[1])/60:+m[1]):0; }
+  function hrsTxt(h){ return h<1?Math.round(h*60)+' min':(Math.round(h*10)/10)+' hr'+(h===1?'':'s'); }
+  function areaSheet(){
+    var A=S.settings.library.filter(function(l){return /^area:/i.test(l.title);});
+    if(!A.length){ toast('No area items saved. Add items titled "Area: …" under Saved items'); return; }
+    var inQ={}; draft.items.forEach(function(it){ inQ[it.title]=1; });
+    var h='<h3>Price by <em>area</em></h3><p class="sub" style="margin:0 0 4px">Each area goes on as its own line, with what\'s included, what isn\'t, and the time it takes. Set qty for more than one (e.g. 2 bathrooms). Remove any line to take it off.</p><div class="lib" id="areaList">'+A.map(function(l){
+      var hr=areaHrs(l.desc), t0=l.title.replace(/^area:\s*/i,''); l=Object.assign({},l,{t0:t0});
+      return '<label class="check" style="background:var(--white);border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:0"><input type="checkbox" data-area="'+l.id+'"'+(inQ[t0]?' disabled':'')+'><span style="flex:1"><b style="display:block;font:600 15px var(--sans)">'+esc(l.title.replace(/^area:\s*/i,''))+'</b><small style="color:var(--meta)">'+(inQ[t0]?'Already on this quote':(hr?'About '+hrsTxt(hr):'')+(l.price?' · '+money(l.price):' · no saved price'))+'</small></span></label>';
+    }).join('')+'</div><div class="actions"><button class="btn plain" data-close>Cancel</button><button class="btn primary grow" data-addareas disabled>Add areas</button></div>';
+    var s=sheet(h), btn=s.querySelector('[data-addareas]');
+    function sel(){ return Array.prototype.filter.call(s.querySelectorAll('[data-area]'),function(c){return c.checked;}).map(function(c){ return A.filter(function(l){return l.id===c.dataset.area;})[0]; }); }
+    s.querySelector('#areaList').onchange=function(){ var x=sel(), t=x.reduce(function(a,l){return a+areaHrs(l.desc);},0); btn.disabled=!x.length; btn.textContent=x.length?'Add '+x.length+' area'+(x.length===1?'':'s')+(t?' · about '+hrsTxt(t):''):'Add areas'; };
+    btn.onclick=function(){ var x=sel(); if(!x.length) return;
+      x.forEach(function(l){ var q=/bathroom/i.test(l.title)&&+draft.baths>1?+draft.baths:1; draft.items.push({title:l.title.replace(/^area:\s*/i,''),desc:l.desc,qty:q,price:l.price||''}); });
+      dirty=true; closeSheet(); redrawItems(); toast(x.length+' area'+(x.length===1?'':'s')+' added'+(x.some(function(l){return !l.price;})?'. Add your prices.':'')); };
   }
   function libRows(L,qq){ qq=(qq||'').toLowerCase(); var f=L.filter(function(l){return !qq||(l.title+' '+l.desc).toLowerCase().indexOf(qq)>=0;}); if(!f.length) return '<div class="empty">Nothing saved yet. Tap "Save to library" on any item to reuse it.</div>'; return f.map(function(l){ return '<button data-addlib="'+l.id+'"><b>'+esc(l.title)+(l.price?' · '+money(l.price):'')+'</b><span>'+esc(sizeScope(l.desc,'','').replace(/\n/g,' · '))+'</span>'+(l.service?'<span class="tag">Scope for '+esc(l.service.toLowerCase())+'</span>':'')+'</button>'; }).join(''); }
   function sheet(inner){ closeSheet(); var s=document.createElement('div'); s.className='scrim'; s.id='scrim'; s.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+inner+'</div>'; s.addEventListener('click',function(e){ if(e.target===s||e.target.closest('[data-close]')) closeSheet(); }); document.body.appendChild(s); return s; }
@@ -965,6 +983,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     if(a==='imp-reset'){ IMP=null; render(); return; }
     if(a==='autofill'){ autofill(); return; }
     if(a==='fromlib'){ libSheet(); return; }
+    if(a==='byarea'){ areaSheet(); return; }
     if(a==='addprior'){ draft.prior=draft.prior||[]; draft.prior.push({amt:'',date:today(),note:'Deposit'}); dirty=true; redrawPrior(); var ps=app.querySelectorAll('.pri'), lp=ps[ps.length-1]; if(lp){ lp.scrollIntoView({behavior:'smooth',block:'center'}); lp.querySelector('input').focus(); } return; }
     if(a==='additem'){ draft.items.push({title:'',desc:'',qty:1,price:''}); dirty=true; redrawItems(); var all=app.querySelectorAll('.item'); var last=all[all.length-1]; if(last){ last.scrollIntoView({behavior:'smooth',block:'center'}); last.querySelector('input').focus(); } return; }
     if(a==='save'){ saveDraft(el); return; }
