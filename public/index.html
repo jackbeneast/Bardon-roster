@@ -474,6 +474,75 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 .jinfo div{display:grid;grid-template-columns:72px 1fr;gap:10px;font:400 14px/1.35 var(--sans)}
 .jinfo span{color:var(--meta)}
 .jinfo b{font-weight:500;overflow-wrap:anywhere}
+
+/* Job updates: header, whose-view flip, tabs */
+.lhead{position:sticky;top:-20px;z-index:4;background:var(--white);margin:-20px -16px 0;padding:16px 16px 0;border-bottom:1px solid var(--cream-dark)}
+.lht{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.lht h3{margin-bottom:10px}
+.lx{flex:none;width:40px;height:40px;border-radius:999px;border:1px solid var(--line);background:var(--white);font:400 24px/1 var(--sans);color:var(--dark);cursor:pointer}
+.vflip{display:flex;background:var(--cream);border-radius:999px;padding:4px;margin:12px 0 0;gap:4px}
+.vflip button{flex:1;min-height:40px;border:0;border-radius:999px;background:none;font:600 14px var(--sans);color:var(--meta);cursor:pointer}
+.vflip button[aria-selected="true"]{background:var(--dark);color:var(--cream)}
+.ltabs{display:flex;margin:10px -16px 0;padding:0 8px;overflow-x:auto;scrollbar-width:none}
+.ltabs::-webkit-scrollbar{display:none}
+.ltabs button{flex:1 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px;padding:8px 8px 9px;border:0;border-bottom:3px solid transparent;background:none;font:600 14px var(--sans);color:var(--meta);cursor:pointer}
+.ltabs button small{font:500 11px var(--sans);color:var(--meta)}
+.ltabs button small b{color:var(--terracotta-dark);font-weight:700}
+.ltabs button[aria-selected="true"]{color:var(--dark);border-bottom-color:var(--terracotta)}
+.ltabs button.ok small{color:#2F5A35}
+.lhow{margin:14px 0 0;background:var(--cream);border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.4;color:var(--dark)}
+.lhow.warnish{background:#FCEFD0}
+.sheet.live{height:92vh}
+.lhead+.lsec{border-top:0;padding-top:0}
+#phbar{position:sticky;bottom:-20px;z-index:3;padding-bottom:12px}
+#phbar .sbar{position:static}
+/* Area cards */
+.acards{display:grid;gap:10px;margin-top:12px}
+.acard{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;background:var(--white);overflow:hidden}
+.acard.s-p{border-left-color:var(--terracotta)}
+.acard.s-d{border-left-color:#2F5A35;background:#F6FAF4}
+.ahit{display:flex;flex-direction:column;align-items:stretch;gap:4px;width:100%;text-align:left;border:0;background:none;padding:12px 12px 8px;font:inherit;color:inherit;cursor:pointer}
+.anm{display:flex;justify-content:space-between;align-items:center;font:700 17px/1.2 var(--serif);color:var(--dark)}
+.anm i{font:400 22px/1 var(--sans);color:var(--meta);font-style:normal}
+.ameta{font-size:13px;color:var(--meta)}
+.abar{display:block;height:4px;border-radius:2px;background:var(--cream-dark);overflow:hidden;margin-top:4px}
+.abar i{display:block;height:100%;background:#2F5A35}
+.awho{font-size:12px;color:var(--meta)}
+.awho.mine{color:var(--terracotta-dark);font-weight:600}
+.awho.err2{color:var(--terracotta-dark);font-weight:600}
+.afoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:0 12px 12px}
+.afoot .asg{display:flex;gap:4px;flex-wrap:wrap}
+.afoot .asg .chip{min-height:32px;padding:6px 10px;font-size:12px}
+.rseg.big{display:flex;gap:6px}
+.rseg.big button{flex:1;min-height:44px;font-size:14px}
+/* Inside an area: numbered steps */
+.astep{margin-top:16px;padding-top:14px;border-top:1px solid var(--cream-dark)}
+.astep>.btn{width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center}
+.asth{display:flex;align-items:center;gap:8px}
+.asth span,.step span{flex:none;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:var(--dark);color:var(--cream);font:700 12px var(--sans)}
+.asth b{font:600 15px var(--sans);color:var(--dark);flex:1}
+.asth em{font:500 13px var(--sans);font-style:normal;color:var(--meta)}
+.astrip{display:flex;gap:6px;overflow-x:auto;margin:10px -16px 0;padding:0 16px;scrollbar-width:none}
+.astrip::-webkit-scrollbar{display:none}
+.astrip .thumb{flex:none;width:76px;height:76px;border:0;padding:0;cursor:pointer}
+.astrip .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.step{display:flex;align-items:center;gap:8px;margin:4px 0 6px;font:600 13px var(--sans);color:var(--dark)}
+
+/* Photos grouped by area */
+.phgrp{margin-top:14px}
+.phgh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:1px solid var(--cream-dark);padding-bottom:4px}
+.phgh b{font:700 15px var(--serif);color:var(--dark)}
+.phgh span{font-size:12px;color:var(--meta)}
+.phgrp .thumbs{margin-top:8px}
+/* Client view */
+.sheet.cv{display:flex;flex-direction:column;height:92vh;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+.sheet.cv #liveBox{display:flex;flex-direction:column;flex:1;min-height:0}
+.cvbar{display:flex;align-items:center;gap:12px;margin:10px 0 8px;font-size:13px;color:var(--meta)}
+.cvbar span{flex:1;min-width:0}
+.cvbar button,.cvbar a{background:none;border:0;padding:6px 0;font:600 13px var(--sans);color:var(--terracotta-dark);text-decoration:underline;cursor:pointer}
+.cvwrap{flex:1;min-height:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--cream)}
+.cvwrap iframe{width:100%;height:100%;border:0;display:block}
+.cvnote{margin:6px 0 0;font-size:12px;text-align:center}
 </style><script src="/lib/teamgate.js"></script><script src="/lib/bcart.js"></script></head><body>
 <div id="app"></div>
 <script src="/lib/confirm.js"></script>
@@ -919,7 +988,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<label class="l" for="f_notes">Notes for the team<textarea id="f_notes" name="notes" placeholder="Access, inclusions, parking. Don\'t put alarm or lockbox codes here.">'+esc(base.notes)+'</textarea></label>';
     h+='<div class="err" id="jobErr" hidden></div>';
     h+='<div class="actions"><button type="button" class="btn outline" data-close>Cancel</button><button type="submit" class="btn primary">Save job</button></div>';
-    if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Copy client link</button>':'')+'</div>'+(job.share?'<div class="actions" style="margin-top:8px"><button type="button" class="btn primary" data-confirmj style="flex:1">'+(tmrJob(sib)?'Send day-before reminder':'Send booking confirmation')+'</button></div>':'');
+    if(!isNew) h+='<div class="actions"><button type="button" class="btn outline" data-livej style="flex:1">Job updates</button>'+(job.share?'<button type="button" class="btn outline" data-vlink style="flex:1">Client view</button>':'')+'</div>'+(job.share?'<div class="actions" style="margin-top:8px"><button type="button" class="btn primary" data-confirmj style="flex:1">'+(tmrJob(sib)?'Send day-before reminder':'Send booking confirmation')+'</button></div>':'');
     if(!isNew&&isRegular(job)) h+='<div class="actions"><button type="button" class="btn primary" data-jinvs style="flex:1">'+(invOf(job)?'Invoice #'+esc(invOf(job).num)+' made · open it':'Create invoice')+'</button></div>';
     if(!isNew&&clientMob(job)) h+='<div class="actions"><a class="btn outline" href="'+textClientHref(job)+'" style="flex:1;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">Text client</a></div>';
     if(!isNew&&teamOn(job).length) h+='<div class="actions"><button type="button" class="btn primary" data-textteam style="flex:1">Text team</button></div>';
@@ -1036,7 +1105,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       var ids=sib.map(function(j){return j.id;}), first=BCConfirm.withDays(sib[0], state.jobs), tj=tmrJob(sib);
       api('/api/docs').then(function(m){ var docs=m.docs||[], d=docs.filter(function(x){return ids.indexOf(x.jobId)>=0;})[0]||null, dep=d&&d.depositInvoice?docs.filter(function(x){return x.id===d.depositInvoice;})[0]:null; return tj?hubReminder(tj,d):hubConfirm(first,d,dep); })
         .catch(function(){ return tj?hubReminder(tj,null):hubConfirm(first,null,null); }); };
-    var vl=s.querySelector('[data-vlink]'); if(vl) vl.onclick=function(){ copyText(location.origin+'/v/'+job.share); };
+    var vl=s.querySelector('[data-vlink]'); if(vl) vl.onclick=function(){ liveSheet(job.id,'',{client:true}); };
     var dup=s.querySelector('[data-dup]');
     if(dup) dup.onclick=function(){
       var c={client:base.client,suburb:base.suburb,address:base.address,service:base.service,notes:base.notes,meet:base.meet,agentId:base.agentId,readyBy:base.readyBy,rooms:base.rooms};
@@ -1145,8 +1214,12 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 
   // ---------- Live job updates ----------
   var liveBusy=false;
-  function liveSheet(jobId, pid){
-    var s=openSheet('<div id="liveBox"></div>'); liveOpen={jobId:jobId,pid:pid};
+  // Job updates opens on a tab (areas, photos, team, notes, finish). The last tab used is remembered,
+  // so coming back from the areas editor or the photo viewer lands where you were.
+  var liveTab='areas';
+  function liveSheet(jobId, pid, opt){
+    opt=opt||{}; if(opt.tab) liveTab=opt.tab;
+    var s=openSheet('<div id="liveBox"></div>'); s.querySelector('.sheet').classList.add('live'); liveOpen={jobId:jobId,pid:pid,client:!!opt.client};
     s.addEventListener('click', liveClick); s.addEventListener('change', liveChange);
     drawLive();
   }
@@ -1250,22 +1323,33 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function phChrono(a){ return a.map(function(p,i){return [p,i];}).sort(function(x,y){ var a1=x[0].tk||x[0].at||'', b1=y[0].tk||y[0].at||''; return a1<b1?-1:a1>b1?1:x[1]-y[1]; }).map(function(x){return x[0];}); }
   function phSrc(j,p,full){ return '/api/photo?j='+encodeURIComponent(p.j||j.id)+'&p='+p.id+(full?'':'&s=t'); }
   function phList(j,L){ var u=phUnsorted(L), a=phAi(L), t=phTab||(u.length?'sort':a.length?'ai':'all'); if(t==='ai'&&!a.length) t=u.length?'sort':'all';
-    return {tab:t, list:t==='sort'?phChrono(u):t==='ai'?phChrono(a):L.photos.slice().reverse(), uns:u, ai:a}; }
+    var groups=null, list;
+    if(t==='all'){ // grouped by area, in the job's area order, befores first; anything not on a listed area last
+      var rs=roomsOf(j); groups=rs.map(function(r){ return {name:r, ps:[]}; });
+      var odd={name:'Not filed to an area', ps:[]};
+      phChrono(L.photos).forEach(function(p){ var ix=rs.indexOf(p.room); (ix>=0&&p.kind?groups[ix]:odd).ps.push(p); });
+      groups.forEach(function(g){ g.ps.sort(function(x,y){ return (x.kind==='before'?0:1)-(y.kind==='before'?0:1); }); });
+      if(odd.ps.length) groups.push(odd);
+      list=[].concat.apply([],groups.map(function(g){return g.ps;}));
+    } else list=t==='sort'?phChrono(u):phChrono(a);
+    return {tab:t, list:list, groups:groups, uns:u, ai:a}; }
   function photoSec(j,L){
-    var v=phList(j,L), h='<div class="lsec" id="phsec"><h4>Photos</h4><p class="sub" style="margin:0 0 8px">Add as many as you like, then sort them into rooms.</p>';
+    var v=phList(j,L), h='<div class="lsec" id="phsec"><div class="lhow"><b>Upload everything here.</b> Then file each photo to an area as <i>before</i> or <i>after</i>. Filed photos show on the client\'s link under that area.</div>';
     h+='<label class="btn primary" id="ph_btn" style="display:flex;align-items:center;justify-content:center;cursor:pointer" for="ph_file">'+(liveBusy?esc(liveBusy):'Add photos')+'</label>';
     if(L.photos.length){
       var ids={}; L.photos.forEach(function(p){ids[p.id]=1;}); Object.keys(phSel).forEach(function(k){ if(!ids[k]) delete phSel[k]; });
-      h+='<div class="kindsw phtabs" style="margin:12px 0 0"><button type="button" data-phtab="sort" aria-pressed="'+(v.tab==='sort')+'">To sort <span>'+v.uns.length+'</span></button>'+(v.ai.length?'<button type="button" data-phtab="ai" aria-pressed="'+(v.tab==='ai')+'">Check <span>'+v.ai.length+'</span></button>':'')+'<button type="button" data-phtab="all" aria-pressed="'+(v.tab==='all')+'">All <span>'+L.photos.length+'</span></button></div>';
+      h+='<div class="kindsw phtabs" style="margin:12px 0 0"><button type="button" data-phtab="sort" aria-pressed="'+(v.tab==='sort')+'">To sort <span>'+v.uns.length+'</span></button>'+(v.ai.length?'<button type="button" data-phtab="ai" aria-pressed="'+(v.tab==='ai')+'">Check <span>'+v.ai.length+'</span></button>':'')+'<button type="button" data-phtab="all" aria-pressed="'+(v.tab==='all')+'">By area <span>'+L.photos.length+'</span></button></div>';
       if(v.tab==='sort'&&v.uns.length&&canEdit) h+='<div class="phtools"><button type="button" class="btn yes" data-phauto'+(phAutoBusy?' disabled':'')+'>'+(phAutoBusy?esc(phAutoBusy):'Auto-sort '+v.uns.length+' for me')+'</button></div><p class="sub" style="margin:4px 0 0">Claude files each photo into an area and before or after. Anything it isn\'t sure of stays here. You check the rest under Check.</p>';
       if(v.tab==='ai') h+='<div class="phtools"><button type="button" class="btn yes" data-phok>All look right</button></div><p class="sub" style="margin:4px 0 0">Scroll through. Tap the circles on any that are wrong and re-file them below, then tap All look right.</p>';
       if(!v.list.length) h+='<p class="sub" style="margin:10px 0 0">All sorted ✓</p>';
       else {
-        h+='<p class="sub" style="margin:8px 0 0">Tap a photo to see it big and sort it. Tap the circles to pick several, or pick the first and last of a run and tap Select between.</p>';
-        h+='<div class="phtools"><button type="button" class="btn outline" data-phall>Select all '+v.list.length+'</button></div><div class="thumbs">';
-        v.list.forEach(function(p){ var lb=p.room&&p.kind?esc(p.room)+' · '+(p.kind==='before'?'Before':'After'):p.room?esc(p.room)+' · ?':p.kind?(p.kind==='before'?'Before':'After')+' · ?':'To sort';
-          h+='<button type="button" class="thumb'+(p.room&&p.kind?(p.ai?' ai':''):' uns')+'" data-ph="'+p.id+'" aria-pressed="'+(!!phSel[p.id])+'" aria-label="'+lb+'"><img loading="lazy" decoding="async" alt="" src="'+phSrc(j,p)+'"><span>'+lb+'</span><i aria-hidden="true">✓</i></button>'; });
-        h+='</div>';
+        h+='<p class="sub" style="margin:8px 0 0">Tap a photo to see it big and file it. Tap the circles to pick several, or pick the first and last of a run and tap Select between.</p>';
+        h+='<div class="phtools"><button type="button" class="btn outline" data-phall>Select all '+v.list.length+'</button></div>';
+        var th=function(p){ var lb=p.room&&p.kind?esc(p.room)+' · '+(p.kind==='before'?'Before':'After'):p.room?esc(p.room)+' · ?':p.kind?(p.kind==='before'?'Before':'After')+' · ?':'To sort';
+          return '<button type="button" class="thumb'+(p.room&&p.kind?(p.ai?' ai':''):' uns')+'" data-ph="'+p.id+'" aria-pressed="'+(!!phSel[p.id])+'" aria-label="'+lb+'"><img loading="lazy" decoding="async" alt="" src="'+phSrc(j,p)+'"><span>'+(v.tab==='all'?(p.kind==='before'?'Before':p.kind==='after'?'After':'?'):lb)+'</span><i aria-hidden="true">✓</i></button>'; };
+        if(v.tab==='all') v.groups.forEach(function(g){ var b=g.ps.filter(function(p){return p.kind==='before';}).length, a=g.ps.filter(function(p){return p.kind==='after';}).length;
+            h+='<div class="phgrp"><div class="phgh"><b>'+esc(g.name)+'</b><span>'+(g.ps.length?b+' before · '+a+' after':'No photos yet')+'</span></div>'+(g.ps.length?'<div class="thumbs">'+g.ps.map(th).join('')+'</div>':'')+'</div>'; });
+        else h+='<div class="thumbs">'+v.list.map(th).join('')+'</div>';
       }
     }
     h+='<div id="phbar">'+phBar(j)+'</div></div>';
@@ -1274,8 +1358,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function phBar(j){
     var n=Object.keys(phSel).length; if(!n) return '';
     var h='<div class="sbar"><div class="sbtop"><b>'+n+' selected</b><span>'+(n>=2?'<button type="button" data-phrange>Select between</button>':'')+'<button type="button" data-phall>Select all</button><button type="button" data-phnone>Clear</button></span></div>';
-    h+='<div class="kindsw" style="margin:0 0 8px"><button type="button" data-phk="before" aria-pressed="'+(phKind==='before')+'">Before</button><button type="button" data-phk="after" aria-pressed="'+(phKind==='after')+'">After</button></div>';
-    h+='<div class="rgrid sgrid">'+roomsOf(j).map(function(r){return '<button type="button" data-phroom="'+esc(r)+'">'+esc(r)+'</button>';}).join('')+'</div>';
+    h+='<p class="step"><span>1</span>Before or after?</p><div class="kindsw" style="margin:0 0 8px"><button type="button" data-phk="before" aria-pressed="'+(phKind==='before')+'">Before</button><button type="button" data-phk="after" aria-pressed="'+(phKind==='after')+'">After</button></div>';
+    h+='<p class="step"><span>2</span>Tap the area to file '+(n>1?'them':'it')+'</p><div class="rgrid sgrid">'+roomsOf(j).map(function(r){return '<button type="button" data-phroom="'+esc(r)+'">'+esc(r)+'</button>';}).join('')+'</div>';
     h+='<button type="button" class="btn danger" data-phdel style="width:100%;margin-top:8px;min-height:40px">Delete '+n+' photo'+(n>1?'s':'')+'</button></div>';
     return h;
   }
@@ -1296,8 +1380,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   // Full-size viewer: swipe or arrow between photos, then tap Before/After and a room to sort.
   var pv=null;
   function pvJob(){ return liveOpen&&state.jobs.find(function(x){return x.id===liveOpen.jobId;}); }
-  function pvOpen(j,id){
-    var v=phList(j,liveOf(j)), ids=v.list.map(function(p){return p.id;}), i=ids.indexOf(id); if(i<0) return;
+  function pvOpen(j,id,only){
+    var v=only?{list:only,tab:'area'}:phList(j,liveOf(j)), ids=v.list.map(function(p){return p.id;}), i=ids.indexOf(id); if(i<0) return;
     var el=document.createElement('div'); el.className='pv'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true'); el.setAttribute('aria-label','Photo viewer'); el.tabIndex=-1;
     document.body.appendChild(el); document.body.style.overflow='hidden';
     pv={el:el,ids:ids,i:i,tab:v.tab,busy:false};
@@ -1323,9 +1407,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<div class="pv-stage"><img alt="" src="'+phSrc(j,p,true)+'">'+
       '<button type="button" class="pv-nav l" data-pvgo="-1" aria-label="Previous photo"'+(pv.i?'':' disabled')+'>‹</button>'+
       '<button type="button" class="pv-nav r" data-pvgo="1" aria-label="Next photo"'+(pv.i<n-1?'':' disabled')+'>›</button></div>';
-    h+='<div class="pv-bot"><div class="kindsw"><button type="button" data-pvk="before" aria-pressed="'+(phKind==='before')+'">Before</button><button type="button" data-pvk="after" aria-pressed="'+(phKind==='after')+'">After</button></div>';
-    h+='<div class="rgrid sgrid">'+roomsOf(j).map(function(r){ return '<button type="button" data-pvroom="'+esc(r)+'" aria-pressed="'+(p.room===r&&p.kind===phKind)+'">'+esc(r)+'</button>'; }).join('')+'</div>';
-    h+='<div class="pv-foot"><span>'+(pv.tab==='sort'?(left?left+' left to sort':'All sorted ✓'):'Tap a room to file this photo')+'</span><button type="button" class="btn danger" data-pvdel>Delete photo</button></div></div>';
+    h+='<div class="pv-bot"><p class="step dk"><span>1</span>Before or after?</p><div class="kindsw"><button type="button" data-pvk="before" aria-pressed="'+(phKind==='before')+'">Before</button><button type="button" data-pvk="after" aria-pressed="'+(phKind==='after')+'">After</button></div>';
+    h+='<p class="step dk"><span>2</span>Tap the area to file it</p><div class="rgrid sgrid">'+roomsOf(j).map(function(r){ return '<button type="button" data-pvroom="'+esc(r)+'" aria-pressed="'+(p.room===r&&p.kind===phKind)+'">'+esc(r)+'</button>'; }).join('')+'</div>';
+    h+='<div class="pv-foot"><span>'+(pv.tab==='sort'?(left?left+' left to sort':'All sorted ✓'):'Tap an area to file this photo')+'</span><button type="button" class="btn danger" data-pvdel>Delete photo</button></div></div>';
     pv.el.innerHTML=h;
     // Warm up the next photo so swiping feels instant
     var nx=pv.ids[pv.i+1]; if(nx){ var np=liveOf(j).photos.find(function(q){return q.id===nx;}); if(np){ var pre=new Image(); pre.src=phSrc(j,np,true); } }
@@ -1375,31 +1459,48 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function onSite(a,l){ var m=Math.round((Date.parse(l)-Date.parse(a))/60000); if(!(m>0)) return ''; return Math.floor(m/60)+'h'+(m%60?' '+pad(m%60)+'m':''); }
   function fmtClock(isoStr){ if(!isoStr) return ''; var d=new Date(isoStr), h=d.getHours(), m=d.getMinutes(); return (h%12||12)+':'+pad(m)+(h>=12?'pm':'am'); }
   // Camera / library for one room's after photos, tagged on upload.
-  function roomPhoto(room){
+  function roomPhoto(room,kind){
     var ctx=liveOpen&&{jobId:liveOpen.jobId,pid:liveOpen.pid}; if(!ctx) return;
     var inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.multiple=true; inp.hidden=true; document.body.appendChild(inp);
-    inp.addEventListener('change',function(){ var fl=Array.prototype.slice.call(inp.files||[]); inp.remove(); if(fl.length) uploadPhotos(fl,room,'after',ctx,function(){ if(liveOpen) drawLive(); }); });
+    inp.addEventListener('change',function(){ var fl=Array.prototype.slice.call(inp.files||[]); inp.remove(); if(fl.length) uploadPhotos(fl,room,kind||'after',ctx,function(){ if(liveOpen) drawLive(); }); });
     inp.click();
+  }
+  function areaStrip(j,ps){
+    if(!ps.length) return '';
+    return '<div class="astrip">'+ps.map(function(p){ return '<button type="button" class="thumb" data-aph="'+p.id+'" aria-label="'+(p.kind==='before'?'Before':'After')+' photo"><img loading="lazy" decoding="async" alt="" src="'+phSrc(j,p)+'"></button>'; }).join('')+'</div>';
   }
   function checklistView(j,L,room){
     var items=CHECKLISTS.itemsFor(room,j.service), got=L.items[room]||{}, n=items.filter(function(i){return got[i.id];}).length, st=roomPend[roomKey(j,room)]||(L.rooms[room]&&L.rooms[room].s)||'w';
     var rs=roomsOf(j), nx=rs[rs.indexOf(room)+1];
-    var h='<button type="button" class="clk" data-clback style="margin:0 0 8px">‹ All updates</button><h3>'+esc(room)+' <em>checklist</em></h3>';
-    h+='<p class="sub" style="margin:-6px 0 0">'+esc(CHECKLISTS.name(j.service))+' · '+esc(j.address||j.client||'')+'</p>';
-    h+='<div class="cbar"><i style="width:'+(items.length?Math.round(n/items.length*100):0)+'%"></i></div><p class="sub" style="margin:0 0 4px">'+n+' of '+items.length+' done. Work top to bottom.</p>';
-    if(canEdit&&items.length) h+='<div class="clbulk"><button type="button" class="btn yes" data-clall'+(n===items.length?' disabled':'')+'>Tick all '+items.length+'</button><button type="button" class="btn outline" data-clnone'+(n?'':' disabled')+'>Clear all</button></div><p class="sub" style="margin:4px 0 0">Tick all, then untick anything you didn\'t do. Unticked items don\'t show on the client\'s report.</p>';
-    CHECKLISTS.sectionsFor(room,j.service).forEach(function(sec,si){ var sd=sec.items.filter(function(i){return got[i.id];}).length;
-      h+='<div class="csec"><span>'+esc(sec.title)+'</span><span'+(sd===sec.items.length?' class="ok"':'')+'>'+(canEdit&&sd<sec.items.length?'<button type="button" class="cstick" data-clsec="'+si+'">Tick these</button>':'')+sd+'/'+sec.items.length+'</span></div>';
-      sec.items.forEach(function(i){ var on=!!got[i.id], by=on&&member(got[i.id].by);
-      h+='<label class="citem'+(on?' on':'')+'"><input type="checkbox" data-ci="'+i.id+'"'+(on?' checked':'')+'><span>'+esc(i.t)+(by&&canEdit?' <small style="color:var(--meta);text-decoration:none">· '+esc(by.name.split(' ')[0])+'</small>':'')+'</span></label>'; }); });
-    var aft=L.photos.filter(function(p){return p.room===room&&p.kind==='after';}).length, needPh=!aft&&!canEdit;
-    h+='<div class="lsec"><h4>After photos</h4><button type="button" class="btn '+(aft?'outline':'primary')+'" data-roomph="'+esc(room)+'" style="width:100%;display:flex;align-items:center;justify-content:center">'+(liveBusy?esc(liveBusy):aft?'Add more after photos ('+aft+' taken)':'Take after photos of '+esc(room))+'</button><p class="sub">'+(aft?'They show on the client and agent link straight away.':'At least one after photo is needed before this room can be marked done.')+'</p></div>';
-    h+='<div class="lsec">';
+    var bef=phChrono(L.photos.filter(function(p){return p.room===room&&p.kind==='before';})), aftL=phChrono(L.photos.filter(function(p){return p.room===room&&p.kind==='after';})), aft=aftL.length, needPh=!aft&&!canEdit;
+    var h='<button type="button" class="clk" data-clback style="margin:0 0 8px">‹ All areas</button><h3>'+esc(room)+'</h3>';
+    h+='<p class="sub" style="margin:-6px 0 10px">'+esc(CHECKLISTS.name(j.service))+' · '+esc(j.address||j.client||'')+'</p>';
+    h+='<div class="rseg big">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(room)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</div>';
+    // 1. Before photos
+    h+='<div class="astep"><div class="asth"><span>1</span><b>Before photos</b><em>'+bef.length+'</em></div>'+areaStrip(j,bef)+
+      '<button type="button" class="btn outline" data-roomph="'+esc(room)+'" data-kind="before">'+(liveBusy?esc(liveBusy):bef.length?'+ Add more before photos':'Take before photos')+'</button></div>';
+    // 2. After photos
+    h+='<div class="astep"><div class="asth"><span>2</span><b>After photos</b><em>'+aft+'</em></div>'+areaStrip(j,aftL)+
+      '<button type="button" class="btn '+(aft?'outline':'primary')+'" data-roomph="'+esc(room)+'" data-kind="after">'+(liveBusy?esc(liveBusy):aft?'+ Add more after photos':'Take after photos')+'</button>'+(aft?'':'<p class="sub" style="margin:6px 0 0">At least one after photo is needed before this area can be marked done.</p>')+'</div>';
+    // 3. Checklist
+    h+='<div class="astep"><div class="asth"><span>3</span><b>Checklist</b><em>'+n+'/'+items.length+'</em></div>';
+    if(!items.length) h+='<p class="sub" style="margin:0">No checklist for this area.</p>';
+    else {
+      h+='<div class="cbar"><i style="width:'+Math.round(n/items.length*100)+'%"></i></div>';
+      if(canEdit) h+='<div class="clbulk"><button type="button" class="btn yes" data-clall'+(n===items.length?' disabled':'')+'>Tick all '+items.length+'</button><button type="button" class="btn outline" data-clnone'+(n?'':' disabled')+'>Clear all</button></div><p class="sub" style="margin:4px 0 0">Unticked items don\'t show on the client\'s report.</p>';
+      CHECKLISTS.sectionsFor(room,j.service).forEach(function(sec,si){ var sd=sec.items.filter(function(i){return got[i.id];}).length;
+        h+='<div class="csec"><span>'+esc(sec.title)+'</span><span'+(sd===sec.items.length?' class="ok"':'')+'>'+(canEdit&&sd<sec.items.length?'<button type="button" class="cstick" data-clsec="'+si+'">Tick these</button>':'')+sd+'/'+sec.items.length+'</span></div>';
+        sec.items.forEach(function(i){ var on=!!got[i.id], by=on&&member(got[i.id].by);
+        h+='<label class="citem'+(on?' on':'')+'"><input type="checkbox" data-ci="'+i.id+'"'+(on?' checked':'')+'><span>'+esc(i.t)+(by&&canEdit?' <small style="color:var(--meta);text-decoration:none">· '+esc(by.name.split(' ')[0])+'</small>':'')+'</span></label>'; }); });
+    }
+    h+='</div>';
+    // 4. Done
+    h+='<div class="astep last">';
     if(st==='d') h+='<span class="cs ok">✓ '+esc(room)+' marked done</span>';
     else if(needPh) h+='<button type="button" class="btn outline" disabled style="width:100%">Take an after photo first</button>';
-    else if(n===items.length) h+='<button type="button" class="btn yes" data-room="'+esc(room)+'" data-st="d" style="width:100%">Mark '+esc(room)+' done</button>';
+    else if(!items.length||n===items.length) h+='<button type="button" class="btn yes" data-room="'+esc(room)+'" data-st="d" style="width:100%">Mark '+esc(room)+' done</button>';
     else h+='<button type="button" class="btn outline" data-room="'+esc(room)+'" data-st="d" style="width:100%">Mark done anyway ('+(items.length-n)+' left)</button>';
-    h+='</div><div class="err" id="liveErr" hidden></div><div class="actions">'+(nx?'<button type="button" class="btn primary" data-clnext="'+esc(nx)+'" style="flex:1">Next: '+esc(nx)+' ›</button>':'')+'<button type="button" class="btn outline" data-clback style="flex:1">All updates</button></div>';
+    h+='</div><div class="err" id="liveErr" hidden></div><div class="actions">'+(nx?'<button type="button" class="btn primary" data-clnext="'+esc(nx)+'" style="flex:1">Next: '+esc(nx)+' ›</button>':'')+'<button type="button" class="btn outline" data-clback style="flex:1">All areas</button></div>';
     return h;
   }
   // Add a day (shift) to an existing job: same booking, client link, areas and progress.
@@ -1466,54 +1567,96 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     });
     load();
   }
+  var LIVE_TABS=[['areas','Areas'],['photos','Photos'],['team','Team'],['notes','Notes'],['finish','Finish']];
+  function liveHead(j,L){
+    var dn=dayNo(j), sib=groupOf(j), cv=!!liveOpen.client;
+    var h='<div class="lhead"><div class="lht"><div style="min-width:0"><h3>'+esc(j.address||j.client||'Job')+'</h3><p class="sub" style="margin:-6px 0 0">'+esc([j.suburb,(dn?'Day '+dn.n+' of '+dn.t+', ':'')+fmtDay(parse(j.date))].filter(Boolean).join(' · '))+'</p></div><button type="button" class="lx" data-close aria-label="Close">×</button></div>';
+    if(canEdit&&j.share) h+='<div class="vflip" role="tablist" aria-label="Whose view"><button type="button" role="tab" data-vflip="0" aria-selected="'+!cv+'">Your updates</button><button type="button" role="tab" data-vflip="1" aria-selected="'+cv+'">Client view</button></div>';
+    if(!cv){
+      var rs=roomsOf(j), dn2=rs.filter(function(r){return L.rooms[r]&&L.rooms[r].s==='d';}).length, un=phUnsorted(L).length, arr=Object.keys(L.arrived||{}).length, stf=(j.staff||[]).length;
+      var badge={areas:dn2+'/'+rs.length, photos:un?'<b>'+un+' to file</b>':String(L.photos.length), team:stf?arr+'/'+stf+' in':'', notes:L.flags.length?String(L.flags.length):'', finish:L.done?'✓':''};
+      h+='<div class="ltabs" role="tablist">'+LIVE_TABS.map(function(t){ return '<button type="button" role="tab" data-ltab="'+t[0]+'" aria-selected="'+(liveTab===t[0])+'"'+(t[0]==='finish'&&L.done?' class="ok"':'')+'>'+t[1]+(badge[t[0]]?'<small>'+badge[t[0]]+'</small>':'')+'</button>'; }).join('')+'</div>';
+    }
+    h+='</div>';
+    if(sib.length>1) h+='<div class="kindsw" style="margin:10px 0 0;flex-wrap:wrap">'+sib.map(function(d,i){ return '<button type="button" data-lday="'+d.id+'" aria-pressed="'+(d.id===j.id)+'">Day '+(i+1)+' · '+DOW[parse(d.date).getDay()]+' '+parse(d.date).getDate()+'</button>'; }).join('')+'</div>'+(cv?'':'<p class="sub" style="margin:6px 0 0">Areas, checklists, photos and notes carry across every day. Clock in and off is per day.</p>');
+    return h;
+  }
+  function areaCards(j,L,pid){
+    var h='';
+    roomsOf(j).forEach(function(r){ var rk=roomKey(j,r), pd=roomPend[rk], rer=roomErr[rk], st=pd||(L.rooms[r]&&L.rooms[r].s)||'w', by=!pd&&L.rooms[r]&&member(L.rooms[r].by);
+      var ci=CHECKLISTS.itemsFor(r,j.service), cd=ci.filter(function(i){return L.items[r]&&L.items[r][i.id];}).length;
+      var nb=L.photos.filter(function(p){return p.room===r&&p.kind==='before';}).length, na=L.photos.filter(function(p){return p.room===r&&p.kind==='after';}).length;
+      var asg=(L.assign[r]||[]).filter(function(x){return (j.staff||[]).includes(x);}), mine=pid&&asg.includes(pid)&&!canEdit;
+      var meta=[ci.length?'Checklist '+cd+'/'+ci.length:'', nb+' before', na+' after'].filter(Boolean).join(' · ');
+      var who=pd?'Saving…':by?'Done by '+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at):(!canEdit&&asg.length?(mine?'Yours':'')+(mine&&asg.length>1?' with ':'')+esc(asg.filter(function(x){return !mine||x!==pid;}).map(function(x){var mm=member(x);return mm?mm.name.split(' ')[0]:'';}).filter(Boolean).join(' & ')):'');
+      h+='<div class="acard s-'+st+'"><button type="button" class="ahit" data-cl="'+esc(r)+'"><span class="anm">'+esc(r)+'<i aria-hidden="true">›</i></span><span class="ameta">'+meta+'</span>'+(ci.length?'<span class="abar"><i style="width:'+Math.round(cd/ci.length*100)+'%"></i></span>':'')+(who?'<span class="awho'+(mine?' mine':'')+'">'+who+'</span>':'')+(rer?'<span class="awho err2">Didn\'t save: '+esc(rer)+'. Tap again.</span>':'')+'</button>';
+      h+='<div class="afoot"><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span>';
+      if(canEdit&&(j.staff||[]).length) h+='<span class="asg">'+(j.staff||[]).map(function(x){ var mm=member(x); return mm?'<button type="button" class="chip" data-asg="'+esc(r)+'" data-who="'+x+'" aria-pressed="'+asg.includes(x)+'">'+esc(mm.name.split(' ')[0])+'</button>':''; }).join('')+'</span>';
+      h+='</div></div>'; });
+    return h;
+  }
   function drawLive(){
     var box=document.getElementById('liveBox'); if(!box||!liveOpen) return;
     var j=state.jobs.find(function(x){return x.id===liveOpen.jobId;}); if(!j){ closeSheet(); return; }
-    var L=liveOf(j), pid=liveOpen.pid, ag=agentOf(j.agentId), keep=box.closest('.sheet').scrollTop;
-    if(liveOpen.room){ box.innerHTML=checklistView(j,L,liveOpen.room); if(liveOpen.keepTop) box.closest('.sheet').scrollTop=keep; else { box.closest('.sheet').scrollTop=0; liveOpen.keepTop=1; } return; }
-    var dn=dayNo(j), sib=groupOf(j);
-    var h='<h3>Job <em>updates</em></h3><p class="sub" style="margin:-6px 0 0">'+esc((j.address||j.client)+(j.suburb?', '+j.suburb:''))+' · '+(dn?'Day '+dn.n+' of '+dn.t+', ':'')+fmtDay(parse(j.date))+'</p>';
-    if(sib.length>1) h+='<div class="kindsw" style="margin:10px 0 0;flex-wrap:wrap">'+sib.map(function(d,i){ return '<button type="button" data-lday="'+d.id+'" aria-pressed="'+(d.id===j.id)+'">Day '+(i+1)+' · '+DOW[parse(d.date).getDay()]+' '+parse(d.date).getDate()+'</button>'; }).join('')+'</div><p class="sub" style="margin:6px 0 0">Areas, checklists, photos and notes carry across every day. Clock in and off is per day.</p>';
-    if(canEdit) h+='<button type="button" class="btn outline" data-addshift style="width:100%;margin-top:10px">+ Add another day to this job</button>';
-    if(canEdit) h+='<button type="button" class="ghost" data-recover style="margin:6px 0 0;padding:4px 0">Something missing? Check this job for lost progress</button>';
-    var acc=(state.access||{})[j.group||j.id];
-    if(acc) h+='<div class="lsec" style="background:#FCEFD0;border-radius:8px;padding:12px;border:0"><h4 style="margin-top:0">From the client: access</h4>'+[['Getting in',[acc.entry,acc.entryNote].filter(Boolean).join(', ')],['Parking',acc.parking],['Pets',acc.pets],['Notes',acc.notes]].filter(function(r){return r[1];}).map(function(r){ return '<p class="sub" style="margin:4px 0;color:var(--dark)"><b>'+r[0]+':</b> '+esc(r[1])+'</p>'; }).join('')+'</div>';
-    h+='<p class="sub">'+(j.agentId?'The agent'+(ag&&canEdit?' ('+esc(ag.name)+')':'')+' sees these updates live, plus the photos and notes.':'No agent on this job. Updates still save to the job.')+'</p>';
-    h+='<div class="lsec"><h4>Clock in and off</h4><p class="sub" style="margin:0 0 8px">Your hours come from these taps, so clock off when you leave the house.</p>';
-    (j.staff||[]).forEach(function(id){ var m=member(id); if(!m) return; if(!canEdit && id!==pid) { h+='<div class="lrow"><span class="nm">'+esc(m.name)+'</span><span class="ds">'+(L.left[id]?'Off '+fmtClock(L.left[id]):L.arrived[id]?'In '+fmtClock(L.arrived[id]):'Not yet')+'</span></div>'; return; }
-      var ar=L.arrived[id], lf=L.left[id], ds=!ar?'Not arrived':'In '+fmtClock(ar)+(lf?' · Off '+fmtClock(lf)+(onSite(ar,lf)?' · '+onSite(ar,lf):''):''), bt;
-      if(canEdit && liveOpen.tEdit===id){ var hhmm=function(x){ if(!x) return ''; var d=new Date(x); return pad(d.getHours())+':'+pad(d.getMinutes()); };
-        h+='<div class="lrow" style="display:block"><span class="nm">'+esc(m.name)+'</span><div class="two" style="margin-top:8px"><label class="l">Started<input type="time" id="tin" value="'+esc(hhmm(ar)||shiftOf(j,id).start||'')+'"></label><label class="l">Finished<input type="time" id="tout" value="'+esc(hhmm(lf))+'"></label></div><p class="sub" style="margin:6px 0 8px">Leave Finished blank if they\'re still here.</p><div style="display:flex;gap:6px"><button type="button" class="btn outline" data-tcancel style="flex:1">Cancel</button>'+(ar?'<button type="button" class="btn danger" data-tclear="'+id+'">Clear</button>':'')+'<button type="button" class="btn yes" data-tsave="'+id+'" style="flex:1">Save times</button></div></div>'; return; }
-      if(!ar) bt='<button type="button" class="btn yes" data-arr="'+id+'" style="flex:none">I\'ve arrived</button>';
-      else if(!lf) bt='<span style="display:flex;gap:6px"><button type="button" class="btn danger" data-arr="'+id+'" data-undo="1">Undo</button><button type="button" class="btn yes" data-leave="'+id+'" style="flex:none">Clock off</button></span>';
-      else bt='<button type="button" class="btn danger" data-leave="'+id+'" data-undo="1">Undo clock off</button>';
-      h+='<div class="lrow"><span><span class="nm">'+esc(m.name)+'</span><br><span class="ds">'+ds+'</span>'+(canEdit?'<br><button type="button" class="clk" data-tedit="'+id+'">Type in times ›</button>':'')+'</span>'+bt+'</div>'; });
-    h+='</div><div class="lsec"><h4>Areas'+(canEdit?'<button type="button" class="ed" data-editareas>Add or remove areas</button>':'')+'</h4>'+(canEdit&&(j.staff||[]).length?'<p class="sub" style="margin:0 0 8px">Tap names to assign each area. When you tick an area off, it\'s credited to whoever it\'s assigned to.</p>':'');
-    roomsOf(j).forEach(function(r){ var rk=roomKey(j,r), pd=roomPend[rk], rer=roomErr[rk], st=pd||(L.rooms[r]&&L.rooms[r].s)||'w', by=!pd&&L.rooms[r]&&member(L.rooms[r].by);
-      var ci=CHECKLISTS.itemsFor(r,j.service), cd=ci.filter(function(i){return L.items[r]&&L.items[r][i.id];}).length;
-      var asg=(L.assign[r]||[]).filter(function(x){return (j.staff||[]).includes(x);}), mine=pid&&asg.includes(pid)&&!canEdit;
-      var who=canEdit&&(j.staff||[]).length?'<span class="asg">'+(j.staff||[]).map(function(x){ var mm=member(x); return mm?'<button type="button" class="chip" data-asg="'+esc(r)+'" data-who="'+x+'" aria-pressed="'+asg.includes(x)+'">'+esc(mm.name.split(' ')[0])+'</button>':''; }).join('')+'</span>'
-        :asg.length?'<br><span class="ds"'+(mine?' style="color:var(--terracotta-dark);font-weight:600"':'')+'>'+(mine?'Yours':'')+(mine&&asg.length>1?' with ':'')+esc(asg.filter(function(x){return !mine||x!==pid;}).map(function(x){var mm=member(x);return mm?mm.name.split(' ')[0]:'';}).filter(Boolean).join(' & '))+'</span>':'';
-      h+='<div class="lrow'+(canEdit?' wrap':'')+'"><span><span class="nm">'+esc(r)+'</span>'+(canEdit?'':who)+(pd?'<br><span class="ds">Saving…</span>':by?'<br><span class="ds">'+esc(by.name.split(' ')[0])+' · '+fmtClock(L.rooms[r].at)+'</span>':'')+(rer?'<br><span class="ds" style="color:var(--terracotta-dark);font-weight:600">Didn\'t save: '+esc(rer)+'. Tap again.</span>':'')+(ci.length?'<br><button type="button" class="clk'+(cd===ci.length?' ok':'')+'" data-cl="'+esc(r)+'">Checklist '+cd+'/'+ci.length+' ›</button>':'')+'</span><span class="rseg">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(r)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</span>'+(canEdit?who:'')+'</div>'; });
-    if(canEdit){ var tot=0, tk=0; roomsOf(j).forEach(function(r){ var ii=CHECKLISTS.itemsFor(r,j.service); tot+=ii.length; tk+=ii.filter(function(i){return L.items[r]&&L.items[r][i.id];}).length; });
-      if(tot&&tk<tot) h+='<button type="button" class="btn outline" data-clevery style="width:100%;margin-top:10px">Tick every checklist ('+tk+'/'+tot+' done)</button><p class="sub" style="margin:4px 0 0">Then open an area and untick what you didn\'t do.</p>'; }
-    h+='</div>'+photoSec(j,L)+tourSec(j,L);
-    h+='<div class="lsec"><h4>Notes for the agent</h4><p class="sub" style="margin:0 0 8px">Anything they should know before photos or buyers: damage, mould, broken fittings, stains that won\'t shift.</p>';
-    L.flags.forEach(function(f){ h+='<div class="flagi"><span><b>'+esc(f.t)+'</b>'+esc(f.d)+'</span><button type="button" class="btn danger" data-unflag="'+f.id+'" style="min-height:0">Remove</button></div>'; });
-    h+='<input id="fl_t" placeholder="Short title, e.g. Oven seal cracked" style="width:100%;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px;margin-top:4px"><textarea id="fl_d" placeholder="Details (optional)" style="width:100%;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px;margin-top:8px;min-height:64px"></textarea><button type="button" class="btn outline" data-addflag style="margin-top:8px;width:100%">Add note</button>';
-    h+='</div><div class="lsec"><h4>Running low on supplies?</h4><p class="sub" style="margin:0 0 8px">Only Jack sees these. They go on the restock list.</p>';
-    L.supplies.forEach(function(x){ h+='<div class="flagi"><span><b>'+esc(x.t)+'</b>'+esc((member(x.by)||{name:''}).name.split(' ')[0])+'</span><button type="button" class="btn danger" data-unsup="'+x.id+'" style="min-height:0">Remove</button></div>'; });
-    h+='<div style="display:flex;gap:8px"><input id="sup_t" placeholder="e.g. Glass cleaner, microfibre cloths" style="flex:1;min-width:0;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px"><button type="button" class="btn outline" data-addsup style="flex:none">Add</button></div>';
-    h+='</div><div class="lsec"><h4>Lock-up</h4>';
-    Object.keys(LOCK).forEach(function(k){ h+='<label class="tick"><input type="checkbox" data-lock="'+k+'"'+(L.lock[k]?' checked':'')+'>'+esc(LOCK[k])+'</label>'; });
-    h+='</div>';
-    if(canEdit) h+='<div class="lsec"><h4>Finish time the agent sees</h4><div class="two"><label class="l" for="eta">Estimated finish<input id="eta" type="time" value="'+esc(L.eta||j.end||'')+'"></label><button type="button" class="btn outline" data-eta style="align-self:end">Update</button></div></div>';
-    if(pid && L.arrived[pid] && !L.left[pid] && L.done) h+='<div class="lsec"><button type="button" class="btn yes" data-leave="'+pid+'" style="width:100%">Clock off now</button><p class="sub">The job is marked ready. Clock off as you leave so your hours are logged.</p></div>';
-    h+='<div class="lsec">'+(L.done?'<span class="cs ok">✓ Marked ready '+fmtClock(L.done)+'</span> <button type="button" class="btn danger" data-finish="undo">Undo</button>':'<button type="button" class="btn yes" data-finish="1" style="width:100%">Job finished: mark ready for the agent</button><p class="sub">Check every room is done, afters are taken and the house is locked up first.</p>')+'</div>';
-    h+='<div class="err" id="liveErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Close</button></div>';
+    var L=liveOf(j), pid=liveOpen.pid, ag=agentOf(j.agentId), sheet=box.closest('.sheet'), keep=sheet.scrollTop;
+    if(liveOpen.client&&!(canEdit&&j.share)) liveOpen.client=false;
+    sheet.classList.toggle('cv',!!liveOpen.client);
+    // Client view: the real client link, framed. Background refreshes don't reload it; Refresh does.
+    if(liveOpen.client){
+      if(box.dataset.cv===j.id) return;
+      var url='/v/'+j.share;
+      box.innerHTML=liveHead(j,L)+'<div class="cvbar"><span>Exactly what '+esc((j.client||'the client').split(' ')[0])+' sees</span><button type="button" data-cvre>Refresh</button><button type="button" data-cvcopy>Copy link</button><a href="'+url+'" target="_blank" rel="noopener">Full screen</a></div><div class="cvwrap"><iframe src="'+url+'?hub='+Date.now()+'" title="Client view"></iframe></div><p class="sub cvnote">Your own visits don\'t count in their engagement.</p>';
+      box.dataset.cv=j.id; return;
+    }
+    delete box.dataset.cv;
+    if(liveOpen.room){ box.innerHTML=checklistView(j,L,liveOpen.room); if(liveOpen.keepTop) sheet.scrollTop=keep; else { sheet.scrollTop=0; liveOpen.keepTop=1; } return; }
     var ft=document.getElementById('fl_t'), fdd=document.getElementById('fl_d'), kv={t:ft?ft.value:'',d:fdd?fdd.value:''};
-    box.innerHTML=h; box.closest('.sheet').scrollTop=keep;
-    if(kv.t) document.getElementById('fl_t').value=kv.t; if(kv.d) document.getElementById('fl_d').value=kv.d;
+    var h=liveHead(j,L), t=liveTab;
+    if(t==='areas'){
+      h+='<div class="lhow">Tap an area to open it: <b>before photos, checklist, after photos</b>, all in one place.'+(canEdit&&(j.staff||[]).length?' Tap names to assign an area.':'')+'</div>';
+      h+='<div class="acards">'+areaCards(j,L,pid)+'</div>';
+      if(canEdit){ var tot=0, tk=0; roomsOf(j).forEach(function(r){ var ii=CHECKLISTS.itemsFor(r,j.service); tot+=ii.length; tk+=ii.filter(function(i){return L.items[r]&&L.items[r][i.id];}).length; });
+        if(tot&&tk<tot) h+='<button type="button" class="btn outline" data-clevery style="width:100%;margin-top:12px">Tick every checklist ('+tk+'/'+tot+' done)</button><p class="sub" style="margin:4px 0 0">Then open an area and untick what you didn\'t do.</p>';
+        h+='<button type="button" class="btn outline" data-editareas style="width:100%;margin-top:10px">+ Add or remove areas</button>'; }
+    }
+    else if(t==='photos') h+=photoSec(j,L)+tourSec(j,L);
+    else if(t==='team'){
+      var acc=(state.access||{})[j.group||j.id];
+      if(acc) h+='<div class="lsec" style="background:#FCEFD0;border-radius:8px;padding:12px;border:0"><h4 style="margin-top:0">From the client: access</h4>'+[['Getting in',[acc.entry,acc.entryNote].filter(Boolean).join(', ')],['Parking',acc.parking],['Pets',acc.pets],['Notes',acc.notes]].filter(function(r){return r[1];}).map(function(r){ return '<p class="sub" style="margin:4px 0;color:var(--dark)"><b>'+r[0]+':</b> '+esc(r[1])+'</p>'; }).join('')+'</div>';
+      h+='<div class="lsec"><h4>Clock in and off</h4><p class="sub" style="margin:0 0 8px">Hours come from these taps, so clock off when you leave the house.</p>';
+      (j.staff||[]).forEach(function(id){ var m=member(id); if(!m) return; if(!canEdit && id!==pid) { h+='<div class="lrow"><span class="nm">'+esc(m.name)+'</span><span class="ds">'+(L.left[id]?'Off '+fmtClock(L.left[id]):L.arrived[id]?'In '+fmtClock(L.arrived[id]):'Not yet')+'</span></div>'; return; }
+        var ar=L.arrived[id], lf=L.left[id], ds=!ar?'Not arrived':'In '+fmtClock(ar)+(lf?' · Off '+fmtClock(lf)+(onSite(ar,lf)?' · '+onSite(ar,lf):''):''), bt;
+        if(canEdit && liveOpen.tEdit===id){ var hhmm=function(x){ if(!x) return ''; var d=new Date(x); return pad(d.getHours())+':'+pad(d.getMinutes()); };
+          h+='<div class="lrow" style="display:block"><span class="nm">'+esc(m.name)+'</span><div class="two" style="margin-top:8px"><label class="l">Started<input type="time" id="tin" value="'+esc(hhmm(ar)||shiftOf(j,id).start||'')+'"></label><label class="l">Finished<input type="time" id="tout" value="'+esc(hhmm(lf))+'"></label></div><p class="sub" style="margin:6px 0 8px">Leave Finished blank if they\'re still here.</p><div style="display:flex;gap:6px"><button type="button" class="btn outline" data-tcancel style="flex:1">Cancel</button>'+(ar?'<button type="button" class="btn danger" data-tclear="'+id+'">Clear</button>':'')+'<button type="button" class="btn yes" data-tsave="'+id+'" style="flex:1">Save times</button></div></div>'; return; }
+        if(!ar) bt='<button type="button" class="btn yes" data-arr="'+id+'" style="flex:none">I\'ve arrived</button>';
+        else if(!lf) bt='<span style="display:flex;gap:6px"><button type="button" class="btn danger" data-arr="'+id+'" data-undo="1">Undo</button><button type="button" class="btn yes" data-leave="'+id+'" style="flex:none">Clock off</button></span>';
+        else bt='<button type="button" class="btn danger" data-leave="'+id+'" data-undo="1">Undo clock off</button>';
+        h+='<div class="lrow"><span><span class="nm">'+esc(m.name)+'</span><br><span class="ds">'+ds+'</span>'+(canEdit?'<br><button type="button" class="clk" data-tedit="'+id+'">Type in times ›</button>':'')+'</span>'+bt+'</div>'; });
+      if(!(j.staff||[]).length) h+='<p class="sub">No one is on this day yet.</p>';
+      h+='</div>';
+      if(canEdit) h+='<div class="lsec"><h4>Days</h4><button type="button" class="btn outline" data-addshift style="width:100%">+ Add another day to this job</button><button type="button" class="ghost" data-recover style="margin:8px 0 0;padding:4px 0">Something missing? Check this job for lost progress</button></div>';
+    }
+    else if(t==='notes'){
+      h+='<div class="lsec"><h4>Notes for the agent</h4><p class="sub" style="margin:0 0 8px">'+(j.agentId?'The agent'+(ag&&canEdit?' ('+esc(ag.name)+')':'')+' sees these. ':'')+'Anything they should know before photos or buyers: damage, mould, broken fittings, stains that won\'t shift.</p>';
+      L.flags.forEach(function(f){ h+='<div class="flagi"><span><b>'+esc(f.t)+'</b>'+esc(f.d)+'</span><button type="button" class="btn danger" data-unflag="'+f.id+'" style="min-height:0">Remove</button></div>'; });
+      h+='<input id="fl_t" placeholder="Short title, e.g. Oven seal cracked" style="width:100%;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px;margin-top:4px"><textarea id="fl_d" placeholder="Details (optional)" style="width:100%;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px;margin-top:8px;min-height:64px"></textarea><button type="button" class="btn outline" data-addflag style="margin-top:8px;width:100%">Add note</button>';
+      h+='</div><div class="lsec"><h4>Running low on supplies?</h4><p class="sub" style="margin:0 0 8px">Only Jack sees these. They go on the restock list.</p>';
+      L.supplies.forEach(function(x){ h+='<div class="flagi"><span><b>'+esc(x.t)+'</b>'+esc((member(x.by)||{name:''}).name.split(' ')[0])+'</span><button type="button" class="btn danger" data-unsup="'+x.id+'" style="min-height:0">Remove</button></div>'; });
+      h+='<div style="display:flex;gap:8px"><input id="sup_t" placeholder="e.g. Glass cleaner, microfibre cloths" style="flex:1;min-width:0;font:400 16px var(--sans);border:1px solid #CFC5BA;border-radius:6px;padding:11px"><button type="button" class="btn outline" data-addsup style="flex:none">Add</button></div></div>';
+    }
+    else { // finish
+      var rs3=roomsOf(j), left3=rs3.filter(function(r){return !(L.rooms[r]&&L.rooms[r].s==='d');});
+      if(!L.done&&left3.length) h+='<div class="lhow warnish">'+left3.length+' area'+(left3.length>1?'s':'')+' not marked done: '+esc(left3.join(', '))+'.</div>';
+      h+='<div class="lsec"><h4>Lock-up</h4>';
+      Object.keys(LOCK).forEach(function(k){ h+='<label class="tick"><input type="checkbox" data-lock="'+k+'"'+(L.lock[k]?' checked':'')+'>'+esc(LOCK[k])+'</label>'; });
+      h+='</div>';
+      if(canEdit) h+='<div class="lsec"><h4>Finish time the agent sees</h4><div class="two"><label class="l" for="eta">Estimated finish<input id="eta" type="time" value="'+esc(L.eta||j.end||'')+'"></label><button type="button" class="btn outline" data-eta style="align-self:end">Update</button></div></div>';
+      if(pid && L.arrived[pid] && !L.left[pid] && L.done) h+='<div class="lsec"><button type="button" class="btn yes" data-leave="'+pid+'" style="width:100%">Clock off now</button><p class="sub">The job is marked ready. Clock off as you leave so your hours are logged.</p></div>';
+      h+='<div class="lsec">'+(L.done?'<span class="cs ok">✓ Marked ready '+fmtClock(L.done)+'</span> <button type="button" class="btn danger" data-finish="undo">Undo</button>':'<button type="button" class="btn yes" data-finish="1" style="width:100%">Job finished: mark ready'+(j.agentId?' for the agent':'')+'</button><p class="sub">Check every area is done, afters are taken and the house is locked up first.</p>')+'</div>';
+    }
+    h+='<div class="err" id="liveErr" hidden></div>';
+    box.innerHTML=h; sheet.scrollTop=liveOpen.tabTop?0:keep; liveOpen.tabTop=0;
+    if(kv.t&&document.getElementById('fl_t')) document.getElementById('fl_t').value=kv.t; if(kv.d&&document.getElementById('fl_d')) document.getElementById('fl_d').value=kv.d;
   }
   function livePost(body, btn, ctx){
     ctx=ctx||liveOpen; if(!ctx) return Promise.resolve();
@@ -1542,6 +1685,11 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function liveClick(e){
     var b=e.target.closest('button'); if(!b||!liveOpen) return;
     if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
+    if(b.dataset.vflip!=null){ liveOpen.client=b.dataset.vflip==='1'; liveOpen.room=null; liveOpen.tabTop=1; drawLive(); return; }
+    if(b.dataset.ltab){ liveTab=b.dataset.ltab; liveOpen.tabTop=1; phSel={}; drawLive(); return; }
+    if(b.hasAttribute('data-cvre')){ var fr=document.querySelector('.cvwrap iframe'); if(fr) fr.src=fr.src.replace(/hub=\d+/,'hub='+Date.now()); return; }
+    if(b.hasAttribute('data-cvcopy')){ var cj0=state.jobs.find(function(x){return x.id===liveOpen.jobId;}); if(cj0&&cj0.share) copyText(location.origin+'/v/'+cj0.share); return; }
+    if(b.dataset.aph){ var aj0=state.jobs.find(function(x){return x.id===liveOpen.jobId;}), ap=liveOf(aj0).photos.find(function(p){return p.id===b.dataset.aph;}); if(ap){ var only=phChrono(liveOf(aj0).photos.filter(function(p){return p.room===ap.room&&p.kind===ap.kind;})); pvOpen(aj0,ap.id,only); } return; }
     if(b.closest('#phsec') && phClick(b)) return;
     if(b.closest('#tvsec') && tvClick(b)) return;
     if(b.dataset.lday){ liveOpen.jobId=b.dataset.lday; liveOpen.tEdit=null; liveOpen.room=null; drawLive(); return; }
@@ -1569,7 +1717,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(b.dataset.room){ roomSet(b.dataset.room,b.dataset.st); return; }
     if(b.dataset.unsup){ livePost({action:'unsupply',id:b.dataset.unsup},b); return; }
     if(b.hasAttribute('data-addsup')){ var sv=document.getElementById('sup_t').value.trim(); if(!sv){ toast('Say what\'s running low'); return; } livePost({action:'supply',title:sv},b).then(function(){ toast('Added to the restock list'); }); return; }
-    if(b.hasAttribute('data-roomph')){ roomPhoto(b.dataset.roomph); return; }
+    if(b.hasAttribute('data-roomph')){ roomPhoto(b.dataset.roomph, b.dataset.kind); return; }
     if(b.dataset.unflag){ livePost({action:'unflag',id:b.dataset.unflag},b); return; }
     if(b.hasAttribute('data-addflag')){ var t=document.getElementById('fl_t').value.trim(); if(!t){ toast('Add a short title'); return; } livePost({action:'flag',title:t,detail:document.getElementById('fl_d').value},b).then(function(){ var x=document.getElementById('fl_t'),y=document.getElementById('fl_d'); if(x) x.value=''; if(y) y.value=''; }); return; }
     if(b.hasAttribute('data-eta')){ livePost({action:'eta',time:document.getElementById('eta').value},b).then(function(){toast('Finish time updated');}); return; }
@@ -1851,22 +1999,22 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var h='<section class="qc"><div class="qtop"><div><h2>'+esc(j.address||j.client||'Job')+'</h2><div class="qmeta">'+esc([j.address&&j.suburb?j.suburb:(j.suburb||''), range(tm.start,tm.end), j.service].filter(Boolean).join(' · '))+'</div>';
     if(canEdit) h+='<div class="qmeta">'+esc(j.client||'')+(ag?' · Agent: '+esc(ag.name):'')+(j.readyBy?' · Ready for '+esc(j.readyBy):'')+'</div>';
     h+='</div>'+(sum?'<span class="lv '+sum.c+'">'+esc(sum.t.split(' · ')[0])+'</span>':'')+'</div>';
-    h+='<div class="qprog"><span class="pb'+(L.done?' ok':'')+'"><i style="width:'+(L.done?100:Math.round(done/rs.length*100))+'%"></i></span>'+done+' of '+rs.length+' rooms'+(uN?' · '+uN+' photo'+(uN>1?'s':'')+' to sort':'')+'</div>';
+    h+='<div class="qprog"><span class="pb'+(L.done?' ok':'')+'"><i style="width:'+(L.done?100:Math.round(done/rs.length*100))+'%"></i></span>'+done+' of '+rs.length+' areas'+(uN?' · '+uN+' photo'+(uN>1?'s':'')+' to file':'')+'</div>';
     var ctx=' data-j="'+j.id+'" data-p="'+esc(pid||'')+'"';
     h+='<div class="qa">';
     h+='<button type="button" class="cam" data-qa="before"'+ctx+'>'+IC.cam+'Before<small>'+bN+' taken</small></button>';
     h+='<button type="button" class="cam" data-qa="after"'+ctx+'>'+IC.cam+'After<small>'+aN+' taken</small></button>';
-    h+='<button type="button" data-qa="rooms"'+ctx+'>'+IC.rooms+'Rooms<small>'+done+'/'+rs.length+' done</small></button>';
+    h+='<button type="button" data-qa="rooms"'+ctx+'>'+IC.rooms+'Areas<small>'+done+'/'+rs.length+' done</small></button>';
     var mineLeft = pid ? L.left[pid] : null;
     if(pid && !mineArr) h+='<button type="button" data-qa="arrive"'+ctx+'>'+IC.pin+'I\'ve arrived</button>';
     else if(pid && !mineLeft) h+='<button type="button" data-qa="leave"'+ctx+'>'+IC.pin+'Clock off<small>In since '+fmtClock(mineArr)+'</small></button>';
     else if(pid) h+='<button type="button" class="done" data-qa="arrive"'+ctx+'>'+IC.check+'Clocked off<small>'+fmtClock(mineLeft)+(onSite(mineArr,mineLeft)?' · '+onSite(mineArr,mineLeft):'')+'</small></button>';
-    else h+='<button type="button" class="'+(arrN&&arrN>=staffN?'done':'')+'" data-qa="rooms"'+ctx+'>'+(arrN?IC.check:IC.pin)+'On site<small>'+arrN+' of '+staffN+' in'+(Object.keys(L.left||{}).length?' · '+Object.keys(L.left).length+' off':'')+'</small></button>';
+    else h+='<button type="button" class="'+(arrN&&arrN>=staffN?'done':'')+'" data-qa="onsite"'+ctx+'>'+(arrN?IC.check:IC.pin)+'On site<small>'+arrN+' of '+staffN+' in'+(Object.keys(L.left||{}).length?' · '+Object.keys(L.left).length+' off':'')+'</small></button>';
     h+='<button type="button" data-qa="note"'+ctx+'>'+IC.flag+'Note for agent<small>'+(L.flags.length?L.flags.length+' added':'Damage, marks')+'</small></button>';
     h+='<button type="button" class="'+(L.done?'done':'')+'" data-qa="finish"'+ctx+'>'+(L.done?IC.check:IC.tick)+(L.done?'Ready<small>'+fmtClock(L.done)+'</small>':'Lock-up &amp; finish')+'</button>';
     h+='</div>';
     if(canEdit && L.done && !isRegular(j) && groupOf(j).slice(-1)[0]===j) h+=nextSteps(j);
-    h+='<div class="qlinks"><button type="button" data-live="'+j.id+'" data-p="'+esc(pid||'')+'">All updates</button>'+(canEdit?'<button type="button" data-edit="'+j.id+'">Edit job</button>':'')+(canEdit&&j.share?'<button type="button" data-vcopy="'+esc(j.share)+'">Client link</button>':'')+(canEdit&&clientMob(j)?'<a href="'+textClientHref(j)+'">Text client</a>':'')+(canEdit&&isRegular(j)&&j.date<=iso(today)?'<button type="button" data-jinv="'+j.id+'">'+(invOf(j)?'Invoice #'+esc(invOf(j).num):'Invoice now')+'</button>':'')+'</div></section>';
+    h+='<div class="qlinks"><button type="button" data-live="'+j.id+'" data-p="'+esc(pid||'')+'">All updates</button>'+(canEdit?'<button type="button" data-edit="'+j.id+'">Edit job</button>':'')+(canEdit&&j.share?'<button type="button" data-cview="'+j.id+'">Client view</button>':'')+(canEdit&&clientMob(j)?'<a href="'+textClientHref(j)+'">Text client</a>':'')+(canEdit&&isRegular(j)&&j.date<=iso(today)?'<button type="button" data-jinv="'+j.id+'">'+(invOf(j)?'Invoice #'+esc(invOf(j).num):'Invoice now')+'</button>':'')+'</div></section>';
     return h;
   }
   function miniList(list){
@@ -2649,9 +2797,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function photoSheet(jobId, pid, kind){
     var j=state.jobs.find(function(x){return x.id===jobId;}); if(!j) return; var L=liveOf(j);
     function draw(){
-      var h='<h3><em>'+(kind==='before'?'Before':'After')+'</em> photo</h3><div class="kindsw"><button type="button" data-k="before" aria-pressed="'+(kind==='before')+'">Before</button><button type="button" data-k="after" aria-pressed="'+(kind==='after')+'">After</button></div><p class="sub" style="margin:0 0 10px">Tap the room. The camera opens.</p><div class="rgrid">';
+      var h='<h3><em>'+(kind==='before'?'Before':'After')+'</em> photo</h3><div class="kindsw"><button type="button" data-k="before" aria-pressed="'+(kind==='before')+'">Before</button><button type="button" data-k="after" aria-pressed="'+(kind==='after')+'">After</button></div><p class="sub" style="margin:0 0 10px">Tap the area. The camera opens.</p><div class="rgrid">';
       roomsOf(j).forEach(function(r,i){ var n=L.photos.filter(function(p){return p.room===r&&p.kind===kind;}).length; h+='<label for="cam'+i+'" class="'+(n?'has':'')+'">'+esc(r)+(n?'<small>'+n+' taken</small>':'')+'</label><input id="cam'+i+'" type="file" accept="image/*" capture="environment" data-room="'+esc(r)+'" hidden>'; });
-      h+='</div><div class="lsec"><h4>Lots from your photo library</h4><p class="sub" style="margin:0 0 8px">Upload them all now and sort them into rooms after.</p><label class="btn outline" for="libFile" style="display:flex;align-items:center;justify-content:center;cursor:pointer">Choose photos</label><input id="libFile" type="file" accept="image/*" multiple hidden></div>';
+      h+='</div><div class="lsec"><h4>Lots from your photo library</h4><p class="sub" style="margin:0 0 8px">Upload them all now and file them to areas after.</p><label class="btn outline" for="libFile" style="display:flex;align-items:center;justify-content:center;cursor:pointer">Choose photos</label><input id="libFile" type="file" accept="image/*" multiple hidden></div>';
       h+='<div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Done</button></div>';
       s.querySelector('.sheet').innerHTML=h;
       s.querySelector('[data-close]').onclick=closeSheet;
@@ -2663,7 +2811,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       var t=e.target; if(!t.files||!t.files.length) return;
       var files=Array.prototype.slice.call(t.files);
       closeSheet();
-      if(t.id==='libFile'){ phTab='sort'; phSel={}; liveSheet(jobId,pid); uploadPhotos(files,'',''); setTimeout(function(){ var p=document.getElementById('phsec'); if(p) p.scrollIntoView({block:'start'}); },80); return; }
+      if(t.id==='libFile'){ phTab='sort'; phSel={}; liveSheet(jobId,pid,{tab:'photos'}); uploadPhotos(files,'',''); setTimeout(function(){ var p=document.getElementById('phsec'); if(p) p.scrollIntoView({block:'start'}); },80); return; }
       uploadPhotos(files, t.dataset.room, kind, {jobId:jobId,pid:pid});
     });
   }
@@ -2787,13 +2935,14 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       else if(q==='note') noteSheet(jid,qp);
       else if(q==='leave'){ livePost({action:'leave',who:qp},qa,{jobId:jid,pid:qp}).then(function(){ toast('Clocked off. Thanks!'); }); }
       else if(q==='arrive'){ var L0=liveOf(state.jobs.find(function(x){return x.id===jid;})); if(L0.arrived[qp]) liveSheet(jid,qp); else livePost({action:'arrive',who:qp},qa,{jobId:jid,pid:qp}).then(function(){ toast('Arrival sent'); }); }
-      else { liveSheet(jid,qp); if(q==='finish') setTimeout(function(){ var sh=document.querySelector('.sheet'); if(sh) sh.scrollTop=sh.scrollHeight; },60); }
+      else liveSheet(jid,qp,{tab:q==='finish'?'finish':q==='onsite'?'team':'areas'});
       return; }
     var wn=e.target.closest('[data-wnav]'); if(wn){ wageOff = wn.dataset.wnav==='0'?0:wageOff+(+wn.dataset.wnav); render(); return; }
     var cl=e.target.closest('[data-copylink2]'); if(cl){ copyText(cl.dataset.copylink2); return; }
     var vc=e.target.closest('[data-vcopy]'); if(vc){ copyText(location.origin+'/v/'+vc.dataset.vcopy); return; }
     var bi=e.target.closest('[data-balinv]'); if(bi){ balanceInvoice(bi.dataset.balinv,bi); return; }
     var jv=e.target.closest('[data-jinv]'); if(jv){ var jx=state.jobs.find(function(q){return q.id===jv.dataset.jinv;}), ix=jx&&invOf(jx); if(ix){ location.href='/money/#/doc/'+ix.id+'/preview'; return; } invoiceSheet(jv.dataset.jinv); return; }
+    var cvw=e.target.closest('[data-cview]'); if(cvw){ liveSheet(cvw.dataset.cview,'',{client:true}); return; }
     var lv=e.target.closest('[data-live]'); if(lv){ liveSheet(lv.dataset.live, lv.dataset.p||''); return; }
     var rq=e.target.closest('[data-req]'); if(rq){ var r=(state.requests||[]).find(function(x){return x.id===rq.dataset.req;}); if(r){ pendingReq=r.id; jobSheet(null, {client:'',suburb:r.suburb,address:r.address,date:r.readyDate,start:'08:00',end:'16:00',service:SERVICES.indexOf(r.service)>=0?r.service:'Pre-sale clean',staff:[],agentId:r.agentId,readyBy:r.readyFor+' '+fmtDay(parse(r.readyDate)),notes:[r.beds?r.beds+' bed':'',r.baths?r.baths+' bath':'','Access: '+r.access,'Invoice: '+r.invoice,r.notes].filter(Boolean).join('. ')}); } return; }
     var rx=e.target.closest('[data-reqx]'); if(rx){ if(!rx.dataset.sure){ rx.dataset.sure='1'; rx.textContent='Tap again'; return; } api('/api/agent',{method:'POST',body:{action:'dismiss',id:rx.dataset.reqx}}).then(refresh).then(function(){toast('Request dismissed');}).catch(function(er){toast(er.message);}); return; }
