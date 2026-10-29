@@ -83,6 +83,7 @@ p{margin:0}
 .gt{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:14px;text-decoration:none;color:var(--dark);font-weight:600;font-size:15px;display:flex;flex-direction:column;gap:3px;min-height:64px}
 .gt span{font-size:12px;font-weight:400;color:var(--body)}
 .ph{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ph .pq{position:relative;display:block}.ph .pq img{opacity:.55}.ph .pq::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;animation:pqspin .8s linear infinite}@keyframes pqspin{to{transform:rotate(360deg)}}
 .ph img,.ph .add{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;background:var(--cream);display:block}
 .ph .add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:0;font:500 12px var(--sans);color:var(--dark);cursor:pointer}
 .std{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:14px;background:var(--cd);display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;color:var(--body);padding:10px}
@@ -156,6 +157,7 @@ body.tour #app{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 <div class="tmbar hide" id="tmbar" role="region" aria-label="Running timers"><div class="in"></div></div>
 <nav class="nav hide" id="nav" aria-label="Main"><div class="in"></div></nav>
 <script src="/lib/checklists.js"></script>
+<script src="/lib/phq.js"></script>
 <script src="/lib/tkart.js"></script>
 <script src="/lib/bcart.js"></script>
 <script type="module">
@@ -417,10 +419,11 @@ function renderRoom(id, room){
   var lm=g?mapHtml(g):''; if(lm) h+='<details class="card lc"'+(st.n>=st.total&&!st.done?' open':'')+'><summary><span class="lbl b">Last check · easy to miss</span><span class="sub">'+g.spots.length+' spots</span></summary>'+lm+'</details>';
   h+='<div class="card" style="display:flex;flex-direction:column;gap:12px;'+(st.photos.length?'':'border:1.5px dashed var(--tcd)')+'"><div class="between"><p class="lbl b">After photos</p><p class="sub">'+(st.photos.length?st.photos.length+' taken':'At least 1 needed')+'</p></div><div class="ph">';
   st.photos.slice(-5).forEach(function(p){ h+='<a href="'+photoSrc(j,p,true)+'" target="_blank" rel="noopener"><img src="'+photoSrc(j,p)+'" alt="'+esc(room)+' after photo" loading="lazy"></a>'; });
-  h+='<button class="add" data-photo'+(busy.photo?' disabled':'')+'>'+I.cam+(busy.photo?esc(busy.photo):'Take photo')+'</button></div><p class="sub">Doorway shot of the whole room first, then the detail. Nothing personal in shot. They go on the job report.</p></div>';
+  pqOf(j,room).forEach(function(m){ h+='<span class="pq" aria-label="Uploading">'+(m.url?'<img src="'+m.url+'" alt="">':'<img alt="">')+'</span>'; });
+  h+='<button class="add" data-photo>'+I.cam+'Take photo</button></div><p class="sub">Doorway shot of the whole room first, then the detail. Nothing personal in shot. They go on the job report.</p></div>';
   if(FLAG) h+=flagForm(); else h+='<button class="btn o" data-flagopen>'+I.flag+'Flag something</button><p class="sub" style="text-align:center;margin-top:-6px">Damage, something you can\'t get clean, extra work, or low on supplies</p>';
   if(!st.done){
-    if(!st.photos.length) h+='<button class="btn big" disabled>Take an after photo to finish</button>';
+    if(!st.photos.length&&!pqOf(j,room).length) h+='<button class="btn big" disabled>Take an after photo to finish</button>';
     else h+='<button class="btn p big" data-roomdone'+(busy.room?' disabled':'')+'>'+(st.n<st.total?'Finish '+esc(room)+' · '+(st.total-st.n)+' steps not ticked':'Finish '+esc(room))+'</button>';
   }
   if(st.done) h+=nx?'<a class="btn p big" href="#/room/'+j.id+'/'+encodeURIComponent(nx)+'">Next: '+esc(nx)+'</a>':'<a class="btn p big" href="#/wrap/'+j.id+'">All your rooms done · wrap up</a>';
@@ -866,16 +869,24 @@ function shrink(file,max,thumb){
 }
 function pick(multi,cb){ var inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; if(multi) inp.multiple=true; inp.hidden=true; document.body.appendChild(inp);
   inp.addEventListener('change',function(){ var fl=Array.prototype.slice.call(inp.files||[]); inp.remove(); if(fl.length) cb(fl); }); inp.click(); }
+// Photos queue in the background (lib/phq.js): saved on the phone first, then uploaded while
+// you keep working. Switching to the camera or another app just pauses it until you're back.
+function pqOf(j,room){ return window.BCPhotoQ?BCPhotoQ.pending(j.id,room,'after'):[]; }
 function roomPhotos(j,room,files){
-  var hd={}; if(key()) hd['x-admin-key']=key();
-  var q='/api/photo?job='+encodeURIComponent(j.id)+'&person='+encodeURIComponent(PID), ids=[], i=0;
-  function one(){ if(i>=files.length) return Promise.resolve();
-    var f=files[i++]; busy.photo='Uploading '+i+' of '+files.length+'…'; render();
-    return shrink(f,1600,true).then(function(r){ return fetch(q+'&stage=bin&tl='+r.thumb.size,{method:'POST',headers:hd,body:new Blob([r.thumb,r.full],{type:'application/octet-stream'})}); })
-      .then(function(res){ return res.json().then(function(d){ if(!res.ok||!d.id) throw new Error(d.error||'Upload failed'); ids.push(d.id); }); }).then(one); }
-  one().then(function(){ return api('POST',q+'&stage=add',{ids:ids,room:room,kind:'after'}); })
-    .then(function(d){ takeLive(d,j.id); busy.photo=''; toast(ids.length+' photo'+(ids.length===1?'':'s')+' added'); track('Added '+ids.length+' photo'+(ids.length===1?'':'s')+' · '+room); render(); })
-    .catch(function(e){ busy.photo=''; render(); toast(e.message||'Photo didn\'t upload. Try again.'); });
+  if(!window.BCPhotoQ){ toast('Couldn\'t start the upload. Reload and try again.'); return; }
+  BCPhotoQ.add(files,{jobId:j.id,pid:PID,room:room,kind:'after'}).then(function(c){
+    render(); toast(c+' photo'+(c===1?'':'s')+' uploading. Carry on, it keeps going.'); track('Added '+c+' photo'+(c===1?'':'s')+' · '+room);
+  },function(){ toast('Couldn\'t save those photos. Try again.'); });
+}
+if(window.BCPhotoQ){ var pqT=null, pqWarned=false;
+  BCPhotoQ.on(function(e){
+    if(e.type==='added') takeLive(e.data,e.jobId);
+    if(e.type==='done') toast(e.failed?(e.added?e.added+' added, '+e.failed+' didn\'t upload. Add those again.':'Photos didn\'t upload'+(e.msg?': '+e.msg:'')+'.'):e.added+' photo'+(e.added===1?'':'s')+' uploaded ✓');
+    if(e.type==='error'&&!pqWarned){ pqWarned=true; toast('No signal? Photos will keep trying.'); }
+    if(e.type==='added'||e.type==='done') pqWarned=false;
+    // Only redraw a room page (so ticking and typing elsewhere isn't disturbed)
+    clearTimeout(pqT); pqT=setTimeout(function(){ if(/^#\/room\//.test(location.hash)&&!(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)&&document.activeElement.type!=='checkbox')) render(); },300);
+  });
 }
 
 // ---------- actions ----------

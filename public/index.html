@@ -401,6 +401,9 @@ body.has-nav #app{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .uppill i{width:14px;height:14px;border:2px solid rgba(245,240,235,.35);border-top-color:var(--cream);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.uppill i{animation:none}}
+.uppill{cursor:pointer}.uppill.wait i{animation:none;border-color:rgba(245,240,235,.6)}
+.pqs{display:contents}.thumb.pq{flex:0 0 auto}.thumb.pq img{opacity:.6}.thumb.pq::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;box-shadow:0 0 0 1px rgba(26,26,26,.15)}
+@media (prefers-reduced-motion:reduce){.thumb.pq::after{animation:none}}
 body.has-nav .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 .menu{display:grid;gap:0;background:var(--white);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:12px}
 .menu button,.menu a{display:flex;align-items:center;gap:14px;padding:15px 16px;background:none;border:0;border-bottom:1px solid var(--cream-dark);font:500 15px var(--sans);color:var(--dark);text-align:left;cursor:pointer;text-decoration:none}
@@ -548,6 +551,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 <script src="/lib/sms.js"></script>
 <script src="/lib/templates.js"></script>
 <script src="/lib/checklists.js"></script>
+<script src="/lib/phq.js"></script>
 <script>
 (function(){
   var state = {team:[],jobs:[],confirms:{},info:{},acks:{},agents:[],live:{},requests:[]}, loaded=false, loadErr='', adminSet=true;
@@ -1333,7 +1337,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     return {tab:t, list:list, groups:groups, uns:u}; }
   function photoSec(j,L){
     var v=phList(j,L), h='<div class="lsec" id="phsec"><div class="lhow"><b>Upload everything here.</b> Then file each photo to an area as <i>before</i> or <i>after</i>. Filed photos show on the client\'s link under that area.</div>';
-    h+='<label class="btn primary" id="ph_btn" style="display:flex;align-items:center;justify-content:center;cursor:pointer" for="ph_file">'+(liveBusy?esc(liveBusy):'Add photos')+'</label>';
+    h+='<label class="btn primary" id="ph_btn" style="display:flex;align-items:center;justify-content:center;cursor:pointer" for="ph_file">Add photos</label>';
+    var pq0=pqTiles(j.id,'',''); h+='<div class="astrip"'+(pq0?'':' hidden')+' style="margin-top:10px">'+pqWrap(j.id,'','',pq0)+'</div>';
     if(L.photos.length){
       var ids={}; L.photos.forEach(function(p){ids[p.id]=1;}); Object.keys(phSel).forEach(function(k){ if(!ids[k]) delete phSel[k]; });
       h+='<div class="kindsw phtabs" style="margin:12px 0 0"><button type="button" data-phtab="sort" aria-pressed="'+(v.tab==='sort')+'">To sort <span>'+v.uns.length+'</span></button>'+'<button type="button" data-phtab="all" aria-pressed="'+(v.tab==='all')+'">By area <span>'+L.photos.length+'</span></button></div>';
@@ -1459,23 +1464,29 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     inp.addEventListener('change',function(){ var fl=Array.prototype.slice.call(inp.files||[]); inp.remove(); if(fl.length) uploadPhotos(fl,room,kind||'after',ctx,function(){ if(liveOpen) drawLive(); }); });
     inp.click();
   }
-  function areaStrip(j,ps){
-    if(!ps.length) return '';
-    return '<div class="astrip">'+ps.map(function(p){ return '<button type="button" class="thumb" data-aph="'+p.id+'" aria-label="'+(p.kind==='before'?'Before':'After')+' photo"><img loading="lazy" decoding="async" alt="" src="'+phSrc(j,p)+'"></button>'; }).join('')+'</div>';
+  function areaStrip(j,ps,room,kind){
+    var pq=pqTiles(j.id,room||'',kind||'');
+    if(!ps.length&&!pq) return '<div class="astrip" hidden>'+pqWrap(j.id,room,kind,'')+'</div>';
+    return '<div class="astrip">'+ps.map(function(p){ return '<button type="button" class="thumb" data-aph="'+p.id+'" aria-label="'+(p.kind==='before'?'Before':'After')+' photo"><img loading="lazy" decoding="async" alt="" src="'+phSrc(j,p)+'"></button>'; }).join('')+pqWrap(j.id,room,kind,pq)+'</div>';
   }
+  // Photos still uploading in the background show as faded tiles with a spinner,
+  // updated in place so the page doesn't jump while you work.
+  function pqTiles(jobId,room,kind){ if(!window.BCPhotoQ) return ''; return BCPhotoQ.pending(jobId,room,kind).map(function(m){ return '<span class="thumb pq" aria-label="Uploading">'+(m.url?'<img alt="" src="'+m.url+'">':'')+'</span>'; }).join(''); }
+  function pqWrap(jobId,room,kind,inner){ return '<span class="pqs" data-pqj="'+esc(jobId)+'" data-pqr="'+esc(room||'')+'" data-pqk="'+esc(kind||'')+'">'+inner+'</span>'; }
+  function pqPaint(){ Array.prototype.forEach.call(document.querySelectorAll('.pqs'),function(el){ var h=pqTiles(el.dataset.pqj,el.dataset.pqr,el.dataset.pqk), st=el.parentNode; if(el.innerHTML!==h) el.innerHTML=h; if(st&&st.classList.contains('astrip')) st.hidden=!st.querySelector('.thumb'); }); }
   function checklistView(j,L,room){
     var items=CHECKLISTS.itemsFor(room,j.service), got=L.items[room]||{}, n=items.filter(function(i){return got[i.id];}).length, st=roomPend[roomKey(j,room)]||(L.rooms[room]&&L.rooms[room].s)||'w';
     var rs=roomsOf(j), nx=rs[rs.indexOf(room)+1];
-    var bef=phChrono(L.photos.filter(function(p){return p.room===room&&p.kind==='before';})), aftL=phChrono(L.photos.filter(function(p){return p.room===room&&p.kind==='after';})), aft=aftL.length, needPh=!aft&&!canEdit;
+    var bef=phChrono(L.photos.filter(function(p){return p.room===room&&p.kind==='before';})), aftL=phChrono(L.photos.filter(function(p){return p.room===room&&p.kind==='after';})), aft=aftL.length+(window.BCPhotoQ?BCPhotoQ.pending(j.id,room,'after').length:0), needPh=!aft&&!canEdit;
     var h='<button type="button" class="clk" data-clback style="margin:0 0 8px">‹ All areas</button><h3>'+esc(room)+'</h3>';
     h+='<p class="sub" style="margin:-6px 0 10px">'+esc(CHECKLISTS.name(j.service))+' · '+esc(j.address||j.client||'')+'</p>';
     h+='<div class="rseg big">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(room)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</div>';
     // 1. Before photos
-    h+='<div class="astep"><div class="asth"><span>1</span><b>Before photos</b><em>'+bef.length+'</em></div>'+areaStrip(j,bef)+
-      '<button type="button" class="btn outline" data-roomph="'+esc(room)+'" data-kind="before">'+(liveBusy?esc(liveBusy):bef.length?'+ Add more before photos':'Take before photos')+'</button></div>';
+    h+='<div class="astep"><div class="asth"><span>1</span><b>Before photos</b><em>'+bef.length+'</em></div>'+areaStrip(j,bef,room,'before')+
+      '<button type="button" class="btn outline" data-roomph="'+esc(room)+'" data-kind="before">'+(bef.length?'+ Add more before photos':'Take before photos')+'</button></div>';
     // 2. After photos
-    h+='<div class="astep"><div class="asth"><span>2</span><b>After photos</b><em>'+aft+'</em></div>'+areaStrip(j,aftL)+
-      '<button type="button" class="btn '+(aft?'outline':'primary')+'" data-roomph="'+esc(room)+'" data-kind="after">'+(liveBusy?esc(liveBusy):aft?'+ Add more after photos':'Take after photos')+'</button>'+(aft?'':'<p class="sub" style="margin:6px 0 0">At least one after photo is needed before this area can be marked done.</p>')+'</div>';
+    h+='<div class="astep"><div class="asth"><span>2</span><b>After photos</b><em>'+aftL.length+'</em></div>'+areaStrip(j,aftL,room,'after')+
+      '<button type="button" class="btn '+(aft?'outline':'primary')+'" data-roomph="'+esc(room)+'" data-kind="after">'+(aft?'+ Add more after photos':'Take after photos')+'</button>'+(aft?'':'<p class="sub" style="margin:6px 0 0">At least one after photo is needed before this area can be marked done.</p>')+'</div>';
     // 3. Checklist
     h+='<div class="astep"><div class="asth"><span>3</span><b>Checklist</b><em>'+n+'/'+items.length+'</em></div>';
     if(!items.length) h+='<p class="sub" style="margin:0">No checklist for this area.</p>';
@@ -1736,47 +1747,36 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       img.src=url;
     });
   }
-  function showUp(){ var el=document.getElementById('uppill'); if(!upState){ if(el) el.remove(); return; } if(!el){ el=document.createElement('div'); el.id='uppill'; el.className='uppill'; el.setAttribute('role','status'); document.body.appendChild(el); } el.innerHTML='<i></i>'+esc(upState); }
-  // Photos are shrunk one at a time (keeps iPhone memory low), uploaded up to three at once,
-  // then added to the job in small batches. room/kind '' = to sort.
+  var phUp=null, phWait=false;
+  function showUp(){ var el=document.getElementById('uppill'), t=[upState,phUp].filter(Boolean).join(' · '); if(!t){ if(el) el.remove(); return; } if(!el){ el=document.createElement('div'); el.id='uppill'; el.className='uppill'; el.setAttribute('role','status'); el.onclick=function(){ if(window.BCPhotoQ) BCPhotoQ.kick(); }; document.body.appendChild(el); } el.classList.toggle('wait',!!phWait&&!upState); el.innerHTML='<i></i>'+esc(t); }
+  // Photos go into a background queue (lib/phq.js): saved on the phone straight away, then
+  // shrunk and uploaded while you carry on. Leaving the hub (camera, other apps) only pauses it;
+  // it picks up again when you're back. room/kind '' = to sort.
   function uploadPhotos(files, room, kind, ctx, onDone){
     var lo=ctx||liveOpen; if(!lo){ toast('Open the job and try again'); return; }
-    var k=key(), hd={}; if(k) hd['x-admin-key']=k;
-    var q='/api/photo?job='+encodeURIComponent(lo.jobId)+'&person='+encodeURIComponent(lo.pid);
-    var total=files.length, nextI=0, sent=0, added=0, failed=0, lastErr='', pending=[], flushing=null, label=room?room+' '+kind:'photos';
-    var decoding=Promise.resolve(), inflight=0, taken={};
-    function progress(){ liveBusy='Uploading '+Math.min(sent+1,total)+' of '+total+'…'; upState='Uploading '+label+' · '+Math.min(sent+1,total)+' of '+total+'…'; showUp(); var bt=document.getElementById('ph_btn'); if(bt) bt.textContent=liveBusy; }
-    function shrinkQueued(f){ var p=decoding.then(function(){ return shrink(f); }); decoding=p.catch(function(){}); return p; }
-    function post(r){ var body=new Blob([r.thumb,r.full],{type:'application/octet-stream'});
-      return fetch(q+'&stage=bin&tl='+r.thumb.size,{method:'POST',headers:hd,body:body})
-        .then(function(res){ return res.json().catch(function(){ return {error:'Upload failed ('+res.status+')'}; }).then(function(d){ if(!res.ok||!d.id) throw new Error(d.error||'Upload failed'); return d.id; }); }); }
-    function sendOne(f){
-      return shrinkQueued(f).then(function(r){ return post(r).catch(function(){ return new Promise(function(ok){setTimeout(ok,1500);}).then(function(){ return post(r); }); }); });
-    }
-    function flush(force){
-      if(flushing) return flushing.then(function(){ return flush(force); });
-      if(!pending.length || (!force && pending.length<5)) return Promise.resolve();
-      var ids=pending.splice(0,pending.length), b={ids:ids,taken:{}}; ids.forEach(function(id){ if(taken[id]) b.taken[id]=taken[id]; }); if(room){ b.room=room; b.kind=kind; }
-      var h2={'content-type':'application/json'}; if(k) h2['x-admin-key']=k;
-      function go(){ return fetch(q+'&stage=add',{method:'POST',headers:h2,body:JSON.stringify(b)}).then(function(res){ return res.json().catch(function(){ return {error:'Saving failed ('+res.status+')'}; }).then(function(d){ if(!res.ok||!d.live) throw new Error(d.error||'Saving failed'); return d; }); }); }
-      flushing=go().catch(function(){ return new Promise(function(ok){setTimeout(ok,1500);}).then(go); })
-        .then(function(d){ takeLive(d,lo.jobId); added+=d.added; failed+=d.missing||0; if(!room) phTab='sort'; if(liveOpen&&liveOpen.jobId===lo.jobId) drawLive(); })
-        .catch(function(e){ failed+=ids.length; lastErr=e.message; })
-        .then(function(){ flushing=null; });
-      return flushing;
-    }
-    function worker(){
-      if(nextI>=files.length) return Promise.resolve();
-      var f=files[nextI++];
-      return sendOne(f).then(function(id){ pending.push(id); if(f.lastModified) taken[id]=f.lastModified; }, function(e){ failed++; lastErr=e.message; })
-        .then(function(){ sent++; progress(); return flush(false); }).then(worker);
-    }
-    liveBusy='Preparing '+total+' photo'+(total>1?'s':'')+'…'; upState=liveBusy; showUp(); var bt=document.getElementById('ph_btn'); if(bt) bt.textContent=liveBusy;
-    Promise.all([worker(),worker(),worker()]).then(function(){ return flush(true); }).then(function(){
-      liveBusy=false; upState=null; showUp(); if(onDone) onDone();
-      if(liveOpen) drawLive(); else if(!document.getElementById('scrim')) render();
-      if(!added) toast('Photos didn\'t upload'+(lastErr?': '+lastErr:'')+'. Check your signal and try again.');
-      else toast(failed? added+' added, '+failed+' didn\'t upload. Add those again.' : added+' photo'+(added>1?'s':'')+' added'+(room?' · '+room:'. Now file them to areas.'));
+    if(!window.BCPhotoQ){ toast('Couldn\'t start the upload. Reload and try again.'); return; }
+    var n=files.length; phUp='Saving '+n+' photo'+(n>1?'s':'')+'…'; showUp();
+    if(!room){ phTab='sort'; }
+    BCPhotoQ.add(files,{jobId:lo.jobId,pid:lo.pid,room:room,kind:kind}).then(function(c){
+      if(onDone) onDone();
+      phStatus(); if(liveOpen&&liveOpen.jobId===lo.jobId) drawLive();
+      toast(c+' photo'+(c>1?'s':'')+' uploading in the background. Keep working.');
+    },function(){ phStatus(); if(onDone) onDone(); toast('Couldn\'t save those photos. Try again.'); });
+  }
+  function phStatus(){ var n=window.BCPhotoQ?BCPhotoQ.count():0;
+    phUp=n?(phWait?n+' photo'+(n>1?'s':'')+' waiting for signal · tap to retry':'Uploading '+n+' photo'+(n>1?'s':'')+'…'):null; if(!n) phWait=false; showUp(); }
+  if(window.BCPhotoQ){
+    var pqRedraw=null;
+    BCPhotoQ.on(function(e){
+      if(e.type==='added'){ phWait=false; takeLive(e.data,e.jobId);
+        // Redraw the open job once things settle, so the real photos replace the faded ones
+        if(liveOpen&&liveOpen.jobId===e.jobId){ clearTimeout(pqRedraw); pqRedraw=setTimeout(function(){ if(liveOpen&&liveOpen.jobId===e.jobId&&!pv) drawLive(); },400); } }
+      if(e.type==='error') phWait=true;
+      if(e.type==='done'){ phWait=false;
+        if(liveOpen) drawLive(); else if(!document.getElementById('scrim')) render();
+        if(e.failed) toast(e.added? e.added+' added, '+e.failed+' didn\'t upload'+(e.msg?' ('+e.msg+')':'')+'. Add those again.' : 'Photos didn\'t upload'+(e.msg?': '+e.msg:'')+'.');
+        else toast(e.added+' photo'+(e.added>1?'s':'')+' uploaded ✓'); }
+      phStatus(); pqPaint();
     });
   }
 
