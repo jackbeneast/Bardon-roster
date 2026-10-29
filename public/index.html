@@ -1904,6 +1904,16 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var sending=D&&D.bal&&D.bal.state==='draft';
     thank=mob?tx(mob,name,'clean_done',(sending?'Or just send':'Send')+' the thank-you &amp; job link<small>You check the text before it goes</small>','nxbtn',j.id):(j.share?'<button type="button" class="nxbtn" data-vcopy="'+esc(j.share)+'">Copy the job link<small>No mobile saved for this client</small></button>':'');
     return h+money+thank+'</div>'; }
+  // Once the job is started (someone's arrived, or areas/photos are underway): one tap opens the
+  // "we're on site" text in Messages, filled in with the job link. Nothing sends until Jack sends it.
+  function startedStep(j, L){
+    var started=Object.keys(L.arrived||{}).length || Object.keys(L.rooms||{}).length || L.photos.length;
+    if(!started) return '';
+    var D=docsOf(j), name=(D&&D.q.client&&D.q.client.name)||j.client||'';
+    var mob=clientMob(j)||(D&&mobOf(D.q.client&&D.q.client.phone))||'';
+    var b=mob?tx(mob,name,'job_started','Tell the client we\'ve started<small>On site, clean has begun, their job link. You check the text before it goes</small>','nxbtn go',j.id)
+      :(j.share?'<button type="button" class="nxbtn" data-vcopy="'+esc(j.share)+'">Copy the job link<small>No mobile saved for this client</small></button>':'');
+    return b?'<div class="nx"><div class="nxh">Job started · let the client know</div>'+b+'</div>':''; }
   function wrapSheet(jobId){ var j=state.jobs.find(function(x){return x.id===jobId;}); if(!j) return;
     var s=openSheet('<h3>Job ready. <em>Next steps</em></h3><p class="sub" style="margin:-4px 0 12px">'+esc(j.address||j.client||'')+'</p>'+nextSteps(j,true)+'<div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Later</button></div>');
     s.querySelector('[data-close]').onclick=closeSheet;
@@ -1980,6 +1990,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<button type="button" data-qa="note"'+ctx+'>'+IC.flag+'Note for agent<small>'+(L.flags.length?L.flags.length+' added':'Damage, marks')+'</small></button>';
     h+='<button type="button" class="'+(L.done?'done':'')+'" data-qa="finish"'+ctx+'>'+(L.done?IC.check:IC.tick)+(L.done?'Ready<small>'+fmtClock(L.done)+'</small>':'Lock-up &amp; finish')+'</button>';
     h+='</div>';
+    if(canEdit && !L.done && j.date===iso(today)) h+=startedStep(j, L);
     if(canEdit && L.done && !isRegular(j) && groupOf(j).slice(-1)[0]===j) h+=nextSteps(j);
     h+='<div class="qlinks"><button type="button" data-live="'+j.id+'" data-p="'+esc(pid||'')+'">All updates</button>'+(canEdit?'<button type="button" data-edit="'+j.id+'">Edit job</button>':'')+(canEdit&&j.share?'<button type="button" data-cview="'+j.id+'">Client view</button>':'')+(canEdit&&clientMob(j)?'<a href="'+textClientHref(j)+'">Text client</a>':'')+(canEdit&&isRegular(j)&&j.date<=iso(today)?'<button type="button" data-jinv="'+j.id+'">'+(invOf(j)?'Invoice #'+esc(invOf(j).num):'Invoice now')+'</button>':'')+'</div></section>';
     return h;
