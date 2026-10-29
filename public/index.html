@@ -552,6 +552,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 <script src="/lib/templates.js"></script>
 <script src="/lib/checklists.js"></script>
 <script src="/lib/phq.js"></script>
+<script src="/lib/bccam.js"></script>
 <script>
 (function(){
   var state = {team:[],jobs:[],confirms:{},info:{},acks:{},agents:[],live:{},requests:[]}, loaded=false, loadErr='', adminSet=true;
@@ -1457,6 +1458,16 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   }
   function onSite(a,l){ var m=Math.round((Date.parse(l)-Date.parse(a))/60000); if(!(m>0)) return ''; return Math.floor(m/60)+'h'+(m%60?' '+pad(m%60)+'m':''); }
   function fmtClock(isoStr){ if(!isoStr) return ''; var d=new Date(isoStr), h=d.getHours(), m=d.getMinutes(); return (h%12||12)+':'+pad(m)+(h>=12?'pm':'am'); }
+  // The hub's own camera: stays open for shot after shot; each one joins the upload queue.
+  // Falls back to the phone's picker where a live camera isn't available.
+  function libLink(room,kind){ return window.BCCam&&BCCam.supported()?'<button type="button" class="clk" data-roomlib="'+esc(room)+'" data-kind="'+kind+'" style="display:block;margin:8px auto 0">or choose from your photo library</button>':''; }
+  function roomCam(room,kind){
+    var ctx=liveOpen&&{jobId:liveOpen.jobId,pid:liveOpen.pid}; if(!ctx) return;
+    if(!(window.BCCam&&BCCam.supported()&&window.BCPhotoQ)) return roomPhoto(room,kind);
+    BCCam.open({title:room, kind:kind||'after',
+      onShot:function(f,k){ BCPhotoQ.add([f],{jobId:ctx.jobId,pid:ctx.pid,room:room,kind:k}).then(function(){ phStatus(); },function(){ toast('Couldn\'t save that photo. Take it again.'); }); },
+      onClose:function(n){ if(liveOpen&&liveOpen.jobId===ctx.jobId) drawLive(); if(n) toast(n+' photo'+(n>1?'s':'')+' uploading in the background'); }});
+  }
   // Camera / library for one room's after photos, tagged on upload.
   function roomPhoto(room,kind){
     var ctx=liveOpen&&{jobId:liveOpen.jobId,pid:liveOpen.pid}; if(!ctx) return;
@@ -1483,10 +1494,10 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<div class="rseg big">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(room)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</div>';
     // 1. Before photos
     h+='<div class="astep"><div class="asth"><span>1</span><b>Before photos</b><em>'+bef.length+'</em></div>'+areaStrip(j,bef,room,'before')+
-      '<button type="button" class="btn outline" data-roomph="'+esc(room)+'" data-kind="before">'+(bef.length?'+ Add more before photos':'Take before photos')+'</button></div>';
+      '<button type="button" class="btn outline" data-roomph="'+esc(room)+'" data-kind="before">'+(bef.length?'+ Add more before photos':'Take before photos')+'</button>'+libLink(room,'before')+'</div>';
     // 2. After photos
     h+='<div class="astep"><div class="asth"><span>2</span><b>After photos</b><em>'+aftL.length+'</em></div>'+areaStrip(j,aftL,room,'after')+
-      '<button type="button" class="btn '+(aft?'outline':'primary')+'" data-roomph="'+esc(room)+'" data-kind="after">'+(aft?'+ Add more after photos':'Take after photos')+'</button>'+(aft?'':'<p class="sub" style="margin:6px 0 0">At least one after photo is needed before this area can be marked done.</p>')+'</div>';
+      '<button type="button" class="btn '+(aft?'outline':'primary')+'" data-roomph="'+esc(room)+'" data-kind="after">'+(aft?'+ Add more after photos':'Take after photos')+'</button>'+libLink(room,'after')+(aft?'':'<p class="sub" style="margin:6px 0 0">At least one after photo is needed before this area can be marked done.</p>')+'</div>';
     // 3. Checklist
     h+='<div class="astep"><div class="asth"><span>3</span><b>Checklist</b><em>'+n+'/'+items.length+'</em></div>';
     if(!items.length) h+='<p class="sub" style="margin:0">No checklist for this area.</p>';
@@ -1722,7 +1733,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(b.dataset.room){ roomSet(b.dataset.room,b.dataset.st); return; }
     if(b.dataset.unsup){ livePost({action:'unsupply',id:b.dataset.unsup},b); return; }
     if(b.hasAttribute('data-addsup')){ var sv=document.getElementById('sup_t').value.trim(); if(!sv){ toast('Say what\'s running low'); return; } livePost({action:'supply',title:sv},b).then(function(){ toast('Added to the restock list'); }); return; }
-    if(b.hasAttribute('data-roomph')){ roomPhoto(b.dataset.roomph, b.dataset.kind); return; }
+    if(b.hasAttribute('data-roomph')){ roomCam(b.dataset.roomph, b.dataset.kind); return; }
+    if(b.hasAttribute('data-roomlib')){ roomPhoto(b.dataset.roomlib, b.dataset.kind); return; }
     if(b.dataset.unflag){ livePost({action:'unflag',id:b.dataset.unflag},b); return; }
     if(b.hasAttribute('data-addflag')){ var t=document.getElementById('fl_t').value.trim(); if(!t){ toast('Add a short title'); return; } livePost({action:'flag',title:t,detail:document.getElementById('fl_d').value},b).then(function(){ var x=document.getElementById('fl_t'),y=document.getElementById('fl_d'); if(x) x.value=''; if(y) y.value=''; }); return; }
     if(b.hasAttribute('data-eta')){ livePost({action:'eta',time:document.getElementById('eta').value},b).then(function(){toast('Finish time updated');}); return; }
