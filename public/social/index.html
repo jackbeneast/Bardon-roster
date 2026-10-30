@@ -404,7 +404,7 @@ document.addEventListener('click',function(e){
   }
   if(t.hasAttribute('data-phide')){
     if(!confirmSoft(t)) return;
-    var hid=t.getAttribute('data-phide'), dt=document.getElementById('barest'); baHid=!!(dt&&dt.open); t.disabled=true;
+    var hid=t.getAttribute('data-phide'); t.disabled=true;
     inLine(function(){ return api('POST',{action:'pairhide',aid:hid,on:true}); }).then(function(){ BA=BA.filter(function(x){return x.a.id!==hid;}); render(); toast('Hidden'); }).catch(function(x){ t.disabled=false; toast(x.message); });
     return;
   }
@@ -445,6 +445,8 @@ document.addEventListener('change',function(e){
   }
 });
 window.addEventListener('hashchange',render);
+// Keep "The rest" open across redraws (the page redraws as Claude rates each batch).
+document.addEventListener('toggle',function(e){ if(e.target&&e.target.id==='barest') baHid=e.target.open; },true);
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&D&&!cur) load(true); });
 
 function load(quiet){
