@@ -8,6 +8,8 @@
 //   ghosts: this area's before photos. On "after", the current one shows faded over the camera so the
 //   after can be lined up from the same spot. Each shot is linked to that before (pairId) and the
 //   camera moves on to the next before. "done" ones (already lined up) are skipped to start with.
+//   "Extra shots" takes afters that aren't matched to any before; the camera switches to it on its own
+//   once every before is lined up (and opens on it if they all already are).
 //   BCCam.supported() -> false if this browser can't show a live camera (use the file picker)
 (function () {
   var css = '' +
@@ -44,6 +46,7 @@
     '.bccam .gbar .gt{flex:1;min-width:0;font:600 13px/1.25 inherit;text-align:center}.bccam .gbar .gt small{display:block;font-weight:400;opacity:.8;font-size:11.5px}' +
     '.bccam .gbar button{padding:9px 12px;font-size:14px}.bccam .gbar .gth{width:44px;height:44px;border-radius:8px;overflow:hidden;padding:0;position:relative;flex:none}' +
     '.bccam .gbar{flex-wrap:wrap}.bccam .gfade{order:9;flex:1 0 100%;display:flex;align-items:center;gap:10px;padding:2px 8px 4px;font:600 13px/1 inherit}.bccam .gfade input{flex:1;height:36px;margin:0;accent-color:#fff;touch-action:auto}' +
+    '.bccam .gmode{order:-1;flex:1 0 100%;display:flex;justify-content:center}.bccam .gmode .seg button{padding:7px 16px;font-size:13.5px}.bccam .gbar.free [data-g],.bccam .gbar.free .gfade{display:none}' +
     '.bccam .gbar .gth img{width:100%;height:100%;object-fit:cover;display:block}.bccam .gbar .gth b{position:absolute;inset:0;display:grid;place-items:center;background:rgba(47,90,53,.6);font-size:18px}';
 
   function supported() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }
@@ -74,16 +77,16 @@
     startMotion(); // must be called straight from the tap so iOS can ask
     var kind = o.kind || 'after', count = 0, stream = null, lensWide = false, wideId = '', mainId = '', closed = false, lastUrl = '';
     var el = document.createElement('div'); el.className = 'bccam'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Camera');
-    var ghosts = (o.ghosts || []).filter(function (g) { return g && g.url; }), gi = 0, gOn = true, gOpv = 0.65, linked = {};
+    var ghosts = (o.ghosts || []).filter(function (g) { return g && g.url; }), gi = 0, gOn = true, gOpv = 0.65, linked = {}, free = false;
     try { var sv = parseFloat(localStorage.getItem('bccam_fade')); if (sv >= 0.15 && sv <= 0.95) gOpv = sv; } catch (e) {}
     ghosts.forEach(function (g) { if (g.done) linked[g.id] = 1; });
-    for (gi = 0; gi < ghosts.length && linked[ghosts[gi].id]; gi++) {} if (gi >= ghosts.length) gi = 0;
+    for (gi = 0; gi < ghosts.length && linked[ghosts[gi].id]; gi++) {} if (gi >= ghosts.length) { gi = 0; free = ghosts.length > 0; } // all lined up already: start on extras
     el.innerHTML = '<video playsinline muted autoplay></video><img class="ghost" alt="" hidden><div class="flash"></div>' +
       '<div class="top"><h4></h4>' + (o.kinds !== false ? '<div class="seg"><button type="button" data-k="before">Before</button><button type="button" data-k="after">After</button></div>' : '') + '<button type="button" class="done">Done</button></div>' +
       '<div class="msg" hidden></div>' +
       '<div class="rot" hidden><span>↻</span>Turn your phone sideways</div>' +
       '<div class="sbar" hidden><button type="button" data-s="prev" aria-label="Previous shot">‹</button><div class="st"></div><button type="button" data-s="next" aria-label="Skip to the next shot">Skip</button></div>' +
-      '<div class="gbar" hidden><button type="button" data-g="prev" aria-label="Previous before photo">‹</button><button type="button" class="gth" data-g="vis" aria-label="Show or hide the before photo"></button><div class="gt"></div><label class="gfade"><span>Show before</span><input type="range" min="15" max="95" step="5" aria-label="How strongly the before photo shows"></label><button type="button" data-g="next" aria-label="Next before photo">›</button></div>' +
+      '<div class="gbar" hidden><div class="gmode"><div class="seg"><button type="button" data-gm="line">Line up</button><button type="button" data-gm="free">Extra shots</button></div></div><button type="button" data-g="prev" aria-label="Previous before photo">‹</button><button type="button" class="gth" data-g="vis" aria-label="Show or hide the before photo"></button><div class="gt"></div><label class="gfade"><span>Show before</span><input type="range" min="15" max="95" step="5" aria-label="How strongly the before photo shows"></label><button type="button" data-g="next" aria-label="Next before photo">›</button></div>' +
       '<div class="bot"><button type="button" class="last" aria-label="Photos taken"></button><button type="button" class="shut" aria-label="Take photo"><i></i></button><div class="side"><button type="button" class="lens" hidden aria-label="Switch lens">0.5×</button></div></div>';
     document.body.appendChild(el);
     var ghost = el.querySelector('.ghost'), gbar = el.querySelector('.gbar'), sbar = el.querySelector('.sbar'), rot = el.querySelector('.rot');
@@ -107,7 +110,7 @@
       if (r === 90 || r === -90) { ghost.style.width = el.clientHeight + 'px'; ghost.style.height = el.clientWidth + 'px'; ghost.style.left = '50%'; ghost.style.top = '50%'; ghost.style.inset = 'auto'; ghost.style.transform = 'translate(-50%,-50%) rotate(' + (-r) + 'deg)'; }
       else { ghost.style.cssText = 'opacity:' + ghost.style.opacity; }
     }
-    var poll = setInterval(function () { rot.hidden = !((kind === 'before' && shots.length) || (kind === 'after' && ghosts.length)) || !upright(); if (!ghost.hidden) fitGhost(); }, 400);
+    var poll = setInterval(function () { rot.hidden = !((kind === 'before' && shots.length) || (kind === 'after' && ghosts.length && !free)) || !upright(); if (!ghost.hidden) fitGhost(); }, 400);
     var video = el.querySelector('video'), msg = el.querySelector('.msg'), flash = el.querySelector('.flash'), last = el.querySelector('.last'), lens = el.querySelector('.lens');
     el.querySelector('h4').textContent = o.title || 'Photos';
     var prevOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden';
@@ -115,8 +118,11 @@
     // Line-up: the before photo, faded over the live camera
     function paintGhost() {
       var show = kind === 'after' && ghosts.length > 0;
-      gbar.hidden = !show; ghost.hidden = !(show && gOn);
+      gbar.hidden = !show; ghost.hidden = !(show && gOn && !free);
       if (!show) return;
+      gbar.classList.toggle('free', free);
+      Array.prototype.forEach.call(gbar.querySelectorAll('[data-gm]'), function (b) { b.setAttribute('aria-pressed', String((b.dataset.gm === 'free') === free)); });
+      if (free) { var nl = Object.keys(linked).length; gbar.querySelector('.gt').innerHTML = 'Extra shots<small>Not matched to a before' + (nl ? ' · ' + nl + ' of ' + ghosts.length + ' lined up' : '') + '</small>'; return; }
       var g = ghosts[gi]; if (ghost.getAttribute('src') !== g.url) ghost.src = g.url;
       ghost.style.opacity = gOpv; fitGhost();
       var rg = gbar.querySelector('input'); if (rg && +rg.value !== Math.round(gOpv * 100)) rg.value = Math.round(gOpv * 100);
@@ -125,7 +131,7 @@
       gbar.querySelector('.gt').innerHTML = (gOn ? 'Line up ' : 'Before hidden · ') + (gi + 1) + ' of ' + ghosts.length + (g.l ? ': <span></span>' : '') + '<small>' + (gOn ? 'Match the faded shot, then take it' : 'Tap the photo to show it again') + (n ? ' · ' + n + ' lined up' : '') + '</small>';
       if (g.l) gbar.querySelector('.gt span').textContent = g.l;
     }
-    function nextGhost() { for (var i = 1; i <= ghosts.length; i++) { var k = (gi + i) % ghosts.length; if (!linked[ghosts[k].id]) { gi = k; return paintGhost(); } } gi = (gi + 1) % ghosts.length; paintGhost(); }
+    function nextGhost() { for (var i = 1; i <= ghosts.length; i++) { var k = (gi + i) % ghosts.length; if (!linked[ghosts[k].id]) { gi = k; return paintGhost(); } } free = true; paintGhost(); }
     var _paintKind = paintKind; paintKind = function () { _paintKind(); paintGhost(); paintShot(); };
     paintKind();
     function say(t, retry) { msg.hidden = !t; msg.innerHTML = ''; if (!t) return; var p = document.createElement('div'); p.textContent = t; msg.appendChild(p); if (retry) { var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Try again'; b.onclick = start; msg.appendChild(b); } }
@@ -161,10 +167,10 @@
       c.width = side ? dh : dw; c.height = side ? dw : dh;
       var x = c.getContext('2d'); x.translate(c.width / 2, c.height / 2); x.rotate(r * Math.PI / 180); x.drawImage(video, -dw / 2, -dh / 2, dw, dh);
       flash.classList.add('on'); setTimeout(function () { flash.classList.remove('on'); }, 40);
-      var k = kind, at = Date.now(), pair = k === 'after' && ghosts.length && gOn ? ghosts[gi].id : '';
+      var k = kind, at = Date.now(), pair = k === 'after' && ghosts.length && gOn && !free ? ghosts[gi].id : '';
       var shot = k === 'before' && shots.length && si < shots.length ? { i: si, l: shots[si].l } : null;
       if (shot) { took[si] = 1; setTimeout(nextShot, 350); }
-      if (pair) { linked[pair] = 1; if (ghosts.length > 1) setTimeout(nextGhost, 350); else paintGhost(); }
+      if (pair) { linked[pair] = 1; setTimeout(nextGhost, 350); }
       c.toBlob(function (b) {
         c.width = c.height = 0; if (!b) return;
         var f; try { f = new File([b], 'photo-' + at + '.jpg', { type: 'image/jpeg', lastModified: at }); } catch (e) { f = b; f.lastModified = at; f.name = 'photo.jpg'; }
@@ -189,6 +195,7 @@
       if (b.dataset.k) { kind = b.dataset.k; paintKind(); return; }
       if (b.dataset.s === 'prev') { si = Math.max(0, Math.min(si, shots.length) - 1); return paintShot(); }
       if (b.dataset.s === 'next') { si = Math.min(shots.length, si + 1); return paintShot(); }
+      if (b.dataset.gm) { free = b.dataset.gm === 'free'; if (!free) gOn = true; return paintGhost(); }
       if (b.dataset.g === 'prev') { gi = (gi - 1 + ghosts.length) % ghosts.length; gOn = true; return paintGhost(); }
       if (b.dataset.g === 'next') { gi = (gi + 1) % ghosts.length; gOn = true; return paintGhost(); }
       if (b.dataset.g === 'vis') { gOn = !gOn; return paintGhost(); }
@@ -196,7 +203,7 @@
     });
     // Slider: how strongly the before shows. Remembered on this phone.
     var rg = gbar.querySelector('input');
-    function onFade() { gOpv = Math.max(0.15, Math.min(0.95, (+rg.value || 65) / 100)); gOn = true; ghost.hidden = kind !== 'after'; ghost.style.opacity = gOpv; try { localStorage.setItem('bccam_fade', String(gOpv)); } catch (e) {} }
+    function onFade() { gOpv = Math.max(0.15, Math.min(0.95, (+rg.value || 65) / 100)); gOn = true; ghost.hidden = kind !== 'after' || free; ghost.style.opacity = gOpv; try { localStorage.setItem('bccam_fade', String(gOpv)); } catch (e) {} }
     rg.addEventListener('input', onFade); rg.addEventListener('change', function () { onFade(); paintGhost(); });
     start();
     return { close: close };
