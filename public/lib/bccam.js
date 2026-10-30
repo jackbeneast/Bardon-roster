@@ -36,6 +36,7 @@
     '.bccam .gbar{position:relative;z-index:2;display:flex;align-items:center;gap:8px;margin:auto 12px 6px;padding:6px;background:rgba(0,0,0,.55);border-radius:14px}' +
     '.bccam .gbar .gt{flex:1;min-width:0;font:600 13px/1.25 inherit;text-align:center}.bccam .gbar .gt small{display:block;font-weight:400;opacity:.8;font-size:11.5px}' +
     '.bccam .gbar button{padding:9px 12px;font-size:14px}.bccam .gbar .gth{width:44px;height:44px;border-radius:8px;overflow:hidden;padding:0;position:relative;flex:none}' +
+    '.bccam .gbar{flex-wrap:wrap}.bccam .gfade{order:9;flex:1 0 100%;display:flex;align-items:center;gap:10px;padding:2px 8px 4px;font:600 13px/1 inherit}.bccam .gfade input{flex:1;height:36px;margin:0;accent-color:#fff;touch-action:auto}' +
     '.bccam .gbar .gth img{width:100%;height:100%;object-fit:cover;display:block}.bccam .gbar .gth b{position:absolute;inset:0;display:grid;place-items:center;background:rgba(47,90,53,.6);font-size:18px}';
 
   function supported() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }
@@ -66,13 +67,14 @@
     startMotion(); // must be called straight from the tap so iOS can ask
     var kind = o.kind || 'after', count = 0, stream = null, lensWide = false, wideId = '', mainId = '', closed = false, lastUrl = '';
     var el = document.createElement('div'); el.className = 'bccam'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Camera');
-    var ghosts = (o.ghosts || []).filter(function (g) { return g && g.url; }), gi = 0, gOn = true, gOp = [0.42, 0.6, 0.25], gOpi = 0, linked = {};
+    var ghosts = (o.ghosts || []).filter(function (g) { return g && g.url; }), gi = 0, gOn = true, gOpv = 0.65, linked = {};
+    try { var sv = parseFloat(localStorage.getItem('bccam_fade')); if (sv >= 0.15 && sv <= 0.95) gOpv = sv; } catch (e) {}
     ghosts.forEach(function (g) { if (g.done) linked[g.id] = 1; });
     for (gi = 0; gi < ghosts.length && linked[ghosts[gi].id]; gi++) {} if (gi >= ghosts.length) gi = 0;
     el.innerHTML = '<video playsinline muted autoplay></video><img class="ghost" alt="" hidden><div class="flash"></div>' +
       '<div class="top"><h4></h4>' + (o.kinds !== false ? '<div class="seg"><button type="button" data-k="before">Before</button><button type="button" data-k="after">After</button></div>' : '') + '<button type="button" class="done">Done</button></div>' +
       '<div class="msg" hidden></div>' +
-      '<div class="gbar" hidden><button type="button" data-g="prev" aria-label="Previous before photo">‹</button><button type="button" class="gth" data-g="vis" aria-label="Show or hide the before photo"></button><div class="gt"></div><button type="button" data-g="fade" aria-label="Change how faded the before photo is">Fade</button><button type="button" data-g="next" aria-label="Next before photo">›</button></div>' +
+      '<div class="gbar" hidden><button type="button" data-g="prev" aria-label="Previous before photo">‹</button><button type="button" class="gth" data-g="vis" aria-label="Show or hide the before photo"></button><div class="gt"></div><label class="gfade"><span>Show before</span><input type="range" min="15" max="95" step="5" aria-label="How strongly the before photo shows"></label><button type="button" data-g="next" aria-label="Next before photo">›</button></div>' +
       '<div class="bot"><button type="button" class="last" aria-label="Photos taken"></button><button type="button" class="shut" aria-label="Take photo"><i></i></button><div class="side"><button type="button" class="lens" hidden aria-label="Switch lens">0.5×</button></div></div>';
     document.body.appendChild(el);
     var ghost = el.querySelector('.ghost'), gbar = el.querySelector('.gbar');
@@ -86,7 +88,8 @@
       gbar.hidden = !show; ghost.hidden = !(show && gOn);
       if (!show) return;
       var g = ghosts[gi]; if (ghost.getAttribute('src') !== g.url) ghost.src = g.url;
-      ghost.style.opacity = gOp[gOpi];
+      ghost.style.opacity = gOpv;
+      var rg = gbar.querySelector('input'); if (rg && +rg.value !== Math.round(gOpv * 100)) rg.value = Math.round(gOpv * 100);
       gbar.querySelector('.gth').innerHTML = '<img alt="" src="' + g.url + '">' + (linked[g.id] ? '<b>✓</b>' : '');
       var n = Object.keys(linked).length;
       gbar.querySelector('.gt').innerHTML = (gOn ? 'Line up with before ' : 'Before hidden · ') + (gi + 1) + ' of ' + ghosts.length + '<small>' + (gOn ? 'Match the faded shot, then take it' : 'Tap the photo to show it again') + (n ? ' · ' + n + ' lined up' : '') + '</small>';
@@ -154,9 +157,12 @@
       if (b.dataset.g === 'prev') { gi = (gi - 1 + ghosts.length) % ghosts.length; gOn = true; return paintGhost(); }
       if (b.dataset.g === 'next') { gi = (gi + 1) % ghosts.length; gOn = true; return paintGhost(); }
       if (b.dataset.g === 'vis') { gOn = !gOn; return paintGhost(); }
-      if (b.dataset.g === 'fade') { gOpi = (gOpi + 1) % gOp.length; gOn = true; return paintGhost(); }
       if (b === lens) { lensWide = !lensWide; lens.textContent = lensWide ? '1×' : '0.5×'; start(); }
     });
+    // Slider: how strongly the before shows. Remembered on this phone.
+    var rg = gbar.querySelector('input');
+    function onFade() { gOpv = Math.max(0.15, Math.min(0.95, (+rg.value || 65) / 100)); gOn = true; ghost.hidden = kind !== 'after'; ghost.style.opacity = gOpv; try { localStorage.setItem('bccam_fade', String(gOpv)); } catch (e) {} }
+    rg.addEventListener('input', onFade); rg.addEventListener('change', function () { onFade(); paintGhost(); });
     start();
     return { close: close };
   }
