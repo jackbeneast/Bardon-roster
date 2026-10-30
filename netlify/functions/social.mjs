@@ -7,8 +7,12 @@
 //   POST { action: "status", id, status: "posted" | "skipped" | "" }
 //   POST { action: "extra", ch, date? }   -> one more post (e.g. a second one today)
 //   POST { action: "settings", gbp, ig }  -> posts per week
+//   GET ?pairs=1                 -> { pairs, ai }  line-up camera before & afters, best first
+//   POST { action: "ratepairs" }  -> Claude rates the next few unrated pairs. { rated, left } — call again while left.
+//   POST { action: "pairpost", aid, ch, date? } -> a post made from that pair
+//   POST { action: "pairhide", aid, on }        -> hide (or unhide) a pair
 import { store, json, checkAdmin } from "../../lib/core.mjs";
-import { ensurePlan, loadPosts, savePosts, swapPhoto, addExtra, saveSettings, writeCaption, matchPair, template, aiOn, todayBne, PAGE, DAYS } from "../../lib/social.mjs";
+import { ensurePlan, pairsView, ratePairs, savePairRatings, hidePair, postFromPair, loadPosts, savePosts, swapPhoto, addExtra, saveSettings, writeCaption, matchPair, template, aiOn, todayBne, PAGE, DAYS } from "../../lib/social.mjs";
 
 const D = /^\d{4}-\d{2}-\d{2}$/;
 const thumb = async (s, x) => (await s.getBin(`photo/${x.j}/${x.id}.t`)) || (await s.getBin(`photo/${x.j}/${x.id}`));
@@ -19,6 +23,7 @@ export default async (req) => {
   if (!(await checkAdmin(s, req))) return json({ error: "Log in first" }, 401);
   const today = todayBne();
 
+  if (req.method === "GET" && new URL(req.url).searchParams.get("pairs")) return json({ pairs: await pairsView(s), ai: aiOn() });
   if (req.method === "GET") {
     const { posts, settings } = await ensurePlan(s, today);
     return json({ posts, settings, ai: aiOn(), today, pages: PAGE, days: DAYS });
@@ -28,6 +33,40 @@ export default async (req) => {
   const id = String(b.id || "");
 
   if (b.action === "settings") return json({ ok: true, settings: await saveSettings(s, b), ...(await ensurePlan(s, today)) });
+
+  if (b.action === "ratepairs") {
+    if (!aiOn()) return json({ error: "Rating needs the Claude key (ANTHROPIC_API_KEY) in Netlify.", off: true }, 503);
+    const todo = (await pairsView(s)).filter((x) => !x.rt);
+    const batch = todo.slice(0, 3);
+    if (!batch.length) return json({ ok: true, rated: 0, left: 0 });
+    const bins = await Promise.all(batch.map(async (x) => [await thumb(s, x.b), await thumb(s, x.a)]));
+    const ok = batch.filter((_, i) => bins[i][0] && bins[i][1]), okBins = bins.filter((x) => x[0] && x[1]);
+    const add = {};
+    // A pair whose photo is missing gets a 1 so it isn't retried forever.
+    batch.forEach((x, i) => { if (!(bins[i][0] && bins[i][1])) add[x.a.id] = { r: 1, al: false, p: false, why: "Photo missing", hd: "", at: new Date().toISOString() }; });
+    if (ok.length) {
+      let res;
+      try { res = await ratePairs(ok.map((x, i) => ({ b: b64(okBins[i][0]), a: b64(okBins[i][1]), room: x.room }))); }
+      catch (e) { return json({ error: e.message }, e.status || 502); }
+      ok.forEach((x, i) => { add[x.a.id] = { ...res[i], at: new Date().toISOString() }; });
+    }
+    await savePairRatings(s, add);
+    return json({ ok: true, rated: batch.length, left: todo.length - batch.length });
+  }
+
+  if (b.action === "pairhide") {
+    if (!/^[a-f0-9]{24}$/.test(String(b.aid || ""))) return json({ error: "Bad photo" }, 400);
+    await hidePair(s, b.aid, b.on !== false);
+    return json({ ok: true });
+  }
+
+  if (b.action === "pairpost") {
+    const ch = b.ch === "gbp" || b.ch === "ig" ? b.ch : null;
+    if (!ch) return json({ error: "Pick Google or Instagram" }, 400);
+    const post = await postFromPair(s, String(b.aid || ""), ch, D.test(String(b.date || "")) ? b.date : today);
+    if (!post) return json({ error: "That pair isn't there any more. Refresh." }, 404);
+    return json({ ok: true, post });
+  }
 
   if (b.action === "extra") {
     const ch = b.ch === "gbp" || b.ch === "ig" ? b.ch : null;

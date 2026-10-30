@@ -88,6 +88,17 @@ table.fq th{font:600 12px var(--sans);color:var(--m);text-transform:uppercase;le
 .dot{width:8px;height:8px;border-radius:50%;background:var(--t);animation:p 1.2s ease-in-out infinite}
 @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
 @media (prefers-reduced-motion:reduce){.dot{animation:none}}
+.ba{background:var(--w);border:1px solid var(--l);border-radius:12px;padding:10px;margin-top:10px}
+.ba .ims{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ba .ims a{position:relative;display:block;border-radius:8px;overflow:hidden;background:var(--cd);aspect-ratio:3/4}
+.ba .ims img{width:100%;height:100%;object-fit:cover;display:block}
+.ba .ims span{position:absolute;left:6px;top:6px;font:600 11px/1 var(--sans);padding:5px 7px;border-radius:999px;background:rgba(26,26,26,.82);color:var(--c)}
+.ba .ims a+a span{background:var(--t);color:#fff}
+.ba .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:9px;font-size:13px;color:var(--m)}
+.ba .why{margin:6px 0 0;font-size:14.5px;color:var(--d)}
+.ba .row2{margin-top:10px}
+.ba.dim{opacity:.7}
+.chip.top{background:var(--d);color:var(--c)}
 details.more{margin-top:10px}details.more summary{cursor:pointer;font:600 14px var(--sans);color:var(--td);padding:8px 0}
 </style>
 <script src="/lib/hubnav.js" data-tabs="tools"></script>
@@ -202,7 +213,7 @@ function weekStats(){
   return {done:wk.filter(function(p){return p.status==='posted';}).length, total:wk.length, last:last};
 }
 function ago(s){ if(!s) return 'not yet'; var n=Math.round((pd(D.today)-pd(s))/864e5); return n<=0?'today':n===1?'yesterday':n+' days ago'; }
-function tabs(on){ return '<nav class="tabs" aria-label="Sections"><a href="#/"'+(on==='posts'?' aria-current="page"':'')+'>Posts</a><a href="#/how"'+(on==='how'?' aria-current="page"':'')+'>How &amp; how often</a><a href="#/more"'+(on==='more'?' aria-current="page"':'')+'>Other platforms</a></nav>'; }
+function tabs(on){ return '<nav class="tabs" aria-label="Sections"><a href="#/"'+(on==='posts'?' aria-current="page"':'')+'>Posts</a><a href="#/how"'+(on==='how'?' aria-current="page"':'')+'>How &amp; how often</a><a href="#/ba"'+(on==='ba'?' aria-current="page"':'')+'>Before &amp; afters</a><a href="#/more"'+(on==='more'?' aria-current="page"':'')+'>Other platforms</a></nav>'; }
 function head(){ return '<div class="top"><a href="/?v=more" data-hb>‹ Back</a><span class="wm">Bardon Clean</span></div>'; }
 function thumbHtml(p){
   if(!(p.ph||[]).length) return '<span class="im"></span>';
@@ -281,7 +292,7 @@ function viewHow(){
   var s=D.settings, gd=(D.days.gbp[s.gbp]||[]).map(function(d){return DOWL[d];}), id=(D.days.ig[s.ig]||[]).map(function(d){return DOWL[d];});
   var h=head()+'<h1>How &amp; <em>how often</em></h1>'+tabs('how');
   h+='<h2>Your posting rhythm</h2><table class="fq"><thead><tr><th></th><th>How often</th><th>Days</th></tr></thead><tbody><tr><td><b>Google</b></td><td>'+s.gbp+' a week</td><td>'+gd.join(', ')+'</td></tr><tr><td><b>Instagram</b></td><td>'+s.ig+' a week</td><td>'+id.join(', ')+'</td></tr></tbody></table>';
-  h+='<div class="card"><h3>The routine</h3><ul><li>On each post day you get a phone ping at 8am (Tools › Phone notifications › Marketing). The post is already made: photo, branding and caption.</li><li>Post whenever you have two minutes that day. Time of day matters far less than not skipping.</li><li>Missed one? It sits in <b>Catch up</b> for a week. Post it any day, or skip it.</li><li>Every post uses a different photo, rotating areas and services, so the feed never repeats itself.</li><li>Every post uses an after photo from a real job. No before-and-after comparisons, since the before and after shots rarely line up.</li></ul></div>';
+  h+='<div class="card"><h3>The routine</h3><ul><li>On each post day you get a phone ping at 8am (Tools › Phone notifications › Marketing). The post is already made: photo, branding and caption.</li><li>Post whenever you have two minutes that day. Time of day matters far less than not skipping.</li><li>Missed one? It sits in <b>Catch up</b> for a week. Post it any day, or skip it.</li><li>Every post uses a different photo, rotating areas and services, so the feed never repeats itself.</li><li>Posts use after photos from real jobs. Every second Instagram post is a before &amp; after, but only from the line-up camera and only pairs Claude rated strong (see the Before &amp; afters tab). Google stays after-only.</li></ul></div>';
   h+='<div class="card"><h3>Why this much, and no more</h3><p>A steady rhythm you can actually keep beats bursts followed by silence. Two Google updates a week keeps a recent post on your listing for people searching locally. Three Instagram posts a week keeps you visible to followers without turning into a second job. If a week is flat out, drop Instagram to 2, not Google.</p></div>';
   h+='<label class="l" for="sg">Google posts per week</label><select id="sg">'+[1,2,3].map(function(n){return '<option value="'+n+'"'+(n===s.gbp?' selected':'')+'>'+n+'</option>';}).join('')+'</select>';
   h+='<label class="l" for="si">Instagram posts per week</label><select id="si">'+[2,3,4].map(function(n){return '<option value="'+n+'"'+(n===s.ig?' selected':'')+'>'+n+'</option>';}).join('')+'</select>';
@@ -291,6 +302,41 @@ function viewHow(){
   h+='<div class="card"><h3>What the captions follow</h3><ul><li>Only what\'s in the photo. No made-up stories or numbers.</li><li>Plain words for what was done (cleaned, degreased, detailed). Never "restored", "like new" or "spotless".</li><li>No promises on quote turnaround, booking lead times, return visits or sale prices.</li><li>Nothing that identifies the home: no client names, streets or suburbs. Photos flagged private are never used.</li><li>Your real standards, used one at a time: fresh cloths every clean, tools cleaned before and after, tested products, team paid above award, fully insured.</li><li>You can edit any caption before you post. Edits are kept.</li></ul></div>';
   h+='<div class="card"><h3>Get better photos into the bank</h3><ul><li>The team\'s sorted <b>after</b> photos feed every post. More sorted after photos means better posts.</li><li>Wide, bright, uncluttered shots work best. Skip toilets, drains and anything personal.</li></ul></div>';
   return h;
+}
+// ---------- before & afters from the line-up camera ----------
+var BA=null, baErr='', baBusy=false, baHid=false;
+var RATE={5:['Top pick','top'],4:['Strong','ok'],3:['OK','wait'],2:['Weak','off'],1:['Skip','off']};
+function baCard(x){
+  var r=x.rt, bad=r&&(r.p||!r.al), lab=!r?['Rating…','off']:r.p?['Private','off']:!r.al?['Not lined up','off']:RATE[r.r];
+  var h='<div class="ba'+(bad||(r&&r.r<3)?' dim':'')+'"><div class="ims"><a href="'+purl(x.b)+'" target="_blank" rel="noopener"><img src="'+purl(x.b,1)+'" alt="Before" loading="lazy"><span>Before</span></a><a href="'+purl(x.a)+'" target="_blank" rel="noopener"><img src="'+purl(x.a,1)+'" alt="After" loading="lazy"><span>After</span></a></div>';
+  h+='<div class="meta"><span class="chip '+lab[1]+'">'+lab[0]+'</span>'+(x.post?'<span class="chip '+(x.post.status==='posted'?'ok':'wait')+'">'+(x.post.status==='posted'?'Posted':'In a post')+'</span>':'')+''+(x.solo?'<span class="chip off">After used on '+CH[x.solo.ch]+'</span>':'')+'<span>'+esc([x.room,x.shot,SVC[x.svc]].filter(Boolean).join(' · '))+'</span><span>'+esc(x.date?dayLbl(x.date):'')+'</span></div>';
+  if(r&&r.why) h+='<p class="why">'+esc(r.why)+'</p>';
+  if(x.post) h+='<div class="row2"><a class="btn sm" href="#/p/'+x.post.id+'">Open the post</a></div>';
+  else if(r&&!bad) h+='<div class="row2"><button type="button" class="btn sm primary" data-pp="ig" data-aid="'+x.a.id+'">Instagram post</button><button type="button" class="btn sm" data-pp="gbp" data-aid="'+x.a.id+'">Google (after only)</button></div>';
+  h+='<div class="row2"><button type="button" class="btn sm" data-phide="'+x.a.id+'">Hide this pair</button></div>';
+  return h+'</div>';
+}
+function viewBA(){
+  var h=head()+'<h1>Before &amp; <em>afters</em></h1><p class="sub">Pairs from the line-up camera, ranked by Claude for how striking the change is. Best first.</p>'+tabs('ba');
+  if(baErr) return h+'<div class="hint warn">'+esc(baErr)+' <button type="button" class="btn sm" data-bareload>Try again</button></div>';
+  if(!BA) return h+'<div class="empty">Loading pairs…</div>';
+  var rated=BA.filter(function(x){return x.rt;}), left=BA.length-rated.length;
+  var good=rated.filter(function(x){ return !x.rt.p&&x.rt.al&&x.rt.r>=4; }), rest=BA.filter(function(x){ return good.indexOf(x)<0; });
+  if(!BA.length) return h+'<div class="empty">No line-up pairs yet. When the team takes after photos with the line-up camera (faded before showing), the pairs land here.</div>';
+  h+='<div class="sum"><div class="row"><div class="k"><b>'+good.length+'</b><span>strong enough to post</span></div><div class="k"><b>'+BA.length+'</b><span>line-up pairs</span></div></div>'+(left?'<p><span class="dot" style="display:inline-block;margin-right:6px"></span>Claude is rating <b>'+left+'</b> new pair'+(left===1?'':'s')+'…</p>':'<p>Strong pairs also feed every second Instagram post automatically. Google stays after-only.</p>')+'</div>';
+  if(!D.ai) h+='<div class="hint warn">Ranking needs the Claude key (ANTHROPIC_API_KEY) in Netlify.</div>';
+  h+='<div class="sect"><span>Worth posting</span><span>'+good.length+'</span></div>'+(good.length?good.map(baCard).join(''):'<div class="empty">'+(left?'Still rating…':'None rated 4 or 5 yet. Big visible changes from the same spot score best: ovens, rangehoods, shower glass, tracks, benchtops.')+'</div>');
+  if(rest.length) h+='<details class="more"'+(baHid?' open':'')+' id="barest"><summary>The rest ('+rest.length+')</summary>'+rest.map(baCard).join('')+'</details>';
+  return h;
+}
+function loadBA(){
+  return fetch('/api/social?pairs=1',{headers:{'x-admin-key':key()},cache:'no-store'}).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'Couldn\'t load pairs'); return d; }); })
+    .then(function(d){ BA=d.pairs; baErr=''; if(location.hash==='#/ba') render(); if(d.ai&&BA.some(function(x){return !x.rt;})) rateBA(); })
+    .catch(function(e){ baErr=e.message; if(location.hash==='#/ba') render(); });
+}
+function rateBA(){
+  if(baBusy) return; baBusy=true;
+  inLine(function(){ return api('POST',{action:'ratepairs'}); }).then(function(d){ baBusy=false; return loadBA(); }).catch(function(e){ baBusy=false; toast(e.message,3600); });
 }
 function viewMore(){
   var h=head()+'<h1>Other <em>platforms</em></h1>'+tabs('more');
@@ -315,7 +361,8 @@ function render(){
     if(!cur.blob&&(p.ph||[]).length) makeImage(p);
   } else {
     if(cur){ cur=null; keepY=0; }
-    app.innerHTML=r==='/how'?viewHow():r==='/more'?viewMore():viewList();
+    if(r==='/ba'&&!BA&&!baErr) loadBA();
+    app.innerHTML=r==='/how'?viewHow():r==='/more'?viewMore():r==='/ba'?viewBA():viewList();
   }
   window.scrollTo(0,keepY);
 }
@@ -349,6 +396,18 @@ document.addEventListener('click',function(e){
   }
   if(t.hasAttribute('data-save')&&p&&cur.blob){ download(p); return; }
   if(t.hasAttribute('data-copylink')&&p){ copyText(D.pages[p.svc]||D.pages.other); toast('Link copied'); return; }
+  if(t.hasAttribute('data-bareload')){ BA=null; baErr=''; render(); return; }
+  if(t.hasAttribute('data-pp')){
+    var ch=t.getAttribute('data-pp'), aid=t.getAttribute('data-aid'); t.disabled=true;
+    inLine(function(){ return api('POST',{action:'pairpost',aid:aid,ch:ch}); }).then(function(d){ put(d.post); BA=null; loadBA(); location.hash='#/p/'+d.post.id; }).catch(function(x){ t.disabled=false; toast(x.message); });
+    return;
+  }
+  if(t.hasAttribute('data-phide')){
+    if(!confirmSoft(t)) return;
+    var hid=t.getAttribute('data-phide'), dt=document.getElementById('barest'); baHid=!!(dt&&dt.open); t.disabled=true;
+    inLine(function(){ return api('POST',{action:'pairhide',aid:hid,on:true}); }).then(function(){ BA=BA.filter(function(x){return x.a.id!==hid;}); render(); toast('Hidden'); }).catch(function(x){ t.disabled=false; toast(x.message); });
+    return;
+  }
   if(t.hasAttribute('data-ig')){ setTimeout(function(){ if(document.visibilityState==='visible') toast('If Instagram didn\'t open, open it from your home screen'); },1500); return; }
   if(t.hasAttribute('data-status')&&p){
     var st=t.getAttribute('data-status'); t.disabled=true;
@@ -368,7 +427,7 @@ document.addEventListener('click',function(e){
   }
 });
 var armed=null;
-function confirmSoft(t){ if(armed===t){ armed=null; return true; } armed=t; t.textContent='Tap again to confirm'; setTimeout(function(){ if(armed===t){ armed=null; t.textContent='Never use this photo'; } },3000); return false; }
+function confirmSoft(t){ if(armed===t){ armed=null; return true; } armed=t; var was=t.textContent; t.textContent='Tap again to confirm'; setTimeout(function(){ if(armed===t){ armed=null; t.textContent=was; } },3000); return false; }
 function download(p){ var a=document.createElement('a'); a.href=cur.url; a.download=fileName(p); document.body.appendChild(a); a.click(); a.remove(); }
 var capT=null;
 document.addEventListener('input',function(e){
