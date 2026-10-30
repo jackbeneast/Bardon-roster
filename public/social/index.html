@@ -321,7 +321,7 @@ function baCard(x){
   return h+'</div>';
 }
 function viewBA(){
-  var h=head()+'<h1>Before &amp; <em>afters</em></h1><p class="sub">Every line-up camera pair, by property and area. Mark the ones worth posting. Post-worthy pairs, and any you add to a client's report, go into your upcoming posts: Instagram as a before &amp; after, Google as the after photo. Look for ★ Your pick on the posts list.</p>'+tabs('ba');
+  var h=head()+'<h1>Before &amp; <em>afters</em></h1><p class="sub">Every line-up camera pair, by property and area. Mark the ones worth posting. Post-worthy pairs, and any you add to a client\'s report, go into your upcoming posts: Instagram as a before &amp; after, Google as the after photo. Look for ★ Your pick on the posts list.</p>'+tabs('ba');
   if(baErr) return h+'<div class="hint warn">'+esc(baErr)+' <button type="button" class="btn sm" data-bareload>Try again</button></div>';
   if(!BA) return h+'<div class="empty">Loading pairs…</div>';
   if(!BA.length) return h+'<div class="empty">No line-up pairs yet. When the team takes after photos with the line-up camera, the pairs land here.</div>';
