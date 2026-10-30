@@ -11,8 +11,9 @@
 //   POST { action: "ratepairs" }  -> Claude rates the next few unrated pairs. { rated, left } — call again while left.
 //   POST { action: "pairpost", aid, ch, date? } -> a post made from that pair
 //   POST { action: "pairhide", aid, on }        -> hide (or unhide) a pair
+//   POST { action: "pairjudge", aid, v: "y"|"n"|"" } -> Jack's call: post-worthy, not using, or undecided
 import { store, json, checkAdmin } from "../../lib/core.mjs";
-import { ensurePlan, pairsView, ratePairs, savePairRatings, hidePair, postFromPair, loadPosts, savePosts, swapPhoto, addExtra, saveSettings, writeCaption, matchPair, template, aiOn, todayBne, PAGE, DAYS } from "../../lib/social.mjs";
+import { ensurePlan, pairsView, ratePairs, savePairRatings, hidePair, judgePair, postFromPair, loadPosts, savePosts, swapPhoto, addExtra, saveSettings, writeCaption, matchPair, template, aiOn, todayBne, PAGE, DAYS } from "../../lib/social.mjs";
 
 const D = /^\d{4}-\d{2}-\d{2}$/;
 const thumb = async (s, x) => (await s.getBin(`photo/${x.j}/${x.id}.t`)) || (await s.getBin(`photo/${x.j}/${x.id}`));
@@ -52,6 +53,12 @@ export default async (req) => {
     }
     await savePairRatings(s, add);
     return json({ ok: true, rated: batch.length, left: todo.length - batch.length });
+  }
+
+  if (b.action === "pairjudge") {
+    if (!/^[a-f0-9]{24}$/.test(String(b.aid || ""))) return json({ error: "Bad photo" }, 400);
+    await judgePair(s, b.aid, b.v);
+    return json({ ok: true });
   }
 
   if (b.action === "pairhide") {
@@ -126,7 +133,7 @@ export default async (req) => {
     let w;
     try { w = await writeCaption(post, bins.map(b64)); }
     catch (e) { return json({ error: e.message }, e.status || 502); }
-    if (!w.usable || w.priv) {
+    if (w.priv || (!w.usable && !post.lu)) {
       const np = await swapPhoto(s, id, { reject: true });
       return json({ ok: true, post: np, again: !!(np && np.ph.length), note: w.priv ? "That photo showed something private, so it's been swapped." : "That photo wasn't strong enough, so it's been swapped." });
     }
