@@ -226,7 +226,7 @@ function thumbHtml(p){
 }
 function postRow(p){
   var st=p.status==='posted'?'<span class="chip ok">Posted</span>':p.status==='skipped'?'<span class="chip off">'+(p.auto?'Missed':'Skipped')+'</span>':p.date<D.today?'<span class="chip wait">Catch up</span>':'';
-  var sub=(p.kind==='pair'?'Before & after':'After photo')+(p.room?' · '+p.room:'')+(SVC[p.svc]?' · '+SVC[p.svc]:'');
+  var sub=(p.ap?'★ Your pick · ':'')+(p.kind==='pair'?'Before & after':'After photo')+(p.room?' · '+p.room:'')+(SVC[p.svc]?' · '+SVC[p.svc]:'');
   if(!(p.ph||[]).length) sub='Needs a photo';
   return '<a class="post'+(p.status?' done':'')+'" href="#/p/'+p.id+'">'+thumbHtml(p)+'<span class="tx"><span><span class="chip '+p.ch+'">'+CH[p.ch]+'</span> '+st+'</span><b>'+esc(dayLbl(p.date))+' · '+esc(p.head||'')+'</b><span>'+esc(sub)+(writing[p.id]?' · writing…':'')+'</span></span><span class="ar" aria-hidden="true">›</span></a>';
 }
@@ -321,7 +321,7 @@ function baCard(x){
   return h+'</div>';
 }
 function viewBA(){
-  var h=head()+'<h1>Before &amp; <em>afters</em></h1><p class="sub">Every line-up camera pair, by property and area. Mark the ones worth posting. Only your post-worthy picks go into posts.</p>'+tabs('ba');
+  var h=head()+'<h1>Before &amp; <em>afters</em></h1><p class="sub">Every line-up camera pair, by property and area. Mark the ones worth posting. Post-worthy pairs, and any you add to a client's report, go into your upcoming posts: Instagram as a before &amp; after, Google as the after photo. Look for ★ Your pick on the posts list.</p>'+tabs('ba');
   if(baErr) return h+'<div class="hint warn">'+esc(baErr)+' <button type="button" class="btn sm" data-bareload>Try again</button></div>';
   if(!BA) return h+'<div class="empty">Loading pairs…</div>';
   if(!BA.length) return h+'<div class="empty">No line-up pairs yet. When the team takes after photos with the line-up camera, the pairs land here.</div>';
