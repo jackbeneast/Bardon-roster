@@ -390,9 +390,9 @@ body.has-nav #app{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .mini .c{font:700 16px/1.25 var(--serif);color:var(--dark)}
 .mini .m{font-size:13px;color:var(--meta);margin-top:2px}
 .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
-.rgrid label{display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;text-align:center;min-height:64px;border-radius:8px;background:var(--cream);border:1px solid var(--line);font:600 15px/1.2 var(--sans);color:var(--dark);cursor:pointer;padding:8px}
-.rgrid label.has{border-color:#CFE0CA;background:#F1F6EF}
-.rgrid label small{display:block;font-weight:400;font-size:11px;color:var(--meta)}
+.rgrid label,.rgrid button[data-camroom]{display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;text-align:center;min-height:64px;border-radius:8px;background:var(--cream);border:1px solid var(--line);font:600 15px/1.2 var(--sans);color:var(--dark);cursor:pointer;padding:8px}
+.rgrid label.has,.rgrid button.has{border-color:#CFE0CA;background:#F1F6EF}
+.rgrid label small,.rgrid button small{display:block;font-weight:400;font-size:11px;color:var(--meta)}
 .kindsw{display:flex;gap:6px;margin:0 0 12px}
 .kindsw button{flex:1;min-height:44px;border-radius:6px;border:1px solid var(--line);background:var(--white);font:600 14px var(--sans);color:var(--dark);cursor:pointer}
 .kindsw button[aria-pressed="true"]{background:var(--dark);border-color:var(--dark);color:var(--cream)}
@@ -552,7 +552,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 <script src="/lib/templates.js"></script>
 <script src="/lib/checklists.js"></script>
 <script src="/lib/phq.js"></script>
-<script src="/lib/bccam.js?v=3"></script>
+<script src="/lib/shots.js?v=1"></script><script src="/lib/bccam.js?v=4"></script>
 <script>
 (function(){
   var state = {team:[],jobs:[],confirms:{},info:{},acks:{},agents:[],live:{},requests:[]}, loaded=false, loadErr='', adminSet=true;
@@ -1464,10 +1464,17 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function roomCam(room,kind){
     var ctx=liveOpen&&{jobId:liveOpen.jobId,pid:liveOpen.pid}; if(!ctx) return;
     if(!(window.BCCam&&BCCam.supported()&&window.BCPhotoQ)) return roomPhoto(room,kind);
-    var gj=state.jobs.find(function(x){return x.id===ctx.jobId;});
-    BCCam.open({title:room, kind:kind||'after', ghosts:gj?BCCam.ghostsFor(liveOf(gj).photos,room,function(p){ return phSrc(gj,p,true); }):[],
-      onShot:function(f,k,pair){ BCPhotoQ.add([f],{jobId:ctx.jobId,pid:ctx.pid,room:room,kind:k,pair:pair}).then(function(){ phStatus(); },function(){ toast('Couldn\'t save that photo. Take it again.'); }); },
-      onClose:function(n){ if(liveOpen&&liveOpen.jobId===ctx.jobId) drawLive(); if(n) toast(n+' photo'+(n>1?'s':'')+' uploading in the background'); }});
+    camOpen(ctx.jobId,ctx.pid,room,kind,function(){ if(liveOpen&&liveOpen.jobId===ctx.jobId) drawLive(); });
+  }
+  // The camera for one area: befores step through the area's shot list (lib/shots.js);
+  // afters show each before faded over the camera to line up, in the same order.
+  function camOpen(jobId,pid,room,kind,after){
+    var gj=state.jobs.find(function(x){return x.id===jobId;}), ph=gj?liveOf(gj).photos:[];
+    BCCam.open({title:room, kind:kind||'after',
+      shots:window.BCShots?BCShots.forArea(room):[], taken:BCCam.takenFor(ph,room),
+      ghosts:gj?BCCam.ghostsFor(ph,room,function(p){ return phSrc(gj,p,true); }):[],
+      onShot:function(f,k,pair,shot){ BCPhotoQ.add([f],{jobId:jobId,pid:pid,room:room,kind:k,pair:pair,shot:shot}).then(function(){ phStatus(); },function(){ toast('Couldn\'t save that photo. Take it again.'); }); },
+      onClose:function(n){ if(after) after(); if(n) toast(n+' photo'+(n>1?'s':'')+' uploading in the background'); }});
   }
   // Camera / library for one room's after photos, tagged on upload.
   function roomPhoto(room,kind){
@@ -1495,7 +1502,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     h+='<div class="rseg big">'+[['w','To do'],['p','Doing'],['d','Done']].map(function(o){return '<button type="button" data-room="'+esc(room)+'" data-st="'+o[0]+'" aria-pressed="'+(st===o[0])+'">'+o[1]+'</button>';}).join('')+'</div>';
     // 1. Before photos
     h+='<div class="astep"><div class="asth"><span>1</span><b>Before photos</b><em>'+bef.length+'</em></div>'+areaStrip(j,bef,room,'before')+
-      '<button type="button" class="btn outline" data-roomph="'+esc(room)+'" data-kind="before">'+(bef.length?'+ Add more before photos':'Take before photos')+'</button>'+libLink(room,'before')+'</div>';
+      '<button type="button" class="btn outline" data-roomph="'+esc(room)+'" data-kind="before">'+(bef.length?'+ Add more before photos':'Take before photos')+'</button>'+(window.BCShots&&window.BCCam&&BCCam.supported()?'<p class="sub" style="margin:6px 0 0">Guided: '+BCShots.forArea(room).length+' set shots, the same order every job. Phone sideways.</p>':'')+libLink(room,'before')+'</div>';
     // 2. After photos
     h+='<div class="astep"><div class="asth"><span>2</span><b>After photos</b><em>'+aftL.length+'</em></div>'+areaStrip(j,aftL,room,'after')+
       '<button type="button" class="btn '+(aft?'outline':'primary')+'" data-roomph="'+esc(room)+'" data-kind="after">'+(aft?'+ Add more after photos':'Take after photos')+'</button>'+libLink(room,'after')+(aft?'':'<p class="sub" style="margin:6px 0 0">At least one after photo is needed before this area can be marked done.</p>')+'</div>';
@@ -2793,7 +2800,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var j=state.jobs.find(function(x){return x.id===jobId;}); if(!j) return; var L=liveOf(j);
     function draw(){
       var h='<h3><em>'+(kind==='before'?'Before':'After')+'</em> photo</h3><div class="kindsw"><button type="button" data-k="before" aria-pressed="'+(kind==='before')+'">Before</button><button type="button" data-k="after" aria-pressed="'+(kind==='after')+'">After</button></div><p class="sub" style="margin:0 0 10px">Tap the area. The camera opens.</p><div class="rgrid">';
-      roomsOf(j).forEach(function(r,i){ var n=L.photos.filter(function(p){return p.room===r&&p.kind===kind;}).length; h+='<label for="cam'+i+'" class="'+(n?'has':'')+'">'+esc(r)+(n?'<small>'+n+' taken</small>':'')+'</label><input id="cam'+i+'" type="file" accept="image/*" capture="environment" data-room="'+esc(r)+'" hidden>'; });
+      var live=window.BCCam&&BCCam.supported()&&window.BCPhotoQ;
+      roomsOf(j).forEach(function(r,i){ var n=L.photos.filter(function(p){return p.room===r&&p.kind===kind;}).length; if(live){ h+='<button type="button" data-camroom="'+esc(r)+'" class="'+(n?'has':'')+'">'+esc(r)+(n?'<small>'+n+' taken</small>':'')+'</button>'; return; } h+='<label for="cam'+i+'" class="'+(n?'has':'')+'">'+esc(r)+(n?'<small>'+n+' taken</small>':'')+'</label><input id="cam'+i+'" type="file" accept="image/*" capture="environment" data-room="'+esc(r)+'" hidden>'; });
       h+='</div><div class="lsec"><h4>Lots from your photo library</h4><p class="sub" style="margin:0 0 8px">Upload them all now and file them to areas after.</p><label class="btn outline" for="libFile" style="display:flex;align-items:center;justify-content:center;cursor:pointer">Choose photos</label><input id="libFile" type="file" accept="image/*" multiple hidden></div>';
       h+='<div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Done</button></div>';
       s.querySelector('.sheet').innerHTML=h;
@@ -2801,7 +2809,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     }
     var s=openSheet('');
     draw();
-    s.addEventListener('click',function(e){ var b=e.target.closest('[data-k]'); if(b){ kind=b.dataset.k; draw(); } });
+    s.addEventListener('click',function(e){ var c=e.target.closest('[data-camroom]'); if(c){ closeSheet(); camOpen(jobId,pid,c.dataset.camroom,kind,function(){ render(); }); return; } var b=e.target.closest('[data-k]'); if(b){ kind=b.dataset.k; draw(); } });
     s.addEventListener('change',function(e){
       var t=e.target; if(!t.files||!t.files.length) return;
       var files=Array.prototype.slice.call(t.files);

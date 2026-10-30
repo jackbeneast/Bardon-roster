@@ -91,8 +91,11 @@ export default async (req) => {
     const taken = body.taken && typeof body.taken === "object" ? body.taken : {};
     // Afters taken in the line-up camera are linked to the before they were lined up with (same job and area).
     const pairs = body.pair && typeof body.pair === "object" ? body.pair : {};
+    // Befores taken from the shot list carry their place on it (sh) and its label (sl).
+    const shots = body.shot && typeof body.shot === "object" ? body.shot : {};
+    const shotOf = (id) => { const x = shots[id]; const i = x && Number(x.i); return kind === "before" && x && Number.isInteger(i) && i >= 0 && i < 100 ? { sh: i, sl: String(x.l || "").replace(/[\u0000-\u001f<>]/g, "").slice(0, 80) } : {}; };
     const befores = new Set(L.photos.filter((p) => p.kind === "before" && (!room || p.room === room)).map((p) => p.id));
-    add.forEach((id) => { const t = Number(taken[id]), pr = String(pairs[id] || ""); L.photos.push({ id, room, kind, by, at, j: hj, ...(t > 1e12 && t < 4e12 ? { tk: new Date(t).toISOString() } : {}), ...(kind === "after" && ID.test(pr) && befores.has(pr) ? { pair: pr } : {}) }); });
+    add.forEach((id) => { const t = Number(taken[id]), pr = String(pairs[id] || ""); L.photos.push({ id, room, kind, by, at, j: hj, ...(t > 1e12 && t < 4e12 ? { tk: new Date(t).toISOString() } : {}), ...(kind === "after" && ID.test(pr) && befores.has(pr) ? { pair: pr } : {}), ...shotOf(id) }); });
     return save({ added: add.length, missing: fresh.length - add.length });
   }
 

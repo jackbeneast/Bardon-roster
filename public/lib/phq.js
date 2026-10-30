@@ -105,7 +105,7 @@
         var ms = groups[k]; if (!force && ms.length < BATCH) return p;
         return p.then(function () {
           var ctx = ms[0].ctx, b = { ids: ms.map(function (m) { return m.binId; }), taken: {} };
-          ms.forEach(function (m) { if (m.taken) b.taken[m.binId] = m.taken; if (m.pair) (b.pair = b.pair || {})[m.binId] = m.pair; });
+          ms.forEach(function (m) { if (m.taken) b.taken[m.binId] = m.taken; if (m.pair) (b.pair = b.pair || {})[m.binId] = m.pair; if (m.shot) (b.shot = b.shot || {})[m.binId] = m.shot; });
           if (ctx.room) { b.room = ctx.room; b.kind = ctx.kind; }
           return call(url(ctx, 'add'), { method: 'POST', headers: hdrs(true), body: JSON.stringify(b) }).then(function (d) {
             done.added += d.added || 0; done.failed += d.missing || 0;
@@ -166,8 +166,8 @@
     return files.reduce(function (p, f, i) {
       return p.then(function () {
         var qid = base + '-' + String(i).padStart(5, '0') + Math.random().toString(36).slice(2, 6);
-        var m = { qid: qid, ctx: c, taken: f.lastModified || 0, pair: /^[a-f0-9]{24}$/.test(ctx.pair || '') ? ctx.pair : '' };
-        return put({ qid: qid, ctx: c, taken: m.taken, pair: m.pair, file: f }).then(function () { if (!mem[qid]) mem[qid] = m; saved++; if (i === 0 || i % 5 === 4) { emit({ type: 'change' }); kick(); } });
+        var m = { qid: qid, ctx: c, taken: f.lastModified || 0, pair: /^[a-f0-9]{24}$/.test(ctx.pair || '') ? ctx.pair : '', shot: ctx.shot && ctx.shot.l ? { i: ctx.shot.i | 0, l: String(ctx.shot.l).slice(0, 80) } : null };
+        return put({ qid: qid, ctx: c, taken: m.taken, pair: m.pair, shot: m.shot, file: f }).then(function () { if (!mem[qid]) mem[qid] = m; saved++; if (i === 0 || i % 5 === 4) { emit({ type: 'change' }); kick(); } });
       });
     }, Promise.resolve()).then(function () { emit({ type: 'change' }); kick(); return saved; });
   }
@@ -182,7 +182,7 @@
     return all().then(function (recs) {
       recs.forEach(function (r) {
         if (mem[r.qid]) return;
-        mem[r.qid] = { qid: r.qid, ctx: r.ctx, taken: r.taken, pair: r.pair || '', binId: r.binId || '', ready: !!r.thumb, url: r.thumb ? URL.createObjectURL(r.thumb) : '' };
+        mem[r.qid] = { qid: r.qid, ctx: r.ctx, taken: r.taken, pair: r.pair || '', shot: r.shot || null, binId: r.binId || '', ready: !!r.thumb, url: r.thumb ? URL.createObjectURL(r.thumb) : '' };
       });
       if (recs.length) emit({ type: 'change' });
     }).catch(function () {});
