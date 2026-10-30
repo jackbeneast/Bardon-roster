@@ -428,13 +428,13 @@ function viewIdeas(){
   if(IX.jobs.length) h+='<div class="hint"><b>Coming up:</b> '+IX.jobs.map(function(j){ return esc(j.when.charAt(0).toUpperCase()+j.when.slice(1))+', '+esc((SVC[j.svc]||'clean').toLowerCase()); }).join(' · ')+'</div>';
   h+='<nav class="tabs" aria-label="Ideas for">'+ISVC.map(function(s){ return '<a href="#/ideas" data-if="'+s[0]+'"'+(iF===s[0]?' aria-current="page"':'')+'>'+(s[0]==='all'?'Any job':s[1])+'</a>'; }).join('')+'</nav>';
   if(!IX.ai) h+='<div class="hint warn">Fresh ideas need the Claude key (ANTHROPIC_API_KEY) in Netlify, the same one the captions use. The basics below still work.</div>';
-  else h+='<button type="button" class="btn primary full" style="margin-top:12px" data-ixnew'+(ixBusy?' disabled':'')+'>'+(ixBusy?'<span class="dot"></span> Thinking up new ideas…':'✦ Give me 3 fresh ideas'+(iF!=='all'?' for '+esc(ISVC.filter(function(s){return s[0]===iF;})[0][1].toLowerCase()):''))+'</button>';
+  else h+='<button type="button" class="btn primary full" style="margin-top:12px" data-ixnew'+(ixBusy?' disabled':'')+'>'+(ixBusy?'<span class="dot"></span> Thinking up new ideas…':'✦ Give me 6 fresh ideas'+(iF!=='all'?' for '+esc(ISVC.filter(function(s){return s[0]===iF;})[0][1].toLowerCase()):''))+'</button>';
   var fit=function(x){ return iF==='all'||x.svc===iF||x.svc==='any'; };
   var nw=IX.ideas.filter(function(x){ return !x.st&&fit(x); }), fav=IX.ideas.filter(function(x){ return x.st==='fav'; }), dn=IX.ideas.filter(function(x){ return x.st==='done'; });
   if(fav.length) h+='<h2>Saved <em>for the next job</em></h2>'+fav.map(ideaCard).join('');
   h+='<h2>Fresh <em>ideas</em></h2>';
-  h+=nw.length?nw.slice(0,12).map(ideaCard).join(''):'<div class="empty">'+(ixBusy?'Working on it…':'No new ideas here yet. Tap the button above.')+'</div>';
-  if(nw.length>12) h+='<p class="sub" style="text-align:center;margin-top:10px">Older unused ideas are tucked away. Save the good ones so they stay at the top.</p>';
+  h+=nw.length?nw.slice(0,18).map(ideaCard).join(''):'<div class="empty">'+(ixBusy?'Working on it…':'No new ideas here yet. Tap the button above.')+'</div>';
+  if(nw.length>18) h+='<p class="sub" style="text-align:center;margin-top:10px">Older unused ideas are tucked away. Save the good ones so they stay at the top.</p>';
   if(dn.length) h+='<details class="more"><summary>Filmed ('+dn.length+')</summary>'+dn.slice(0,30).map(ideaCard).join('')+'</details>';
   h+='<details class="more" style="margin-top:18px"><summary>The basics: what to get on every job</summary>'+basicsHtml()+'</details>';
   return h;

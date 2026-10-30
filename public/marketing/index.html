@@ -117,9 +117,9 @@ details{margin-top:8px}summary{cursor:pointer;color:var(--td);font-weight:600;fo
     if(!m||m.err) return h+'<div class="card err">'+esc(m&&m.err||'Couldn\'t load')+'</div>';
     if(!m.ai) return h+'<div class="card">This needs the Claude key (ANTHROPIC_API_KEY) in Netlify, the same one the captions use.</div>';
     h+='<p class="sub">Every morning the hub reads the week\'s Australian news on cleaning, renting, bonds, mould, selling and home care, and picks the stories where you\'re a credible expert voice. You get a phone ping when there\'s one.'+(m.last?' Last checked '+esc(ago(m.last.at))+(m.last.err?' (didn\'t finish: '+esc(m.last.err)+')':': '+m.last.read+' stories read, '+m.last.found+' worth your time')+'.':'')+'</p>';
-    h+='<div class="acts"><button type="button" class="btn sm" data-mscan'+(mScan?' disabled':'')+'>'+(mScan?'Reading the news…':'Check the news now')+'</button><button type="button" class="btn o sm" data-mseas'+(mSeas?' disabled':'')+'>'+(mSeas?'Thinking…':'Seasonal story idea')+'</button></div>';
+    h+='<div class="acts"><button type="button" class="btn sm" data-mscan'+(mScan?' disabled':'')+'>'+(mScan?'Reading the news…':'Check the news now')+'</button><button type="button" class="btn o sm" data-mseas'+(mSeas?' disabled':'')+'>'+(mSeas?'Thinking…':'3 story ideas')+'</button></div>';
     var O=m.opps;
-    if(!O.length) return h+'<div class="card empty">Nothing yet. Tap Check the news now, or get a seasonal story idea.</div>';
+    if(!O.length) return h+'<div class="card empty">Nothing yet. Tap Check the news now, or tap 3 story ideas.</div>';
     return h+O.map(oppCard).join('');
   }
   function oppCard(o){
@@ -351,7 +351,7 @@ details{margin-top:8px}summary{cursor:pointer;color:var(--td);font-weight:600;fo
     if(b.dataset.alog){ beacon(Object.assign({action:'agent-log'},JSON.parse(b.dataset.alog))); return; }
     if(b.dataset.copy){ copy(b.dataset.copy); return; }
     if(b.hasAttribute('data-mscan')){ mScanNow(); return; }
-    if(b.hasAttribute('data-mseas')){ mSeas=true; mRedraw(); api('',{action:'media-seasonal'}).then(function(d){ mOpen[d.opp.id]=''; }).catch(function(x){ toast(x.message); }).then(function(){ mSeas=false; delete cache.media; mRedraw(); }); return; }
+    if(b.hasAttribute('data-mseas')){ mSeas=true; mRedraw(); api('',{action:'media-seasonal'}).then(function(d){ toast((d.opps||[]).length+' story ideas added'); }).catch(function(x){ toast(x.message); }).then(function(){ mSeas=false; delete cache.media; mRedraw(); }); return; }
     if(b.dataset.mopen){ var oo=b.dataset.mopen; mOpen[oo]=mOpen[oo]===b.dataset.w?'':b.dataset.w; mRedraw(); return; }
     if(b.dataset.mcopy){ var mo=mFind(b.dataset.mcopy); if(mo) copy(b.dataset.w==='rel'?mo.rel.text:'Subject: '+mo.subj+'\n\n'+mo.pitch); return; }
     if(b.dataset.mrel){ var ro=mFind(b.dataset.mrel); if(!ro) return; if(ro.rel&&!b.dataset.again){ mOpen[ro.id]=mOpen[ro.id]==='rel'?'':'rel'; mRedraw(); return; }

@@ -8,7 +8,7 @@ import {
   markReview, addRating, saveProspect, logProspect, delProspect, saveSpend, loadSpend, setReward, savePr, delPr, saveBrand, addConsent, gclidCsv, CHANNELS, STAGES,
 } from "../../lib/marketing.mjs";
 import { loadTemplates } from "../../lib/templates.mjs";
-import { mediaView, writeRelease, seasonalAngle, markOpp, loadOpps, scanMedia, markScanned } from "../../lib/media.mjs";
+import { mediaView, writeRelease, seasonalAngles, markOpp, loadOpps, scanMedia, markScanned } from "../../lib/media.mjs";
 
 export default async (req) => {
   const s = await store(), u = new URL(req.url);
@@ -52,7 +52,7 @@ export default async (req) => {
     case "media-release": case "media-seasonal": {
       if (!process.env.ANTHROPIC_API_KEY) return json({ error: "This needs the Claude key (ANTHROPIC_API_KEY) in Netlify." }, 503);
       try {
-        if (b.action === "media-seasonal") return json({ ok: true, opp: await seasonalAngle(s) });
+        if (b.action === "media-seasonal") return json({ ok: true, opps: await seasonalAngles(s) });
         const o = await writeRelease(s, String(b.id || ""));
         return o ? json({ ok: true, opp: o }) : json({ error: "That one isn't there any more." }, 404);
       } catch (e) { return json({ error: e.message }, e.status || 502); }
