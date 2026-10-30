@@ -8,6 +8,7 @@ import {
   markReview, addRating, saveProspect, logProspect, delProspect, saveSpend, loadSpend, setReward, savePr, delPr, saveBrand, addConsent, gclidCsv, CHANNELS, STAGES,
 } from "../../lib/marketing.mjs";
 import { loadTemplates } from "../../lib/templates.mjs";
+import { mediaView, writeRelease, seasonalAngle, markOpp, loadOpps, scanMedia, markScanned } from "../../lib/media.mjs";
 
 export default async (req) => {
   const s = await store(), u = new URL(req.url);
@@ -27,6 +28,7 @@ export default async (req) => {
       if (part === "clients") return json(await clientsPart(s));
       if (part === "pr") return json({ list: (await loadPr(s)).sort((a, b) => b.date.localeCompare(a.date)) });
       if (part === "brand") return json(await loadBrand(s));
+      if (part === "media") return json(await mediaView(s));
       if (part === "settings") { const [set, tpl] = await Promise.all([loadMktSettings(s), loadTemplates(s)]); return json({ settings: set, reviewLink: tpl.reviewLink, channels: CHANNELS, stages: STAGES }); }
     } catch (e) { console.error("marketing", part, e); return json({ error: "Couldn't load that. " + (e.message || "") }, 500); }
     return json({ error: "Unknown part" }, 400);
@@ -47,6 +49,27 @@ export default async (req) => {
     case "reward": return done(await setReward(s, b));
     case "pr-save": return done(await savePr(s, b));
     case "pr-del": return done(await delPr(s, String(b.id || "")));
+    case "media-release": case "media-seasonal": {
+      if (!process.env.ANTHROPIC_API_KEY) return json({ error: "This needs the Claude key (ANTHROPIC_API_KEY) in Netlify." }, 503);
+      try {
+        if (b.action === "media-seasonal") return json({ ok: true, opp: await seasonalAngle(s) });
+        const o = await writeRelease(s, String(b.id || ""));
+        return o ? json({ ok: true, opp: o }) : json({ error: "That one isn't there any more." }, 404);
+      } catch (e) { return json({ error: e.message }, e.status || 502); }
+    }
+    case "media-scan": {
+      // Fallback when the background check can't run: a quicker read of the news within the normal time limit.
+      if (!process.env.ANTHROPIC_API_KEY) return json({ error: "This needs the Claude key (ANTHROPIC_API_KEY) in Netlify." }, 503);
+      try { const r = await scanMedia(s, { quick: true }); await markScanned(s, r); return json({ ok: true, found: r.add.length, read: r.read }); }
+      catch (e) { return json({ error: e.message }, e.status || 502); }
+    }
+    case "media-mark": { const o = await markOpp(s, String(b.id || ""), String(b.st || "")); return o ? json({ ok: true, opp: o }) : json({ error: "That one isn't there any more." }, 404); }
+    case "media-pitch": {
+      const o = (await loadOpps(s)).find((x) => x.id === b.id);
+      if (!o) return json({ error: "That one isn't there any more." }, 404);
+      await markOpp(s, o.id, "saved");
+      return done(await savePr(s, { kind: "pitch", name: o.kind === "news" ? `Comment: ${o.news.title}` : o.title, outlet: o.kind === "news" ? o.news.src : "", status: "Idea", link: o.kind === "news" ? o.news.url : "", notes: `${o.angle}\n\nPitch: ${o.subj}\n${o.pitch}` }));
+    }
     case "brand-save": return done(await saveBrand(s, b));
     case "consent-add": return (await addConsent(s, b.phone, b.name, "Added by Jack" + (b.how ? `: ${String(b.how).slice(0, 40)}` : ""))) ? json({ ok: true }) : json({ error: "That isn't an Australian mobile number." }, 400);
     case "consent-del": { const c = (await s.get("mkt/consent")) || {}; delete c[String(b.phone || "")]; await s.set("mkt/consent", c); return json({ ok: true }); }
