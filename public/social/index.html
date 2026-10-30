@@ -213,7 +213,7 @@ function weekStats(){
   return {done:wk.filter(function(p){return p.status==='posted';}).length, total:wk.length, last:last};
 }
 function ago(s){ if(!s) return 'not yet'; var n=Math.round((pd(D.today)-pd(s))/864e5); return n<=0?'today':n===1?'yesterday':n+' days ago'; }
-function tabs(on){ return '<nav class="tabs" aria-label="Sections"><a href="#/"'+(on==='posts'?' aria-current="page"':'')+'>Posts</a><a href="#/how"'+(on==='how'?' aria-current="page"':'')+'>How &amp; how often</a><a href="#/ba"'+(on==='ba'?' aria-current="page"':'')+'>Before &amp; afters</a><a href="#/more"'+(on==='more'?' aria-current="page"':'')+'>Other platforms</a></nav>'; }
+function tabs(on){ return '<nav class="tabs" aria-label="Sections"><a href="#/"'+(on==='posts'?' aria-current="page"':'')+'>Posts</a><a href="#/how"'+(on==='how'?' aria-current="page"':'')+'>How &amp; how often</a><a href="#/ba"'+(on==='ba'?' aria-current="page"':'')+'>Before &amp; afters</a><a href="#/ideas"'+(on==='ideas'?' aria-current="page"':'')+'>Photo &amp; video ideas</a><a href="#/more"'+(on==='more'?' aria-current="page"':'')+'>Other platforms</a></nav>'; }
 function head(){ return '<div class="top"><a href="/?v=more" data-hb>‹ Back</a><span class="wm">Bardon Clean</span></div>'; }
 function thumbHtml(p){
   if(!(p.ph||[]).length) return '<span class="im"></span>';
@@ -354,6 +354,62 @@ function viewMore(){
   h+='<div class="card"><h3>TikTok, Pinterest, X <span class="verdict v4">Skip for now</span></h3><p>Too much effort for the local, high-trust work you do. Revisit TikTok only if Reels takes off.</p></div>';
   return h;
 }
+// ---------- photo & video ideas: what to film on the job ----------
+// Static shot list, filterable by service, with ticks that reset each day (kept on this phone only).
+var ISVC=[['all','Every job'],['presale','Pre-sale'],['bond','Bond'],['deep','Deep']], iF='all';
+var IDEAS=[
+ {g:'Every job: the three clips', n:'Under two minutes of filming in total. Get these three and you have a Reel.', items:[
+  {id:'reveal',t:'The walk-in',how:'Once an area is finished: lights on, blinds open. Start in the doorway and walk in slowly with the phone at chest height. Hold still for 3 seconds at the end.',len:'10–15 sec',fmt:'Vertical',use:'Reel, Story, Google profile video',txt:'Kitchen, done.'},
+  {id:'pair',t:'Same spot, before and after',how:'Before you start, film 5 seconds of one spot (oven door, shower screen, rangehood, tap). At the end, film it again from the same place. The line-up camera\'s before photo shows you where you stood.',len:'5 sec + 5 sec',fmt:'Vertical',use:'Reel, Story',txt:'Oven door. Before / after.'},
+  {id:'detail',t:'One close-up in action',how:'Phone close and still (lean it on something), one movement through the frame: squeegee down glass, a wipe across a cooktop, a brush along a track, fresh vacuum lines.',len:'5–10 sec',fmt:'Vertical',use:'Reel, Story',txt:'Window tracks.'}
+ ]},
+ {g:'Your standards, on camera', n:'These show why you cost what you do. One a week is plenty.', items:[
+  {id:'cloths',t:'Fresh cloths, opened on site',how:'At the start of a job, film the fresh microfibre cloths coming out of the bag. Never reused between homes.',len:'5–8 sec',fmt:'Vertical',use:'Reel, Story',txt:'Fresh cloths. Every home.'},
+  {id:'checklist',t:'The checklist in use',how:'Close-up of an area being ticked off on the checklist, with the finished area behind it. Real use, not posed.',len:'5–8 sec',fmt:'Vertical',use:'Reel, Story, LinkedIn',txt:'Every area. Same checklist.'},
+  {id:'tools',t:'Tools cleaned after the job',how:'Brushes and tools being cleaned before they go back in the kit.',len:'5–8 sec',fmt:'Vertical',use:'Story',txt:'Clean tools in, clean tools out.'},
+  {id:'kit',t:'The kit, laid out',how:'Overhead shot of the products and tools on a clean bench before you start. Slow pan from one end to the other.',len:'8–10 sec',fmt:'Vertical',use:'Reel, Story',txt:''}
+ ]},
+ {g:'Pre-sale jobs', svc:'presale', items:[
+  {id:'tourls',t:'Agent-ready walkthrough',how:'One steady walk through the finished home, room to room, no talking. This is also the walkthrough video for the live job link.',len:'30–60 sec',fmt:'Landscape',use:'Live job link, LinkedIn for agents',txt:''},
+  {id:'glass',t:'Light through clean glass',how:'Film a finished window or glass door with daylight coming through. Slow sideways move so the glass catches the light.',len:'5–8 sec',fmt:'Vertical',use:'Reel, Google profile video',txt:'Ready for the photographer.'},
+  {id:'heroph',t:'Wide photo of each finished area',how:'From the doorway corner, phone level at chest height, landscape. Lights on, blinds open.',len:'Photo',fmt:'Landscape',use:'Google, website, agents',txt:''}
+ ]},
+ {g:'Bond jobs', svc:'bond', items:[
+  {id:'oven',t:'Inside the oven',how:'Before and after of the oven interior, same angle, oven light on.',len:'5 sec + 5 sec',fmt:'Vertical',use:'Reel, Story',txt:'Inside the oven.'},
+  {id:'hood',t:'Rangehood filter',how:'Filter held up to the light before, then after degreasing.',len:'5 sec + 5 sec',fmt:'Vertical',use:'Reel, Story',txt:'Rangehood filter, degreased.'},
+  {id:'empty',t:'The empty home, done',how:'Walk through the empty, finished home ending at the front door. Keys on the bench is a good last shot.',len:'15–20 sec',fmt:'Vertical',use:'Reel, Google profile video',txt:'Ready to hand back.'}
+ ]},
+ {g:'Deep cleans', svc:'deep', items:[
+  {id:'grout',t:'Grout and shower screen',how:'Close-up of one section of grout or glass, before and after, same angle.',len:'5 sec + 5 sec',fmt:'Vertical',use:'Reel, Story',txt:'Shower screen.'},
+  {id:'skirt',t:'Skirting and edges',how:'Low shot along a skirting board or cupboard kick as it\'s wiped.',len:'5–8 sec',fmt:'Vertical',use:'Reel, Story',txt:'The edges count.'}
+ ]},
+ {g:'You on camera (optional, once a week)', n:'15 to 30 seconds, phone at eye height, in a finished room. Say it once, plainly. Pick one question:', items:[
+  {id:'q1',t:'"Why do we use fresh cloths in every home?"',how:'',len:'15–30 sec',fmt:'Vertical',use:'Reel',txt:''},
+  {id:'q2',t:'"What does a pre-sale clean cover?"',how:'',len:'15–30 sec',fmt:'Vertical',use:'Reel, LinkedIn',txt:''},
+  {id:'q3',t:'"How does the live job link work for agents?"',how:'',len:'15–30 sec',fmt:'Vertical',use:'LinkedIn, Reel',txt:''},
+  {id:'q4',t:'"Why I started Bardon Clean."',how:'',len:'20–30 sec',fmt:'Vertical',use:'Reel, pinned post',txt:''}
+ ]}
+];
+function iTicks(){ try{ var o=JSON.parse(localStorage.getItem('bc_ideas')||'{}'); return o.d===D.today?o:{d:D.today,t:{}}; }catch(e){ return {d:D.today,t:{}}; } }
+function iSave(o){ try{ localStorage.setItem('bc_ideas',JSON.stringify(o)); }catch(e){} }
+function viewIdeas(){
+  var tk=iTicks(), h=head()+'<h1>Photo &amp; <em>video</em> ideas</h1><p class="sub">What to film on the job. Tick them off as you go; ticks clear each day.</p>'+tabs('ideas');
+  h+='<nav class="tabs" aria-label="Service">'+ISVC.map(function(s){ return '<a href="#/ideas" data-if="'+s[0]+'"'+(iF===s[0]?' aria-current="page"':'')+'>'+s[1]+'</a>'; }).join('')+'</nav>';
+  var groups=IDEAS.filter(function(g){ return !g.svc||iF==='all'||g.svc===iF; }), all=[], done=0;
+  groups.forEach(function(g){ g.items.forEach(function(x){ all.push(x); if(tk.t[x.id]) done++; }); });
+  h+='<div class="sum"><div class="row"><div class="k"><b>'+done+' of '+all.length+'</b><span>filmed today</span></div><div class="k"><b>3</b><span>clips a job is enough</span></div></div><p>Get <b>the walk-in, one same-spot before and after, and one close-up</b> on every job. Everything else is a bonus.</p></div>';
+  groups.forEach(function(g){
+    h+='<h2>'+esc(g.g)+'</h2>'+(g.n?'<p class="sub">'+esc(g.n)+'</p>':'');
+    g.items.forEach(function(x){
+      var on=!!tk.t[x.id];
+      h+='<div class="card'+(on?' ' :'')+'"'+(on?' style="opacity:.62"':'')+'><label class="tog" style="margin:0;padding:0;border:0;background:none;align-items:flex-start"><span><h3>'+esc(x.t)+'</h3>'+(x.how?'<p>'+esc(x.how)+'</p>':'')+'<p style="font-size:13px;color:var(--m)">'+esc(x.len)+' · '+esc(x.fmt)+' · '+esc(x.use)+(x.txt?'<br>On-screen text: <b style="color:var(--d);font-weight:600">'+esc(x.txt)+'</b>':'')+'</p></span><input type="checkbox" data-itk="'+x.id+'"'+(on?' checked':'')+' aria-label="Filmed: '+esc(x.t)+'"></label></div>';
+    });
+  });
+  h+='<h2>Filming <em>rules</em></h2><div class="card"><ul><li>Wipe the lens first. Lights on, blinds open.</li><li>Vertical for Instagram and Stories. Landscape for walkthroughs, the website and agents.</li><li>Hold still for 2 to 3 seconds at the start and end of every clip. It makes cutting easy.</li><li>Move slowly, or don\'t move at all. Lean the phone on something for close-ups.</li><li>No faces, names, house numbers, mail, family photos, street views or personal belongings. Skip toilets and drains.</li><li>Only film in homes where the client is fine with photos.</li></ul></div>';
+  h+='<h2>Turning clips into <em>posts</em></h2><div class="card"><ol class="steps" style="margin-top:4px"><li>Once a week, make one Reel from that week\'s clips.<small>Instagram › + › Reel › pick 3 to 5 clips › trim each to 2 to 5 seconds.</small></li><li>Add the on-screen text from the idea, and a track from Instagram\'s audio library.</li><li>Caption: one plain line on what was done, then "Pre-sale, bond and deep cleaning across Brisbane\'s inner west."</li><li>Short clips (30 seconds or less) can also go on Google: your profile › Add photos › pick the video.</li><li>The full walkthrough goes on the job itself, so it shows on the client and agent links.</li></ol></div>';
+  h+='<div class="row2" style="margin-top:14px"><button type="button" class="btn sm" data-iclear>Clear today\'s ticks</button></div>';
+  return h;
+}
 function render(){
   if(err==='login'){ app.innerHTML='<div class="center"><h1>Log in <em>first</em></h1><p class="sub">Open the hub, log in with your password, then come back here.</p><p><a class="btn primary" href="/">Go to the hub</a></p></div>'; return; }
   if(err){ app.innerHTML='<div class="center"><h1>Couldn\'t <em>load</em></h1><p class="sub">'+esc(err)+'</p><p><button class="btn" onclick="location.reload()">Try again</button></p></div>'; return; }
@@ -367,7 +423,7 @@ function render(){
   } else {
     if(cur){ cur=null; keepY=0; }
     if(r==='/ba'&&!BA&&!baErr) loadBA();
-    app.innerHTML=r==='/how'?viewHow():r==='/more'?viewMore():r==='/ba'?viewBA():viewList();
+    app.innerHTML=r==='/how'?viewHow():r==='/more'?viewMore():r==='/ba'?viewBA():r==='/ideas'?viewIdeas():viewList();
   }
   window.scrollTo(0,keepY);
 }
@@ -407,6 +463,8 @@ document.addEventListener('click',function(e){
     inLine(function(){ return api('POST',{action:'pairpost',aid:aid,ch:ch}); }).then(function(d){ put(d.post); BA=null; loadBA(); location.hash='#/p/'+d.post.id; }).catch(function(x){ t.disabled=false; toast(x.message); });
     return;
   }
+  if(t.hasAttribute('data-if')){ e.preventDefault(); iF=t.getAttribute('data-if'); render(); return; }
+  if(t.hasAttribute('data-iclear')){ iSave({d:D.today,t:{}}); render(); toast('Ticks cleared'); return; }
   if(t.hasAttribute('data-baf')){ e.preventDefault(); baF=t.getAttribute('data-baf'); render(); window.scrollTo(0,0); return; }
   if(t.hasAttribute('data-jk')){
     var jaid=t.getAttribute('data-aid'), x=BA&&BA.find(function(y){return y.a.id===jaid;}); if(!x) return;
@@ -452,6 +510,7 @@ document.addEventListener('change',function(e){
     inLine(function(){ return api('POST',{action:'settings',gbp:gb,ig:ig}); }).then(function(d){ D.settings=d.settings; D.posts=d.posts; render(); toast('Rhythm updated. The plan has been redone.'); }).catch(function(x){ toast(x.message); });
   }
 });
+document.addEventListener('change',function(e){ var c=e.target; if(!c.hasAttribute||!c.hasAttribute('data-itk')) return; var o=iTicks(); if(c.checked) o.t[c.getAttribute('data-itk')]=1; else delete o.t[c.getAttribute('data-itk')]; iSave(o); render(); });
 window.addEventListener('hashchange',render);
 // Keep "The rest" open across redraws (the page redraws as Claude rates each batch).
 document.addEventListener('toggle',function(e){ var k=e.target&&e.target.getAttribute&&e.target.getAttribute('data-prop'); if(k) baOpen[k]=e.target.open; },true);
