@@ -12,7 +12,11 @@
 //   POST { action: "pairpost", aid, ch, date? } -> a post made from that pair
 //   POST { action: "pairhide", aid, on }        -> hide (or unhide) a pair
 //   POST { action: "pairjudge", aid, v: "y"|"n"|"" } -> Jack's call: post-worthy, not using, or undecided
+//   GET ?ideas=1                 -> { ideas, jobs, today, ai }  photo & video ideas (lib/ideas.mjs)
+//   POST { action: "ideas", svc? } -> Claude writes 3 fresh ideas. { add }
+//   POST { action: "idea", id, st: "fav"|"done"|"no"|"" } -> Jack's reaction (steers the next batch)
 import { store, json, checkAdmin } from "../../lib/core.mjs";
+import { ideasView, freshIdeas, markIdea } from "../../lib/ideas.mjs";
 import { ensurePlan, pairsView, ratePairs, savePairRatings, hidePair, judgePair, postFromPair, loadPosts, savePosts, swapPhoto, addExtra, saveSettings, writeCaption, matchPair, template, CAPV, aiOn, todayBne, PAGE, DAYS } from "../../lib/social.mjs";
 
 const D = /^\d{4}-\d{2}-\d{2}$/;
@@ -24,6 +28,7 @@ export default async (req) => {
   if (!(await checkAdmin(s, req))) return json({ error: "Log in first" }, 401);
   const today = todayBne();
 
+  if (req.method === "GET" && new URL(req.url).searchParams.get("ideas")) return json({ ...(await ideasView(s)), ai: aiOn() });
   if (req.method === "GET" && new URL(req.url).searchParams.get("pairs")) return json({ pairs: await pairsView(s), ai: aiOn() });
   if (req.method === "GET") {
     const { posts, settings } = await ensurePlan(s, today);
@@ -53,6 +58,16 @@ export default async (req) => {
     }
     await savePairRatings(s, add);
     return json({ ok: true, rated: batch.length, left: todo.length - batch.length });
+  }
+
+  if (b.action === "ideas") {
+    if (!aiOn()) return json({ error: "Fresh ideas need the Claude key (ANTHROPIC_API_KEY) in Netlify.", off: true }, 503);
+    try { return json({ ok: true, ...(await freshIdeas(s, { svc: ["presale", "bond", "deep"].includes(b.svc) ? b.svc : "" })) }); }
+    catch (e) { return json({ error: e.message }, e.status || 502); }
+  }
+  if (b.action === "idea") {
+    const x = await markIdea(s, String(b.id || ""), String(b.st || ""));
+    return x ? json({ ok: true, idea: x }) : json({ error: "That idea isn't there any more." }, 404);
   }
 
   if (b.action === "pairjudge") {

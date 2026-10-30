@@ -99,7 +99,12 @@ table.fq th{font:600 12px var(--sans);color:var(--m);text-transform:uppercase;le
 .ba .row2{margin-top:10px}
 .ba.dim{opacity:.7}
 .chip.top{background:var(--d);color:var(--c)}
-details.more{margin-top:10px}details.more summary{cursor:pointer;font:600 14px var(--sans);color:var(--td);padding:8px 0}
+details.more{margin-top:10px}
+.idea .ih{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;padding:0}
+.idea .ic{flex:none;width:38px;height:38px;border-radius:10px;background:var(--d);color:var(--c);display:grid;place-items:center;font-size:16px}
+.idea .im2{display:block;font-size:12.5px;color:var(--m);margin-top:3px}
+.idea.dn{opacity:.7}
+.lnk{background:none;border:0;padding:0 4px;color:var(--td);font:600 13.5px var(--sans);text-decoration:underline}details.more summary{cursor:pointer;font:600 14px var(--sans);color:var(--td);padding:8px 0}
 </style>
 <script src="/lib/hubnav.js" data-tabs="tools"></script>
 </head><body><div id="app"><div class="center">Loading…</div></div>
@@ -392,21 +397,60 @@ var IDEAS=[
 ];
 function iTicks(){ try{ var o=JSON.parse(localStorage.getItem('bc_ideas')||'{}'); return o.d===D.today?o:{d:D.today,t:{}}; }catch(e){ return {d:D.today,t:{}}; } }
 function iSave(o){ try{ localStorage.setItem('bc_ideas',JSON.stringify(o)); }catch(e){} }
+var IX=null, ixErr='', ixBusy=false, ixAuto=false, ixOpen={};
+var FMTI={'Reel':'▶','Story':'◷','Carousel':'▤','Photo':'◻','Talking to camera':'◉'};
+function loadIX(){
+  return fetch('/api/social?ideas=1',{headers:{'x-admin-key':key()},cache:'no-store'}).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||'Couldn\'t load ideas'); return d; }); })
+    .then(function(d){ IX=d; ixErr=''; if(d.ai&&!ixAuto&&!d.ideas.some(function(x){return x.at===d.today;})){ ixAuto=true; freshIX(); } if(location.hash==='#/ideas') render(); })
+    .catch(function(e){ ixErr=e.message; if(location.hash==='#/ideas') render(); });
+}
+function freshIX(){
+  if(ixBusy) return; ixBusy=true; if(location.hash==='#/ideas') render();
+  api('POST',{action:'ideas',svc:iF==='all'?'':iF}).then(function(d){ (d.add||[]).slice().reverse().forEach(function(x){ IX.ideas.unshift(x); ixOpen[x.id]=1; }); })
+    .catch(function(e){ toast(e.message,3600); })
+    .then(function(){ ixBusy=false; if(location.hash==='#/ideas'){ render(); } });
+}
+function ideaCard(x){
+  var open=!!ixOpen[x.id], sv=SVC[x.svc]||'Any job';
+  var h='<div class="card idea'+(x.st==='done'?' dn':'')+'"><button type="button" class="ih" data-iopen="'+x.id+'" aria-expanded="'+open+'"><span class="ic" aria-hidden="true">'+(FMTI[x.fmt]||'▶')+'</span><span style="flex:1;min-width:0"><h3>'+esc(x.t)+'</h3><span class="im2">'+esc([x.fmt,sv,x.len].filter(Boolean).join(' · '))+(x.at===D.today&&!x.st?' · <b style="color:var(--t)">New</b>':'')+'</span></span><span aria-hidden="true" style="color:var(--m)">'+(open?'–':'+')+'</span></button>';
+  if(open){
+    h+='<p>'+esc(x.hook)+'</p><div class="sect" style="margin:14px 0 6px"><span>What to film</span></div><ol class="steps">'+x.shots.map(function(y){ return '<li>'+esc(y)+'</li>'; }).join('')+'</ol>';
+    if(x.txt) h+='<p style="margin-top:12px"><span style="color:var(--m);font-size:13px">On-screen text</span><br><b style="color:var(--d)">'+esc(x.txt)+'</b></p>';
+    if(x.cap) h+='<p><span style="color:var(--m);font-size:13px">Caption starter</span><br>'+esc(x.cap)+' <button type="button" class="lnk" data-icopy="'+x.id+'">Copy</button></p>';
+    h+='<div class="row2" style="margin-top:12px"><button type="button" class="btn sm'+(x.st==='fav'?' dark':'')+'" data-ist="fav" data-iid="'+x.id+'" aria-pressed="'+(x.st==='fav')+'">'+(x.st==='fav'?'★ Saved':'☆ Save')+'</button><button type="button" class="btn sm'+(x.st==='done'?' okb':'')+'" data-ist="done" data-iid="'+x.id+'" aria-pressed="'+(x.st==='done')+'">'+(x.st==='done'?'✓ Filmed':'Filmed it')+'</button><button type="button" class="btn sm" data-ist="no" data-iid="'+x.id+'">Not for me</button></div>';
+  }
+  return h+'</div>';
+}
 function viewIdeas(){
-  var tk=iTicks(), h=head()+'<h1>Photo &amp; <em>video</em> ideas</h1><p class="sub">What to film on the job. Tick them off as you go; ticks clear each day.</p>'+tabs('ideas');
-  h+='<nav class="tabs" aria-label="Service">'+ISVC.map(function(s){ return '<a href="#/ideas" data-if="'+s[0]+'"'+(iF===s[0]?' aria-current="page"':'')+'>'+s[1]+'</a>'; }).join('')+'</nav>';
-  var groups=IDEAS.filter(function(g){ return !g.svc||iF==='all'||g.svc===iF; }), all=[], done=0;
-  groups.forEach(function(g){ g.items.forEach(function(x){ all.push(x); if(tk.t[x.id]) done++; }); });
-  h+='<div class="sum"><div class="row"><div class="k"><b>'+done+' of '+all.length+'</b><span>filmed today</span></div><div class="k"><b>3</b><span>clips a job is enough</span></div></div><p>Get <b>the walk-in, one same-spot before and after, and one close-up</b> on every job. Everything else is a bonus.</p></div>';
+  var h=head()+'<h1>Photo &amp; <em>video</em> ideas</h1><p class="sub">Fresh concepts for your next jobs. New ones every day, or tap for more any time. The more you save and skip, the better they get.</p>'+tabs('ideas');
+  if(ixErr) return h+'<div class="hint warn">'+esc(ixErr)+' <button type="button" class="btn sm" data-ixreload>Try again</button></div>';
+  if(!IX) return h+'<div class="empty">Loading ideas…</div>';
+  if(IX.jobs.length) h+='<div class="hint"><b>Coming up:</b> '+IX.jobs.map(function(j){ return esc(j.when.charAt(0).toUpperCase()+j.when.slice(1))+', '+esc((SVC[j.svc]||'clean').toLowerCase()); }).join(' · ')+'</div>';
+  h+='<nav class="tabs" aria-label="Ideas for">'+ISVC.map(function(s){ return '<a href="#/ideas" data-if="'+s[0]+'"'+(iF===s[0]?' aria-current="page"':'')+'>'+(s[0]==='all'?'Any job':s[1])+'</a>'; }).join('')+'</nav>';
+  if(!IX.ai) h+='<div class="hint warn">Fresh ideas need the Claude key (ANTHROPIC_API_KEY) in Netlify, the same one the captions use. The basics below still work.</div>';
+  else h+='<button type="button" class="btn primary full" style="margin-top:12px" data-ixnew'+(ixBusy?' disabled':'')+'>'+(ixBusy?'<span class="dot"></span> Thinking up new ideas…':'✦ Give me 3 fresh ideas'+(iF!=='all'?' for '+esc(ISVC.filter(function(s){return s[0]===iF;})[0][1].toLowerCase()):''))+'</button>';
+  var fit=function(x){ return iF==='all'||x.svc===iF||x.svc==='any'; };
+  var nw=IX.ideas.filter(function(x){ return !x.st&&fit(x); }), fav=IX.ideas.filter(function(x){ return x.st==='fav'; }), dn=IX.ideas.filter(function(x){ return x.st==='done'; });
+  if(fav.length) h+='<h2>Saved <em>for the next job</em></h2>'+fav.map(ideaCard).join('');
+  h+='<h2>Fresh <em>ideas</em></h2>';
+  h+=nw.length?nw.slice(0,12).map(ideaCard).join(''):'<div class="empty">'+(ixBusy?'Working on it…':'No new ideas here yet. Tap the button above.')+'</div>';
+  if(nw.length>12) h+='<p class="sub" style="text-align:center;margin-top:10px">Older unused ideas are tucked away. Save the good ones so they stay at the top.</p>';
+  if(dn.length) h+='<details class="more"><summary>Filmed ('+dn.length+')</summary>'+dn.slice(0,30).map(ideaCard).join('')+'</details>';
+  h+='<details class="more" style="margin-top:18px"><summary>The basics: what to get on every job</summary>'+basicsHtml()+'</details>';
+  return h;
+}
+function basicsHtml(){
+  var tk=iTicks(), h='<p class="sub">The reliable shots that every Reel and post can draw on. Ticks clear each day.</p>';
+  var groups=IDEAS.filter(function(g){ return !g.svc||iF==='all'||g.svc===iF; });
   groups.forEach(function(g){
-    h+='<h2>'+esc(g.g)+'</h2>'+(g.n?'<p class="sub">'+esc(g.n)+'</p>':'');
+    h+='<div class="sect" style="margin-top:20px"><span>'+esc(g.g)+'</span></div>'+(g.n?'<p class="sub">'+esc(g.n)+'</p>':'');
     g.items.forEach(function(x){
       var on=!!tk.t[x.id];
       h+='<div class="card'+(on?' ' :'')+'"'+(on?' style="opacity:.62"':'')+'><label class="tog" style="margin:0;padding:0;border:0;background:none;align-items:flex-start"><span><h3>'+esc(x.t)+'</h3>'+(x.how?'<p>'+esc(x.how)+'</p>':'')+'<p style="font-size:13px;color:var(--m)">'+esc(x.len)+' · '+esc(x.fmt)+' · '+esc(x.use)+(x.txt?'<br>On-screen text: <b style="color:var(--d);font-weight:600">'+esc(x.txt)+'</b>':'')+'</p></span><input type="checkbox" data-itk="'+x.id+'"'+(on?' checked':'')+' aria-label="Filmed: '+esc(x.t)+'"></label></div>';
     });
   });
-  h+='<h2>Filming <em>rules</em></h2><div class="card"><ul><li>Wipe the lens first. Lights on, blinds open.</li><li>Vertical for Instagram and Stories. Landscape for walkthroughs, the website and agents.</li><li>Hold still for 2 to 3 seconds at the start and end of every clip. It makes cutting easy.</li><li>Move slowly, or don\'t move at all. Lean the phone on something for close-ups.</li><li>No faces, names, house numbers, mail, family photos, street views or personal belongings. Skip toilets and drains.</li><li>Only film in homes where the client is fine with photos.</li></ul></div>';
-  h+='<h2>Turning clips into <em>posts</em></h2><div class="card"><ol class="steps" style="margin-top:4px"><li>Once a week, make one Reel from that week\'s clips.<small>Instagram › + › Reel › pick 3 to 5 clips › trim each to 2 to 5 seconds.</small></li><li>Add the on-screen text from the idea, and a track from Instagram\'s audio library.</li><li>Caption: one plain line on what was done, then "Pre-sale, bond and deep cleaning across Brisbane\'s inner west."</li><li>Short clips (30 seconds or less) can also go on Google: your profile › Add photos › pick the video.</li><li>The full walkthrough goes on the job itself, so it shows on the client and agent links.</li></ol></div>';
+  h+='<div class="sect" style="margin-top:20px"><span>Filming rules</span></div><div class="card"><ul><li>Wipe the lens first. Lights on, blinds open.</li><li>Vertical for Instagram and Stories. Landscape for walkthroughs, the website and agents.</li><li>Hold still for 2 to 3 seconds at the start and end of every clip. It makes cutting easy.</li><li>Move slowly, or don\'t move at all. Lean the phone on something for close-ups.</li><li>No faces, names, house numbers, mail, family photos, street views or personal belongings. Skip toilets and drains.</li><li>Only film in homes where the client is fine with photos.</li></ul></div>';
+  h+='<div class="sect" style="margin-top:20px"><span>Turning clips into posts</span></div><div class="card"><ol class="steps" style="margin-top:4px"><li>Once a week, make one Reel from that week\'s clips.<small>Instagram › + › Reel › pick 3 to 5 clips › trim each to 2 to 5 seconds.</small></li><li>Add the on-screen text from the idea, and a track from Instagram\'s audio library.</li><li>Caption: one plain line on what was done, then "Pre-sale, bond and deep cleaning across Brisbane\'s inner west."</li><li>Short clips (30 seconds or less) can also go on Google: your profile › Add photos › pick the video.</li><li>The full walkthrough goes on the job itself, so it shows on the client and agent links.</li></ol></div>';
   h+='<div class="row2" style="margin-top:14px"><button type="button" class="btn sm" data-iclear>Clear today\'s ticks</button></div>';
   return h;
 }
@@ -423,6 +467,7 @@ function render(){
   } else {
     if(cur){ cur=null; keepY=0; }
     if(r==='/ba'&&!BA&&!baErr) loadBA();
+    if(r==='/ideas'&&!IX&&!ixErr) loadIX();
     app.innerHTML=r==='/how'?viewHow():r==='/more'?viewMore():r==='/ba'?viewBA():r==='/ideas'?viewIdeas():viewList();
   }
   window.scrollTo(0,keepY);
@@ -461,6 +506,17 @@ document.addEventListener('click',function(e){
   if(t.hasAttribute('data-pp')){
     var ch=t.getAttribute('data-pp'), aid=t.getAttribute('data-aid'); t.disabled=true;
     inLine(function(){ return api('POST',{action:'pairpost',aid:aid,ch:ch}); }).then(function(d){ put(d.post); BA=null; loadBA(); location.hash='#/p/'+d.post.id; }).catch(function(x){ t.disabled=false; toast(x.message); });
+    return;
+  }
+  if(t.hasAttribute('data-ixnew')){ freshIX(); return; }
+  if(t.hasAttribute('data-ixreload')){ IX=null; ixErr=''; render(); return; }
+  if(t.hasAttribute('data-iopen')){ var oi=t.getAttribute('data-iopen'); if(ixOpen[oi]) delete ixOpen[oi]; else ixOpen[oi]=1; render(); return; }
+  if(t.hasAttribute('data-icopy')){ var cx=IX&&IX.ideas.find(function(y){return y.id===t.getAttribute('data-icopy');}); if(cx){ copyText(cx.cap); toast('Caption starter copied'); } return; }
+  if(t.hasAttribute('data-ist')){
+    var ix=IX&&IX.ideas.find(function(y){return y.id===t.getAttribute('data-iid');}); if(!ix) return;
+    var nv=t.getAttribute('data-ist'); nv=ix.st===nv?'':nv; var was2=ix.st; ix.st=nv; if(nv==='no') delete ixOpen[ix.id]; render();
+    if(nv==='no') toast('Got it. Fewer like that.');
+    api('POST',{action:'idea',id:ix.id,st:nv}).catch(function(e){ ix.st=was2; render(); toast(e.message); });
     return;
   }
   if(t.hasAttribute('data-if')){ e.preventDefault(); iF=t.getAttribute('data-if'); render(); return; }
