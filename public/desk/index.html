@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#F5F0EB">
+<title>Desk · Bardon Clean</title>
+<link rel="icon" type="image/png" href="/icons/favicon.png?v=2"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--t:#C06B3C;--td:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cd:#EDE6DE;--body:#4A4A4A;--meta:#6B635B;--gold:#F4B942;--gd:#9A6B0E;--white:#fff;--line:#DDD3C8;--tint:#FBF3EE;--ok:#2F5A35;--okb:#E6EFE3;--red:#9B2C1F;--redb:#FBEBEB;
+  --serif:"Playfair Display",Georgia,serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--body);font:400 15px/1.5 var(--sans);-webkit-text-size-adjust:100%}
+#app{max-width:760px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top,0px)) 16px calc(70px + env(safe-area-inset-bottom,0px))}
+a{color:var(--td)}button,input,select,textarea{font-family:var(--sans)}
+:focus-visible{outline:2px solid var(--t);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.top a{font:500 14px var(--sans);color:var(--meta);text-decoration:none;padding:10px 0;min-height:44px;display:inline-flex;align-items:center}
+h1{font:700 30px/1.15 var(--serif);color:var(--dark);margin:2px 0 0}h1 em,h2 em{font-style:italic;font-weight:500}
+h2{font:700 20px/1.2 var(--serif);color:var(--dark);margin:26px 0 10px}
+h3{font:600 15.5px/1.3 var(--sans);color:var(--dark);margin:0}
+.sub{color:var(--meta);font-size:13.5px;margin:4px 0 0}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:14px -16px 0;padding:0 16px 4px;scrollbar-width:none;position:sticky;top:0;background:var(--cream);z-index:3;padding-top:8px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:1px solid var(--line);background:var(--white);color:var(--dark);border-radius:999px;padding:0 14px;font:500 14px var(--sans);cursor:pointer;min-height:42px;white-space:nowrap}
+.tab[aria-current="page"]{background:var(--dark);border-color:var(--dark);color:var(--cream)}
+.tab .n{display:inline-block;min-width:20px;margin-left:6px;padding:0 6px;border-radius:10px;background:var(--t);color:#fff;font:600 12px/20px var(--sans)}
+.card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.need{display:grid;gap:6px;border-left:4px solid var(--line)}
+.need.p0{border-left-color:var(--red)}.need.p1{border-left-color:var(--t)}.need.p2{border-left-color:var(--gold)}
+.need .ty{font:600 10.5px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--meta)}
+.need.p0 .ty{color:var(--red)}
+.need p{margin:0;font-size:14px;color:var(--body);overflow-wrap:anywhere}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.btn{font:600 14.5px/1 var(--sans);border-radius:8px;min-height:44px;padding:0 14px;cursor:pointer;border:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;background:var(--td);color:#fff}
+.btn.o{background:var(--white);border:1.5px solid var(--line);color:var(--dark)}
+.btn.q{background:none;color:var(--meta);padding:0 8px}
+.btn.sm{min-height:38px;font-size:13.5px;padding:0 12px}
+.btn[disabled]{opacity:.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat span{display:block;font-size:12.5px;color:var(--meta)}.stat b{display:block;font:700 24px/1.2 var(--serif);color:var(--dark);font-variant-numeric:tabular-nums;margin-top:2px}
+.stat small{display:block;font-size:12px;color:var(--meta)}
+.stat.hl{background:var(--tint);border-color:#EBD3C2}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font:600 11px/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--meta);text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+td{padding:9px 6px;border-bottom:1px solid var(--cd);vertical-align:top;font-variant-numeric:tabular-nums}
+td.r,th.r{text-align:right}
+.tw{overflow-x:auto;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:4px 8px;margin-top:10px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--cd)}.row:last-child{border:0}
+.row b{color:var(--dark);font-weight:600}
+.pill{display:inline-block;align-self:flex-start;flex:none;height:fit-content;font:600 11px/1 var(--sans);padding:5px 8px;border-radius:999px;background:var(--cd);color:var(--dark);white-space:nowrap}
+.pill.ok{background:var(--okb);color:var(--ok)}.pill.live{background:#F6E3D7;color:var(--td)}.pill.warn{background:#FBEBC9;color:var(--gd)}.pill.red{background:var(--redb);color:var(--red)}
+label.f{display:grid;gap:4px;font:500 13px var(--sans);color:var(--dark);margin-top:10px}
+input,select,textarea{font-size:16px;border:1px solid var(--line);border-radius:8px;padding:10px 11px;background:var(--white);color:var(--dark);width:100%}
+textarea{min-height:76px;resize:vertical}
+.inl{display:flex;gap:8px;margin-top:8px}.inl input{flex:1}
+details{margin-top:8px}summary{cursor:pointer;color:var(--td);font-weight:600;font-size:14px;min-height:36px;display:flex;align-items:center}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.cal .h{font:600 11px var(--sans);color:var(--meta);text-align:center;padding:4px 0}
+.cal button{min-height:58px;border:1px solid var(--line);border-radius:8px;background:var(--white);padding:4px;text-align:left;cursor:pointer;font:500 12px var(--sans);color:var(--dark);display:flex;flex-direction:column;gap:3px}
+.cal button.free{background:var(--okb);border-color:#C8DCC4}.cal button.closed{background:var(--cd);color:var(--meta)}.cal button.full{background:var(--tint);border-color:#EBD3C2}
+.cal button[aria-pressed="true"]{outline:2px solid var(--dark)}
+.cal i{display:block;height:5px;border-radius:3px;background:var(--t)}.cal i.tent{background:repeating-linear-gradient(45deg,var(--t) 0 4px,#F2C9AE 4px 8px)}
+.cal .w{font-size:10.5px;color:var(--gd)}
+.ph{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;display:block;background:var(--cd)}
+.cap{white-space:pre-wrap;font-size:13.5px;background:var(--cream);border-radius:8px;padding:10px;margin-top:8px}
+.empty{text-align:center;color:var(--meta);padding:28px 10px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 16px;border-radius:8px;font-size:14px;z-index:50;max-width:90vw}
+.mom{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;padding:6px 0;border-bottom:1px solid var(--cd)}
+.err{color:var(--red);font-size:14px;margin-top:6px}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--cd)}
+.sw input{width:24px;height:24px;accent-color:var(--ok)}
+</style></head><body>
+<div id="app"><div class="empty">Loading…</div></div>
+<script>
+(function(){
+  var app=document.getElementById('app'), KEY=null;
+  try{ KEY=localStorage.getItem('roster_admin_key'); }catch(e){}
+  var TABS=[['needs','Needs me'],['jobs','Bookings'],['cash','Money ahead'],['diary','Diary'],['pricing','Pricing'],['leads','Leads & agents'],['nudges','Rebook & posts'],['records','Records'],['settings','Settings']];
+  var tab=(location.hash.slice(1)||'needs'), cache={}, srcDays=90, pick='', openJob='';
+  if(tab==='rebook') tab='nudges'; if(tab==='backup') tab='records';
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function money(v,c){ v=+v||0; return (v<0?'-':'')+'$'+Math.abs(v).toLocaleString('en-AU',{minimumFractionDigits:c?2:0,maximumFractionDigits:c?2:0}); }
+  var DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function day(s){ if(!s) return ''; var p=String(s).slice(0,10).split('-'), d=new Date(+p[0],+p[1]-1,+p[2]); return DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()]; }
+  function clock(s){ if(!s) return ''; var d=new Date(s), h=d.getHours(); return (h%12||12)+':'+(d.getMinutes()<10?'0':'')+d.getMinutes()+(h>=12?'pm':'am'); }
+  function ago(s){ if(!s) return 'never'; var n=Math.round((Date.now()-Date.parse(s))/864e5); return n<=0?'today':n===1?'yesterday':n+' days ago'; }
+  function toast(m){ var t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2600); }
+  function api(q,body){ return fetch('/api/plus'+(q||''),{method:body?'POST':'GET',headers:{'content-type':'application/json','x-admin-key':KEY||''},body:body?JSON.stringify(body):undefined,cache:'no-store'}).then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong'); return d; }); }); }
+  function copy(t){ try{ navigator.clipboard.writeText(t).then(function(){ toast('Copied'); },function(){ prompt('Copy',t); }); }catch(e){ prompt('Copy',t); } }
+
+  function shell(inner){
+    var n=cache.needs?cache.needs.items.length:0;
+    return '<div class="top"><a href="/">‹ Hub</a><a href="/money/">Quotes &amp; invoices</a></div><h1>The <em>desk</em></h1>'+
+      '<nav class="tabs" aria-label="Desk sections">'+TABS.map(function(t){ return '<button type="button" class="tab" data-tab="'+t[0]+'"'+(tab===t[0]?' aria-current="page"':'')+'>'+t[1]+(t[0]==='needs'&&n?'<span class="n">'+n+'</span>':'')+'</button>'; }).join('')+'</nav>'+inner;
+  }
+  function draw(inner){ app.innerHTML=shell(inner); var c=app.querySelector('[aria-current="page"]'); if(c&&c.scrollIntoView) c.scrollIntoView({inline:'center',block:'nearest'}); }
+  function load(part,q,force){ if(cache[part]&&!force) return Promise.resolve(cache[part]); return api('?part='+part+(q||'')).then(function(d){ cache[part]=d; return d; }); }
+  function render(force){
+    if(!KEY){ app.innerHTML='<div class="empty"><h1>Log in <em>first</em></h1><p>Open the hub, log in, then come back here.</p><a class="btn" href="/">Open the hub</a></div>'; return; }
+    draw('<div class="empty">Loading…</div>');
+    var f=VIEWS[tab]||VIEWS.needs;
+    f(force).then(function(h){ draw(h); }).catch(function(e){ draw('<div class="card err">'+esc(e.message)+'</div>'); });
+    if(tab!=='needs'&&!cache.needs) load('needs').then(function(d){ var b=app.querySelector('[data-tab="needs"]'); if(b&&d.items.length&&!b.querySelector('.n')) b.insertAdjacentHTML('beforeend','<span class="n">'+d.items.length+'</span>'); }).catch(function(){});
+  }
+
+  var VIEWS={
+    needs:function(f){ return load('needs','',f).then(function(d){
+      var h='<p class="sub">Everything waiting on you, most urgent first. Drafts open in Messages for you to edit and send. Nothing goes out on its own.</p>';
+      if(!d.items.length) return h+'<div class="card empty">Nothing needs you right now.</div>';
+      return h+d.items.map(function(x){ return '<div class="card need p'+x.p+'"><span class="ty">'+esc(x.type)+'</span><h3>'+esc(x.title)+'</h3>'+(x.sub?'<p>'+esc(x.sub)+'</p>':'')+
+        '<div class="acts">'+x.actions.map(function(a){ return a.href&&a.href.charAt(0)==='#'?'<button type="button" class="btn o sm" data-tab="'+esc(a.href.slice(1)==='rebook'?'nudges':a.href.slice(1))+'">'+esc(a.label)+'</button>':'<a class="btn sm'+(/draft/.test(a.label)?'':' o')+'" href="'+esc(a.href)+'">'+esc(a.label)+'</a>'; }).join('')+'<button type="button" class="btn q sm" data-dismiss="'+esc(x.key)+'">Done</button></div></div>'; }).join('');
+    }); },
+
+    jobs:function(f){ return load('jobs','',f).then(function(d){
+      var h='<p class="sub">Live and upcoming bookings, and the last 10 days. Everything here shows on the client\'s link.</p>';
+      if(!d.jobs.length) return h+'<div class="card empty">No bookings in this window.</div>';
+      return h+d.jobs.map(function(j){
+        var ph=j.phase==='done'?'<span class="pill ok">Done</span>':j.phase==='live'?'<span class="pill live">On site</span>':'<span class="pill">Booked</span>';
+        var o=openJob===j.key;
+        var s='<div class="card"><div style="display:flex;justify-content:space-between;gap:10px"><div style="min-width:0"><h3>'+esc(j.client||j.address)+'</h3><p class="sub">'+esc([j.address,j.service].filter(Boolean).join(' · '))+'<br>'+esc(day(j.date)+(j.last!==j.date?' to '+day(j.last):''))+'</p></div>'+ph+'</div>';
+        var chips=[];
+        if(j.phase==='booked'&&j.kind!=='regular'&&j.kind!=='other') chips.push('<span class="pill'+(j.prep.n>=j.prep.of?' ok':'')+'">Prep '+j.prep.n+'/'+j.prep.of+'</span>');
+        if(j.keydate) chips.push('<span class="pill'+(j.keydate.date<=j.last?' red':'')+'">'+esc(j.keydate.what)+' '+esc(day(j.keydate.date))+'</span>');
+        if(j.signoff) chips.push('<span class="pill ok">Signed off</span>');
+        if(j.feedback) chips.push('<span class="pill '+(j.feedback.mood==='happy'?'ok':'red')+'">'+(j.feedback.mood==='happy'?'Happy':'Not happy')+'</span>');
+        var pend=j.addons.filter(function(a){return a.state==='pending';}).length; if(pend) chips.push('<span class="pill warn">'+pend+' extra waiting</span>');
+        if(j.entry.length) chips.push('<span class="pill">Entry report</span>');
+        if(j.alerts) chips.push('<span class="pill">Texts on</span>');
+        if(!j.access&&j.phase==='booked') chips.push('<span class="pill warn">No access details</span>');
+        if(chips.length) s+='<div class="acts">'+chips.join('')+'</div>';
+        s+='<div class="acts">'+(j.share?'<a class="btn o sm" href="/v/'+esc(j.share)+'" target="_blank" rel="noopener">Client link</a>':'')+'<button type="button" class="btn o sm" data-open="'+esc(j.key)+'">'+(o?'Close':'Updates, extras, notes')+'</button></div>';
+        if(o){
+          s+='<h3 style="margin-top:16px">Post an update to their feed</h3><p class="sub">Shows in "Happening now" on their link. Short and specific works best.</p><form class="inl" data-f="moment" data-bk="'+esc(j.key)+'"><input name="text" maxlength="200" placeholder="e.g. Oven was a big one, all sparkling now"><button class="btn sm">Post</button></form>';
+          s+=j.moments.slice().reverse().map(function(m){ return '<div class="mom"><span>'+esc(clock(m.at))+' · '+esc(m.t)+'</span><button type="button" class="btn q sm" data-unmom="'+esc(m.id)+'" data-bk="'+esc(j.key)+'">Remove</button></div>'; }).join('');
+          s+='<h3 style="margin-top:18px">Extras for their OK</h3><p class="sub">The client approves or declines on their link. Approved extras go on the unpaid invoice for this booking, if there is one.</p>';
+          s+=j.addons.map(function(a){ return '<div class="row"><span><b>'+esc(a.title)+'</b> '+money(a.price,1)+'<br><span class="sub">'+(a.state==='pending'?'Waiting on the client':a.state==='approved'?'Approved '+clock(a.decidedAt)+(a.invoiced?' · on the invoice':' · not on an invoice yet'):'Declined')+'</span></span><span>'+(a.state==='approved'&&!a.invoiced?'<button type="button" class="btn o sm" data-addinv="'+esc(a.id)+'" data-bk="'+esc(j.key)+'">Add to invoice</button> <button type="button" class="btn q sm" data-addman="'+esc(a.id)+'" data-bk="'+esc(j.key)+'">Done by hand</button>':'')+(a.state==='pending'?'<button type="button" class="btn q sm" data-adddel="'+esc(a.id)+'" data-bk="'+esc(j.key)+'">Withdraw</button>':'')+'</span></div>'; }).join('');
+          s+='<form data-f="addon" data-bk="'+esc(j.key)+'"><div class="grid2"><label class="f">What it is<input name="title" maxlength="120" placeholder="Inside oven: heavy build-up"></label><label class="f">Price inc GST<input name="price" inputmode="decimal" placeholder="80"></label></div><label class="f">Note for the client <span class="sub">Optional</span><input name="note" maxlength="400" placeholder="About 45 extra minutes. Worth it before photos."></label><button class="btn sm" style="margin-top:10px">Send for their OK</button></form>';
+          s+='<h3 style="margin-top:18px">Home notes</h3><p class="sub">Kept for this address. The client can edit these too.</p><form data-f="prefs" data-bk="'+esc(j.key)+'"><textarea name="prefs" maxlength="1200">'+esc(j.prefs)+'</textarea><button class="btn o sm" style="margin-top:8px">Save notes</button></form>';
+          if(j.prep.ticked.length) s+='<details><summary>Prep they\'ve ticked ('+j.prep.n+')</summary><ul>'+j.prep.ticked.map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul></details>';
+          if(j.entry.length) s+='<details open><summary>Entry condition report</summary>'+j.entry.map(function(e){ return '<div class="row"><a href="/api/plus?entry='+esc(e.id)+'&bk='+esc(j.key)+'" data-file>'+esc(e.name)+'</a><span class="sub">'+esc(day(e.at))+'</span></div>'; }).join('')+'</details>';
+          s+='<div class="sw"><span>Show the finish estimate on their link</span><input type="checkbox" data-eta="'+esc(j.key)+'"'+(j.etaHidden||!d.settings.showEta?'':' checked')+(d.settings.showEta?'':' disabled')+'></div>';
+          s+='<div class="acts"><button type="button" class="btn o sm" data-link="view" data-bk="'+esc(j.key)+'">'+(j.viewLink?'Copy view-only link':'Make a view-only link')+'</button><button type="button" class="btn o sm" data-link="ref" data-bk="'+esc(j.key)+'">'+(j.ref?'Copy referral link':'Make a referral link')+'</button></div>';
+        }
+        return s+'</div>';
+      }).join('');
+    }); },
+
+    cash:function(f){ return load('cash','',f).then(function(d){
+      var h='<p class="sub">A forward look built from your quotes, invoices, roster and regular outgoings. Xero stays the official record.</p>';
+      h+='<h2>Coming <em>in</em></h2><div class="grid2"><div class="stat hl"><span>Owing on invoices</span><b>'+money(d.in.owing)+'</b>'+(d.in.overdue?'<small>'+money(d.in.overdue)+' overdue</small>':'<small>Nothing overdue</small>')+'</div><div class="stat"><span>Deposits unpaid</span><b>'+money(d.in.deposits)+'</b><small>'+d.in.depositsN+' booking'+(d.in.depositsN===1?'':'s')+' tentative</small></div><div class="stat"><span>Booked, not invoiced yet</span><b>'+money(d.in.toInvoice)+'</b><small>Accepted quotes still to come</small></div></div>';
+      if(d.in.owingList.length) h+='<details><summary>Who owes what ('+d.in.owingList.length+')</summary>'+d.in.owingList.map(function(x){ return '<div class="row"><a href="/money/#/doc/'+esc(x.id)+'">'+esc(x.name)+' · #'+esc(x.num)+'</a><span><b>'+money(x.due,1)+'</b> '+(x.state==='overdue'?'<span class="pill red">Overdue</span>':x.dueDate?'<span class="sub">due '+esc(day(x.dueDate))+'</span>':'')+'</span></div>'; }).join('')+'</details>';
+      h+='<h2>Going <em>out</em> <span class="sub" style="font:400 13px var(--sans)">next 14 days</span></h2><div class="grid2"><div class="stat"><span>Team wages + super</span><b>'+money(d.out.wages)+'</b><small>From the roster</small></div><div class="stat"><span>Regular outgoings</span><b>'+money(d.out.bills)+'</b><small>'+d.out.billList.length+' due</small></div></div>';
+      if(d.out.billList.length) h+='<details><summary>Bills due</summary>'+d.out.billList.map(function(x){ return '<div class="row"><span>'+esc(x.name)+'</span><span>'+money(x.amt,1)+' <span class="sub">'+esc(day(x.date))+'</span></span></div>'; }).join('')+'</details>';
+      h+='<h2>Set <em>aside</em></h2><div class="grid2">';
+      if(d.gst) h+='<div class="stat hl"><span>GST this quarter so far</span><b>'+money(d.gst.net)+'</b><small>'+money(d.gst.collected)+' collected less '+money(d.gst.credits)+' credits, since '+esc(day(d.gst.from))+'</small></div>';
+      h+='<div class="stat hl"><span>Income tax this financial year</span><b>'+money(d.tax.setAside)+'</b><small>'+d.tax.pct+'% of '+money(d.tax.profit)+' profit so far. Change the % in Settings, and check it with your accountant.</small></div></div>';
+      return h;
+    }); },
+
+    diary:function(f){ return load('capacity','',f).then(function(d){
+      var h='<p class="sub">Next four weeks. Green days are free to book. Striped bars are bookings with the deposit still unpaid. Up to '+d.perDay+' booking'+(d.perDay===1?'':'s')+' a day.</p>';
+      var first=d.days[0], pad=(first.dow+6)%7;
+      h+='<div class="cal">'+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function(x){return '<span class="h">'+x+'</span>';}).join('');
+      for(var i=0;i<pad;i++) h+='<span></span>';
+      d.days.forEach(function(x){ var n=x.jobs.length, cls=x.closed?'closed':n>=d.perDay?'full':x.free&&!n?'free':x.free?'free':'';
+        h+='<button type="button" class="'+cls+'" data-day="'+x.date+'" aria-pressed="'+(pick===x.date)+'"><span>'+(+x.date.slice(8))+'</span>'+x.jobs.map(function(j){ return '<i class="'+(j.tentative?'tent':'')+'"></i>'; }).join('')+(x.wanted.length?'<span class="w">'+x.wanted.length+' want</span>':'')+'</button>'; });
+      h+='</div>';
+      var sel=d.days.filter(function(x){return x.date===pick;})[0];
+      if(sel){ h+='<div class="card"><h3>'+esc(day(sel.date))+'</h3>'+(sel.closed?'<p class="sub">Closed.</p>':'')+(sel.jobs.length?sel.jobs.map(function(j){ return '<div class="row"><span>'+esc(j.client)+'<br><span class="sub">'+esc([j.service,j.suburb].filter(Boolean).join(' · '))+'</span></span>'+(j.tentative?'<span class="pill warn">Deposit unpaid</span>':'<span class="pill ok">Locked in</span>')+'</div>'; }).join(''):'<p class="sub">Nothing booked.'+(sel.free?' Free to book.':'')+'</p>')+(sel.wanted.length?'<h3 style="margin-top:12px">Asked for this day</h3>'+sel.wanted.map(function(w){ return '<div class="row"><a href="/money/#/req/'+esc(w.id)+'">'+esc(w.name)+'</a><span class="pill">New lead</span></div>'; }).join(''):'')+'</div>'; }
+      var free=d.days.filter(function(x){return x.free&&!x.jobs.length;}).length;
+      h+='<div class="grid2" style="margin-top:12px"><div class="stat"><span>Free days ahead</span><b>'+free+'</b></div><div class="stat"><span>Leads wanting a date</span><b>'+d.days.reduce(function(n,x){return n+x.wanted.length;},0)+'</b></div></div>';
+      return h;
+    }); },
+
+    pricing:function(f){ return load('calib','',f).then(function(d){
+      var h='<p class="sub">Your area estimates against what the team actually took. Area timings record from now on (start and finish of each area). Job totals use the actual hours you log after each job, or clock-ins if you haven\'t.</p>';
+      h+='<h2>By <em>area</em></h2><div class="tw"><table><thead><tr><th>Area</th><th class="r">Your estimate</th><th class="r">Actual (median)</th><th class="r">Jobs</th></tr></thead><tbody>'+d.areas.map(function(a){ var diff=a.actual!=null?a.actual-a.est:0; return '<tr><td>'+esc(a.label)+'</td><td class="r">'+a.est+' h</td><td class="r">'+(a.actual!=null?'<b style="color:'+(Math.abs(diff)>=0.5?'var(--red)':'var(--ok)')+'">'+a.actual+' h</b>':'—')+'</td><td class="r">'+a.n+'</td></tr>'; }).join('')+'</tbody></table></div>';
+      var sug=d.areas.filter(function(a){ return a.suggest!=null&&a.suggest!==a.est; });
+      if(sug.length) h+='<div class="card"><b>Suggested updates</b><p class="sub">'+sug.map(function(a){return esc(a.label)+': '+a.est+' → '+a.suggest+' h';}).join(' · ')+'</p><button type="button" class="btn sm" style="margin-top:8px" data-usesug=\''+esc(JSON.stringify(Object.fromEntries(sug.map(function(a){return [a.key,a.suggest];}))))+'\'>Use these estimates</button><p class="sub">These drive the finish estimate clients see. Your quote prices don\'t change.</p></div>';
+      else h+='<p class="sub">Suggestions appear once an area has been timed on at least two jobs.</p>';
+      h+='<h2>By kind of <em>clean</em></h2>';
+      if(!d.kinds.length) h+='<div class="card empty">Log actual hours on finished jobs to see this.</div>';
+      d.kinds.forEach(function(k){
+        h+='<div class="card"><h3>'+esc({presale:'Pre-sale',bond:'Bond',deep:'Deep',regular:'Regular',other:'Other'}[k.kind]||k.kind)+' · '+k.n+' job'+(k.n===1?'':'s')+'</h3><div class="grid2" style="margin-top:8px"><div class="stat"><span>Estimate vs actual</span><b>'+k.fc+' → '+k.act+' h</b><small>'+(k.act>k.fc?'Running '+Math.round((k.act/k.fc-1)*100)+'% over':'Within estimate')+'</small></div><div class="stat'+(k.rate!=null&&d.target&&k.rate<d.target?' hl':'')+'"><span>Earned per hour worked</span><b>'+(k.rate!=null?money(k.rate):'—')+'</b><small>ex GST'+(d.target?' · your target '+money(d.target):'')+'</small></div></div>'+
+          '<details><summary>Recent jobs</summary>'+k.recent.map(function(r){ return '<div class="row"><span>'+esc(r.client)+'<br><span class="sub">'+esc(day(r.date))+'</span></span><span>'+r.fc+' → <b>'+r.act+' h</b>'+(r.rate!=null?' · '+money(r.rate)+'/h':'')+'</span></div>'; }).join('')+'</details></div>';
+      });
+      return h;
+    }); },
+
+    leads:function(f){ return Promise.all([load('sources','&days='+srcDays,f),load('agents','',f)]).then(function(r){
+      var d=r[0], a=r[1].agents;
+      var h='<h2>Where work <em>comes from</em></h2><div class="acts">'+[[30,'30 days'],[90,'90 days'],[365,'12 months']].map(function(x){ return '<button type="button" class="tab" data-days="'+x[0]+'"'+(srcDays===x[0]?' aria-current="page"':'')+'>'+x[1]+'</button>'; }).join('')+'</div>';
+      h+='<div class="tw"><table><thead><tr><th>Source</th><th class="r">Leads</th><th class="r">Won</th><th class="r">Revenue</th></tr></thead><tbody>'+(d.rows.length?d.rows.map(function(x){ return '<tr><td>'+esc(x.source)+'</td><td class="r">'+x.leads+'</td><td class="r">'+x.won+'</td><td class="r"><b>'+money(x.revenue)+'</b></td></tr>'; }).join(''):'<tr><td colspan="4" class="sub">No leads in this period.</td></tr>')+'</tbody></table></div>';
+      h+='<div class="stat" style="margin-top:10px"><span>Marketing spend logged in this period</span><b>'+money(d.marketing)+'</b><small>Expenses and regular outgoings in the Marketing category. Log ad spend there to compare it with the revenue above.</small></div>';
+      h+='<h2>Agents</h2>';
+      if(!a.length) h+='<div class="card empty">No agents yet.</div>';
+      h+=a.map(function(x){ return '<div class="card"><div style="display:flex;justify-content:space-between;gap:10px"><div><h3>'+esc(x.name)+'</h3><p class="sub">'+esc(x.agency)+'</p></div>'+(x.nudge?'<span class="pill warn">Due a catch-up</span>':'')+'</div><div class="grid2" style="margin-top:8px"><div class="stat"><span>Jobs</span><b>'+x.jobs+'</b><small>'+(x.upcoming?x.upcoming+' coming up':'none booked ahead')+'</small></div><div class="stat"><span>Revenue</span><b>'+money(x.revenue)+'</b><small>Last job '+(x.lastJob?esc(day(x.lastJob)):'—')+'</small></div></div><p class="sub">Last message '+esc(ago(x.lastContact))+'</p>'+(x.phone?'<div class="acts"><a class="btn o sm" href="/messages/#/t/'+esc(x.phone)+'?name='+encodeURIComponent(x.name)+'">Message</a><a class="btn o sm" href="tel:'+esc(x.phone)+'">Call</a></div>':'')+'</div>'; }).join('');
+      return h;
+    }); },
+
+    nudges:function(f){ return Promise.all([load('rebook','',f),load('content','',f)]).then(function(r){
+      var rb=r[0].list, ct=r[1].list;
+      var h='<h2>Worth a <em>nudge</em></h2><p class="sub">Past clients who might want you again. Drafts open in Messages. Nothing is sent until you send it.</p>';
+      h+=rb.length?rb.map(function(x){ return '<div class="card"><h3>'+esc(x.name)+'</h3><p class="sub">'+esc(x.why)+'</p><div class="cap">'+esc(x.draft)+'</div><div class="acts">'+(x.href?'<a class="btn sm" href="'+esc(x.href)+'">Text (draft ready)</a>':'<span class="sub">No mobile on file.</span>')+'<button type="button" class="btn q sm" data-rbdone="'+esc(x.key)+'">Done</button></div></div>'; }).join(''):'<div class="card empty">No one due a nudge right now.</div>';
+      h+='<h2>Posts from your <em>photos</em></h2><p class="sub">The first after photo from each area of recent pre-sale, bond and deep cleans, with captions to copy. Check each photo for anything private before posting.</p>';
+      var todo=ct.filter(function(x){return !x.posted;}), done=ct.length-todo.length;
+      h+=todo.length?todo.slice(0,20).map(function(x){ return '<div class="card"><img class="ph" loading="lazy" src="'+esc(x.src)+'" alt="'+esc(x.area)+' after"><p class="sub">'+esc(x.area+' · '+x.service+' · '+x.suburb+' · '+day(x.date))+'</p><div class="cap">'+esc(x.ig)+'</div><div class="acts"><button type="button" class="btn o sm" data-copy="'+esc(x.ig)+'">Copy Instagram caption</button><button type="button" class="btn o sm" data-copy="'+esc(x.gbp)+'">Copy Google post</button><a class="btn o sm" href="'+esc(x.src)+'" download="bardon-'+esc(x.area.toLowerCase().replace(/\W+/g,'-'))+'.jpg">Save photo</a><button type="button" class="btn q sm" data-posted="'+esc(x.id)+'">Mark posted</button></div></div>'; }).join(''):'<div class="card empty">No new photos to post.</div>';
+      if(done) h+='<p class="sub">'+done+' already posted.</p>';
+      return h;
+    }); },
+
+    records:function(f){ return Promise.all([load('incidents','',f),load('dns','',f),load('backups','',f)]).then(function(r){
+      var inc=r[0].list, dns=r[1].list, bk=r[2].list;
+      var h='<h2>Backups</h2><div class="card"><p style="margin:0">A copy of every hub record (jobs, clients, quotes, invoices, pay, messages, settings) is saved each night at 3am, and the last 30 are kept. Photos aren\'t included.</p><p class="sub">'+(bk.length?'Latest: '+esc(day(bk[0]))+' · '+bk.length+' saved':'No nightly backup yet. Tap Back up now for the first one.')+'</p><div class="acts"><button type="button" class="btn sm" data-backup>Back up now</button><button type="button" class="btn o sm" data-export>Download everything</button></div><p class="sub">Download a copy every month or so and keep it in Google Drive. That gives you a copy outside Netlify.</p></div>';
+      h+='<h2>Incidents &amp; <em>damage</em></h2><p class="sub">Anything broken, damaged or that went wrong on a job. Print one to send to your insurer.</p>';
+      h+='<details'+(inc.length?'':' open')+'><summary>Log an incident</summary><form data-f="incident"><div class="grid2"><label class="f">Date<input type="date" name="date" value="'+new Date().toISOString().slice(0,10)+'"></label><label class="f">Time<input type="time" name="time"></label></div><label class="f">Job or address<input name="job" maxlength="160"></label><label class="f">What happened<textarea name="what" maxlength="3000"></textarea></label><label class="f">Who was on<input name="who" maxlength="200"></label><label class="f">What you did about it<textarea name="fix" maxlength="2000"></textarea></label><label class="f">Photos<input type="file" name="photos" accept="image/*" multiple></label><div class="sw"><span>Reported to the insurer</span><input type="checkbox" name="insurer"></div><div class="err" hidden></div><button class="btn" style="margin-top:10px;width:100%">Save incident</button></form></details>';
+      h+=inc.map(function(x){ return '<div class="card"><div style="display:flex;justify-content:space-between;gap:10px"><h3>'+esc(day(x.date))+(x.time?' · '+esc(x.time):'')+(x.job?' · '+esc(x.job):'')+'</h3><span class="pill '+(x.status==='closed'?'ok':'warn')+'">'+(x.status==='closed'?'Closed':'Open')+'</span></div><p style="margin:6px 0 0;white-space:pre-wrap">'+esc(x.what)+'</p>'+(x.photos?'<p class="sub">'+x.photos+' photo'+(x.photos>1?'s':'')+'</p>':'')+'<div class="acts"><button type="button" class="btn o sm" data-iprint="'+esc(x.id)+'">Print or PDF</button><button type="button" class="btn o sm" data-iclose="'+esc(x.id)+'">'+(x.status==='closed'?'Reopen':'Close')+'</button><button type="button" class="btn q sm" data-idel="'+esc(x.id)+'">Delete</button></div></div>'; }).join('');
+      h+='<h2>Do not <em>service</em></h2><p class="sub">If someone on this list fills in the quote form, you get a warning and the lead is flagged. Nothing is sent to them.</p><div id="dnsList">'+dnsRows(dns)+'</div><div class="acts"><button type="button" class="btn o sm" data-dnsadd>Add someone</button><button type="button" class="btn sm" data-dnssave>Save list</button></div>';
+      return h;
+    }); },
+
+    settings:function(f){ return load('settings','',f).then(function(d){
+      var S=d.settings, h='<h2>Finish <em>estimate</em></h2><div class="card"><div class="sw"><span><b>Show clients a finish estimate</b><br><span class="sub">Worked out from the areas still to do and who\'s on site. You can hide it on any booking.</span></span><input type="checkbox" data-set="showEta"'+(S.showEta?' checked':'')+'></div><p class="sub" style="margin-top:10px">Person-hours per area:</p><div class="grid2">'+Object.keys(d.labels).map(function(k){ return '<label class="f">'+esc(d.labels[k])+'<input inputmode="decimal" data-ah="'+k+'" value="'+S.areaHours[k]+'"></label>'; }).join('')+'</div><button type="button" class="btn sm" style="margin-top:12px" data-saveah>Save hours</button></div>';
+      h+='<h2>Arrival &amp; finish <em>texts</em></h2><div class="card"><div class="sw"><span><b>Let clients opt in to two texts</b><br><span class="sub">Off by default. When on, clients can ask on their link for one text when the team arrives and one when it\'s finished. These go automatically (not approved one by one) and show in their Messages thread.</span></span><input type="checkbox" data-set="alertsOn"'+(S.alertsOn?' checked':'')+'></div><label class="f">Arrival text<textarea data-at="alertArrive">'+esc(S.alertArrive)+'</textarea></label><label class="f">Finished text<textarea data-at="alertFinish">'+esc(S.alertFinish)+'</textarea></label><p class="sub">{first} is their first name, {place} the address, {link} their link.</p><button type="button" class="btn sm" style="margin-top:10px" data-savetexts>Save texts</button></div>';
+      h+='<h2>Money &amp; <em>nudges</em></h2><div class="card"><div class="grid2"><label class="f">Income tax set-aside %<input inputmode="decimal" data-tax value="'+(S.taxPct==null?'':S.taxPct)+'" placeholder="From your money settings"></label><label class="f">Deep clean nudge after (months)<input inputmode="numeric" data-deep value="'+S.deepMonths+'"></label></div><button type="button" class="btn sm" style="margin-top:12px" data-savemoney>Save</button></div>';
+      return h;
+    }); },
+  };
+  function dnsRows(list){ return (list.length?list:[{}]).map(function(x){ return '<div class="card" data-dns><div class="grid2"><label class="f">Name<input data-k="name" value="'+esc(x.name||'')+'"></label><label class="f">Mobile<input data-k="phone" value="'+esc(x.phone||'')+'"></label><label class="f">Email<input data-k="email" value="'+esc(x.email||'')+'"></label><label class="f">Address<input data-k="address" value="'+esc(x.address||'')+'"></label></div><label class="f">Note (only you see it)<input data-k="note" value="'+esc(x.note||'')+'"></label><input type="hidden" data-k="id" value="'+esc(x.id||'')+'"><button type="button" class="btn q sm" data-dnsrm>Remove</button></div>'; }).join(''); }
+
+  function refresh(part){ delete cache[part]; delete cache.needs; render(); }
+  function saveSettings(patch){ return api('',{action:'settings',settings:patch}).then(function(){ toast('Saved'); refresh('settings'); delete cache.jobs; delete cache.calib; }).catch(function(e){ toast(e.message); }); }
+  function readImg(f){ return new Promise(function(res){ var r=new FileReader(); r.onload=function(){ var i=new Image(); i.onload=function(){ var s=Math.min(1,1600/Math.max(i.width,i.height)), c=document.createElement('canvas'); c.width=Math.round(i.width*s); c.height=Math.round(i.height*s); c.getContext('2d').drawImage(i,0,0,c.width,c.height); res(c.toDataURL('image/jpeg',0.8)); }; i.onerror=function(){ res(''); }; i.src=r.result; }; r.readAsDataURL(f); }); }
+
+  app.addEventListener('click',function(e){
+    var b=e.target.closest('button,a[data-file]'); if(!b) return;
+    if(b.dataset.tab){ tab=b.dataset.tab; history.replaceState(null,'','#'+tab); render(); window.scrollTo(0,0); return; }
+    if(b.hasAttribute('data-file')){ e.preventDefault(); fetch(b.getAttribute('href'),{headers:{'x-admin-key':KEY}}).then(function(r){ return r.blob(); }).then(function(bl){ window.open(URL.createObjectURL(bl),'_blank'); }); return; }
+    if(b.dataset.dismiss){ var c=b.closest('.card'); c.style.opacity=.4; api('',{action:'dismiss',key:b.dataset.dismiss}).then(function(){ cache.needs.items=cache.needs.items.filter(function(x){return x.key!==b.dataset.dismiss;}); render(); }).catch(function(x){ c.style.opacity=1; toast(x.message); }); return; }
+    if(b.dataset.open){ openJob=openJob===b.dataset.open?'':b.dataset.open; render(); return; }
+    if(b.dataset.unmom){ api('',{action:'unmoment',bk:b.dataset.bk,id:b.dataset.unmom}).then(function(){ refresh('jobs'); }); return; }
+    if(b.dataset.adddel){ api('',{action:'addon-del',bk:b.dataset.bk,id:b.dataset.adddel}).then(function(){ refresh('jobs'); }); return; }
+    if(b.dataset.addinv){ api('',{action:'addon-invoiced',bk:b.dataset.bk,id:b.dataset.addinv,auto:true}).then(function(){ toast('Added to the invoice'); refresh('jobs'); }).catch(function(x){ toast(x.message); }); return; }
+    if(b.dataset.addman){ api('',{action:'addon-invoiced',bk:b.dataset.bk,id:b.dataset.addman}).then(function(){ refresh('jobs'); }); return; }
+    if(b.dataset.link){ api('',{action:'link',bk:b.dataset.bk,kind:b.dataset.link}).then(function(d){ copy(location.origin+d.link); delete cache.jobs; }).catch(function(x){ toast(x.message); }); return; }
+    if(b.dataset.day){ pick=pick===b.dataset.day?'':b.dataset.day; render(); return; }
+    if(b.dataset.usesug){ var cur=cache.settings?cache.settings.settings.areaHours:{}; saveSettings({areaHours:Object.assign({},cur,JSON.parse(b.dataset.usesug))}); delete cache.calib; return; }
+    if(b.dataset.days){ srcDays=+b.dataset.days; delete cache.sources; render(); return; }
+    if(b.dataset.rbdone){ api('',{action:'rebook-done',key:b.dataset.rbdone}).then(function(){ refresh('rebook'); }); return; }
+    if(b.dataset.copy){ copy(b.dataset.copy); return; }
+    if(b.dataset.posted){ api('',{action:'posted',id:b.dataset.posted,value:true}).then(function(){ refresh('content'); }); return; }
+    if(b.hasAttribute('data-backup')){ b.disabled=true; b.textContent='Backing up…'; api('',{action:'backup-now'}).then(function(d){ toast('Backed up '+d.count+' records'); refresh('backups'); }).catch(function(x){ toast(x.message); b.disabled=false; b.textContent='Back up now'; }); return; }
+    if(b.hasAttribute('data-export')){ b.disabled=true; b.textContent='Preparing…'; fetch('/api/plus?export=1',{headers:{'x-admin-key':KEY}}).then(function(r){ if(!r.ok) throw new Error('Couldn\'t download'); return r.blob(); }).then(function(bl){ var a=document.createElement('a'); a.href=URL.createObjectURL(bl); a.download='bardon-hub-export-'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); a.remove(); }).catch(function(x){ toast(x.message); }).then(function(){ b.disabled=false; b.textContent='Download everything'; }); return; }
+    if(b.dataset.iprint){ var x=cache.incidents.list.filter(function(i){return i.id===b.dataset.iprint;})[0]; if(x) printIncident(x); return; }
+    if(b.dataset.iclose){ var y=cache.incidents.list.filter(function(i){return i.id===b.dataset.iclose;})[0]; api('',Object.assign({action:'incident-save'},y,{fix:y.action,status:y.status==='closed'?'open':'closed'})).then(function(){ refresh('incidents'); }); return; }
+    if(b.dataset.idel){ if(!confirm('Delete this incident?')) return; api('',{action:'incident-del',id:b.dataset.idel}).then(function(){ refresh('incidents'); }); return; }
+    if(b.hasAttribute('data-dnsadd')){ document.getElementById('dnsList').insertAdjacentHTML('beforeend',dnsRows([{}])); return; }
+    if(b.hasAttribute('data-dnsrm')){ b.closest('[data-dns]').remove(); return; }
+    if(b.hasAttribute('data-dnssave')){ var list=[].map.call(document.querySelectorAll('[data-dns]'),function(c){ var o={}; c.querySelectorAll('[data-k]').forEach(function(i){ o[i.dataset.k]=i.value; }); return o; }); api('',{action:'dns-save',list:list}).then(function(){ toast('Saved'); refresh('dns'); }).catch(function(x){ toast(x.message); }); return; }
+    if(b.hasAttribute('data-saveah')){ var ah={}; document.querySelectorAll('[data-ah]').forEach(function(i){ ah[i.dataset.ah]=i.value; }); saveSettings({areaHours:ah}); return; }
+    if(b.hasAttribute('data-savetexts')){ var p={}; document.querySelectorAll('[data-at]').forEach(function(i){ p[i.dataset.at]=i.value; }); saveSettings(p); return; }
+    if(b.hasAttribute('data-savemoney')){ saveSettings({taxPct:document.querySelector('[data-tax]').value,deepMonths:document.querySelector('[data-deep]').value}); delete cache.cash; delete cache.rebook; return; }
+  });
+  app.addEventListener('change',function(e){
+    var t=e.target;
+    if(t.dataset.set){ var p={}; p[t.dataset.set]=t.checked; saveSettings(p); return; }
+    if(t.dataset.eta){ api('',{action:'eta-hide',bk:t.dataset.eta,value:!t.checked}).then(function(){ toast(t.checked?'Clients see the estimate':'Hidden on this booking'); delete cache.jobs; }); return; }
+  });
+  app.addEventListener('submit',function(e){
+    var f=e.target, k=f.dataset.f; if(!k) return; e.preventDefault(); var bt=f.querySelector('button'); if(bt) bt.disabled=true;
+    function done(m){ toast(m); refresh(k==='incident'?'incidents':'jobs'); }
+    function fail(x){ if(bt) bt.disabled=false; var er=f.querySelector('.err'); if(er){ er.textContent=x.message; er.hidden=false; } else toast(x.message); }
+    if(k==='moment') return api('',{action:'moment',bk:f.dataset.bk,text:f.elements.text.value}).then(function(){ done('Posted to their feed'); }).catch(fail);
+    if(k==='addon') return api('',{action:'addon-new',bk:f.dataset.bk,title:f.elements.title.value,price:f.elements.price.value,note:f.elements.note.value}).then(function(){ done('Sent. It\'s on their link now. Let them know if you need a quick answer.'); }).catch(fail);
+    if(k==='prefs') return api('',{action:'prefs',bk:f.dataset.bk,prefs:f.elements.prefs.value}).then(function(){ done('Saved'); }).catch(fail);
+    if(k==='incident'){ var files=[].slice.call(f.elements.photos.files||[]).slice(0,8);
+      return Promise.all(files.map(readImg)).then(function(ph){ return api('',{action:'incident-save',date:f.elements.date.value,time:f.elements.time.value,job:f.elements.job.value,what:f.elements.what.value,who:f.elements.who.value,fix:f.elements.fix.value,insurer:f.elements.insurer.checked,photos:ph.filter(Boolean)}); }).then(function(){ done('Saved'); }).catch(fail); }
+  });
+  function printIncident(x){
+    var w=window.open('','_blank'); if(!w){ toast('Allow pop-ups to print'); return; }
+    var imgs=''; var n=x.photos||0;
+    var h='<!doctype html><html><head><meta charset="utf-8"><title>Incident '+esc(x.date)+'</title><style>body{font:14px/1.5 Arial,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;color:#1a1a1a}h1{font-size:22px}dt{font-weight:700;margin-top:12px}dd{margin:2px 0 0;white-space:pre-wrap}img{width:48%;margin:1%;border-radius:4px}</style></head><body><h1>Incident report · Bardon Clean</h1><p>Jack East T/A Bardon Clean · ABN 46 426 437 394 · 0406 216 212</p><dl><dt>Date</dt><dd>'+esc(day(x.date)+' '+x.date.slice(0,4))+(x.time?' at '+esc(x.time):'')+'</dd><dt>Job</dt><dd>'+esc(x.job||'—')+'</dd><dt>What happened</dt><dd>'+esc(x.what)+'</dd><dt>Who was on</dt><dd>'+esc(x.who||'—')+'</dd><dt>What was done about it</dt><dd>'+esc(x.action||'—')+'</dd><dt>Reported to insurer</dt><dd>'+(x.insurer?'Yes':'No')+'</dd><dt>Status</dt><dd>'+(x.status==='closed'?'Closed':'Open')+'</dd></dl><div id="ph"></div><p style="color:#666;font-size:12px">Logged '+esc(new Date(x.at).toLocaleString('en-AU'))+'</p></body></html>';
+    w.document.write(h); w.document.close();
+    var jobs=[]; for(var i=0;i<n;i++) jobs.push(fetch('/api/plus?ifile='+x.id+'&n='+i,{headers:{'x-admin-key':KEY}}).then(function(r){return r.blob();}).then(function(bl){ return URL.createObjectURL(bl); }));
+    Promise.all(jobs).then(function(urls){ w.document.getElementById('ph').innerHTML=urls.map(function(u){return '<img src="'+u+'">';}).join(''); setTimeout(function(){ w.print(); },600); });
+  }
+  window.addEventListener('hashchange',function(){ var t=location.hash.slice(1); if(t&&t!==tab){ tab=t==='rebook'?'nudges':t==='backup'?'records':t; render(); } });
+  render();
+})();
+</script>
+</body></html>

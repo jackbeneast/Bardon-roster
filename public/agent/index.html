@@ -343,6 +343,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
 <script src="/lib/demo.js"></script>
 <script src="/lib/house.js"></script>
 <script src="/lib/bcart.js"></script>
+<script src="/lib/clientplus.js"></script>
 <script>
 (function(){
   var path=location.pathname, mode, cred='';
@@ -351,6 +352,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
   if(demoAud){ mode=demoAud==='agent'?'agent':'vendor'; cred='demo'; }
   else if(/^\/a\/[\w-]+/.test(path)){ mode='agent'; cred=path.split('/')[2]; }
   else if(/^\/v\/[\w-]+/.test(path)){ mode='vendor'; cred=path.split('/')[2]; }
+  else if(/^\/s\/[\w-]+/.test(path)){ mode='vendor'; cred=path.split('/')[2]; var viewer=true; }
   else mode='admin';
   var gal=[], galKind='', accEdit=false, fbMode='', formDirty=false, data=null, tab='today', openId=null, photoMode='after', as='', err='';
   var JACK='0406 216 212', JACK_TXT='0468 193 772';
@@ -418,7 +420,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     if(demoAud){ data=BCDemo.data(demoAud,demo.phase,demo.step,demo.saved); err=''; render(); drawBar();
       if(mode==='vendor') document.title='Sample clean · Bardon Clean';
       return Promise.resolve(); }
-    var q = mode==='agent'?'?k='+encodeURIComponent(cred) : mode==='vendor'?'?v='+encodeURIComponent(cred) : (as?'?as='+encodeURIComponent(as):'');
+    var q = mode==='agent'?'?k='+encodeURIComponent(cred) : mode==='vendor'?(viewer?'?vv=':'?v=')+encodeURIComponent(cred) : (as?'?as='+encodeURIComponent(as):'');
     return api(q).then(function(d){ data=d; err=''; render(); }).catch(function(e){ if(!data){ err=e.message; render(); } });
   }
 
@@ -732,7 +734,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
       h+='<div class="bar"><i style="width:'+p.pct+'%"></i></div>';
       h+='<div class="gl-grid">'+[
         ['Team arrived',ac.in?clock(ac.in):'—'],
-        ['Est. finish',fmtTime(L.eta||j.end)],
+        ['Est. finish',(j.plus&&j.plus.finish&&!j.plus.finish.set)?fmtTime(j.plus.finish.from)+'–'+fmtTime(j.plus.finish.to):fmtTime(L.eta||j.end)],
         ['Checks done',totalChecks(j)||'—'],
         ['Notes for you',notes?notes:'None']
       ].map(function(x){ return '<div><span>'+gi(x[0])+x[0]+'</span><b>'+esc(x[1])+'</b></div>'; }).join('')+'</div>';
@@ -856,10 +858,14 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     return h;
   }
 
+  // Client link extras (public/lib/clientplus.js): steps, prep, moments feed, add-ons, sign-off and more.
+  function XP(where,j,ph){ return (window.BCPlus&&mode==='vendor')?BCPlus.html(where,j,ph,data):''; }
+  if(window.BCPlus&&mode==='vendor') BCPlus.init({ cred:cred, viewer:!!viewer, demo:!!demoAud, redraw:function(){ showDetail(true); },
+    job:function(){ return data&&data.jobs&&data.jobs[0]; }, post:function(body){ return api('',{method:'POST',body:body}); } });
   function showDetail(standalone){
     var j=(data.jobs||[]).find(function(x){return x.id===openId;}), el=$('detail');
     if(!j){ if(standalone){ $('main').innerHTML='<div class="empty">This clean is no longer listed. Call Jack on <b>'+JACK+'</b>.</div>'; } closeDetail(); return; }
-    var p=prog(j), L=j.live, ph=phaseOf(j), keep=el.scrollTop, h='', V=mode==='vendor';
+    var p=prog(j), L=j.live, ph=phaseOf(j), keep=el.scrollTop, h='', V=mode==='vendor', VW=!!viewer;
     gal=[];
     if(standalone){ el.hidden=true; }
     h+='<div class="wrap rep" style="padding-bottom:60px">';
@@ -871,13 +877,17 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
        ph==='done'?'<p class="sub sec-sub">Photos from every area. Open one to see each check the team ticked.</p>':'<p class="sub sec-sub">Each area fills in as the team finishes it.</p>')+
       '<div class="rooms">'+j.rooms.map(function(r){ return roomCard(j,r,ph); }).join('')+'</div></section>';
     h+=glance(j,p,ph);
+    if(ph!=='done') h+=XP('glance',j,ph);
     if(ph==='done') h+=roomsH;
+    if(ph==='done') h+=XP('glance',j,ph);
     if(L.updated && ph==='live') h+='<p class="updated">Last update '+clock(L.updated)+'. This page updates itself.</p>';
 
-    if(V && ph==='done') h+=feedbackCard();
+    if(V && !VW && ph==='done') h+=feedbackCard();
+    if(ph==='done') h+=XP('done',j,ph);
     if(ph==='done') h+=tourBlock(L);
-    if(V && ph==='booked') h+=bookingCard(j);
-    if(V && ph==='booked') h+=accessSec(j);
+    if(V && !VW && ph==='booked') h+=bookingCard(j);
+    if(V && !VW && ph==='booked') h+=accessSec(j);
+    if(ph==='booked') h+=XP('booked',j,ph);
 
     if(ph!=='done') h+=roomsH;
     if(ph==='live') h+=tourBlock(L);
@@ -892,8 +902,9 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     h+=billSec(j);
     h+=nextSteps(j,ph);
     if(ph==='live') h+='<section class="blk"><h2>'+hi('clock')+'<span>Progress</span></h2><div class="panel"><ol class="tl">'+STEPS.map(function(s,i){ if(i===0) return ''; var hit=i<=p.step; return '<li class="'+(hit?'hit':'')+(i===p.step&&!L.done&&p.step>0?' now':'')+(i===4?' last':'')+'"><span>'+s+'</span><time>'+(hit?whenAt(p.times[i]):'')+'</time></li>'; }).join('')+'</ol></div></section>';
+    h+=XP('end',j,ph);
     h+=trustSec(j);
-    if(V && ph==='done') h+=againCard();
+    if(V && !VW && ph==='done') h+=againCard();
 
     h+='<section class="blk"><div class="actions">'+(!V&&(j.share||demoAud)?'<button type="button" class="btn primary" data-sharejob="'+esc(j.id)+'">Share with the vendor</button>':'')+(mode==='agent'?'<button type="button" class="btn outline" data-askjob="'+esc(j.id)+'">Message Jack about this</button>':V?'<a class="btn primary" href="sms:+61468193772">Text Jack</a><a class="btn outline" href="tel:+61406216212">Call Jack</a>':'<a class="btn outline" href="tel:+61406216212">Call Jack</a>')+'</div><p class="contact">Jack East, owner · <b>'+JACK+'</b>'+(mode==='agent'?' · <a href="tel:+61406216212" style="color:var(--btn);font-weight:600">Call</a>':'')+'</p>'+(!V&&j.share?'<p class="sub">The vendor gets this clean only: progress, photos, notes and their own invoices. No other listings.</p>':'')+'</section>';
     h+='</div>';
@@ -1005,7 +1016,7 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
 
   if(mode==='admin' && !ls('roster_admin_key')){ err='Log in on the roster first, then open the agent portal preview from there.'; render(); }
   else if(demoAud){ load(); BCDemo.loadPhotos().then(load); setInterval(demoTick, 3000); document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') load(); }); }
-  else { load(); setInterval(function(){ if(document.visibilityState!=='visible' || document.getElementById('bookForm') || formDirty) return; if(tab==='messages') return; load(); }, 30000);
+  else { load(); setInterval(function(){ if(document.visibilityState!=='visible' || document.getElementById('bookForm') || formDirty || (window.BCPlus&&BCPlus.busy())) return; if(tab==='messages') return; load(); }, 30000);
     // Not on Messages: still check for Jack's replies now and then so the badge lights up.
     if(mode==='agent') setInterval(function(){ if(document.visibilityState==='visible' && tab!=='messages') pullChat(); }, 45000);
     document.addEventListener('visibilitychange',function(){ if(document.visibilityState!=='visible') return; if(tab==='messages' && mode==='agent') pullChat(); else load(); }); }

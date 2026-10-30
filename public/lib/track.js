@@ -9,7 +9,7 @@
     if(/[?&]a=/.test(location.search) && /^\/(q|i|r)\//.test(location.pathname)) return;
   }catch(e){}
   var parts=location.pathname.split('/'), p=parts[1], t=parts[2]||'';
-  if(['q','i','r','v','a'].indexOf(p)<0 || !/^[\w-]{16,80}$/.test(t)) return;
+  if(['q','i','r','v','a','s'].indexOf(p)<0 || !/^[\w-]{16,80}$/.test(t)) return;
 
   var sid=(Date.now().toString(36)+Math.random().toString(36).slice(2,10)).slice(0,20);
   var w=Math.min(screen.width||0, screen.height||0)||window.innerWidth;

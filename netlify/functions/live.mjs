@@ -3,6 +3,8 @@ import { teamSession, needLogin } from "../../lib/teamauth.mjs";
 import { autoWrap, clockedHours } from "../../lib/clock.mjs";
 import { paySet } from "../../public/lib/wages.mjs";
 import { notify, firstName, where, fmtTime, clockNow } from "../../lib/notify.mjs";
+import { milestoneText } from "../../lib/plus.mjs";
+import { sendSms } from "../../lib/mm.mjs";
 
 // Live progress on a job: arrivals, rooms, flags for the agent, lock-up, finish.
 // The team posts from the roster (same trust as shift confirmations); Jack can do everything.
@@ -42,6 +44,7 @@ export default async (req) => {
       if (b.undo) { delete D.arrived[who]; delete D.left[who]; }
       else {
         const first = !D.arrived[who];
+        if (!Object.values(D.arrived || {}).some(Boolean)) await milestoneText(s, roster, job, "arrive", { sendSms }).catch(() => {});
         D.arrived[who] = now;
         const p = roster.team.find((x) => x.id === who);
         if (first && p && !p.owner) {
@@ -95,7 +98,11 @@ export default async (req) => {
     case "room": {
       if (!roomsOf(job).includes(b.room)) return json({ error: "Unknown room" }, 400);
       if (b.status === "w") delete L.rooms[b.room];
-      else if (b.status === "p" || b.status === "d") L.rooms[b.room] = { s: b.status, by: doer(b.room), at: now };
+      else if (b.status === "p" || b.status === "d") {
+        // Keep when the area was started, so the client's feed and the pricing check know how long it took.
+        const prev = L.rooms[b.room], st = prev ? (prev.st || (prev.s === "p" ? prev.at : "")) : (b.status === "p" ? now : "");
+        L.rooms[b.room] = { s: b.status, by: doer(b.room), at: now, ...(st ? { st } : {}) };
+      }
       else return json({ error: "Bad status" }, 400);
       break;
     }
@@ -107,8 +114,23 @@ export default async (req) => {
       if (b.value) r[id] = { by: doer(b.room), at: now }; else delete r[id];
       if (!Object.keys(r).length) delete L.items[b.room];
       // First tick in a room moves it to "Doing" so the agent sees progress.
-      if (b.value && !L.rooms[b.room]) L.rooms[b.room] = { s: "p", by: doer(b.room), at: now };
+      if (b.value && !L.rooms[b.room]) L.rooms[b.room] = { s: "p", by: doer(b.room), at: now, st: now };
       break;
+    }
+    case "moment": { // a short update for the client's feed ("Oven was a big one, all sparkling now")
+      const t = str(b.text, 200);
+      if (!t) return json({ error: "Type the update first" }, 400);
+      const bkey = job.group || job.id, list = (await s.get(`moment/${bkey}`)) || [];
+      if (list.length >= 60) return json({ error: "Too many updates on this job" }, 400);
+      list.push({ id: Math.random().toString(36).slice(2, 10), t, at: now, by: pid });
+      await s.set(`moment/${bkey}`, list);
+      return json({ ok: true, moments: list });
+    }
+    case "unmoment": {
+      if (!admin) return json({ error: "Only Jack can remove updates" }, 401);
+      const bkey = job.group || job.id;
+      await s.set(`moment/${bkey}`, ((await s.get(`moment/${bkey}`)) || []).filter((m) => m.id !== b.id));
+      return json({ ok: true });
     }
     case "items": { // bulk ticks: { rooms: { Kitchen: [ids] }, value } — tick all / clear all
       const map = b.rooms && typeof b.rooms === "object" ? b.rooms : {};
@@ -119,7 +141,7 @@ export default async (req) => {
         const r = (L.items[room] ||= {});
         for (const id of ids) { if (b.value) { if (!r[id]) r[id] = { by: doer(room), at: now }; } else delete r[id]; }
         if (!Object.keys(r).length) delete L.items[room];
-        if (b.value && ids.length && !L.rooms[room]) L.rooms[room] = { s: "p", by: doer(room), at: now };
+        if (b.value && ids.length && !L.rooms[room]) L.rooms[room] = { s: "p", by: doer(room), at: now, st: now };
       }
       break;
     }
@@ -168,6 +190,7 @@ export default async (req) => {
         const first = !L.done;
         L.done = now;
         wrapCheck = true;
+        if (first) await milestoneText(s, roster, job, "finish", { sendSms }).catch(() => {});
         if (first && !admin) {
           const rs = roomsOf(job), d = rs.filter((r) => L.rooms[r]?.s === "d").length, lk = Object.keys(LOCK).filter((k) => L.lock[k]).length;
           const ph = L.photos.filter((p) => p.kind === "after").length;

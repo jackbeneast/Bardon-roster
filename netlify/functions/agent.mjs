@@ -9,6 +9,7 @@ import { loadDocs, loadSettings, freeDates } from "../../lib/docs.mjs";
 import { loadThread, logPortal } from "../../lib/messages.mjs";
 import { auMobile, sendSms, mmReady } from "../../lib/mm.mjs";
 import { createHash, randomInt } from "node:crypto";
+import { clientExtras, clientAction } from "../../lib/plus.mjs";
 
 // ---- sample jobs, so a new agent's link isn't empty on first open ----
 // Three clearly labelled jobs: finished yesterday (report), on site today, booked later this week.
@@ -160,6 +161,19 @@ export default async (req) => {
     const photos = await loadTeamPhotos(s);
     const set = await loadSettings(s).catch(() => null);
     const base = { lock: LOCK, phone: "0406 216 212", biz: { abn: set?.biz?.abn || "46 426 437 394", legal: set?.biz?.legal || "Jack East T/A Bardon Clean" } };
+    // View-only copy the client shared with someone: progress and photos, no prices, access or forms.
+    const vv = u.searchParams.get("vv") || "";
+    if (vv) {
+      const m = vv.length >= 20 && /^[0-9a-f]+$/.test(vv) ? await s.get(`vshare/${vv}`) : null;
+      const all = m ? roster.jobs.filter((j) => (j.group || j.id) === m.bk).sort((a, b) => a.date.localeCompare(b.date)) : [];
+      const t = new Date(Date.now() + 10 * 3600e3).toISOString().slice(0, 10);
+      const job = all.find((j) => j.date >= t) || all[all.length - 1];
+      if (!job) return json({ error: "This link has been switched off." }, 404);
+      const vj = view(job, roster, live[job.id], false, photos, live);
+      const kind = /bond|lease/i.test(job.service || "") ? "bond" : /pre.?sale/i.test(job.service || "") ? "presale" : /deep/i.test(job.service || "") ? "deep" : /regular/i.test(job.service || "") ? "regular" : "other";
+      vj.plus = await clientExtras(s, roster, job, vj, { viewer: true, raw: live[job.id] }).catch(() => null);
+      return json({ ...base, mode: "vendor", agent: null, jobs: [vj], client: { viewer: true, kind } });
+    }
     if (v) {
       // Multi-day bookings share one client link: show today's day, else the next one, else the last.
       const all = v.length >= 16 ? roster.jobs.filter((j) => j.share === v).sort((a, b) => a.date.localeCompare(b.date)) : [];
@@ -173,6 +187,7 @@ export default async (req) => {
       const vj = view(job, roster, live[job.id], false, photos, live);
       const vb = billingFor(job, roster, (await loadDocs(s).catch(() => [])).filter((d) => !d.archived || d.jobId), "");
       if (vb) vj.billing = vb;
+      vj.plus = await clientExtras(s, roster, job, vj, { raw: live[job.id] }).catch((e) => { console.error("plus", e); return null; });
       return json({ ...base, mode: "vendor", agent: a ? { name: a.name, agency: a.agency } : null, jobs: [vj],
         client: { access: acc || null, feedback: fb ? { mood: fb.mood, at: fb.at } : null, reviewLink: tp.reviewLink || "", kind } });
     }
@@ -219,6 +234,14 @@ export default async (req) => {
       }
       await s.set("roster", { ...roster, savedAt: new Date().toISOString() });
       return json({ ok: true });
+    }
+    if (typeof b.action === "string" && b.action.startsWith("x-")) { // client link extras (lib/plus.mjs)
+      const v = typeof b.v === "string" && b.v.length >= 16 ? b.v : "";
+      const job = v && roster.jobs.find((j) => j.share === v);
+      if (!job) return json({ error: "This link has expired. Call Jack on 0406 216 212." }, 404);
+      const r = await clientAction(s, roster, job, b, { notify, where, sendSms, auMobile });
+      if (!r) return json({ error: "Unknown action" }, 400);
+      return r.error ? json(r, 400) : json(r);
     }
     if (b.action === "access" || b.action === "feedback") { // from the client's own link
       const v = typeof b.v === "string" && b.v.length >= 16 ? b.v : "";

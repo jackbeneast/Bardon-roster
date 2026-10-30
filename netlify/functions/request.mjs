@@ -84,6 +84,11 @@ export default async (req) => {
       const id = pid(); await s.setBin(`reqphoto/${id}`, buf); r.photos.push(id);
     } catch { /* skip a bad photo, keep the request */ }
   }
+  // Referred by a past client's link (/quote?src=ref-<code>), and the do-not-service list.
+  const refm = /^ref-([0-9a-f]{8})$/.exec(r.src || "");
+  if (refm) { const ref = await s.get(`ref/${refm[1]}`); if (ref) r.refBy = { code: refm[1], name: ref.name || "", suburb: ref.suburb || "" }; }
+  const dns = await dnsMatch(s, r);
+  if (dns) r.dns = dns;
   await s.set(`req/${r.id}`, r);
 
   const S = SERVICES[r.service];
@@ -93,9 +98,24 @@ export default async (req) => {
     body: [`${r.name} · ${r.phone}`, r.business ? [r.business, r.cfreq ? CFREQ_L(r) : ""].filter(Boolean).join(" · ") : "", [size, r.extras.length ? r.extras.map((x) => EXTRAS[x].toLowerCase()).join(", ") : ""].filter(Boolean).join(" · "), r.date ? `Date: ${r.date}` : "", r.photos.length ? `${r.photos.length} photo${r.photos.length > 1 ? "s" : ""}` : ""].filter(Boolean).join("\n"),
     tags: "inbox_tray", priority: 5, url: `/money/#/req/${r.id}`,
   });
+  if (r.refBy) await notify(s, { type: "request", title: `Referral: ${r.name} was sent by ${r.refBy.name || "a past client"}`, body: "Worth a thank-you once they book.", tags: "gift", priority: 3, url: "/desk/" });
+  if (r.dns) await notify(s, { type: "request", title: `Do-not-service match: ${r.name}`, body: `Matches "${r.dns}" on your list. Nothing has been sent to them.`, tags: "no_entry", priority: 5, url: "/desk/" });
 
   // Nothing goes to the client automatically: Jack approves every message from the request screen.
   return json({ ok: true, first: firstName(r.name) });
 };
 
 export const config = { path: "/api/request" };
+
+// Jack's do-not-service list (plus/dns): match on phone, email, address or name.
+async function dnsMatch(s, r) {
+  const list = (await s.get("plus/dns")) || [];
+  const dig = (x) => String(x || "").replace(/\D/g, "").slice(-9), low = (x) => String(x || "").toLowerCase().replace(/\s+/g, " ").trim();
+  for (const d of list) {
+    if (d.phone && dig(d.phone).length >= 8 && dig(d.phone) === dig(r.phone)) return d.name || d.phone;
+    if (d.email && low(d.email) === low(r.email)) return d.name || d.email;
+    if (d.address && low(r.address).includes(low(d.address))) return d.name || d.address;
+    if (d.name && d.name.trim().split(/\s+/).length >= 2 && low(d.name) === low(r.name)) return d.name;
+  }
+  return "";
+}

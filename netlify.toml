@@ -22,6 +22,18 @@
   to = "/agent/index.html"
   status = 200
 
+# View-only copy of a client's link that they shared: /s/<token>
+[[redirects]]
+  from = "/s/*"
+  to = "/agent/index.html"
+  status = 200
+
+# Bond evidence pack, printable: /pack/<client link token>
+[[redirects]]
+  from = "/pack/*"
+  to = "/pack/index.html"
+  status = 200
+
 # Public demo of the client link and agent portal (for the website): /demo, /demo/rent, /demo/agent
 [[redirects]]
   from = "/demo"
