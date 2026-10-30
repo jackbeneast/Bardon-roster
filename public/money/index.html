@@ -163,7 +163,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .pkpick button[aria-pressed="true"]{border:2px solid var(--terracotta);background:var(--tint)}
 .pkpick b{font:600 15px var(--sans)}.pkpick small{display:block;color:var(--meta);font-size:12.5px}
 .pay{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--cream-dark);font-size:14px;color:var(--dark)}
-</style></head><body>
+</style><script src="/lib/hubnav.js" data-tabs="tools"></script>
+</head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <script src="/lib/confirm.js"></script>
 <script src="/lib/sms.js"></script>
@@ -232,7 +233,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
     curHash=location.hash; dirty=false; draft=null; render(); window.scrollTo(0,0);
   });
 
-  function topbar(back){ return '<div class="top">'+(back?'<a href="'+back+'">← Back</a>':'<a href="/">← Hub</a>')+'<span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
+  function topbar(back){ return '<div class="top">'+(back?'<a href="'+back+'" data-hb>← Back</a>':'<a href="/?v=more" data-hb>← Back</a>')+'<span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
 
   function render(){
     if(loadErr==='login'){ app.innerHTML='<div class="center">'+LOGO.replace('<svg','<svg style="width:48px;height:48px"')+'<h1 style="margin-top:12px">Log in <em>first</em></h1><p class="sub">Open the hub, log in with your password, then come back here.</p><p><a class="btn primary" href="/">Go to the hub</a></p></div>'; return; }

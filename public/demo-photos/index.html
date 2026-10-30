@@ -94,7 +94,8 @@ h2{font:700 20px/1.2 var(--serif);color:var(--dark);margin:28px 0 10px}
 .btn{font:600 15px/1 var(--sans);border-radius:8px;min-height:46px;padding:0 18px;border:0;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
 .btn.primary{background:var(--terracotta);color:#fff}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:30;box-shadow:0 6px 18px rgba(0,0,0,.2)}
-</style></head><body>
+</style><script src="/lib/hubnav.js" data-tabs="tools"></script>
+</head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <script>
 (function(){
@@ -227,7 +228,7 @@ function render(){
   if(err){ app.innerHTML='<div class="center">'+esc(err)+'</div>'; return; }
   if(!D) return;
   var total=D.jobs.reduce(function(n,j){ return n+aftersOf(j).length; },0), unsorted=D.jobs.reduce(function(n,j){ return n+j.photos.filter(function(x){ return !x.room&&!D.guess[x.id]; }).length; },0);
-  var h='<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><a href="/demo" target="_blank" rel="noopener" style="color:var(--terracotta-dark)">Open demo</a></div>';
+  var h='<div class="top"><a href="/?v=more" data-hb>← Back</a><span class="wm">'+LOGO+'Bardon Clean</span><a href="/demo" target="_blank" rel="noopener" style="color:var(--terracotta-dark)">Open demo</a></div>';
   var njobs=D.jobs.filter(function(j){ return aftersOf(j).length; }).length;
   if(target) h+='<div class="pick"><span>Tap a photo below for: '+esc(target==='gallery'?'the homepage gallery':target.indexOf('page:')===0?pgName(target.slice(5))+' photos ('+(D.pages[target.slice(5)]||[]).length+' of 6)':spotOf(target).page+' · '+spotOf(target).spot)+'</span><button type="button" data-cancel>'+(target.indexOf('page:')===0?'Done':'Cancel')+'</button></div>';
   if(uping) h+='<div class="pick" style="background:var(--dark)"><span>Uploading '+uping.done+' of '+uping.total+'…</span></div>';

@@ -90,6 +90,7 @@ table.fq th{font:600 12px var(--sans);color:var(--m);text-transform:uppercase;le
 @media (prefers-reduced-motion:reduce){.dot{animation:none}}
 details.more{margin-top:10px}details.more summary{cursor:pointer;font:600 14px var(--sans);color:var(--td);padding:8px 0}
 </style>
+<script src="/lib/hubnav.js" data-tabs="tools"></script>
 </head><body><div id="app"><div class="center">Loading…</div></div>
 <script>
 (function(){
@@ -202,7 +203,7 @@ function weekStats(){
 }
 function ago(s){ if(!s) return 'not yet'; var n=Math.round((pd(D.today)-pd(s))/864e5); return n<=0?'today':n===1?'yesterday':n+' days ago'; }
 function tabs(on){ return '<nav class="tabs" aria-label="Sections"><a href="#/"'+(on==='posts'?' aria-current="page"':'')+'>Posts</a><a href="#/how"'+(on==='how'?' aria-current="page"':'')+'>How &amp; how often</a><a href="#/more"'+(on==='more'?' aria-current="page"':'')+'>Other platforms</a></nav>'; }
-function head(){ return '<div class="top"><a href="/">‹ Hub</a><span class="wm">Bardon Clean</span></div>'; }
+function head(){ return '<div class="top"><a href="/?v=more" data-hb>‹ Back</a><span class="wm">Bardon Clean</span></div>'; }
 function thumbHtml(p){
   if(!(p.ph||[]).length) return '<span class="im"></span>';
   return '<span class="im'+(p.kind==='pair'?' two':'')+'">'+p.ph.map(function(x){ return '<img src="'+purl(x,1)+'" alt="" loading="lazy">'; }).join('')+'</span>';
@@ -252,7 +253,7 @@ function stepsFor(p){
     '<li>Tap <b>Share</b>, then come back here and tap <b>Mark posted</b>.</li></ol>';
 }
 function viewPost(p){
-  var h='<div class="top"><a href="#/">‹ All posts</a><span class="wm">Bardon Clean</span></div>';
+  var h='<div class="top"><a href="#/" data-hb>‹ Back</a><span class="wm">Bardon Clean</span></div>';
   h+='<h1 style="font-size:24px"><span class="chip '+p.ch+'" style="font-size:12px;vertical-align:5px">'+CH[p.ch]+'</span> '+esc(dayLbl(p.date))+'</h1>';
   if(p.status==='posted') h+='<div class="hint" style="background:var(--okb);border-color:#CFE0CB;color:var(--ok)">Posted'+(p.postedAt?' '+esc(dayLbl(new Date(Date.parse(p.postedAt)+36e6).toISOString().slice(0,10)).toLowerCase()):'')+'. <button type="button" class="btn sm" data-status="" style="margin-left:6px">Undo</button></div>';
   if(p.status==='skipped') h+='<div class="hint">'+(p.auto?'Missed, and dropped off after a week.':'Skipped.')+' <button type="button" class="btn sm" data-status="" style="margin-left:6px">Bring it back</button></div>';

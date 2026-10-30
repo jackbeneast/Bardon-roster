@@ -108,7 +108,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible{out
 .nav .range{flex:1;text-align:center;font:600 15px var(--sans);color:var(--dark)}
 .nav button{min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:8px;background:var(--white);font:600 16px var(--sans);color:var(--dark);cursor:pointer}
 details.more summary{cursor:pointer;color:var(--terracotta-dark);font:500 14px var(--sans);padding:8px 0}
-</style></head><body>
+</style><script src="/lib/hubnav.js" data-tabs="tools"></script>
+</head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <script src="/lib/sms.js"></script>
 <script src="/lib/payslip.js"></script>
@@ -220,7 +221,7 @@ function personCalc(pid){
 function route(){ var h=location.hash.replace(/^#\/?/,'').split('/'); return {v:h[0]||'', id:decodeURIComponent(h[1]||'')}; }
 function go(h){ if(location.hash==='#/'+h) render(); else location.hash='#/'+h; }
 window.addEventListener('hashchange',function(){ render(); window.scrollTo(0,0); });
-function topbar(back){ return '<div class="top">'+(back?'<a href="'+back+'">← Back</a>':'<a href="/">← Hub</a>')+'<span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
+function topbar(back){ return '<div class="top">'+(back?'<a href="'+back+'" data-hb>← Back</a>':'<a href="/?v=more" data-hb>← Back</a>')+'<span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
 
 function render(){
   if(loadErr==='login'){ app.innerHTML='<div class="center">'+LOGO.replace('<svg','<svg style="width:48px;height:48px"')+'<h1 style="margin-top:12px">Log in <em>first</em></h1><p class="sub">Open the hub, log in with your password, then come back here.</p><p><a class="btn primary" href="/">Go to the hub</a></p></div>'; return; }

@@ -73,7 +73,8 @@ details summary{cursor:pointer;font:600 14px var(--sans);color:var(--dark);paddi
 .toast{pointer-events:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--dark);color:var(--cream);padding:10px 16px;border-radius:999px;font:500 14px var(--sans);z-index:40;max-width:90vw;text-align:center}
 .center{text-align:center;padding:60px 16px;color:var(--dark)}
 @media (max-width:400px){.grid3{grid-template-columns:1fr 1fr}.hero b{font-size:30px}}
-</style></head><body>
+</style><script src="/lib/hubnav.js" data-tabs="tools"></script>
+</head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <script type="module">
 // Price calculator: what a job costs, its break-even, and the price that pays
@@ -150,7 +151,7 @@ function render(){
   if(err==='login'){ app.innerHTML='<div class="center"><h1>Log in <em>first</em></h1><p class="sub">Open the hub, log in, then come back here.</p><p><a class="btn primary" href="/">Go to the hub</a></p></div>'; return; }
   if(err){ app.innerHTML='<div class="center"><p>'+esc(err)+'</p><button class="btn plain" onclick="location.reload()">Try again</button></div>'; return; }
   if(!D){ app.innerHTML='<div class="center">Loading…</div>'; return; }
-  var h='<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><a href="/money/">Quotes ›</a></div>';
+  var h='<div class="top"><a href="/?v=more" data-hb>← Back</a><span class="wm">'+LOGO+'Bardon Clean</span><a href="/money/">Quotes ›</a></div>';
   h+='<h1>Price <em>calculator</em></h1><p class="sub">What a job costs you, where it breaks even, and the price that pays you and grows the business.</p>';
   // The job
   h+='<div class="card"><h2>The <em>job</em></h2><div class="grid3">';

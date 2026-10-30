@@ -257,7 +257,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .pend input{width:22px;height:22px;min-height:0;margin:2px 0 0;accent-color:var(--terracotta);flex:none}
 .pend small{display:block;color:var(--meta);font-size:13px}
 .ok-note{font-size:13px;color:#2F5A35;margin-top:8px}
-</style></head><body>
+</style><script src="/lib/hubnav.js" data-tabs="tools"></script>
+</head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <script type="module">
 import { pnl, bookingsOf, priceOf, perMonth, dueDates, rosteredHours, toWrap, costBasis } from '/lib/profit.mjs';
@@ -336,7 +337,7 @@ function nudges(p){
   return h;
 }
 
-function topbar(){ return '<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
+function topbar(){ return '<div class="top"><a href="/?v=more" data-hb>← Back</a><span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
 function tabs(r){ function b(v,l){ return '<button type="button" data-go="'+v+'" aria-pressed="'+(r===v)+'">'+l+'</button>'; } return '<div class="seg">'+b('profit','Profit')+b('spend','Spending')+b('prices','Prices &amp; apps')+'</div>'; }
 function bottom(){ return '<div class="bar"><div class="in"><div class="sum">Paid for something?<b>Log it now</b></div><button type="button" class="btn plain" data-act="addexp">+ Manual</button>'+rcptBtn('btn primary','📷 Receipts')+'</div></div>'; }
 function rcptBtn(cls,label,style){ return '<label class="'+cls+'"'+(style?' style="'+style+'"':'')+'>'+label+'<input type="file" accept="image/*" multiple data-rcpts hidden></label>'; }

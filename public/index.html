@@ -328,6 +328,8 @@ body.has-nav #app{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .tabbar .add span.c svg{width:26px;height:26px}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 .topbar .wm{font:700 18px/1 var(--serif);color:var(--dark)}
+.hbk{background:none;border:0;display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 12px 0 0;margin:-8px 0;color:var(--dark);font:500 15px var(--sans);cursor:pointer;-webkit-tap-highlight-color:transparent}.hbk svg{width:20px;height:20px}
+.hbkrow{margin:-4px 0 4px}
 .topbar .refresh{background:none;border:0;color:var(--meta);font:500 12px var(--sans);cursor:pointer;padding:6px 0}
 .topbar .tr{display:flex;align-items:center;gap:14px}
 .bell{position:relative;background:none;border:0;color:var(--dark);cursor:pointer;padding:6px;margin:-6px 0}
@@ -545,7 +547,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 .cvwrap{flex:1;min-height:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--cream)}
 .cvwrap iframe{width:100%;height:100%;border:0;display:block}
 .cvnote{margin:6px 0 0;font-size:12px;text-align:center}
-</style><script src="/lib/teamgate.js"></script><script src="/lib/bcart.js"></script></head><body>
+</style><script src="/lib/teamgate.js"></script><script src="/lib/bcart.js"></script><script src="/lib/hubnav.js"></script></head><body>
 <div id="app"></div>
 <script src="/lib/confirm.js"></script>
 <script src="/lib/sms.js"></script>
@@ -603,7 +605,13 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   var LOGO = '<svg viewBox="0 0 48 48" role="img" aria-label="Bardon Clean"><path d="M5 21 L24 6 L43 21" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/><text x="24" y="43" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="25" fill="#1A1A1A">B</text></svg>';
   var canEdit = false, saving = false, pendingReq = null, liveOpen = null;
   var qv=(location.search.match(/[?&]v=(\w+)/)||[])[1];
-  var view = (qv && ['today','roster','pipeline','agents','more','activity','regulars','contracts','onboard'].indexOf(qv)>=0) ? qv : (ls('roster_view')||'today');
+  var VIEWS=['today','roster','pipeline','agents','more','activity','regulars','contracts','onboard','jobs','wages'];
+  var view = (qv && VIEWS.indexOf(qv)>=0) ? qv : (ls('roster_view')||'today');
+  if(VIEWS.indexOf(view)<0) view='today';
+  var wantAdd=/[?&]add=1/.test(location.search);
+  // Every screen has its own address (/?v=tools etc.), so the phone's back gesture and Back buttons return to it.
+  function viewUrl(v){ return '/?v='+v+(location.hash&&!/^#job=/.test(location.hash)?location.hash:''); }
+  try{ history.replaceState(history.state,'',viewUrl(view)); }catch(e){}
   var upState=null;
   function key(v){ if(v===undefined) return ls('roster_admin_key')||''; try{ if(v===null) localStorage.removeItem('roster_admin_key'); else localStorage.setItem('roster_admin_key',v);}catch(e){} }
   function api(path, opts){
@@ -663,7 +671,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   var startStr = ss('roster_start'); var start = startStr ? parse(startStr) : today;
   var filter = ls('roster_filter') || 'all';
   // ?p=<team id> opens the roster on that person's own shifts (the link new starters get).
-  (function(){ var p=(location.search.match(/[?&]p=([\w-]+)/)||[])[1]; if(p){ filter=p; ls('roster_filter',p); try{ history.replaceState(null,'',location.pathname); }catch(e){} } })();
+  (function(){ var p=(location.search.match(/[?&]p=([\w-]+)/)||[])[1]; if(p){ filter=p; ls('roster_filter',p); } })();
   var DAYS = 14;
   var sel = ss('roster_sel') || iso(today);
   function curView(){ var v=ls('roster_rview'); return (v==='week'||v==='month'||v==='list')?v:(canEdit?'week':'list'); }
@@ -776,6 +784,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(loaded && canEdit && view!=='roster'){ app.innerHTML=(view==='onboard'?renderOnboard():view==='contracts'?renderContracts():view==='regulars'?renderRegulars():view==='pipeline'?renderPipeline():view==='agents'?renderAgentsView():view==='more'?renderMore():view==='jobs'?renderJobs():view==='wages'?renderWages():view==='activity'?renderActivity():renderToday())+navBar(); if(view==='activity') loadActivity(); return; }
     var h='';
     if(!loaded){ app.innerHTML='<div class="brand"><div class="wm">Bardon Clean</div></div><h1>Team <em>roster</em></h1><p class="sub" style="margin-top:14px">'+(loadErr?esc(loadErr)+' <button class="ghost" data-act="reload">Try again</button>':'Loading…')+'</p>'; return; }
+    if(canEdit){ var bk0=backBtn(); if(bk0) h+='<div class="hbkrow">'+bk0+'</div>'; }
     h+='<div class="brand"><div class="wm">Bardon Clean</div></div>';
     h+='<div class="head"><div><h1>Team <em>roster</em></h1><p class="sub">'+(canEdit?'Tap a job to edit it. Your team sees changes straight away.':'Tap your name to see just your shifts.')+'</p></div>';
     h+='<span class="mode'+(canEdit?' edit':'')+'">'+(canEdit?'Editing':'View only')+'</span></div>';
@@ -1802,6 +1811,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
 
   // ---------- On-the-go views (Jack) ----------
   var IC={
+    back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
     search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>',
     funnel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5h17l-6.5 8v5.5l-4 1.5v-7z"/></svg>',
     today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>',
@@ -1882,14 +1892,19 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     });
     return h;
   }
-  function setView(v){ view=v; ls('roster_view',v); closeSheet(); render(); window.scrollTo(0,0); }
+  function setView(v,noPush){ if(VIEWS.indexOf(v)<0) v='today'; var ch=v!==view; view=v; ls('roster_view',v); if(ch&&!noPush){ try{ history.pushState({hv:v},'','/?v='+v); }catch(e){} } closeSheet(); render(); window.scrollTo(0,0); }
+  // Phone back gesture / browser back between hub screens.
+  window.addEventListener('popstate',function(){ var v=(location.search.match(/[?&]v=(\w+)/)||[])[1]||'today'; if(VIEWS.indexOf(v)>=0 && v!==view) setView(v,true); else if(document.getElementById('scrim')) closeSheet(); });
+  if(window.HubNav) HubNav.local=function(url){ var a=document.createElement('a'); a.href=url; if(a.pathname!=='/'||a.host!==location.host) return false; var v=(a.search.match(/[?&]v=(\w+)/)||[])[1]||'today'; if(v===view) return true; setView(v); return true; };
+  // Back button: to the screen you were on before; with nothing before, up to Today or Tools.
+  function backBtn(){ var top=['today','roster','pipeline','more'].indexOf(view)>=0; if(view==='today' && !(window.HubNav&&HubNav.canBack())) return ''; return '<button type="button" class="hbk" data-hb="/?v='+(top?'today':'more')+'" aria-label="Back">'+IC.back+'Back</button>'; }
   function alertCount(){ var nc=needsConfirm(); return (state.requests||[]).length + nc.filter(function(x){return x.c.v==='no';}).length; }
   function navBar(){
     var a=alertCount(), rq=(state.requests||[]).length;
     function b(v,label,icon,badge){ return '<button type="button" data-view="'+v+'"'+(view===v?' aria-current="page"':'')+'>'+icon+label+(badge?'<span class="badge">'+badge+'</span>':'')+'</button>'; }
     return '<nav class="tabbar" aria-label="Main"><div class="in">'+b('today','Today',IC.today,a)+b('roster','Roster',IC.roster)+'<button type="button" class="add" data-act="add" aria-label="Add job"><span class="c">'+IC.plus+'</span>Add job</button>'+'<a href="/messages/" class="tablink">'+IC.chat+'Messages'+(state.msgUnread?'<span class="badge">'+(state.msgUnread>99?'99+':state.msgUnread)+'</span>':'')+'</a>'+b('pipeline','Pipeline',IC.funnel,rq+(pipe?pipe.stages.new.length:0)+(cands?(cands.candidates||[]).filter(function(c){return c.stage==='applied'&&!c.seen;}).length:0))+b('more','Tools',IC.grid)+'</div></nav>';
   }
-  function topbar(title){ var u=state.actUnread||0; return '<div class="topbar"><span class="wm">Bardon Clean</span><span class="tr"><button class="refresh" data-act="sync">Refresh</button><button type="button" class="bell" data-view="jobs" aria-label="Search jobs and clients">'+IC.search+'</button><button type="button" class="bell" data-view="activity" aria-label="Activity'+(u?', '+u+' new':'')+'">'+IC.bell+(u?'<span class="badge">'+(u>99?'99+':u)+'</span>':'')+'</button></span></div><h1>'+title+'</h1>'; }
+  function topbar(title){ var u=state.actUnread||0; var bk=backBtn(); return '<div class="topbar">'+(bk||'<span class="wm">Bardon Clean</span>')+'<span class="tr"><button class="refresh" data-act="sync">Refresh</button><button type="button" class="bell" data-view="jobs" aria-label="Search jobs and clients">'+IC.search+'</button><button type="button" class="bell" data-view="activity" aria-label="Activity'+(u?', '+u+' new':'')+'">'+IC.bell+(u?'<span class="badge">'+(u>99?'99+':u)+'</span>':'')+'</button></span></div><h1>'+title+'</h1>'; }
   // The client's mobile for a job: from its notes ("Client: 04…") as quotes write it.
   function clientMob(j){ var m=/Client:\s*([+\d][\d\s]{7,15}\d)/.exec(j.notes||''); if(!m) return ''; var x=m[1].replace(/[^\d+]/g,'').replace(/^\+61/,'0').replace(/^61(?=4\d{8}$)/,'0'); return /^04\d{8}$/.test(x)?x:''; }
   function textClientHref(j){ var tm=new Date(); tm.setDate(tm.getDate()+1); var tmr=tm.getFullYear()+'-'+('0'+(tm.getMonth()+1)).slice(-2)+'-'+('0'+tm.getDate()).slice(-2);
@@ -2881,7 +2896,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       if(d.admin && Date.now()-(window._deskAt||0)>300000 && (window._deskAt=Date.now())) api('/api/plus?part=needs').then(function(n){ var c=(n.items||[]).length; if(c!==state.deskN){ state.deskN=c; if(view==='today'&&!document.getElementById('scrim')) render(); } }).catch(function(){});
       if(d.admin) api('/api/docs').then(function(m){ state.money=(m.docs||[]).filter(function(x){ return x.flag||x.state==='overdue'; }).slice(0,8); state.invoiced=invoicedMap(m.docs||[]); state.jobDocs=jobDocsMap(m.docs||[]); state.docs=m.docs||[]; if(view==='today'&&!document.getElementById('scrim')) render(); if(view==='jobs'&&!document.getElementById('scrim')){ if(document.activeElement&&document.activeElement.id==='jq') jobsDraw(); else render(); } }).catch(function(){});
       canEdit=!!d.admin;
-      var hj=/^#job=([\w-]+)/.exec(location.hash); if(hj && canEdit){ history.replaceState(null,'',location.pathname); var jj=(d.jobs||[]).filter(function(x){return x.id===hj[1];})[0]; if(jj) setTimeout(function(){ view='roster'; render(); jobSheet(state.jobs.filter(function(x){return x.id===hj[1];})[0]); },0); }
+      if(wantAdd && canEdit){ wantAdd=false; try{ history.replaceState(history.state,'','/?v='+view); }catch(e){} setTimeout(addChooser,0); }
+      var hj=/^#job=([\w-]+)/.exec(location.hash); if(hj && canEdit){ history.replaceState(null,'','/?v=roster'); var jj=(d.jobs||[]).filter(function(x){return x.id===hj[1];})[0]; if(jj) setTimeout(function(){ view='roster'; ls('roster_view','roster'); render(); jobSheet(state.jobs.filter(function(x){return x.id===hj[1];})[0]); },0); }
       if (filter!=='all' && filter!=='open' && !member(filter)) filter='all';
       if(!document.getElementById('scrim')) render(); else if(liveOpen && !liveBusy) drawLive();
     }).catch(function(e){ if(!loaded){ loadErr='Couldn\'t load the roster. Check your signal.'; render(); } else if(window.console) console.error(e); });

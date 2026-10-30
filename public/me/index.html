@@ -152,7 +152,8 @@ details.lc[open] summary{margin-bottom:12px}
 /* Welcome tour: fills the screen and keeps the buttons clear of the iPhone home bar */
 .intro{min-height:calc(100vh - 22px - 24px - env(safe-area-inset-bottom,0px));min-height:calc(100dvh - 22px - 24px - env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:20px}
 body.tour #app{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
-</style><script src="/lib/teamgate.js"></script></head><body>
+</style><script src="/lib/teamgate.js"></script><script src="/lib/hubnav.js"></script>
+</head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <div class="tmbar hide" id="tmbar" role="region" aria-label="Running timers"><div class="in"></div></div>
 <nav class="nav hide" id="nav" aria-label="Main"><div class="in"></div></nav>
@@ -277,7 +278,7 @@ function back(href,label){ return '<a class="back" href="'+href+'">'+I.left+(lab
 function editbar(){
   if(!ADMIN) return '';
   var m=member(PID);
-  return '<div class="editbar"><span style="flex:1">You\'re logged in as Jack'+(m?' · seeing '+esc(first(m.name))+'\'s view':'')+'</span><a class="ghost" href="#/who">'+(m?'Switch':'Pick someone')+'</a></div>';
+  return '<div class="editbar"><span style="flex:1">You\'re logged in as Jack'+(m?' · seeing '+esc(first(m.name))+'\'s view':'')+'</span><a class="ghost" href="#/who">'+(m?'Switch':'Pick someone')+'</a><a class="ghost" href="/?v=more" data-hb>‹ Hub</a></div>';
 }
 
 function render(){ render0(); tmPaint(); }

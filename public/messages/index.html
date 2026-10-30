@@ -140,7 +140,8 @@ mark{background:var(--cream-dark);color:var(--dark);border-radius:4px;padding:0 
 .addc input{margin-top:4px}
 .addc .actions{margin-top:2px}
 .hint{margin:0;font-size:14px;color:var(--dark);line-height:1.45}
-</style></head><body>
+</style><script src="/lib/hubnav.js" data-tabs="messages"></script>
+</head><body>
 <div id="app"><div class="center">Loading…</div></div>
 <script src="/lib/templates.js"></script>
 <script>
@@ -180,7 +181,7 @@ function dayLabel(iso){ var d=new Date(iso), n=new Date(); if(dayKey(iso)===dayK
 var GSM=/^[A-Za-z0-9 \r\n@£$¥èéùìòÇØøÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ!"#¤%&'()*+,\-.\/:;<=>?¡ÄÖÑÜ§¿äöñüà^{}\\\[~\]|€]*$/;
 function parts(t){ var g=GSM.test(t), n=t.length; if(!n) return {n:0,p:0}; var one=g?160:70, many=g?153:67; return {n:n,p:n<=one?1:Math.ceil(n/many),u:!g}; }
 function route(){ var h=location.hash.replace(/^#\/?/,''), qi=h.indexOf('?'), qs=qi>=0?h.slice(qi+1):''; h=qi>=0?h.slice(0,qi):h; var p=h.split('/'); var draft=(qs.match(/(?:^|&)draft=([^&]*)/)||[])[1]; var nm=(qs.match(/(?:^|&)name=([^&]*)/)||[])[1]; var tp=(qs.match(/(?:^|&)tpl=([\w-]+)/)||[])[1]||'', jb=(qs.match(/(?:^|&)job=([\w-]+)/)||[])[1]||''; return {v:p[0]||'inbox', id:p[1]||'', draft:draft?decodeURIComponent(draft):'', name:nm?decodeURIComponent(nm):'', tpl:tp, job:jb}; }
-function topbar(){ return '<div class="top"><a href="/">← Hub</a><span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
+function topbar(){ return '<div class="top"><a href="/?v=today" data-hb>← Back</a><span class="wm">'+LOGO+'Bardon Clean</span><button data-act="refresh">Refresh</button></div>'; }
 
 // ---------- inbox ----------
 function loadInbox(){
@@ -238,7 +239,7 @@ function loadThread(phone, quiet){
 }
 function renderConv(phone){
   var r=route(), nm=(T&&T.thread.phone===phone&&T.thread.name)||r.name||'';
-  return '<div class="conv"><div class="chead"><div class="in"><a class="ib" href="#/" aria-label="Back to messages">'+IC.back+'</a>'+
+  return '<div class="conv"><div class="chead"><div class="in"><a class="ib" href="#/" data-hb aria-label="Back">'+IC.back+'</a>'+
     '<button class="who" data-act="info"><b data-who>'+esc(nm||fmtPhone(phone))+'</b><span>'+esc(nm?fmtPhone(phone):'Tap to add a name')+'</span></button>'+
     '<a class="ib" href="tel:'+phone+'" aria-label="Call">'+IC.call+'</a><button class="ib" data-act="info" aria-label="More">'+IC.more+'</button></div><div class="ctx" data-ctx></div></div>'+
     '<div class="msgs" data-msgs><div class="in" data-in>'+(T&&T.thread.phone===phone?'':'<div class="sys">Loading…</div>')+'</div></div>'+
