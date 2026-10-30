@@ -377,6 +377,18 @@ body.has-nav #app{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .nxbtn.go{background:var(--terracotta);border-color:var(--terracotta);color:#fff}
 .nxrow{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;background:#E6EFE3;color:#2F5A35;font:600 14px var(--sans)}
 .nxrow svg{width:20px;height:20px;flex:none}
+.nxrow.off{background:var(--cream);color:var(--dark)}
+.bap-area{font:600 12px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--meta,#6B6259);margin:16px 0 8px}
+.bap-grid{display:grid;gap:10px}
+.bap{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:0;border:3px solid transparent;border-radius:10px;overflow:hidden;background:var(--cream-dark);cursor:pointer;width:100%}
+.bap img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:var(--cream-dark)}
+.bap .bl{position:absolute;bottom:8px;font:600 10px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:#fff;background:rgba(26,26,26,.6);padding:5px 7px;border-radius:999px}
+.bap .bl.b{left:8px}.bap .bl.a{left:calc(50% + 8px)}
+.bap .bn{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.92);border:2px solid #fff;font:700 14px/26px var(--sans);text-align:center;color:transparent;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.bap[aria-pressed="true"]{border-color:var(--terracotta)}
+.bap[aria-pressed="true"] .bn{background:var(--terracotta);color:#fff}
+.bap-foot{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom,0px));background:var(--white);margin:14px -16px calc(-20px - env(safe-area-inset-bottom,0px));padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.bap-foot .actions{margin-top:0}
 .qlinks{display:flex;justify-content:space-between;gap:10px;margin-top:10px;flex-wrap:wrap}
 .ivc{background:var(--tint);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:4px;font-variant-numeric:tabular-nums}
 .ivc div{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:15px;color:var(--dark)}
@@ -1685,7 +1697,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       h+='</div>';
       if(canEdit) h+='<div class="lsec"><h4>Finish time the agent sees</h4><div class="two"><label class="l" for="eta">Estimated finish<input id="eta" type="time" value="'+esc(L.eta||j.end||'')+'"></label><button type="button" class="btn outline" data-eta style="align-self:end">Update</button></div></div>';
       if(pid && L.arrived[pid] && !L.left[pid] && L.done) h+='<div class="lsec"><button type="button" class="btn yes" data-leave="'+pid+'" style="width:100%">Clock off now</button><p class="sub">The job is marked ready. Clock off as you leave so your hours are logged.</p></div>';
-      h+='<div class="lsec">'+(L.done?'<span class="cs ok">✓ Marked ready '+fmtClock(L.done)+'</span> <button type="button" class="btn danger" data-finish="undo">Undo</button>':'<button type="button" class="btn yes" data-finish="1" style="width:100%">Job finished: mark ready'+(j.agentId?' for the agent':'')+'</button><p class="sub">Check every area is done, afters are taken and the house is locked up first.</p>')+'</div>';
+      h+='<div class="lsec">'+(L.done?'<span class="cs ok">✓ Marked ready '+fmtClock(L.done)+'</span> <button type="button" class="btn danger" data-finish="undo">Undo</button>'+(canEdit&&!isRegular(j)?'<div class="nx" style="margin-top:10px">'+baRow(groupOf(j).slice(-1)[0]||j)+'</div>':''):'<button type="button" class="btn yes" data-finish="1" style="width:100%">Job finished: mark ready'+(j.agentId?' for the agent':'')+'</button><p class="sub">Check every area is done, afters are taken and the house is locked up first.</p>')+'</div>';
     }
     h+='<div class="err" id="liveErr" hidden></div>';
     box.innerHTML=h; sheet.scrollTop=liveOpen.tabTop?0:keep; liveOpen.tabTop=0;
@@ -1718,6 +1730,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function liveClick(e){
     var b=e.target.closest('button'); if(!b||!liveOpen) return;
     if(b.hasAttribute('data-close')){ closeSheet(); render(); return; }
+    if(b.dataset.ba){ var bj=liveOpen.jobId, bp=liveOpen.pid; closeSheet(); baSheet(b.dataset.ba,function(){ liveSheet(bj,bp); }); return; }
     if(b.dataset.vflip!=null){ liveOpen.client=b.dataset.vflip==='1'; liveOpen.room=null; liveOpen.tabTop=1; drawLive(); return; }
     if(b.dataset.ltab){ liveTab=b.dataset.ltab; liveOpen.tabTop=1; phSel={}; drawLive(); return; }
     if(b.hasAttribute('data-cvre')){ var fr=document.querySelector('.cvwrap iframe'); if(fr) fr.src=fr.src.replace(/hub=\d+/,'hub='+Date.now()); return; }
@@ -1756,7 +1769,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(b.hasAttribute('data-addflag')){ var t=document.getElementById('fl_t').value.trim(); if(!t){ toast('Add a short title'); return; } livePost({action:'flag',title:t,detail:document.getElementById('fl_d').value},b).then(function(){ var x=document.getElementById('fl_t'),y=document.getElementById('fl_d'); if(x) x.value=''; if(y) y.value=''; }); return; }
     if(b.hasAttribute('data-eta')){ livePost({action:'eta',time:document.getElementById('eta').value},b).then(function(){toast('Finish time updated');}); return; }
     if(b.dataset.finish){ var j=state.jobs.find(function(x){return x.id===liveOpen.jobId;}), L=liveOf(j); if(b.dataset.finish!=='undo' && !b.dataset.sure){ var left=roomsOf(j).filter(function(r){return !(L.rooms[r]&&L.rooms[r].s==='d');}).length, lk=Object.keys(LOCK).filter(function(k){return !L.lock[k];}).length; if(left||lk){ b.dataset.sure='1'; b.textContent=(left?left+' room'+(left>1?'s':'')+' not done':'')+(left&&lk?', ':'')+(lk?lk+' lock-up item'+(lk>1?'s':'')+' unticked':'')+'. Tap again to finish anyway'; return; } }
-      var fj=liveOpen.jobId; livePost({action:'finish',undo:b.dataset.finish==='undo'},b).then(function(ok){ var fx=state.jobs.find(function(x){return x.id===fj;}); if(ok && b.dataset.finish!=='undo' && canEdit && fx && !isRegular(fx) && groupOf(fx).slice(-1)[0]===fx){ closeSheet(); render(); wrapSheet(fj); return; } if(b.dataset.finish!=='undo') toast(liveOpen&&liveOpen.pid&&!liveOf(state.jobs.find(function(x){return x.id===liveOpen.jobId;})).left[liveOpen.pid]?'Marked ready. Now clock off when you leave.':'Marked ready. The agent can see it now.'); }); return; }
+      var fj=liveOpen.jobId; livePost({action:'finish',undo:b.dataset.finish==='undo'},b).then(function(ok){ var fx=state.jobs.find(function(x){return x.id===fj;}); if(ok && b.dataset.finish!=='undo' && canEdit && fx && !isRegular(fx) && groupOf(fx).slice(-1)[0]===fx){ closeSheet(); render(); (baDec?Promise.resolve():loadBa()).then(function(){ if(baPairs(fx).length&&!baOf(fx)) baSheet(fj,function(){ wrapSheet(fj); }); else wrapSheet(fj); }); return; } if(b.dataset.finish!=='undo') toast(liveOpen&&liveOpen.pid&&!liveOf(state.jobs.find(function(x){return x.id===liveOpen.jobId;})).left[liveOpen.pid]?'Marked ready. Now clock off when you leave.':'Marked ready. The agent can see it now.'); }); return; }
   }
   function liveChange(e){
     var t=e.target; if(!liveOpen) return;
@@ -1938,7 +1951,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     else money='<a class="nxbtn go" href="/money/#/edit/new-invoice">Create the invoice<small>No quote is linked to this job</small></a>';
     var sending=D&&D.bal&&D.bal.state==='draft';
     thank=mob?tx(mob,name,'clean_done',(sending?'Or just send':'Send')+' the thank-you &amp; job link<small>You check the text before it goes</small>','nxbtn',j.id):(j.share?'<button type="button" class="nxbtn" data-vcopy="'+esc(j.share)+'">Copy the job link<small>No mobile saved for this client</small></button>':'');
-    return h+money+thank+'</div>'; }
+    return h+baRow(j)+money+thank+'</div>'; }
   // Once the job is started (someone's arrived, or areas/photos are underway): one tap opens the
   // "we're on site" text in Messages, filled in with the job link. Nothing sends until Jack sends it.
   function startedStep(j, L){
@@ -1952,7 +1965,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function wrapSheet(jobId){ var j=state.jobs.find(function(x){return x.id===jobId;}); if(!j) return;
     var s=openSheet('<h3>Job ready. <em>Next steps</em></h3><p class="sub" style="margin:-4px 0 12px">'+esc(j.address||j.client||'')+'</p>'+nextSteps(j,true)+'<div class="actions"><button type="button" class="btn outline" data-close style="flex:1">Later</button></div>');
     s.querySelector('[data-close]').onclick=closeSheet;
-    s.addEventListener('click',function(e){ var bi=e.target.closest('[data-balinv]'); if(bi){ balanceInvoice(bi.dataset.balinv,bi); return; } var vc=e.target.closest('[data-vcopy]'); if(vc) copyText(location.origin+'/v/'+vc.dataset.vcopy); }); }
+    s.addEventListener('click',function(e){ var bq=e.target.closest('[data-ba]'); if(bq){ baSheet(bq.dataset.ba,function(){ wrapSheet(jobId); }); return; } var bi=e.target.closest('[data-balinv]'); if(bi){ balanceInvoice(bi.dataset.balinv,bi); return; } var vc=e.target.closest('[data-vcopy]'); if(vc) copyText(location.origin+'/v/'+vc.dataset.vcopy); }); }
   function balanceInvoice(qid, btn){ btn.disabled=true; var sm=btn.querySelector('small'); if(sm) sm.textContent='Creating…';
     api('/api/docs',{method:'POST',body:{action:'invoice',id:qid,mode:'balance'}}).then(function(r){ location.href='/money/#/doc/'+r.id+'/preview'; })
       .catch(function(x){ btn.disabled=false; if(sm) sm.textContent=x.message; toast(x.message); }); }
@@ -2061,6 +2074,50 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     if(w.length>4) h+='<a class="wr" href="/books/#/wrap" style="grid-template-columns:1fr"><span class="m">+ '+(w.length-4)+' more finished job'+(w.length-4===1?'':'s')+'</span></a>';
     return h+'</div><p class="sub" style="margin:6px 0 0;font-size:12.5px">Shows what each job really made per hour, after wages and costs.</p>';
   }
+  // ---------- Before & afters for the client report ----------
+  // When a job is marked ready, Jack picks the best line-up pairs (up to 3) for the client's report.
+  // Skip = the report has no before & after section and says nothing about them.
+  var baDec=null, BA_MAX=3, BA_DAYS=7;
+  function loadBa(){ return api('/api/reportba').then(function(d){ baDec=d.ba||{}; if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){}); }
+  function bkKey(j){ return j.group||j.id; }
+  function baPairs(j){ var ps=liveOf(j).photos, by={}; ps.forEach(function(p){ by[p.id]=p; });
+    return ps.filter(function(p){ var b=p.kind==='after'&&p.pair&&by[p.pair]; return b&&b.kind==='before'; }).map(function(p){ var b=by[p.pair]; return {a:p,b:b,room:p.room||b.room||''}; }); }
+  function baOf(j){ return baDec?baDec[bkKey(j)]||null:null; }
+  // Finished in the last week, has pairs, no decision yet. One entry per booking (its last day).
+  function baPending(){ if(!baDec) return [];
+    var cut=Date.now()-BA_DAYS*864e5;
+    return state.jobs.filter(function(j){ if(j.sample||isRegular(j)||groupOf(j).slice(-1)[0]!==j) return false; var L=liveOf(j);
+      return L.done && Date.parse(L.done)>cut && !baOf(j) && baPairs(j).length; }); }
+  function baRow(j){ // the step inside "Job ready · next steps"
+    if(!baDec||!baPairs(j).length) return '';
+    var d=baOf(j);
+    if(!d) return '<button type="button" class="nxbtn go" data-ba="'+j.id+'">Pick the best before &amp; afters<small>'+baPairs(j).length+' lined-up pair'+(baPairs(j).length===1?'':'s')+' · they go on the client\'s report, or skip</small></button>';
+    if(d.st==='y') return '<button type="button" class="nxrow" data-ba="'+j.id+'" style="border:0;width:100%;cursor:pointer;text-align:left">'+IC.check+'<span>'+d.ids.length+' before &amp; after'+(d.ids.length===1?'':'s')+' on the report · change</span></button>';
+    return '<button type="button" class="nxrow off" data-ba="'+j.id+'" style="border:0;width:100%;cursor:pointer;text-align:left"><span>No before &amp; afters on the report · change</span></button>';
+  }
+  function baSheet(jobId, after){
+    var j=state.jobs.find(function(x){return x.id===jobId;}); if(!j) return;
+    var P=baPairs(j), d=baOf(j), pick=(d&&d.st==='y'?d.ids.slice():[]).filter(function(id){ return P.some(function(x){return x.a.id===id;}); });
+    var done=function(){ if(after) after(); };
+    if(!P.length){ toast('No lined-up before & afters on this job'); done(); return; }
+    var areas=[]; P.forEach(function(x){ if(areas.indexOf(x.room)<0) areas.push(x.room); });
+    var h='<h3>Best before <em>&amp;</em> afters</h3><p class="sub" style="margin:-6px 0 4px">'+esc(j.client||j.address||j.suburb||'')+'. Tap up to '+BA_MAX+' that show the change best. They lead the client\'s report. If none are good enough, skip and the report won\'t mention before &amp; afters.</p>';
+    areas.forEach(function(r){ h+='<div class="bap-area">'+esc(r||'Other')+'</div><div class="bap-grid">'+P.filter(function(x){return x.room===r;}).map(function(x){
+      return '<button type="button" class="bap" data-bap="'+x.a.id+'" aria-pressed="false" aria-label="'+esc((r||'Pair')+' before and after')+'"><img loading="lazy" alt="" src="'+phSrc(j,x.b)+'"><img loading="lazy" alt="" src="'+phSrc(j,x.a)+'"><span class="bl b">Before</span><span class="bl a">After</span><span class="bn"></span></button>'; }).join('')+'</div>'; });
+    h+='<div class="bap-foot"><div class="err" id="baErr" hidden></div><div class="actions"><button type="button" class="btn outline" data-baskip>Skip, none</button><button type="button" class="btn primary" data-basave></button></div>'+(after?'<p class="sub" style="margin:8px 0 0;text-align:center"><button type="button" class="ghost" data-balater style="padding:0">Decide later</button></p>':'')+'</div>';
+    var sh=openSheet(h), sv=sh.querySelector('[data-basave]'), sk=sh.querySelector('[data-baskip]'), er=sh.querySelector('#baErr');
+    function draw(){ sh.querySelectorAll('[data-bap]').forEach(function(b){ var i=pick.indexOf(b.dataset.bap); b.setAttribute('aria-pressed',i>=0?'true':'false'); b.querySelector('.bn').textContent=i>=0?String(i+1):''; });
+      sv.disabled=!pick.length; sv.textContent=pick.length?'Add '+pick.length+' to the report':'Pick at least one'; }
+    sh.querySelectorAll('[data-bap]').forEach(function(b){ b.onclick=function(){ var id=b.dataset.bap, i=pick.indexOf(id);
+      if(i>=0) pick.splice(i,1); else if(pick.length<BA_MAX) pick.push(id); else { toast('Up to '+BA_MAX+'. Untick one first'); return; } draw(); }; });
+    function send(body,btn,msg){ sv.disabled=sk.disabled=true; btn.textContent='Saving…'; er.hidden=true; body.jobId=jobId;
+      api('/api/reportba',{method:'POST',body:body}).then(function(r){ baDec=r.ba||baDec; closeSheet(); render(); toast(msg); done(); })
+        .catch(function(x){ sk.disabled=false; sk.textContent='Skip, none'; draw(); er.textContent=x.message; er.hidden=false; }); }
+    sv.onclick=function(){ send({ids:pick},sv,pick.length===1?'Added to the client\'s report':pick.length+' added to the client\'s report'); };
+    sk.onclick=function(){ send({skip:true},sk,'No before & afters on this report'); };
+    var lt=sh.querySelector('[data-balater]'); if(lt) lt.onclick=function(){ closeSheet(); render(); done(); };
+    draw();
+  }
   // ---------- Today: only what needs Jack, each card ending in the button that does it ----------
   function snoozed(k){ return ls('snz_'+k)===iso(today); }
   function aCard(o){ // {key, tone:'hot'|'', title, sub, btns:[html], later:true}
@@ -2071,6 +2128,8 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function tx(mob,name,tpl,label,cls,job){ return mob?'<a class="'+(cls||'')+'" href="/messages/#/t/'+mob+'?name='+encodeURIComponent(name||'')+(tpl?'&tpl='+tpl:'')+(job?'&job='+encodeURIComponent(job):'')+'">'+label+'</a>':''; }
   function urgentCards(){
     var h='';
+    baPending().forEach(function(j){ var n=baPairs(j).length, L=liveOf(j);
+      h+=aCard({key:'ba_'+bkKey(j),title:'Before &amp; afters: '+esc(j.client||j.suburb||'job'),sub:esc([j.address||j.suburb,'Ready '+(L.done.slice(0,10)===iso(today)?'today':fmtDay(parse(L.done.slice(0,10))))].filter(Boolean).join(' · '))+'<br>'+n+' lined-up pair'+(n===1?'':'s')+'. Pick the best for the client\'s report, or skip.',btns:['<button type="button" class="go" data-ba="'+j.id+'">Review</button>']}); });
     needsConfirm().filter(function(x){return x.c.v==='no';}).forEach(function(x){ var m=member(x.id), ph=mobOf(m.phone);
       h+=aCard({key:'no_'+x.j.id+'_'+x.id,tone:'hot',title:esc(m.name.split(' ')[0])+' can\'t make it',sub:esc(shiftLine(x.j,x.id))+(x.c.reason?'<br>Reason: '+esc(x.c.reason):''),btns:['<button type="button" class="go" data-edit="'+x.j.id+'">Reassign</button>',ph?'<a href="tel:'+ph+'">Call</a>':''],later:false}); });
     (state.money||[]).filter(function(d){return d.state==='overdue';}).forEach(function(d){ var ph=mobOf(d.client.phone), days=d.dueDate?Math.round((Date.parse(iso(today))-Date.parse(d.dueDate))/864e5):0;
@@ -2892,11 +2951,12 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
       if(key() && !d.admin){ key(null); }
       if(d.admin&&window.BCTpl) BCTpl.load(key()).catch(function(){});
       if(d.admin) api('/api/books?sum=1').then(function(b){ state.books=b; if(view==='today'&&!document.getElementById('scrim')) render(); }).catch(function(){});
-      if(d.admin){ loadPipe(); loadCands(); }
+      if(d.admin){ loadPipe(); loadCands(); loadBa(); }
       if(d.admin && Date.now()-(window._deskAt||0)>300000 && (window._deskAt=Date.now())) api('/api/plus?part=needs').then(function(n){ var c=(n.items||[]).length; if(c!==state.deskN){ state.deskN=c; if(view==='today'&&!document.getElementById('scrim')) render(); } }).catch(function(){});
       if(d.admin) api('/api/docs').then(function(m){ state.money=(m.docs||[]).filter(function(x){ return x.flag||x.state==='overdue'; }).slice(0,8); state.invoiced=invoicedMap(m.docs||[]); state.jobDocs=jobDocsMap(m.docs||[]); state.docs=m.docs||[]; if(view==='today'&&!document.getElementById('scrim')) render(); if(view==='jobs'&&!document.getElementById('scrim')){ if(document.activeElement&&document.activeElement.id==='jq') jobsDraw(); else render(); } }).catch(function(){});
       canEdit=!!d.admin;
       if(wantAdd && canEdit){ wantAdd=false; try{ history.replaceState(history.state,'','/?v='+view); }catch(e){} setTimeout(addChooser,0); }
+      var hb=/^#ba=([\w-]+)/.exec(location.hash); if(hb && canEdit){ history.replaceState(null,'','/?v=today'); setTimeout(function(){ loadBa().then(function(){ if(state.jobs.some(function(x){return x.id===hb[1];})) baSheet(hb[1]); }); },0); }
       var hj=/^#job=([\w-]+)/.exec(location.hash); if(hj && canEdit){ history.replaceState(null,'','/?v=roster'); var jj=(d.jobs||[]).filter(function(x){return x.id===hj[1];})[0]; if(jj) setTimeout(function(){ view='roster'; ls('roster_view','roster'); render(); jobSheet(state.jobs.filter(function(x){return x.id===hj[1];})[0]); },0); }
       if (filter!=='all' && filter!=='open' && !member(filter)) filter='all';
       if(!document.getElementById('scrim')) render(); else if(liveOpen && !liveBusy) drawLive();
@@ -2941,6 +3001,7 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
     var sz=e.target.closest('[data-snz]'); if(sz){ ls('snz_'+sz.dataset.snz, iso(today)); render(); toast('Hidden until tomorrow'); return; }
     var pg=e.target.closest('[data-pgo]'); if(pg){ board='leads'; ls('pipe_board','leads'); pipeTab=pg.dataset.pgo; ls('pipe_tab',pipeTab); setView('pipeline'); return; }
     var c2=e.target.closest('[data-cand2]'); if(c2){ candSheet(c2.dataset.cand2); return; }
+    var bq=e.target.closest('[data-ba]'); if(bq){ (baDec?Promise.resolve():loadBa()).then(function(){ baSheet(bq.dataset.ba); }); return; }
     var bd=e.target.closest('[data-board]'); if(bd){ board=bd.dataset.board; ls('pipe_board',board); render(); return; }
     var ht=e.target.closest('[data-htab]'); if(ht){ hireTab=ht.dataset.htab; ls('hire_tab',hireTab); render(); return; }
     var cd=e.target.closest('[data-cand]'); if(cd){ candSheet(cd.dataset.cand); return; }

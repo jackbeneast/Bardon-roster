@@ -293,6 +293,17 @@ body.chatting main.wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom,0
 .st.d{background:var(--ok-bg);border-radius:999px;padding:5px 9px}.st.p{background:var(--live);border-radius:999px;padding:5px 9px}.st.w{padding:5px 0}
 .lab{position:absolute;top:10px;font:600 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:#fff;background:rgba(26,26,26,.62);padding:6px 8px;border-radius:999px;pointer-events:none}
 .lab.l{left:10px}.lab.r{right:10px}
+.ba-list{display:grid;gap:14px}
+.ba{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px}
+.ba-cmp{position:relative;aspect-ratio:4/5;border-radius:8px;overflow:hidden;background:var(--cream-dark);touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.ba-cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.ba-cmp .ba-b{clip-path:inset(0 calc(100% - var(--x,50%)) 0 0)}
+.ba-cmp .ba-line{position:absolute;top:0;bottom:0;left:var(--x,50%);width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.12);pointer-events:none}
+.ba-cmp .ba-line::after{content:"";position:absolute;top:50%;left:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.ba-cmp input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;-webkit-appearance:none;appearance:none}
+.ba-cmp input:focus-visible~.ba-line::after{outline:3px solid var(--terracotta);outline-offset:2px}
+.ba-cap{display:flex;justify-content:space-between;gap:8px;font:600 14px/1.3 var(--sans);color:var(--dark);padding:0 2px}
+.ba-cap span{font-weight:400;color:var(--meta)}
 .hero-ph{position:relative;display:block;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:var(--cream-dark)}
 .hero-ph img{width:100%;height:100%;object-fit:cover;display:block}
 .strip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -779,6 +790,16 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     }
     return h+'</article>';
   }
+  // Before & afters Jack picked for this report. Drag (or use the arrow keys) to compare.
+  function baBlock(j){
+    var P=(j.live.ba||[]); if(!P.length) return '';
+    return '<section class="blk" id="ba"><h2>'+hi('camera')+'<span>Before <em>&amp;</em> after</span></h2><p class="sub sec-sub">'+(P.length>1?'A few of our favourite':'One of our favourite')+' changes from this clean. Drag the line to compare.</p><div class="ba-list">'+
+      P.map(function(x){ var b=photoSrc(j,x.b), a=photoSrc(j,x.a), r=x.room||'';
+        return '<div class="ba"><div class="ba-cmp" style="--x:50%"><img class="ba-a" loading="lazy" alt="'+esc((r?r+', ':'')+'after')+'" src="'+esc(a)+'"><img class="ba-b" loading="lazy" alt="'+esc((r?r+', ':'')+'before')+'" src="'+esc(b)+'">'+
+          '<input type="range" min="0" max="100" value="50" aria-label="Compare before and after'+(r?' in the '+esc(r.toLowerCase()):'')+'"><span class="ba-line"></span><span class="lab l">Before</span><span class="lab r">After</span></div>'+
+          (r?'<div class="ba-cap">'+esc(r)+'</div>':'')+'</div>'; }).join('')+'</div></section>';
+  }
+  document.addEventListener('input',function(e){ var t=e.target; if(t&&t.matches&&t.matches('.ba-cmp input')) t.parentNode.style.setProperty('--x',t.value+'%'); });
   function galPush(src,room,kind){ gal.push({src:src,room:room,kind:kind}); return gal.length-1; }
 
   // ---- 4. What's next, by kind of clean ----
@@ -871,13 +892,14 @@ details.cl li.inc::before{content:"·";color:var(--meta)}
     h+='<div class="wrap rep" style="padding-bottom:60px">';
     h+='<div class="intro"><span class="eyebrow">'+esc(j.service||'Clean')+(j.dayT?' · Day '+j.dayN+' of '+j.dayT:'')+'</span><h1>'+esc(j.address||j.suburb)+'</h1><p>'+esc([j.address?j.suburb:'',fmtDay(j.date)].filter(Boolean).join(' · '))+'</p>'+(standalone&&data.agent?'<p>Arranged by '+esc(data.agent.name)+(data.agent.agency?', '+esc(data.agent.agency):'')+'</p>':'')+'</div>';
 
-    // Room by room. Once the clean is done, the before and after photos lead the page.
-    var roomsH='<section class="blk" id="photos"><h2>'+hi(ph==='done'?'camera':'clipboard')+'<span>'+(ph==='booked'?'What we\'ll <em>clean</em>':ph==='done'?'Before <em>&amp;</em> after':'Where we\'re <em>up to</em>')+'</span></h2>'+
+    // Area by area. Once the clean is done, the photos lead the page (after the picked before & afters, if any).
+    var roomsH='<section class="blk" id="photos"><h2>'+hi(ph==='done'?'camera':'clipboard')+'<span>'+(ph==='booked'?'What we\'ll <em>clean</em>':ph==='done'?'Area by <em>area</em>':'Where we\'re <em>up to</em>')+'</span></h2>'+
       (ph==='booked'?'<p class="sub sec-sub">Every area has its own checklist. The team ticks each item off on the day, and you\'ll see them here.</p>':
        ph==='done'?'<p class="sub sec-sub">Photos from every area. Open one to see each check the team ticked.</p>':'<p class="sub sec-sub">Each area fills in as the team finishes it.</p>')+
       '<div class="rooms">'+j.rooms.map(function(r){ return roomCard(j,r,ph); }).join('')+'</div></section>';
     h+=glance(j,p,ph);
     if(ph!=='done') h+=XP('glance',j,ph);
+    if(ph==='done') h+=baBlock(j);
     if(ph==='done') h+=roomsH;
     if(ph==='done') h+=XP('glance',j,ph);
     if(L.updated && ph==='live') h+='<p class="updated">Last update '+clock(L.updated)+'. This page updates itself.</p>';

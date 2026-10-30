@@ -32,7 +32,7 @@
     var sms='Hi '+who+', '+(locked?'your Bardon Clean booking is confirmed.':'here are your Bardon Clean booking details.')+'\n\n'+
       j.service+size+(days?' over '+days.length+' days':'')+'\n'+whenSms+'\n'+(place?place+'\n':'')+
       (depSms?'\n'+depSms+'\n':'')+
-      (live?'\nFollow your clean live, with before and after photos:\n'+live+'\n':'')+
+      (live?'\nFollow your clean live on the day:\n'+live+'\n':'')+
       '\nAny questions, text me on '+text+'.\nJack';
 
     // Use the editable template from Text templates when it's loaded.
@@ -53,7 +53,7 @@
     L.push('SERVICE',j.service+size,'');
     if(j.readyBy) L.push('READY FOR',j.readyBy,'');
     if(depLine||balance){ L.push('PAYMENT'); if(depLine) L.push(depLine); if(balance) L.push(balance); L.push(''); }
-    if(live) L.push('FOLLOW YOUR CLEAN LIVE',live,'Open this on the day to see when the team arrives, each room as it\'s finished, and before and after photos.','');
+    if(live) L.push('FOLLOW YOUR CLEAN LIVE',live,'Open this on the day to see when the team arrives, and each area as it\'s finished, with photos.','');
     L.push('BEFORE WE ARRIVE',
       '- Let us know how we\'ll get in (keys, lockbox or someone home), if we haven\'t sorted it already.',
       '- Please have the power and water on.',

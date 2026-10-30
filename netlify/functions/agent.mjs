@@ -10,6 +10,7 @@ import { loadThread, logPortal } from "../../lib/messages.mjs";
 import { auMobile, sendSms, mmReady } from "../../lib/mm.mjs";
 import { createHash, randomInt } from "node:crypto";
 import { clientExtras, clientAction } from "../../lib/plus.mjs";
+import { loadBa, baForClient } from "../../lib/reportba.mjs";
 
 // ---- sample jobs, so a new agent's link isn't empty on first open ----
 // Three clearly labelled jobs: finished yesterday (report), on site today, booked later this week.
@@ -67,7 +68,7 @@ function actual(L) {
   const allOff = Object.keys(a).every((id) => l[id]);
   return { in: ins[0], ...(allOff ? { out: Object.values(l).filter(Boolean).sort().pop() } : {}) };
 }
-function view(job, roster, L, withShare, photos = {}, all = {}) {
+function view(job, roster, L, withShare, photos = {}, all = {}, ba = {}) {
   const team = (job.staff || []).map((id) => roster.team.find((t) => t.id === id)).filter(Boolean)
     .map((t) => ({ id: t.id, name: first(t.name), owner: !!t.owner, ...(photos[t.id]?.ok ? { photo: `/api/teamphoto?p=${t.id}&v=${photos[t.id].v}` } : {}) }));
   const live = L || {};
@@ -78,6 +79,8 @@ function view(job, roster, L, withShare, photos = {}, all = {}) {
     live: {
       arrived: live.arrived || {}, rooms: live.rooms || {}, flags: (live.flags || []).map(({ id, t, d, at }) => ({ id, t, d, at })),
       photos: (live.photos || []).filter((p) => p.room && p.kind).map(({ id, room, kind, at, j }) => ({ id, room, kind, at, j: j || job.id })),
+      // Before & afters Jack picked for the report. Empty means no before & after section at all.
+      ba: baForClient(ba[job.group || job.id], live.photos, job.id),
       tour: (live.tour || []).filter((v) => v.ready).map(({ id, title, secs }) => ({ id, title, secs: secs || 0, src: embedUrl(id) })),
       lock: live.lock || {}, eta: live.eta || "", done: live.done || "", updated: live.updated || "",
       checks: Object.fromEntries(Object.entries(live.items || {}).map(([r, v]) => [r, Object.keys(v || {}).length])),
@@ -158,7 +161,7 @@ export default async (req) => {
     const watch = v.length >= 16 ? roster.jobs.filter((j) => j.share === v) : k.length >= 16 ? roster.jobs.filter((j) => { const a = agents.find((x) => x.token === k); return a && j.agentId === a.id; }) : [];
     if (watch.length) await refreshTours(s, roster, watch).catch(() => {});
     const live = bookingLive(roster, await loadAllLive(s));
-    const photos = await loadTeamPhotos(s);
+    const [photos, ba] = await Promise.all([loadTeamPhotos(s), loadBa(s)]);
     const set = await loadSettings(s).catch(() => null);
     const base = { lock: LOCK, phone: "0406 216 212", biz: { abn: set?.biz?.abn || "46 426 437 394", legal: set?.biz?.legal || "Jack East T/A Bardon Clean" } };
     // View-only copy the client shared with someone: progress and photos, no prices, access or forms.
@@ -169,7 +172,7 @@ export default async (req) => {
       const t = new Date(Date.now() + 10 * 3600e3).toISOString().slice(0, 10);
       const job = all.find((j) => j.date >= t) || all[all.length - 1];
       if (!job) return json({ error: "This link has been switched off." }, 404);
-      const vj = view(job, roster, live[job.id], false, photos, live);
+      const vj = view(job, roster, live[job.id], false, photos, live, ba);
       const kind = /bond|lease/i.test(job.service || "") ? "bond" : /pre.?sale/i.test(job.service || "") ? "presale" : /deep/i.test(job.service || "") ? "deep" : /regular/i.test(job.service || "") ? "regular" : "other";
       vj.plus = await clientExtras(s, roster, job, vj, { viewer: true, raw: live[job.id] }).catch(() => null);
       return json({ ...base, mode: "vendor", agent: null, jobs: [vj], client: { viewer: true, kind } });
@@ -184,7 +187,7 @@ export default async (req) => {
       const bk = job.group || job.id;
       const [acc, fb, tp] = await Promise.all([s.get(`access/${bk}`), s.get(`fb/${bk}`), loadTemplates(s)]);
       const kind = /bond|lease/i.test(job.service || "") ? "bond" : /pre.?sale/i.test(job.service || "") ? "presale" : /deep/i.test(job.service || "") ? "deep" : /regular/i.test(job.service || "") ? "regular" : "other";
-      const vj = view(job, roster, live[job.id], false, photos, live);
+      const vj = view(job, roster, live[job.id], false, photos, live, ba);
       const vb = billingFor(job, roster, (await loadDocs(s).catch(() => [])).filter((d) => !d.archived || d.jobId), "");
       if (vb) vj.billing = vb;
       vj.plus = await clientExtras(s, roster, job, vj, { raw: live[job.id] }).catch((e) => { console.error("plus", e); return null; });
@@ -197,7 +200,7 @@ export default async (req) => {
       const chat = await chatFor(s, a);
       const docs = (await loadDocs(s).catch(() => [])).filter((d) => !d.archived || d.jobId);
       const jobs = oneEach(roster.jobs.filter((j) => j.agentId === a.id)).map((j) => {
-        const o = view(j, roster, live[j.id], true, photos, live), b = billingFor(j, roster, docs, k);
+        const o = view(j, roster, live[j.id], true, photos, live, ba), b = billingFor(j, roster, docs, k);
         if (b) o.billing = b;
         return o;
       });
@@ -207,7 +210,7 @@ export default async (req) => {
     if (await checkAdmin(s, req)) {
       const as = u.searchParams.get("as") || "";
       const jobs = oneEach(roster.jobs.filter((j) => (as ? j.agentId === as : true)))
-        .map((j) => ({ ...view(j, roster, live[j.id], true, photos, live), agentId: j.agentId || "", client: j.client }));
+        .map((j) => ({ ...view(j, roster, live[j.id], true, photos, live, ba), agentId: j.agentId || "", client: j.client }));
       return json({ ...base, mode: "admin", agents: agents.map(({ id, name, agency }) => ({ id, name, agency })), jobs });
     }
     return json({ error: "Open this page from the link Bardon Clean sent you." }, 401);

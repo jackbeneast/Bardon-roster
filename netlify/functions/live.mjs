@@ -5,6 +5,7 @@ import { paySet } from "../../public/lib/wages.mjs";
 import { notify, firstName, where, fmtTime, clockNow } from "../../lib/notify.mjs";
 import { milestoneText } from "../../lib/plus.mjs";
 import { sendSms } from "../../lib/mm.mjs";
+import { pairsOf } from "../../lib/reportba.mjs";
 
 // Live progress on a job: arrivals, rooms, flags for the agent, lock-up, finish.
 // The team posts from the roster (same trust as shift confirmations); Jack can do everything.
@@ -194,7 +195,8 @@ export default async (req) => {
         if (first && !admin) {
           const rs = roomsOf(job), d = rs.filter((r) => L.rooms[r]?.s === "d").length, lk = Object.keys(LOCK).filter((k) => L.lock[k]).length;
           const ph = L.photos.filter((p) => p.kind === "after").length;
-          await notify(s, { type: "finish", title: `${where(job)} is ready`, body: `Finished ${clockNow()} · ${d}/${rs.length} rooms · ${lk}/${Object.keys(LOCK).length} lock-up checks · ${ph} after photo${ph === 1 ? "" : "s"}`, tags: "sparkles", url: "/" });
+          const prs = pairsOf(L.photos, job.id).length;
+          await notify(s, { type: "finish", title: `${where(job)} is ready`, body: `Finished ${clockNow()} · ${d}/${rs.length} rooms · ${lk}/${Object.keys(LOCK).length} lock-up checks · ${ph} after photo${ph === 1 ? "" : "s"}${prs ? ` · pick the best before & afters for the report` : ""}`, tags: "sparkles", url: prs ? `/#ba=${job.id}` : "/" });
         }
       }
       break;
