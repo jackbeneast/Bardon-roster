@@ -7,6 +7,7 @@ import { weeklyMoney } from "../../lib/weekly.mjs";
 import { loadBooks } from "../../lib/books.mjs";
 import { generate } from "../../lib/series.mjs";
 import { toWrap } from "../../public/lib/profit.mjs";
+import { ensurePlan, CH_NAME } from "../../lib/social.mjs";
 import { notify, once, fmtDay, fmtTime, firstName, where, money } from "../../lib/notify.mjs";
 
 const BNE = 10 * 3600e3;
@@ -112,6 +113,18 @@ export async function runChecks(s) {
       const fresh = (r.pending || []).filter((p) => p.date >= today && !(jb.pending || []).some((q) => q.uid === p.uid));
       if (fresh.length) await notify(s, { type: "jobber", title: `${fresh.length} new Jobber job${fresh.length === 1 ? "" : "s"} not on the roster`, body: fresh.slice(0, 6).map((p) => `${p.client}, ${fmtDay(p.date)}`).join("\n"), tags: "inbox_tray", url: "/books/#/jobber" });
     } catch (e) { console.error("jobber sync failed", e); }
+  }
+  // ---- Marketing: 8am on post days, today's Google / Instagram post is ready ----
+  if (nowMin >= 8 * 60 && nowMin < 20 * 60 && (await once(s, `postday/${today}`))) {
+    try {
+      const { posts } = await ensurePlan(s, today);
+      const due = posts.filter((p) => p.date === today && !p.status);
+      const missed = posts.filter((p) => p.date < today && !p.status).length;
+      if (due.length) {
+        const names = [...new Set(due.map((p) => CH_NAME[p.ch]))].join(" and ");
+        await notify(s, { type: "post_due", title: `Post day: your ${names} post${due.length === 1 ? " is" : "s are"} ready`, body: `Photo and caption are done. Open it, tap Copy & share, then mark it posted. About two minutes.${missed ? `\n${missed} earlier post${missed === 1 ? "" : "s"} still waiting too.` : ""}`, tags: "camera", url: "/social/" });
+      }
+    } catch (e) { console.error("post day failed", e); }
   }
   // Monday 7am: last week's numbers and what's missing.
   if (n.getUTCDay() === 1 && nowMin >= 7 * 60) {

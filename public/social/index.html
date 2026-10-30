@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#F5F0EB">
+<title>Social &amp; Google posts</title>
+<link rel="icon" type="image/png" href="/icons/favicon.png?v=2"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--t:#C06B3C;--td:#A55830;--d:#1A1A1A;--c:#F5F0EB;--cd:#EDE6DE;--b:#4A4A4A;--m:#7A7A7A;--g:#F4B942;--w:#fff;--l:#DDD3C8;--ok:#2F5A35;--okb:#E6EFE3;--warn:#8A5A00;--warnb:#FBF0D9;
+  --serif:"Playfair Display",Georgia,serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--c);color:var(--b);font:400 15px/1.5 var(--sans);-webkit-text-size-adjust:100%}
+#app{max-width:680px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(96px + env(safe-area-inset-bottom,0px))}
+a{color:var(--td)}
+button{font-family:var(--sans);cursor:pointer;color:inherit}
+button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--t);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.top a,.top button.bk{font:500 14px var(--sans);color:var(--m);text-decoration:none;padding:10px 0;background:none;border:0}
+.wm{font:700 17px/1 var(--serif);color:var(--d)}
+h1{font:700 28px/1.15 var(--serif);color:var(--d);margin:6px 0 0}
+h1 em,h2 em{font-style:italic;font-weight:500}
+h2{font:700 20px/1.25 var(--serif);color:var(--d);margin:26px 0 10px}
+h3{font:600 15.5px/1.3 var(--sans);color:var(--d);margin:0}
+.sub{color:var(--m);font-size:14px;margin:4px 0 0}
+.sum{margin-top:14px;background:var(--d);color:var(--c);border-radius:14px;padding:16px;display:grid;gap:12px}
+.sum .row{display:flex;gap:10px}
+.sum .k{flex:1;background:#2A2826;border-radius:10px;padding:10px 12px}
+.sum .k b{display:block;font:700 22px/1.1 var(--serif);color:var(--c)}
+.sum .k span{font-size:12.5px;color:#BFB6AC}
+.sum p{margin:0;font-size:14px;color:#CFC6BC}.sum p b{color:var(--c);font-weight:600}
+.tabs{display:flex;gap:6px;margin:16px 0 4px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabs a{flex:none;min-height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;border:1.5px solid var(--l);background:var(--w);color:var(--d);font:500 14px var(--sans);text-decoration:none}
+.tabs a[aria-current="page"]{background:var(--d);border-color:var(--d);color:var(--c)}
+.sect{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 8px;font:600 12px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--m)}
+.post{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:var(--w);border:1px solid var(--l);border-radius:12px;padding:10px;margin-top:8px;text-decoration:none;color:inherit}
+.post .im{flex:none;width:74px;height:74px;border-radius:9px;overflow:hidden;background:var(--cd);display:flex}
+.post .im img{width:100%;height:100%;object-fit:cover;display:block}
+.post .im.two img{width:50%}
+.post .tx{flex:1;min-width:0;display:grid;gap:3px}
+.post .tx b{font:600 15px/1.3 var(--sans);color:var(--d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.post .tx span{font-size:13px;color:var(--m);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.post .ar{color:var(--m);font-size:20px}
+.post.done{opacity:.62}
+.chip{display:inline-flex;align-items:center;gap:5px;font:600 11px/1 var(--sans);letter-spacing:.04em;padding:5px 8px;border-radius:999px;vertical-align:1px}
+.chip.gbp{background:#E3ECF8;color:#1F4E8C}.chip.ig{background:#F6E3D8;color:var(--td)}
+.chip.ok{background:var(--okb);color:var(--ok)}.chip.wait{background:var(--warnb);color:var(--warn)}.chip.off{background:var(--cd);color:var(--m)}
+.hint{margin-top:12px;background:var(--w);border:1px solid var(--l);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--d)}
+.hint.warn{background:var(--warnb);border-color:#EED9A8}
+.empty{margin-top:10px;text-align:center;color:var(--m);font-size:14px;padding:18px;border:1.5px dashed var(--l);border-radius:12px}
+/* post detail */
+.pv{margin-top:12px;background:var(--cd);border-radius:12px;overflow:hidden;position:relative;display:grid;place-items:center;min-height:240px}
+.pv img{display:block;width:100%;height:auto}
+.pv .ld{position:absolute;inset:0;display:grid;place-items:center;font-size:14px;color:var(--m)}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btn{min-height:46px;padding:0 16px;border-radius:9px;border:1.5px solid var(--l);background:var(--w);color:var(--d);font:600 14.5px var(--sans);display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn.primary{background:var(--t);border-color:var(--t);color:#fff}
+.btn.dark{background:var(--d);border-color:var(--d);color:var(--c)}
+.btn.okb{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.full{width:100%}
+.btn:disabled{opacity:.55}
+.btn.sm{min-height:38px;padding:0 12px;font-size:13.5px}
+.row2{display:flex;gap:8px;margin-top:8px}.row2>*{flex:1}
+label.l{display:block;font:600 13px var(--sans);color:var(--d);margin:14px 0 6px}
+textarea,input[type=text],select{width:100%;font:400 15px/1.5 var(--sans);color:var(--d);background:var(--w);border:1.5px solid var(--l);border-radius:9px;padding:10px 12px}
+textarea{min-height:220px;resize:vertical}
+.cnt{font-size:12px;color:var(--m);text-align:right;margin-top:4px}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--w);border:1px solid var(--l);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px;color:var(--d)}
+.tog input{width:22px;height:22px;accent-color:var(--t)}
+input[type=range]{width:100%;accent-color:var(--t)}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:grid;gap:10px}
+.steps li{counter-increment:s;position:relative;padding-left:40px;font-size:14.5px;color:var(--d)}
+.steps li:before{content:counter(s);position:absolute;left:0;top:-1px;width:28px;height:28px;border-radius:50%;background:var(--d);color:var(--c);display:grid;place-items:center;font:600 13px/1 var(--sans)}
+.steps li small{display:block;color:var(--m);font-size:13px;margin-top:2px}
+.card{background:var(--w);border:1px solid var(--l);border-radius:12px;padding:14px 16px;margin-top:10px}
+.card p{margin:6px 0 0;font-size:14.5px}
+.card ul{margin:8px 0 0;padding-left:18px;font-size:14.5px}.card li{margin:4px 0}
+.verdict{font:600 11px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:999px;margin-left:6px;vertical-align:2px}
+.v1{background:var(--okb);color:var(--ok)}.v2{background:#E3ECF8;color:#1F4E8C}.v3{background:var(--warnb);color:var(--warn)}.v4{background:var(--cd);color:var(--m)}
+table.fq{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px}
+table.fq td,table.fq th{padding:9px 6px;border-bottom:1px solid var(--cd);text-align:left;vertical-align:top}
+table.fq th{font:600 12px var(--sans);color:var(--m);text-transform:uppercase;letter-spacing:.06em}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--w);border-top:1px solid var(--l);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));z-index:5}
+.bar .in{max-width:680px;margin:0 auto;display:flex;gap:8px}.bar .in>*{flex:1}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--d);color:var(--c);padding:11px 16px;border-radius:10px;font-size:14px;z-index:20;max-width:92vw;text-align:center}
+.center{text-align:center;padding:60px 10px}
+.writing{font-size:13px;color:var(--m);display:flex;align-items:center;gap:8px;margin-top:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--t);animation:p 1.2s ease-in-out infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+details.more{margin-top:10px}details.more summary{cursor:pointer;font:600 14px var(--sans);color:var(--td);padding:8px 0}
+</style>
+</head><body><div id="app"><div class="center">Loading…</div></div>
+<script>
+(function(){
+var app=document.getElementById('app'), D=null, err='', cur=null, imgCache={}, writing={}, wq=[], wBusy=false, notes={};
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], DOWL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var CH={gbp:'Google',ig:'Instagram'}, SVC={presale:'Pre-sale',bond:'Bond',deep:'Deep',other:''};
+var SIZE={gbp:[1200,900],ig:[1080,1350]};
+function key(){ try{ return localStorage.getItem('roster_admin_key')||''; }catch(e){ return ''; } }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function toast(m,ms){ var o=document.querySelector('.toast'); if(o) o.remove(); var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},ms||2400); }
+function purl(x,t){ return '/api/photo?j='+encodeURIComponent(x.j)+'&p='+x.id+(t?'&s=t':''); }
+function pd(s){ var p=s.split('-'); return new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); }
+function addD(s,n){ var d=pd(s); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function dayLbl(s){ if(s===D.today) return 'Today'; if(s===addD(D.today,1)) return 'Tomorrow'; if(s===addD(D.today,-1)) return 'Yesterday'; var d=pd(s); return DOW[d.getUTCDay()]+' '+d.getUTCDate()+' '+MON[d.getUTCMonth()]; }
+function api(method,body){
+  return fetch('/api/social',{method:method,headers:{'content-type':'application/json','x-admin-key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'})
+    .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok){ var e=new Error(d.error||'Something went wrong'); e.status=r.status; e.off=d.off; throw e; } return d; }); });
+}
+var queue=Promise.resolve();
+function inLine(fn){ var p=queue.then(fn,fn); queue=p.catch(function(){}); return p; }
+function put(p){ if(!p) return; var i=D.posts.findIndex(function(x){return x.id===p.id;}); if(i>=0) D.posts[i]=p; else D.posts.push(p); D.posts.sort(function(a,b){ return (a.date+a.ch).localeCompare(b.date+b.ch); }); }
+function byId(id){ return D.posts.find(function(p){return p.id===id;}); }
+function copyText(t){
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).catch(function(){ legacyCopy(t); }); return; } }catch(e){}
+  legacyCopy(t);
+}
+function legacyCopy(t){ var a=document.createElement('textarea'); a.value=t; a.setAttribute('readonly',''); a.style.position='fixed'; a.style.opacity='0'; document.body.appendChild(a); a.select(); a.setSelectionRange(0,t.length); try{ document.execCommand('copy'); }catch(e){} a.remove(); }
+
+// ---------- branded images (drawn here on the phone, from the job photos) ----------
+function loadImg(src){
+  if(imgCache[src]) return imgCache[src];
+  imgCache[src]=new Promise(function(res,rej){ var i=new Image(); i.onload=function(){res(i);}; i.onerror=function(){ delete imgCache[src]; rej(new Error('Photo didn\'t load')); }; i.src=src; });
+  return imgCache[src];
+}
+var fontsReady=null;
+function fonts(){
+  if(!fontsReady) fontsReady=Promise.all(['700 60px "Playfair Display"','600 26px Inter','500 24px Inter'].map(function(f){ return document.fonts&&document.fonts.load?document.fonts.load(f).catch(function(){}):null; })).then(function(){},function(){});
+  return fontsReady;
+}
+function rr(x,X,Y,W,H,R){ x.beginPath(); x.moveTo(X+R,Y); x.arcTo(X+W,Y,X+W,Y+H,R); x.arcTo(X+W,Y+H,X,Y+H,R); x.arcTo(X,Y+H,X,Y,R); x.arcTo(X,Y,X+W,Y,R); x.closePath(); }
+function cover(x,img,X,Y,W,H,fx,fy){
+  var s=Math.max(W/img.width,H/img.height), sw=W/s, sh=H/s;
+  var sx=(img.width-sw)*(fx==null?.5:fx), sy=(img.height-sh)*(fy==null?.5:fy);
+  x.drawImage(img,sx,sy,sw,sh,X,Y,W,H);
+}
+function wrap(x,t,maxW){ var w=t.split(/\s+/), out=[], line=''; w.forEach(function(word){ var tr=line?line+' '+word:word; if(x.measureText(tr).width>maxW&&line){ out.push(line); line=word; } else line=tr; }); if(line) out.push(line); return out; }
+function pill(x,t,X,Y,bg,fg,font,padX,h,alignRight){
+  x.font=font; var w=x.measureText(t).width+padX*2, px=alignRight?X-w:X;
+  x.fillStyle=bg; rr(x,px,Y,w,h,h/2); x.fill();
+  x.fillStyle=fg; x.textBaseline='middle'; x.fillText(t,px+padX,Y+h/2+1); x.textBaseline='alphabetic';
+}
+function overflowAxis(p,img){ var sz=SIZE[p.ch], W=sz[0], H=sz[1]; if(p.kind==='pair'){ if(p.ch==='ig') H=(H-16)/2; else W=(W-16)/2; } return img.width/img.height > W/H ? 'x':'y'; }
+function draw(p){
+  var sz=SIZE[p.ch], W=sz[0], H=sz[1];
+  return fonts().then(function(){ return Promise.all((p.ph||[]).map(function(x){ return loadImg(purl(x)); })); }).then(function(imgs){
+    var c=document.createElement('canvas'); c.width=W; c.height=H; var x=c.getContext('2d');
+    x.fillStyle='#F5F0EB'; x.fillRect(0,0,W,H);
+    var fx=p.fx==null?.5:p.fx, fy=p.fy==null?.5:p.fy, U=W/1080;
+    if(p.kind==='pair'&&imgs.length===2){
+      var g=16, pad=Math.round(34*U), ph=Math.round(54*U), f='600 '+Math.round(27*U)+'px Inter';
+      if(p.ch==='ig'){ var h=(H-g)/2; cover(x,imgs[0],0,0,W,h,fx,fy); cover(x,imgs[1],0,h+g,W,h,fx,fy);
+        pill(x,'Before',pad,pad,'rgba(26,26,26,.82)','#F5F0EB',f,Math.round(22*U),ph); pill(x,'After',pad,h+g+pad,'#C06B3C','#fff',f,Math.round(22*U),ph);
+        pill(x,'Bardon Clean',W-pad,H-pad-ph,'#F5F0EB','#1A1A1A','700 '+Math.round(30*U)+'px "Playfair Display"',Math.round(22*U),ph,true);
+      } else { var w=(W-g)/2; cover(x,imgs[0],0,0,w,H,fx,fy); cover(x,imgs[1],w+g,0,w,H,fx,fy);
+        pill(x,'Before',pad,pad,'rgba(26,26,26,.82)','#F5F0EB',f,Math.round(22*U),ph); pill(x,'After',w+g+pad,pad,'#C06B3C','#fff',f,Math.round(22*U),ph);
+        pill(x,'Bardon Clean',W-pad,H-pad-ph,'#F5F0EB','#1A1A1A','700 '+Math.round(30*U)+'px "Playfair Display"',Math.round(22*U),ph,true);
+      }
+    } else if(imgs.length){
+      cover(x,imgs[0],0,0,W,H,fx,fy);
+      var M=Math.round(72*U), txt=p.txt&&p.head;
+      var gr=x.createLinearGradient(0,H*(txt?.45:.7),0,H); gr.addColorStop(0,'rgba(26,26,26,0)'); gr.addColorStop(1,'rgba(26,26,26,'+(txt?.82:.55)+')'); x.fillStyle=gr; x.fillRect(0,0,W,H);
+      x.fillStyle='#F5F0EB'; x.font='700 '+Math.round(36*U)+'px "Playfair Display"'; x.textBaseline='alphabetic';
+      x.fillText('Bardon Clean',M,H-M+Math.round(8*U));
+      x.font='500 '+Math.round(24*U)+'px Inter'; x.fillStyle='#E9DFD4'; x.textAlign='right'; x.fillText('bardonclean.au',W-M,H-M+Math.round(6*U)); x.textAlign='left';
+      if(txt){
+        var fs=Math.round((p.ch==='ig'?80:64)*U); x.font='700 '+fs+'px "Playfair Display"'; x.fillStyle='#F5F0EB';
+        var lines=wrap(x,p.head,W-M*2).slice(0,3), lh=Math.round(fs*1.08), base=H-M-Math.round(78*U);
+        lines.forEach(function(l,i){ x.fillText(l,M,base-(lines.length-1-i)*lh); });
+        x.fillStyle='#C06B3C'; x.fillRect(M,base-(lines.length-1)*lh-fs-Math.round(26*U),Math.round(60*U),Math.round(6*U));
+      }
+    }
+    return new Promise(function(res){ c.toBlob(function(b){ res(b); },'image/jpeg',.92); });
+  });
+}
+function fileName(p){ return 'bardon-'+(p.ch==='ig'?'instagram':'google')+'-'+p.date+'.jpg'; }
+
+// ---------- Claude writes captions in the background ----------
+function needsWrite(p){ return D.ai && !p.ai && !p.edited && !p.status && (p.ph||[]).length && p.date<=addD(D.today,6); }
+function queueWrite(id,front){ if(writing[id]) return; wq=wq.filter(function(x){return x!==id;}); if(front) wq.unshift(id); else wq.push(id); pump(); }
+function pump(){
+  if(wBusy||!wq.length) return; var id=wq.shift(); wBusy=true; writing[id]=1; rerenderIf(id);
+  var n=0;
+  (function step(){
+    inLine(function(){ return api('POST',{action:'write',id:id}); }).then(function(d){
+      if(d.post) put(d.post); if(d.note){ notes[id]=d.note; }
+      if(d.again&&++n<5) { rerenderIf(id,true); return step(); }
+      done();
+    }).catch(function(e){ notes[id]=e.off?'':'Claude couldn\'t write this one ('+e.message+'). The ready-made caption below is fine to use.'; if(e.off) D.ai=false; done(); });
+  })();
+  function done(){ delete writing[id]; wBusy=false; rerenderIf(id,true); pump(); }
+}
+function rerenderIf(id,photoMayChange){ if(cur&&cur.id===id){ if(photoMayChange) cur.blob=null; render(); } else if(!cur) render(); }
+
+// ---------- views ----------
+function weekStats(){
+  var d=pd(D.today), mon=addD(D.today,-((d.getUTCDay()+6)%7)), sun=addD(mon,6);
+  var wk=D.posts.filter(function(p){ return p.date>=mon&&p.date<=sun&&p.status!=='skipped'; });
+  var last={}; D.posts.forEach(function(p){ if(p.status==='posted'&&(!last[p.ch]||p.date>last[p.ch])) last[p.ch]=p.date; });
+  return {done:wk.filter(function(p){return p.status==='posted';}).length, total:wk.length, last:last};
+}
+function ago(s){ if(!s) return 'not yet'; var n=Math.round((pd(D.today)-pd(s))/864e5); return n<=0?'today':n===1?'yesterday':n+' days ago'; }
+function tabs(on){ return '<nav class="tabs" aria-label="Sections"><a href="#/"'+(on==='posts'?' aria-current="page"':'')+'>Posts</a><a href="#/how"'+(on==='how'?' aria-current="page"':'')+'>How &amp; how often</a><a href="#/more"'+(on==='more'?' aria-current="page"':'')+'>Other platforms</a></nav>'; }
+function head(){ return '<div class="top"><a href="/">‹ Hub</a><span class="wm">Bardon Clean</span></div>'; }
+function thumbHtml(p){
+  if(!(p.ph||[]).length) return '<span class="im"></span>';
+  return '<span class="im'+(p.kind==='pair'?' two':'')+'">'+p.ph.map(function(x){ return '<img src="'+purl(x,1)+'" alt="" loading="lazy">'; }).join('')+'</span>';
+}
+function postRow(p){
+  var st=p.status==='posted'?'<span class="chip ok">Posted</span>':p.status==='skipped'?'<span class="chip off">'+(p.auto?'Missed':'Skipped')+'</span>':p.date<D.today?'<span class="chip wait">Catch up</span>':'';
+  var sub=(p.kind==='pair'?'Before & after':'After photo')+(p.room?' · '+p.room:'')+(SVC[p.svc]?' · '+SVC[p.svc]:'');
+  if(!(p.ph||[]).length) sub='Needs a photo';
+  return '<a class="post'+(p.status?' done':'')+'" href="#/p/'+p.id+'">'+thumbHtml(p)+'<span class="tx"><span><span class="chip '+p.ch+'">'+CH[p.ch]+'</span> '+st+'</span><b>'+esc(dayLbl(p.date))+' · '+esc(p.head||'')+'</b><span>'+esc(sub)+(writing[p.id]?' · writing…':'')+'</span></span><span class="ar" aria-hidden="true">›</span></a>';
+}
+function viewList(){
+  var t=D.today, ws=weekStats(), P=D.posts;
+  var todays=P.filter(function(p){return p.date===t&&!p.status;});
+  var catchup=P.filter(function(p){return p.date<t&&!p.status;});
+  var soon=P.filter(function(p){return p.date>t&&!p.status;}).slice(0,10);
+  var past=P.filter(function(p){return p.status&&p.date>=addD(t,-21);}).reverse().slice(0,8);
+  var next=soon[0];
+  var h=head()+'<h1>Social &amp; <em>Google</em> posts</h1><p class="sub">Made from your job photos. Open one, tap share, paste, post.</p>';
+  h+='<div class="sum"><div class="row"><div class="k"><b>'+ws.done+' of '+ws.total+'</b><span>posted this week</span></div><div class="k"><b>'+(todays.length+catchup.length)+'</b><span>ready to post now</span></div></div>';
+  h+='<p>Google: last post <b>'+ago(ws.last.gbp)+'</b>. Instagram: last post <b>'+ago(ws.last.ig)+'</b>.'+(next&&!todays.length?' Next up: <b>'+esc(dayLbl(next.date))+', '+CH[next.ch]+'</b>.':'')+'</p></div>';
+  if(!D.ai) h+='<div class="hint warn">Captions are the ready-made versions. Claude writes better, photo-specific ones once the Claude key (ANTHROPIC_API_KEY) is set in Netlify, the same key the photo sorting uses.</div>';
+  h+=tabs('posts');
+  h+='<div class="sect"><span>Today</span><span>'+todays.length+'</span></div>';
+  h+=todays.length?todays.map(postRow).join(''):'<div class="empty">'+(P.some(function(p){return p.date===t&&p.status==='posted';})?'Today\'s done. Nice.':'Nothing due today.')+' <div class="row2"><button type="button" class="btn sm" data-extra="gbp">Make a Google post</button><button type="button" class="btn sm" data-extra="ig">Make an Instagram post</button></div></div>';
+  if(catchup.length) h+='<div class="sect"><span>Catch up</span><span>'+catchup.length+'</span></div><p class="sub" style="margin:-2px 0 0">Missed ones wait here for a week, then drop off. Post one today or skip it.</p>'+catchup.map(postRow).join('');
+  h+='<div class="sect"><span>Coming up</span><span>'+soon.length+'</span></div>'+(soon.length?soon.map(postRow).join(''):'<div class="empty">No posts planned.</div>');
+  if(past.length) h+='<div class="sect"><span>Done recently</span></div>'+past.map(postRow).join('');
+  if(P.some(function(p){ return !p.status&&!(p.ph||[]).length; })) h+='<div class="hint warn">Some posts need a photo. Photos come from jobs: the team\'s sorted after photos (and befores for pairs), plus anything you upload in <a href="/demo-photos/">Website &amp; demo photos</a>.</div>';
+  return h;
+}
+function stepsFor(p){
+  var link=D.pages[p.svc]||D.pages.other;
+  if(p.ch==='gbp') return '<ol class="steps">'+
+    '<li>Tap <b>Copy text &amp; share</b> below, then <b>Save Image</b> in the share sheet.<small>The post text is now copied too.</small></li>'+
+    '<li>Tap <b>Open my Google profile</b>. Make sure you\'re signed in to the Google account that manages Bardon Clean.</li>'+
+    '<li>On your profile, tap <b>Add update</b>.<small>On some screens it\'s under <b>Promote</b>, or <b>Posts › Add post</b>.</small></li>'+
+    '<li>Tap <b>Add photo</b> and choose the image you just saved.</li>'+
+    '<li>Long-press the description box and tap <b>Paste</b>.</li>'+
+    '<li>Optional: <b>Add button › Learn more</b>. Come back here, tap <b>Copy button link</b>, and paste it in.<small>Links to '+esc(link.replace('https://',''))+'</small></li>'+
+    '<li>Tap <b>Post</b>. Google checks it first, so it can take a little while to show. Then come back and tap <b>Mark posted</b>.</li></ol>';
+  return '<ol class="steps">'+
+    '<li>Tap <b>Copy caption &amp; share</b> below.<small>The caption is now copied.</small></li>'+
+    '<li>In the share sheet, tap <b>Instagram</b>, then <b>Feed</b> if it asks.<small>Not in the list? Tap <b>Save Image</b>, open Instagram, tap <b>+</b>, choose <b>Post</b> and pick the photo.</small></li>'+
+    '<li>Skip filters. The image is already finished.</li>'+
+    '<li>Tap the caption box, long-press, <b>Paste</b>.</li>'+
+    '<li>If Facebook is linked, leave <b>Share to Facebook</b> on (see Other platforms).</li>'+
+    '<li>Tap <b>Share</b>, then come back here and tap <b>Mark posted</b>.</li></ol>';
+}
+function viewPost(p){
+  var h='<div class="top"><a href="#/">‹ All posts</a><span class="wm">Bardon Clean</span></div>';
+  h+='<h1 style="font-size:24px"><span class="chip '+p.ch+'" style="font-size:12px;vertical-align:5px">'+CH[p.ch]+'</span> '+esc(dayLbl(p.date))+'</h1>';
+  if(p.status==='posted') h+='<div class="hint" style="background:var(--okb);border-color:#CFE0CB;color:var(--ok)">Posted'+(p.postedAt?' '+esc(dayLbl(new Date(Date.parse(p.postedAt)+36e6).toISOString().slice(0,10)).toLowerCase()):'')+'. <button type="button" class="btn sm" data-status="" style="margin-left:6px">Undo</button></div>';
+  if(p.status==='skipped') h+='<div class="hint">'+(p.auto?'Missed, and dropped off after a week.':'Skipped.')+' <button type="button" class="btn sm" data-status="" style="margin-left:6px">Bring it back</button></div>';
+  if(notes[p.id]) h+='<div class="hint warn">'+esc(notes[p.id])+'</div>';
+  if(!(p.ph||[]).length){
+    h+='<div class="hint warn">No photo available for this one yet. Sorted after photos from jobs (or your uploads in <a href="/demo-photos/">Website &amp; demo photos</a>) feed these posts.</div><div class="ctl"><button type="button" class="btn" data-swap="">Try again</button></div>';
+    return h;
+  }
+  h+='<div class="pv" id="pv">'+(cur.url?'<img src="'+cur.url+'" alt="The finished image for this post">':'<span class="ld">Making the image…</span>')+'</div>';
+  if(writing[p.id]) h+='<div class="writing"><span class="dot"></span>Claude is checking the photo and writing the caption…</div>';
+  h+='<div class="ctl"><button type="button" class="btn sm" data-swap="">Different photo</button>'+(p.ch==='ig'?'<button type="button" class="btn sm" data-swap="'+(p.kind==='pair'?'after':'pair')+'">'+(p.kind==='pair'?'Use a single after photo':'Try a before &amp; after')+'</button>':'')+'<button type="button" class="btn sm" data-reject>Never use this photo</button></div>';
+  if(p.kind!=='pair') h+='<label class="tog"><span>Headline on the image</span><input type="checkbox" id="txt"'+(p.txt?' checked':'')+'></label>';
+  if(p.kind!=='pair'&&p.txt) h+='<label class="l" for="hd">Headline</label><input type="text" id="hd" maxlength="60" value="'+esc(p.head||'')+'">';
+  h+='<label class="l" for="fpos">Photo position</label><input type="range" id="fpos" min="0" max="100" value="'+Math.round(((cur.axis==='x'?p.fx:p.fy)==null?.5:(cur.axis==='x'?p.fx:p.fy))*100)+'" aria-label="Move the photo within the frame">';
+  h+='<label class="l" for="cap">'+(p.ch==='gbp'?'Post text':'Caption')+'</label><textarea id="cap"'+(writing[p.id]?' readonly':'')+'>'+esc(p.cap||'')+'</textarea><div class="cnt" id="cnt">'+(p.cap||'').length+(p.ch==='gbp'?' / 1500':' / 2200')+'</div>';
+  h+='<div class="ctl"><button type="button" class="btn sm" data-rewrite'+(D.ai&&!writing[p.id]?'':' disabled')+'>'+(p.ai?'Rewrite with Claude':'Write with Claude')+'</button>'+(p.ch==='gbp'?'<button type="button" class="btn sm" data-copylink>Copy button link</button>':'')+'</div>';
+  h+='<h2>How to post <em>this one</em></h2>'+stepsFor(p);
+  if(p.ch==='gbp') h+='<div class="row2"><a class="btn" href="https://www.google.com/search?q=my+business" target="_blank" rel="noopener">Open my Google profile</a></div>';
+  else h+='<div class="row2"><a class="btn" href="instagram://camera" data-ig>Open Instagram</a></div>';
+  if(!p.status) h+='<div class="row2"><button type="button" class="btn" data-status="skipped">Skip this one</button><button type="button" class="btn" data-save>Save image only</button></div>';
+  h+='<div class="bar"><div class="in">'+(p.status==='posted'?'<a class="btn dark" href="#/">Back to posts</a>':'<button type="button" class="btn primary" data-share'+(cur.blob?'':' disabled')+'>'+(p.ch==='ig'?'Copy caption &amp; share':'Copy text &amp; share')+'</button><button type="button" class="btn okb" data-status="posted" style="flex:.7">Mark posted</button>')+'</div></div>';
+  return h;
+}
+function viewHow(){
+  var s=D.settings, gd=(D.days.gbp[s.gbp]||[]).map(function(d){return DOWL[d];}), id=(D.days.ig[s.ig]||[]).map(function(d){return DOWL[d];});
+  var h=head()+'<h1>How &amp; <em>how often</em></h1>'+tabs('how');
+  h+='<h2>Your posting rhythm</h2><table class="fq"><thead><tr><th></th><th>How often</th><th>Days</th></tr></thead><tbody><tr><td><b>Google</b></td><td>'+s.gbp+' a week</td><td>'+gd.join(', ')+'</td></tr><tr><td><b>Instagram</b></td><td>'+s.ig+' a week</td><td>'+id.join(', ')+'</td></tr></tbody></table>';
+  h+='<div class="card"><h3>The routine</h3><ul><li>On each post day you get a phone ping at 8am (Tools › Phone notifications › Marketing). The post is already made: photo, branding and caption.</li><li>Post whenever you have two minutes that day. Time of day matters far less than not skipping.</li><li>Missed one? It sits in <b>Catch up</b> for a week. Post it any day, or skip it.</li><li>Every post uses a different photo, rotating areas and services, so the feed never repeats itself.</li><li>Google posts use after photos only. Instagram alternates before &amp; afters and single afters.</li></ul></div>';
+  h+='<div class="card"><h3>Why this much, and no more</h3><p>A steady rhythm you can actually keep beats bursts followed by silence. Two Google updates a week keeps a recent post on your listing for people searching locally. Three Instagram posts a week keeps you visible to followers without turning into a second job. If a week is flat out, drop Instagram to 2, not Google.</p></div>';
+  h+='<label class="l" for="sg">Google posts per week</label><select id="sg">'+[1,2,3].map(function(n){return '<option value="'+n+'"'+(n===s.gbp?' selected':'')+'>'+n+'</option>';}).join('')+'</select>';
+  h+='<label class="l" for="si">Instagram posts per week</label><select id="si">'+[2,3,4].map(function(n){return '<option value="'+n+'"'+(n===s.ig?' selected':'')+'>'+n+'</option>';}).join('')+'</select>';
+  h+='<h2>Posting to <em>Google</em></h2><div class="card">'+stepsFor({ch:'gbp',svc:'other'}).replace(/ below/g,' on the post')+'</div>';
+  h+='<div class="card"><h3>Google\'s rules worth knowing</h3><ul><li>No phone numbers in the post text. Google may reject the post. (The captions here never include one.)</li><li>Hashtags do nothing on Google, so the Google captions don\'t use them.</li><li>One photo per post. Posts older than six months get archived, which is another reason to keep posting.</li><li>Once a month, also add 3 to 5 good after photos to your profile\'s <b>Photos</b> section. Save them from any post here.</li></ul></div>';
+  h+='<h2>Posting to <em>Instagram</em></h2><div class="card">'+stepsFor({ch:'ig'}).replace(/ below/g,' on the post')+'</div>';
+  h+='<div class="card"><h3>What the captions follow</h3><ul><li>Only what\'s in the photo. No made-up stories or numbers.</li><li>No promises on quote turnaround, booking lead times, return visits or sale prices.</li><li>Nothing that identifies the home: no client names, streets or suburbs. Photos flagged private are never used.</li><li>Your real standards, used one at a time: fresh cloths every clean, tools cleaned before and after, tested products, team paid above award, fully insured.</li><li>You can edit any caption before you post. Edits are kept.</li></ul></div>';
+  h+='<div class="card"><h3>Get better photos into the bank</h3><ul><li>The team\'s sorted <b>after</b> photos feed every post, and their befores make the pairs. More sorted photos means better posts.</li><li>For a strong pair, take the before and after from the same spot and angle.</li><li>Wide, bright, uncluttered shots work best. Skip toilets, drains and anything personal.</li></ul></div>';
+  return h;
+}
+function viewMore(){
+  var h=head()+'<h1>Other <em>platforms</em></h1>'+tabs('more');
+  h+='<p class="sub" style="margin-top:10px">Google and Instagram come first. These are worth adding in this order, only once those two are steady.</p>';
+  h+='<div class="card"><h3>Facebook Page <span class="verdict v1">Do now</span></h3><p>No extra work. Link Instagram to a Bardon Clean Facebook Page and every Instagram post goes to Facebook too. Lots of locals still ask Facebook for cleaner recommendations.</p><details class="more"><summary>How to set it up</summary><ol class="steps" style="margin-top:8px"><li>If there\'s no Bardon Clean Page yet, create one in the Facebook app: <b>Menu › Pages › Create</b>.</li><li>In Instagram: your profile › <b>☰</b> › <b>Accounts Centre</b>. Add your Facebook account if it isn\'t there.</li><li>In Accounts Centre, tap <b>Sharing across profiles</b>, pick the Bardon Clean Instagram, then the Facebook Page, and turn on automatic sharing for posts.</li></ol><p class="sub">Meta moves these menus around now and then. If a name doesn\'t match, search for "share to Facebook" in Instagram\'s settings.</p></details></div>';
+  h+='<div class="card"><h3>Local Facebook groups <span class="verdict v2">Worth it</span></h3><p>The community groups for the suburbs you work in. People post "can anyone recommend a cleaner?" all the time, and a reply from the owner carries weight.</p><ul><li>Join as yourself (Jack), not the Page. Read each group\'s rules on business posts.</li><li>Answer recommendation threads with one short, helpful reply and your website.</li><li>Where groups allow a weekly business post, use one of your before &amp; afters from here.</li></ul></div>';
+  h+='<div class="card"><h3>LinkedIn <span class="verdict v2">Worth it, for agents</span></h3><p>Real estate agents and property managers are on LinkedIn, and it fits your agent outreach. Post from your personal profile, not a company page.</p><ul><li>Once a fortnight: a pre-sale before &amp; after, plus a line on how agents get progress, photos and handover notes on the live job link.</li><li>Connect with every agent you pitch or work with.</li></ul></div>';
+  h+='<div class="card"><h3>Instagram Reels <span class="verdict v3">Next step</span></h3><p>Short before &amp; after reveals cut from your walkthrough videos. Reels can reach people who don\'t follow you yet. Start here before TikTok, since you\'re already on Instagram.</p></div>';
+  h+='<div class="card"><h3>Nextdoor <span class="verdict v3">Try it</span></h3><p>Free business page. How useful it is depends on how active your suburbs are on it, so check before putting time in.</p></div>';
+  h+='<div class="card"><h3>TikTok, Pinterest, X <span class="verdict v4">Skip for now</span></h3><p>Too much effort for the local, high-trust work you do. Revisit TikTok only if Reels takes off.</p></div>';
+  return h;
+}
+function render(){
+  if(err==='login'){ app.innerHTML='<div class="center"><h1>Log in <em>first</em></h1><p class="sub">Open the hub, log in with your password, then come back here.</p><p><a class="btn primary" href="/">Go to the hub</a></p></div>'; return; }
+  if(err){ app.innerHTML='<div class="center"><h1>Couldn\'t <em>load</em></h1><p class="sub">'+esc(err)+'</p><p><button class="btn" onclick="location.reload()">Try again</button></p></div>'; return; }
+  if(!D) return;
+  var r=location.hash.replace(/^#/,'')||'/', m=r.match(/^\/p\/(\w+)/), keepY=window.scrollY;
+  if(m){
+    var p=byId(m[1]); if(!p){ location.hash='#/'; return; }
+    if(!cur||cur.id!==p.id){ cur={id:p.id,blob:null,url:null,axis:'y'}; keepY=0; if(needsWrite(p)) queueWrite(p.id,true); }
+    app.innerHTML=viewPost(p);
+    if(!cur.blob&&(p.ph||[]).length) makeImage(p);
+  } else {
+    if(cur){ cur=null; keepY=0; }
+    app.innerHTML=r==='/how'?viewHow():r==='/more'?viewMore():viewList();
+  }
+  window.scrollTo(0,keepY);
+}
+var mkSeq=0;
+function makeImage(p){
+  var seq=++mkSeq, id=p.id;
+  draw(p).then(function(b){
+    if(!cur||cur.id!==id||seq!==mkSeq) return;
+    if(cur.url) URL.revokeObjectURL(cur.url);
+    cur.blob=b; cur.url=URL.createObjectURL(b);
+    loadImg(purl(p.ph[p.kind==='pair'?1:0])).then(function(img){ if(cur&&cur.id===id){ cur.axis=overflowAxis(p,img); } }).catch(function(){}).then(function(){
+      var pv=document.getElementById('pv'); if(pv) pv.innerHTML='<img src="'+cur.url+'" alt="The finished image for this post">';
+      var sb=document.querySelector('[data-share]'); if(sb) sb.disabled=false;
+      var fp=document.getElementById('fpos'); var pp=byId(id); if(fp&&pp){ var v=cur.axis==='x'?pp.fx:pp.fy; fp.value=Math.round((v==null?.5:v)*100); }
+    });
+  }).catch(function(e){ var pv=document.getElementById('pv'); if(pv) pv.innerHTML='<span class="ld">'+esc(e.message)+'. <button type="button" class="btn sm" data-swap="">Use a different photo</button></span>'; });
+}
+function save(id,body,quiet){ body.action='save'; body.id=id; return inLine(function(){ return api('POST',body); }).then(function(d){ var p=byId(id); if(p&&d.post){ ['cap','head','txt','fx','fy','edited'].forEach(function(k){ p[k]=d.post[k]; }); } if(!quiet) toast('Saved'); }).catch(function(e){ toast(e.message); }); }
+
+// ---------- actions ----------
+document.addEventListener('click',function(e){
+  var t=e.target.closest('button,a'); if(!t) return;
+  var p=cur&&byId(cur.id);
+  if(t.hasAttribute('data-share')&&p&&cur.blob){
+    copyText(p.cap||'');
+    var f=null; try{ f=new File([cur.blob],fileName(p),{type:'image/jpeg'}); }catch(x){}
+    if(f&&navigator.canShare&&navigator.canShare({files:[f]})){
+      navigator.share({files:[f]}).then(function(){ toast(p.ch==='ig'?'Now paste the caption in Instagram, then Mark posted':'Now open your Google profile and paste the text',3600); }).catch(function(x){ if(x&&x.name!=='AbortError') toast('Couldn\'t open sharing. Use Save image only.'); });
+    } else { download(p); toast((p.ch==='ig'?'Caption':'Text')+' copied and image saved',3000); }
+    return;
+  }
+  if(t.hasAttribute('data-save')&&p&&cur.blob){ download(p); return; }
+  if(t.hasAttribute('data-copylink')&&p){ copyText(D.pages[p.svc]||D.pages.other); toast('Link copied'); return; }
+  if(t.hasAttribute('data-ig')){ setTimeout(function(){ if(document.visibilityState==='visible') toast('If Instagram didn\'t open, open it from your home screen'); },1500); return; }
+  if(t.hasAttribute('data-status')&&p){
+    var st=t.getAttribute('data-status'); t.disabled=true;
+    inLine(function(){ return api('POST',{action:'status',id:p.id,status:st}); }).then(function(d){ put(d.post); if(st==='posted'){ toast('Posted. Nice work.'); location.hash='#/'; } else render(); }).catch(function(x){ t.disabled=false; toast(x.message); });
+    return;
+  }
+  if((t.hasAttribute('data-swap')||t.hasAttribute('data-reject'))&&p){
+    var rej=t.hasAttribute('data-reject'); if(rej&&!confirmSoft(t)) return;
+    t.disabled=true; delete notes[p.id];
+    inLine(function(){ return api('POST',{action:'swap',id:p.id,kind:t.getAttribute('data-swap')||'',reject:rej}); }).then(function(d){ put(d.post); cur.blob=null; if(cur.url){ URL.revokeObjectURL(cur.url); cur.url=null; } render(); if(D.ai&&!d.post.edited&&(d.post.ph||[]).length) queueWrite(p.id,true); if(!(d.post.ph||[]).length) toast('No other photos left to use right now'); }).catch(function(x){ t.disabled=false; toast(x.message); });
+    return;
+  }
+  if(t.hasAttribute('data-rewrite')&&p){ delete notes[p.id]; queueWrite(p.id,true); render(); return; }
+  if(t.hasAttribute('data-extra')){
+    t.disabled=true;
+    inLine(function(){ return api('POST',{action:'extra',ch:t.getAttribute('data-extra')}); }).then(function(d){ put(d.post); location.hash='#/p/'+d.post.id; }).catch(function(x){ t.disabled=false; toast(x.message); });
+  }
+});
+var armed=null;
+function confirmSoft(t){ if(armed===t){ armed=null; return true; } armed=t; t.textContent='Tap again to confirm'; setTimeout(function(){ if(armed===t){ armed=null; t.textContent='Never use this photo'; } },3000); return false; }
+function download(p){ var a=document.createElement('a'); a.href=cur.url; a.download=fileName(p); document.body.appendChild(a); a.click(); a.remove(); }
+var capT=null;
+document.addEventListener('input',function(e){
+  var p=cur&&byId(cur.id); var t=e.target;
+  if(t.id==='cap'&&p){ p.cap=t.value; p.edited=1; var c=document.getElementById('cnt'); if(c) c.textContent=t.value.length+(p.ch==='gbp'?' / 1500':' / 2200'); clearTimeout(capT); capT=setTimeout(function(){ save(p.id,{cap:t.value},true); },700); }
+  if(t.id==='hd'&&p){ p.head=t.value; clearTimeout(capT); capT=setTimeout(function(){ save(p.id,{head:t.value},true); makeImage(p); },500); }
+  if(t.id==='fpos'&&p){ var v=+t.value/100; if(cur.axis==='x') p.fx=v; else p.fy=v; clearTimeout(capT); capT=setTimeout(function(){ makeImage(p); save(p.id,cur.axis==='x'?{fx:v}:{fy:v},true); },180); }
+});
+document.addEventListener('change',function(e){
+  var p=cur&&byId(cur.id), t=e.target;
+  if(t.id==='txt'&&p){ p.txt=t.checked?1:0; save(p.id,{txt:p.txt},true); cur.blob=null; render(); }
+  if(t.id==='sg'||t.id==='si'){
+    var gb=+document.getElementById('sg').value, ig=+document.getElementById('si').value;
+    inLine(function(){ return api('POST',{action:'settings',gbp:gb,ig:ig}); }).then(function(d){ D.settings=d.settings; D.posts=d.posts; render(); toast('Rhythm updated. The plan has been redone.'); }).catch(function(x){ toast(x.message); });
+  }
+});
+window.addEventListener('hashchange',render);
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&D&&!cur) load(true); });
+
+function load(quiet){
+  return api('GET').then(function(d){
+    D=d; err=''; render();
+    D.posts.filter(needsWrite).slice(0,6).forEach(function(p){ queueWrite(p.id); });
+  }).catch(function(e){ if(!quiet){ err=e.status===401?'login':e.message; render(); } });
+}
+if(!key()){ err='login'; render(); } else load();
+})();
+</script>
+</body></html>
