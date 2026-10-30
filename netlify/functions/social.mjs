@@ -13,7 +13,7 @@
 //   POST { action: "pairhide", aid, on }        -> hide (or unhide) a pair
 //   POST { action: "pairjudge", aid, v: "y"|"n"|"" } -> Jack's call: post-worthy, not using, or undecided
 import { store, json, checkAdmin } from "../../lib/core.mjs";
-import { ensurePlan, pairsView, ratePairs, savePairRatings, hidePair, judgePair, postFromPair, loadPosts, savePosts, swapPhoto, addExtra, saveSettings, writeCaption, matchPair, template, aiOn, todayBne, PAGE, DAYS } from "../../lib/social.mjs";
+import { ensurePlan, pairsView, ratePairs, savePairRatings, hidePair, judgePair, postFromPair, loadPosts, savePosts, swapPhoto, addExtra, saveSettings, writeCaption, matchPair, template, CAPV, aiOn, todayBne, PAGE, DAYS } from "../../lib/social.mjs";
 
 const D = /^\d{4}-\d{2}-\d{2}$/;
 const thumb = async (s, x) => (await s.getBin(`photo/${x.j}/${x.id}.t`)) || (await s.getBin(`photo/${x.j}/${x.id}`));
@@ -139,7 +139,7 @@ export default async (req) => {
     }
     const fresh = await loadPosts(s), p2 = fresh.find((p) => p.id === id);
     if (!p2) return json({ error: "That post isn't there any more. Refresh." }, 404);
-    Object.assign(p2, { cap: w.cap || p2.cap, head: w.head || p2.head, ai: 1 });
+    Object.assign(p2, { cap: w.cap || p2.cap, head: w.head || p2.head, ai: 1, capv: CAPV });
     delete p2.edited;
     await savePosts(s, fresh);
     return json({ ok: true, post: p2 });
