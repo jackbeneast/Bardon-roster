@@ -10,6 +10,8 @@ import { cleanRequest, cleanManual, loadRequests, lines, rid, pid, ipKey, SERVIC
 import { notify, firstName } from "../../lib/notify.mjs";
 const CFREQ_L = (r) => (lines(r).find((x) => x[0] === "How often") || [])[1] || "";
 import { readRequest, readerOn } from "../../lib/scanreq.mjs";
+import { loadMktSettings, fillAck, addConsent } from "../../lib/marketing.mjs";
+import { sendSms, mmReady, auMobile } from "../../lib/mm.mjs";
 
 const PHOTO = /^[a-f0-9]{24}$/;
 const MAXPHOTO = 1.5 * 1024 * 1024, MAXN = 8;
@@ -101,7 +103,16 @@ export default async (req) => {
   if (r.refBy) await notify(s, { type: "request", title: `Referral: ${r.name} was sent by ${r.refBy.name || "a past client"}`, body: "Worth a thank-you once they book.", tags: "gift", priority: 3, url: "/desk/" });
   if (r.dns) await notify(s, { type: "request", title: `Do-not-service match: ${r.name}`, body: `Matches "${r.dns}" on your list. Nothing has been sent to them.`, tags: "no_entry", priority: 5, url: "/desk/" });
 
-  // Nothing goes to the client automatically: Jack approves every message from the request screen.
+  if (r.mktOk) await addConsent(s, r.phone, r.name, "Quote form tick-box").catch(() => {});
+  // Optional instant "got your request" text (Growth hub > Settings, off by default). It only
+  // confirms the request arrived: no price, no promised reply time. Everything else Jack approves.
+  try {
+    const mk = await loadMktSettings(s);
+    if (mk.ackOn && !r.dns && mmReady() && auMobile(r.phone)) {
+      const sent = await sendSms(r.phone, fillAck(mk.ackText, r), `ack:${r.id}`, { name: r.name });
+      if (sent.ok) { r.ackAt = new Date().toISOString(); await s.set(`req/${r.id}`, r); }
+    }
+  } catch { /* the request is saved; the acknowledgement is a nice-to-have */ }
   return json({ ok: true, first: firstName(r.name) });
 };
 

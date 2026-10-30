@@ -9,6 +9,10 @@ import { generate } from "../../lib/series.mjs";
 import { toWrap } from "../../public/lib/profit.mjs";
 import { ensurePlan, CH_NAME } from "../../lib/social.mjs";
 import { notify, once, fmtDay, fmtTime, firstName, where, money } from "../../lib/notify.mjs";
+import { loadMktSettings, reviewsPart, growthWeek, weeksAhead } from "../../lib/marketing.mjs";
+import { loadRequests, SERVICES } from "../../lib/requests.mjs";
+import { loadThread } from "../../lib/messages.mjs";
+import { auMobile } from "../../lib/mm.mjs";
 
 const BNE = 10 * 3600e3;
 const nowBne = () => new Date(Date.now() + BNE);
@@ -126,6 +130,34 @@ export async function runChecks(s) {
       }
     } catch (e) { console.error("post day failed", e); }
   }
+  // ---- Growth hub ----
+  try {
+    const mk = await loadMktSettings(s);
+    // A new lead waiting past the reply target (7am to 7pm only; overnight leads count from 7am).
+    if (nowMin >= 7 * 60 && nowMin < 19 * 60) {
+      const since = Date.now() - 36 * 3600e3;
+      for (const r of (await loadRequests(s)).filter((x) => x.status === "new" && !x.quoteId && !x.dns && Date.parse(x.at) > since)) {
+        const startMs = Math.max(Date.parse(r.at), Date.parse(today + "T07:00:00+10:00"));
+        const waited = Math.round((Date.now() - startMs) / 60000);
+        if (waited < mk.respondMins) continue;
+        const ph = auMobile(r.phone);
+        if (ph) { const t = await loadThread(s, ph); if ((t.msgs || []).some((m) => m.dir === "out" && m.at > r.at && !/^ack:/.test(m.ref || ""))) continue; }
+        await fire(`leadwait/${r.id}`, { type: "lead_wait", title: `${firstName(r.name)} has been waiting ${waited} min`, body: `${(SERVICES[r.service] || SERVICES.other).label}${r.suburb ? ", " + r.suburb : ""}. No reply yet.${r.phone ? "\nCall " + r.phone : ""}`, tags: "alarm_clock", priority: 4, url: `/money/#/req/${r.id}` });
+      }
+    }
+    // 10am: review requests ready.
+    if (nowMin >= 10 * 60 && nowMin < 18 * 60 && (await once(s, `revdue/${today}`))) {
+      const rv = await reviewsPart(s), n = rv.ask.length + rv.remind.length;
+      if (n) await notify(s, { type: "review_due", title: `${n} review request${n === 1 ? "" : "s"} ready`, body: [...rv.ask, ...rv.remind].slice(0, 5).map((x) => x.name).join(", ") + "\nDrafts are written. Tap each one to send from Messages.", tags: "star", url: "/marketing/#reviews" });
+    }
+    // Monday: growth check, and quiet weeks ahead.
+    if (n.getUTCDay() === 1 && nowMin >= 7 * 60 + 30 && (await once(s, `growthweek/${today}`))) {
+      await notify(s, await growthWeek(s));
+      const quiet = (await weeksAhead(s, mk.quietPct)).filter((w) => w.quiet);
+      if (quiet.length) await notify(s, { type: "quiet_week", title: `${quiet.length} quiet week${quiet.length === 1 ? "" : "s"} ahead`, body: quiet.map((w) => `Week of ${fmtDay(w.from)}: ${w.pct}% booked`).join("\n") + "\nThe Growth hub lists agents, past clients and referrals to reach out to.", tags: "calendar", priority: 4, url: "/marketing/" });
+    }
+  } catch (e) { console.error("growth checks failed", e); }
+
   // Monday 7am: last week's numbers and what's missing.
   if (n.getUTCDay() === 1 && nowMin >= 7 * 60) {
     if (await once(s, `moneyweek/${today}`)) { try { const e = await weeklyMoney(s, today); if (e) await notify(s, e); } catch (e) { console.error("weekly money failed", e); } }

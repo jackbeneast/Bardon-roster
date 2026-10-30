@@ -188,7 +188,7 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
   var TIME=[['morning','Morning'],['afternoon','Afternoon'],['any','Any time']];
   var ACCESS=[['home','Someone will be home'],['keys','Keys or lockbox'],['agent','Collect keys from the agent'],['tbc','Not sure yet']];
   var CONTACT=[['text','Text'],['call','Call'],['email','Email']];
-  var HEARD=[['google','Google'],['referral','Friend or family'],['agent','My real estate agent'],['instagram','Instagram'],['repeat','I\'ve used Bardon Clean before'],['other','Other']];
+  var HEARD=[['google','Google search'],['maps','Google Maps or reviews'],['referral','Friend or family'],['agent','My real estate agent'],['instagram','Instagram'],['facebook','Facebook'],['repeat','I\'ve used Bardon Clean before'],['flyer','A flyer or letterbox drop'],['vehicle','Saw the Bardon Clean car'],['media','News or media'],['other','Other']];
   var PHOTO_TIPS={
     presale:['Kitchen, including the oven','Each bathroom','Main living area','Anything that needs extra attention'],
     bond:['Kitchen and oven','Each bathroom','Carpets, if you\'d like them cleaned','Any marks on walls'],
@@ -201,7 +201,7 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
 
   // ---------- state ----------
   var KEY='bc_quote_draft_v1', t0=Date.now();
-  var A={service:'',who:'',agency:'',placeId:'',address:'',suburb:'',postcode:'',ptype:'',beds:3,baths:2,storeys:1,furnished:'',condition:'',extras:[],freq:'',days:[],date:'',flex:'',time:'',access:'',name:'',phone:'',email:'',contact:'text',heard:'',notes:'',business:'',role:'',industry:'',sites:'1',csize:'',cfreq:'',window:'',current:''};
+  var A={service:'',who:'',agency:'',placeId:'',address:'',suburb:'',postcode:'',ptype:'',beds:3,baths:2,storeys:1,furnished:'',condition:'',extras:[],freq:'',days:[],date:'',flex:'',time:'',access:'',name:'',phone:'',email:'',contact:'text',heard:'',heardAgent:'',mktOk:false,notes:'',business:'',role:'',industry:'',sites:'1',csize:'',cfreq:'',window:'',current:''};
   var photos=[]; // {data, url}
   var step=0, done=false, sending=false, err='', resumeOffer=false, editing=false;
   function lsGet(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ return null; } }
@@ -210,6 +210,13 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
   var saved=lsGet(); if(saved&&saved.a&&saved.a.service&&saved.a.service!=='regular'&&Date.now()-saved.at<14*864e5) resumeOffer=true;
   var params=new URLSearchParams(location.search);
   var src=params.get('src')||params.get('utm_source')||(document.referrer&&document.referrer.indexOf(location.host)<0?document.referrer.replace(/^https?:\/\//,'').split('/')[0]:'');
+  // Link tags and ad click ids: remembered for 30 days on this device, so a visitor who comes back later is still traced to the ad or post.
+  var ATTR=(function(){ var k='bc_req_attr', o=null, now=Date.now();
+    var fresh={utm:{source:params.get('utm_source')||'',medium:params.get('utm_medium')||'',campaign:params.get('utm_campaign')||'',content:params.get('utm_content')||''},gclid:params.get('gclid')||params.get('gbraid')||params.get('wbraid')||'',fbclid:params.get('fbclid')||'',src:params.get('src')||''};
+    var has=fresh.gclid||fresh.fbclid||fresh.src||fresh.utm.source||fresh.utm.campaign;
+    try{ if(has){ localStorage.setItem(k,JSON.stringify({a:fresh,at:now})); o=fresh; } else { var x=JSON.parse(localStorage.getItem(k)||'null'); if(x&&now-x.at<30*864e5) o=x.a; } }catch(e){ if(has) o=fresh; }
+    return o||{utm:{},gclid:'',fbclid:'',src:''}; })();
+  if(!src&&ATTR.src) src=ATTR.src; if(!src&&ATTR.utm&&ATTR.utm.source) src=ATTR.utm.source;
   // A service in the link always wins over an old draft for a different service.
   var want=params.get('service'); if(!SERVICES.some(function(s){return s.k===want;})) want='';
   if(want){
@@ -339,6 +346,8 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
       h+='<fieldset class="q"><legend>Best way to reach you</legend>'+radios('contact',CONTACT)+'</fieldset>';
       h+=field('notes','Anything else Jack should know? <small>(optional)</small>',{area:true,ph:isCom()?'Rooms, problem areas, products or compliance needs, parking…':'Pets, parking, problem areas, special requests…'});
       h+='<label class="field" for="f_heard"><span class="lbl" style="margin:0">How did you find us? <small>(optional)</small></span><select id="f_heard" name="heard"><option value="">Choose…</option>'+HEARD.map(function(o){return '<option value="'+o[0]+'"'+(A.heard===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>';
+      if(A.heard==='agent') h+=field('heardAgent','Which agent or agency? <small>(optional)</small>',{ph:'e.g. Carmen at Harcourts'});
+      h+='<label style="display:flex;gap:10px;align-items:flex-start;margin-top:16px;font:400 15px/1.45 var(--sans);color:var(--dark);cursor:pointer"><input type="checkbox" name="mktOk" value="1"'+(A.mktOk?' checked':'')+' style="width:22px;height:22px;flex:none;margin:1px 0 0;accent-color:#A55830"><span>Send me the occasional tip or offer from Bardon Clean. <small>Optional. Unsubscribe any time.</small></span></label>';
     }
     if(s==='review'){
       h+='<h1>Check and <em>send</em></h1><p class="lead">Make sure this looks right. You can change anything.</p>';
@@ -388,6 +397,7 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
   function readForm(){
     var f=document.getElementById('f'); if(!f) return;
     [].forEach.call(f.querySelectorAll('input[type=radio]:checked'),function(i){ A[i.name]=i.value; });
+    var mk=f.querySelector('input[name=mktOk]'); if(mk) A.mktOk=mk.checked;
     ['extras','days'].forEach(function(n){ var els=f.querySelectorAll('input[name='+n+']'); if(els.length) A[n]=[].map.call(f.querySelectorAll('input[name='+n+']:checked'),function(i){return i.value;}); });
     [].forEach.call(f.querySelectorAll('input[type=text],input:not([type]),input[type=tel],input[type=email],input[type=date],textarea,select'),function(i){ if(i.name&&i.name!=='website'&&A.hasOwnProperty(i.name)) A[i.name]=i.value; });
   }
@@ -396,7 +406,7 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
     if(t.id==='ph'){ addPhotos(t.files); return; }
     readForm(); lsSet();
     if(t.name==='service'){ err=''; setTimeout(function(){ next(); },180); }
-    if(t.name==='who') render();
+    if(t.name==='who'||t.name==='heard') render();
   });
   app.addEventListener('input',function(e){ if(e.target.name){ readForm(); if(e.target.name==='address'||e.target.name==='suburb'||e.target.name==='postcode'){ if(A.placeId){ A.placeId=''; var okp=app.querySelector('.ok'); if(okp) okp.remove(); } } lsSet(); if(e.target.name==='address') lookup(e.target.value); } });
   app.addEventListener('keydown',function(e){ if(e.target.id!=='f_address'||!LOOK.items.length) return;
@@ -486,7 +496,7 @@ h2{font:700 21px/1.25 var(--serif);color:var(--dark);margin:0 0 4px}
   function send(){
     if(sending) return; sending=true; render();
     var body={}; for(var k in A) body[k]=A[k];
-    body.photos=photos.map(function(p){return p.data;}); body.t=Date.now()-t0; body.src=src;
+    body.photos=photos.map(function(p){return p.data;}); body.t=Date.now()-t0; body.src=src; body.utm=ATTR.utm; body.gclid=ATTR.gclid; body.fbclid=ATTR.fbclid; body.mktOk=!!A.mktOk;
     var hp=document.querySelector('input[name=website]'); body.hp=hp?hp.value:'';
     fetch('/api/request',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
       .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok) throw new Error(d.error||'That didn\'t send. Please try again.'); return d; }); })

@@ -93,7 +93,7 @@ details{margin-top:8px}summary{cursor:pointer;color:var(--td);font-weight:600;fo
 
   function shell(inner){
     var n=cache.needs?cache.needs.items.length:0;
-    return '<div class="top"><a href="/">‹ Hub</a><a href="/money/">Quotes &amp; invoices</a></div><h1>The <em>desk</em></h1>'+
+    return '<div class="top"><a href="/">‹ Hub</a><span style="display:flex;gap:14px"><a href="/marketing/">Growth hub</a><a href="/money/">Quotes &amp; invoices</a></span></div><h1>The <em>desk</em></h1>'+
       '<nav class="tabs" aria-label="Desk sections">'+TABS.map(function(t){ return '<button type="button" class="tab" data-tab="'+t[0]+'"'+(tab===t[0]?' aria-current="page"':'')+'>'+t[1]+(t[0]==='needs'&&n?'<span class="n">'+n+'</span>':'')+'</button>'; }).join('')+'</nav>'+inner;
   }
   function draw(inner){ app.innerHTML=shell(inner); var c=app.querySelector('[aria-current="page"]'); if(c&&c.scrollIntoView) c.scrollIntoView({inline:'center',block:'nearest'}); }

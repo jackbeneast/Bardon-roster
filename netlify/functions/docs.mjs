@@ -11,6 +11,7 @@ import { sendSms, auMobile, mmReady } from "../../lib/mm.mjs";
 import { notify, money, fmtDay } from "../../lib/notify.mjs";
 import { planImport } from "../../lib/jobberImport.mjs";
 import { jobInvoicePlan, createJobInvoice } from "../../lib/jobinv.mjs";
+import { addConsent } from "../../lib/marketing.mjs";
 
 // "Quote #172 for Hughes" style label.
 const label = (d) => `${d.kind === "quote" ? "Quote" : "Invoice"} #${d.num}${d.client?.name ? " for " + d.client.name : ""}`;
@@ -135,6 +136,7 @@ export default async (req) => {
     const special = bakeSpecial(q);
     q.status = "accepted"; q.acceptedAt = new Date().toISOString(); q.acceptedName = name;
     q.flag = "accepted"; q.flagAt = q.acceptedAt;
+    if (b.mktOk === true) { q.mktOk = true; try { await addConsent(s, q.client?.phone, q.client?.name || name, "Quote acceptance tick-box"); } catch {} }
     const set = await loadSettings(s);
     // The deposit invoice is drafted, not sent: Jack sends it himself from the hub
     // so it lands in the client's Messages thread alongside the rest of the conversation.

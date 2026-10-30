@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#F5F0EB">
+<title>Growth hub · Bardon Clean</title>
+<link rel="icon" type="image/png" href="/icons/favicon.png?v=2"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--t:#C06B3C;--td:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--cd:#EDE6DE;--body:#4A4A4A;--meta:#6B635B;--gold:#F4B942;--gd:#9A6B0E;--white:#fff;--line:#DDD3C8;--tint:#FBF3EE;--ok:#2F5A35;--okb:#E6EFE3;--red:#9B2C1F;--redb:#FBEBEB;
+  --serif:"Playfair Display",Georgia,serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--body);font:400 15px/1.5 var(--sans);-webkit-text-size-adjust:100%}
+#app{max-width:760px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top,0px)) 16px calc(70px + env(safe-area-inset-bottom,0px))}
+a{color:var(--td)}button,input,select,textarea{font-family:var(--sans)}
+:focus-visible{outline:2px solid var(--t);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.top a{font:500 14px var(--sans);color:var(--meta);text-decoration:none;padding:10px 0;min-height:44px;display:inline-flex;align-items:center}
+h1{font:700 30px/1.15 var(--serif);color:var(--dark);margin:2px 0 0}h1 em,h2 em{font-style:italic;font-weight:500}
+h2{font:700 20px/1.2 var(--serif);color:var(--dark);margin:26px 0 10px}
+h3{font:600 15.5px/1.3 var(--sans);color:var(--dark);margin:0}
+.sub{color:var(--meta);font-size:13.5px;margin:4px 0 0}
+p.lead{margin:6px 0 0;font-size:14.5px}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:14px -16px 0;padding:8px 16px 4px;scrollbar-width:none;position:sticky;top:0;background:var(--cream);z-index:3}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:1px solid var(--line);background:var(--white);color:var(--dark);border-radius:999px;padding:0 14px;font:500 14px var(--sans);cursor:pointer;min-height:42px;white-space:nowrap}
+.tab[aria-current="page"]{background:var(--dark);border-color:var(--dark);color:var(--cream)}
+.tab .n{display:inline-block;min-width:20px;margin-left:6px;padding:0 6px;border-radius:10px;background:var(--t);color:#fff;font:600 12px/20px var(--sans)}
+.card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.card.hl{background:var(--tint);border-color:#EBD3C2}
+.card.due{border-left:4px solid var(--t)}
+.todo{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:var(--white);border:1px solid var(--line);border-left:4px solid var(--t);border-radius:12px;padding:12px 14px;margin-top:8px;cursor:pointer;font:500 15px var(--sans);color:var(--dark);min-height:52px}
+.todo b{font:700 22px/1 var(--serif);color:var(--td);margin-right:10px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.btn{font:600 14.5px/1 var(--sans);border-radius:8px;min-height:44px;padding:0 14px;cursor:pointer;border:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;background:var(--td);color:#fff}
+.btn.o{background:var(--white);border:1.5px solid var(--line);color:var(--dark)}
+.btn.q{background:none;color:var(--meta);padding:0 8px}
+.btn.sm{min-height:38px;font-size:13.5px;padding:0 12px}
+.btn[disabled]{opacity:.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:520px){.grid3{grid-template-columns:1fr 1fr}}
+.stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat span{display:block;font-size:12.5px;color:var(--meta)}.stat b{display:block;font:700 24px/1.2 var(--serif);color:var(--dark);font-variant-numeric:tabular-nums;margin-top:2px}
+.stat small{display:block;font-size:12px;color:var(--meta)}
+.stat.hl{background:var(--tint);border-color:#EBD3C2}
+.stat.good b{color:var(--ok)}.stat.bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font:600 11px/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--meta);text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+td{padding:9px 6px;border-bottom:1px solid var(--cd);vertical-align:top;font-variant-numeric:tabular-nums}
+td.r,th.r{text-align:right}
+.tw{overflow-x:auto;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:4px 8px;margin-top:10px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--cd);align-items:flex-start}.row:last-child{border:0}
+.row b{color:var(--dark);font-weight:600}
+.pill{display:inline-block;flex:none;height:fit-content;font:600 11px/1 var(--sans);padding:5px 8px;border-radius:999px;background:var(--cd);color:var(--dark);white-space:nowrap}
+.pill.ok{background:var(--okb);color:var(--ok)}.pill.live{background:#F6E3D7;color:var(--td)}.pill.warn{background:#FBEBC9;color:var(--gd)}.pill.red{background:var(--redb);color:var(--red)}
+label.f{display:grid;gap:4px;font:500 13px var(--sans);color:var(--dark);margin-top:10px}
+input,select,textarea{font-size:16px;border:1px solid var(--line);border-radius:8px;padding:10px 11px;background:var(--white);color:var(--dark);width:100%}
+textarea{min-height:76px;resize:vertical}
+details{margin-top:8px}summary{cursor:pointer;color:var(--td);font-weight:600;font-size:14px;min-height:40px;display:flex;align-items:center}
+.cap{white-space:pre-wrap;font-size:13.5px;background:var(--cream);border-radius:8px;padding:10px;margin-top:8px;overflow-wrap:anywhere}
+.empty{text-align:center;color:var(--meta);padding:24px 10px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 16px;border-radius:8px;font-size:14px;z-index:50;max-width:90vw}
+.err{color:var(--red);font-size:14px;margin-top:6px}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--cd)}
+.sw input{width:24px;height:24px;flex:none;accent-color:var(--ok)}
+.bar{height:10px;border-radius:5px;background:var(--cd);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--t)}
+.bar.q i{background:var(--gold)}
+.wk{display:grid;grid-template-columns:110px 1fr 46px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--cd);font-size:14px}.wk:last-child{border:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{border:1px solid var(--line);background:var(--white);border-radius:999px;padding:0 12px;min-height:36px;font:500 13px var(--sans);cursor:pointer;color:var(--dark)}
+.chip[aria-pressed="true"]{background:var(--dark);color:var(--cream);border-color:var(--dark)}
+.sws{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.sws span{display:flex;align-items:center;gap:8px;font-size:13px;background:var(--white);border:1px solid var(--line);border-radius:8px;padding:6px 10px}.sws i{width:22px;height:22px;border-radius:5px;border:1px solid rgba(0,0,0,.1)}
+.guide h3{margin-top:16px}.guide p,.guide li{font-size:14.5px}.guide ul,.guide ol{padding-left:20px;margin:6px 0}
+.star{color:var(--gd)}
+</style></head><body>
+<div id="app"><div class="empty">Loading…</div></div>
+<script>
+(function(){
+  var app=document.getElementById('app'), KEY=null;
+  try{ KEY=localStorage.getItem('roster_admin_key'); }catch(e){}
+  var TABS=[['overview','Overview'],['leads','Leads & speed'],['reviews','Reviews'],['agents','Agents'],['clients','Past clients'],['ads','Sources & ads'],['content','Content'],['pr','PR'],['brand','Brand'],['settings','Settings'],['guide','How to use']];
+  var tab=(location.hash.slice(1)||'overview'), cache={}, srcDays=90, stageF='', editAgent='', logAgent='', prKind='';
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function money(v){ v=+v||0; return (v<0?'-':'')+'$'+Math.abs(Math.round(v)).toLocaleString('en-AU'); }
+  var DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function day(s){ if(!s) return ''; var p=String(s).slice(0,10).split('-'), d=new Date(+p[0],+p[1]-1,+p[2]); return DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()]; }
+  function ago(s){ if(!s) return 'never'; var n=Math.round((Date.now()-Date.parse(s))/864e5); return n<=0?'today':n===1?'yesterday':n+' days ago'; }
+  function mins(m){ if(m==null) return '–'; if(m<60) return m+' min'; if(m<1440) return (Math.round(m/6)/10)+' h'; return Math.round(m/1440)+' d'; }
+  function today(){ var d=new Date(Date.now()+10*3600e3); return d.toISOString().slice(0,10); }
+  function toast(m){ var t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2600); }
+  function api(q,body,path){ return fetch((path||'/api/marketing')+(q||''),{method:body?'POST':'GET',headers:{'content-type':'application/json','x-admin-key':KEY||''},body:body?JSON.stringify(body):undefined,cache:'no-store'}).then(function(r){ return r.json().catch(function(){return {};}).then(function(d){ if(!r.ok) throw new Error(d.error||'Something went wrong'); return d; }); }); }
+  function copy(t){ try{ navigator.clipboard.writeText(t).then(function(){ toast('Copied'); },function(){ prompt('Copy',t); }); }catch(e){ prompt('Copy',t); } }
+  function load(part,q,force){ var k=part+(q||''); if(cache[k]&&!force) return Promise.resolve(cache[k]); return api('?part='+part+(q||'')).then(function(d){ cache[k]=d; return d; }); }
+  function drop(){ cache={}; }
+  function textBtn(href,label,mark){ return href?'<a class="btn sm" href="'+esc(href)+'"'+(mark?' data-mark=\''+esc(JSON.stringify(mark))+'\'':'')+'>'+esc(label||'Text (draft ready)')+'</a>':'<span class="sub">No mobile on file.</span>'; }
+
+  function shell(inner){
+    var n=cache.overview?cache.overview.todo.reduce(function(a,x){return a+x.n;},0):0;
+    return '<div class="top"><a href="/">‹ Hub</a><a href="/desk/">The desk</a></div><h1>Growth <em>hub</em></h1>'+
+      '<nav class="tabs" aria-label="Growth hub sections">'+TABS.map(function(t){ return '<button type="button" class="tab" data-tab="'+t[0]+'"'+(tab===t[0]?' aria-current="page"':'')+'>'+t[1]+(t[0]==='overview'&&n?'<span class="n">'+n+'</span>':'')+'</button>'; }).join('')+'</nav>'+inner;
+  }
+  function draw(inner){ app.innerHTML=shell(inner); var c=app.querySelector('[aria-current="page"]'); if(c&&c.scrollIntoView) c.scrollIntoView({inline:'center',block:'nearest'}); }
+  function render(force){
+    if(!KEY){ app.innerHTML='<div class="empty"><h1>Log in <em>first</em></h1><p>Open the hub, log in, then come back here.</p><a class="btn" href="/">Open the hub</a></div>'; return; }
+    draw('<div class="empty">Loading…</div>');
+    var f=VIEWS[tab]||VIEWS.overview;
+    Promise.resolve(f(force)).then(function(h){ draw(h); }).catch(function(e){ draw('<div class="card err">'+esc(e.message)+'</div>'); });
+  }
+
+  var VIEWS={
+    // ---------------- Overview ----------------
+    overview:function(f){ return load('overview','',f).then(function(d){
+      var h='<p class="lead">How the business is growing, and the few things worth doing this week. Measured in leads, won jobs and revenue.</p>';
+      if(d.todo.length){ h+='<h2>Worth doing <em>now</em></h2>'+d.todo.map(function(x){ return '<button type="button" class="todo" data-tab="'+x.tab+'"><span><b>'+x.n+'</b>'+esc(x.label)+'</span><span>›</span></button>'; }).join(''); }
+      else h+='<div class="card empty">Nothing waiting on you here. Nice.</div>';
+      var sp=d.speed, rv=d.reviews;
+      h+='<h2>The <em>numbers</em></h2><div class="grid2">';
+      h+='<div class="stat hl"><span>Won, last 90 days</span><b>'+money(d.revenue.total)+'</b><small>'+d.revenue.agents+'% from agents · '+d.revenue.repeat+'% repeat &amp; referral</small></div>';
+      h+='<div class="stat"><span>Leads, last 30 days</span><b>'+d.funnel.leads+' → '+d.funnel.quoted+' → '+d.funnel.won+'</b><small>leads → quoted → won'+(d.funnel.rate!=null?' · '+d.funnel.rate+'% of quotes won':'')+'</small></div>';
+      h+='<div class="stat '+(sp.median==null?'':sp.median<=sp.target?'good':'bad')+'"><span>Median first reply</span><b>'+mins(sp.median)+'</b><small>Target '+sp.target+' min'+(sp.waiting?' · <b style="display:inline;font:600 12px var(--sans);color:var(--red)">'+sp.waiting+' waiting</b>':'')+'</small></div>';
+      h+='<div class="stat"><span>Google reviews this month</span><b>'+(rv.newMonth!=null?rv.newMonth:rv.leftMonth)+' <span style="font:400 14px var(--sans);color:var(--meta)">of '+rv.target+'</span></b><small>'+(rv.latest?rv.latest.rating+'★ · '+rv.latest.count+' total ('+day(rv.latest.date)+')':'Log your rating in Reviews')+' · '+rv.asked30+' asked in 30 days</small></div>';
+      h+='<div class="stat"><span>Active agent partners</span><b>'+d.agentsActive+'</b><small>Referred a job in the last 90 days</small></div>';
+      h+='<div class="stat"><span>Clients opted in to offers</span><b>'+d.consent.yes+' <span style="font:400 14px var(--sans);color:var(--meta)">of '+d.consent.clients+'</span></b><small>'+(d.consent.out?d.consent.out+' unsubscribed':'None unsubscribed')+'</small></div>';
+      h+='</div>';
+      h+='<h2>Next four <em>weeks</em></h2><div class="card">'+d.weeks.map(function(w){ return '<div class="wk"><span>'+esc(day(w.from))+'</span><div class="bar'+(w.quiet?' q':'')+'"><i style="width:'+Math.min(100,w.pct)+'%"></i></div><b style="text-align:right;color:'+(w.quiet?'var(--gd)':'var(--dark)')+'">'+w.pct+'%</b></div>'; }).join('')+'<p class="sub">Share of booking slots filled each week (Mon to Sat). Yellow = under your quiet-week line.</p></div>';
+      if(d.levers.length) h+='<div class="card hl"><h3>Fill the quiet '+(d.quiet===1?'week':'weeks')+'</h3><p class="sub">Cheapest first.</p>'+d.levers.map(function(l){ return '<div class="row"><span>'+esc(l.label)+'</span><button type="button" class="btn o sm" data-tab="'+l.tab+'">Go</button></div>'; }).join('')+'</div>';
+      if(d.revenue.top.length) h+='<h2>Where work <em>comes from</em></h2><div class="tw"><table><thead><tr><th>Source · 90 days</th><th class="r">Leads</th><th class="r">Won</th><th class="r">Revenue</th></tr></thead><tbody>'+d.revenue.top.map(function(x){ return '<tr><td>'+esc(x.source)+'</td><td class="r">'+x.leads+'</td><td class="r">'+x.won+'</td><td class="r"><b>'+money(x.revenue)+'</b></td></tr>'; }).join('')+'</tbody></table></div><div class="acts"><button type="button" class="btn o sm" data-tab="ads">All sources &amp; spend</button></div>';
+      if(d.channels.length) h+='<h2>Paid <em>channels</em></h2><div class="tw"><table><thead><tr><th>Channel</th><th class="r">Spend</th><th class="r">Won</th><th class="r">Per won job</th></tr></thead><tbody>'+d.channels.map(function(c){ return '<tr><td>'+esc(c.label)+'</td><td class="r">'+money(c.spend)+'</td><td class="r">'+c.won+'</td><td class="r"><b>'+(c.perWon!=null?money(c.perWon):'–')+'</b></td></tr>'; }).join('')+'</tbody></table></div>';
+      return h;
+    }); },
+
+    // ---------------- Leads & speed ----------------
+    leads:function(f){ return load('leads','',f).then(function(d){
+      var h='<p class="lead">The faster a new lead hears from you, the more likely you are to win it. This shows who is waiting and how quickly you usually reply.</p>';
+      h+='<h2>Waiting on a <em>first reply</em></h2>';
+      h+=d.waiting.length?d.waiting.map(function(r){ var over=r.mins>d.settings.respondMins; return '<div class="card'+(over?' due':'')+'"><div style="display:flex;justify-content:space-between;gap:10px"><div><h3>'+esc(r.name)+'</h3><p class="sub">'+esc(r.service+(r.suburb?' · '+r.suburb:'')+' · '+r.source)+'</p></div><span class="pill '+(over?'red':'warn')+'">'+mins(r.mins)+'</span></div><div class="acts"><a class="btn sm" href="/money/#/req/'+esc(r.id)+'">Open request</a>'+(r.phone?'<a class="btn o sm" href="tel:'+esc(r.phone)+'">Call</a><a class="btn o sm" href="/messages/#/t/'+esc(r.phone)+'?name='+encodeURIComponent(r.name)+'">Text</a>':'')+'</div></div>'; }).join(''):'<div class="card empty">Everyone has heard from you.</div>';
+      var s=d.speed;
+      h+='<h2>Reply <em>speed</em> <span class="sub" style="font:400 13px var(--sans)">last 30 days</span></h2><div class="grid3"><div class="stat"><span>Median first reply</span><b>'+mins(s.median)+'</b></div><div class="stat"><span>Within '+d.settings.respondMins+' min</span><b>'+(s.replied?Math.round(s.within/s.replied*100)+'%':'–')+'</b></div><div class="stat"><span>Within an hour</span><b>'+(s.replied?Math.round(s.hour/s.replied*100)+'%':'–')+'</b></div></div>';
+      h+='<p class="sub">First reply = your first text to them from the hub, or the quote going out, whichever came first. The automatic "got your request" text doesn\'t count. Replies from your own phone or Jobber can\'t be seen here.</p>';
+      h+='<h2>Instant <em>"got it"</em> text</h2><div class="card"><div class="sw"><span><b>Text new leads straight away</b><br><span class="sub">Sent from the business number the moment a quote request comes in. It only confirms you got it. No prices and no promised reply time. Off until you switch it on.</span></span><input type="checkbox" data-set="ackOn"'+(d.settings.ackOn?' checked':'')+'></div><label class="f">The text<textarea data-acktext maxlength="400">'+esc(d.settings.ackText)+'</textarea></label><p class="sub">{first}, {service} and {suburb} fill in from the request.</p><button type="button" class="btn o sm" data-saveack style="margin-top:8px">Save text</button></div>';
+      if(d.byService.length) h+='<h2>By <em>service</em> <span class="sub" style="font:400 13px var(--sans)">90 days</span></h2><div class="tw"><table><thead><tr><th>Service</th><th class="r">Leads</th><th class="r">Quoted</th><th class="r">Won</th><th class="r">Revenue</th></tr></thead><tbody>'+d.byService.map(function(x){ return '<tr><td>'+esc(x.service)+'</td><td class="r">'+x.leads+'</td><td class="r">'+x.quoted+'</td><td class="r">'+x.won+'</td><td class="r"><b>'+money(x.revenue)+'</b></td></tr>'; }).join('')+'</tbody></table></div>';
+      if(d.recent.length) h+='<h2>Recent <em>leads</em></h2><div class="tw"><table><thead><tr><th>Lead</th><th>Found you</th><th class="r">First reply</th></tr></thead><tbody>'+d.recent.map(function(r){ return '<tr><td><a href="/money/#/req/'+esc(r.id)+'">'+esc(r.name)+'</a><br><span class="sub">'+esc(day(r.at)+' · '+r.service)+'</span>'+(r.won?' <span class="pill ok">Won</span>':r.quoted?' <span class="pill">Quoted</span>':'')+'</td><td>'+esc(r.source)+'</td><td class="r">'+mins(r.reply)+'</td></tr>'; }).join('')+'</tbody></table></div>';
+      return h;
+    }); },
+
+    // ---------------- Reviews ----------------
+    reviews:function(f){ return load('reviews','',f).then(function(d){
+      var h='<p class="lead">Every finished client gets asked the same way. Google doesn\'t allow asking only the happy ones, and a steady flow of recent reviews matters more than a big burst.</p>';
+      if(!d.linkSet) h+='<div class="card hl"><b>Using your saved Google review link.</b><p class="sub">'+esc(d.link)+'<br>To change it, set it once on <a href="/messages/#/templates">Text templates</a>.</p></div>';
+      var st=d.stats;
+      h+='<div class="grid3" style="margin-top:12px"><div class="stat hl"><span>New this month</span><b>'+(st.newMonth!=null?st.newMonth:st.leftMonth)+' / '+d.target+'</b><small>'+(st.newMonth!=null?'From your Google count':'Marked as left')+'</small></div><div class="stat"><span>Asked, 30 days</span><b>'+st.asked30+'</b></div><div class="stat"><span>Google rating</span><b>'+(st.latest?st.latest.rating+'<span class="star">★</span>':'–')+'</b><small>'+(st.latest?st.latest.count+' reviews':'Log it below')+'</small></div></div>';
+      h+='<h2>Ready to <em>ask</em> ('+d.ask.length+')</h2>';
+      h+=d.ask.length?d.ask.map(function(x){ return revCard(x,'asked','Text (draft ready)'); }).join(''):'<div class="card empty">Nobody waiting to be asked.</div>';
+      if(d.remind.length) h+='<h2>One gentle <em>reminder</em> ('+d.remind.length+')</h2><p class="sub">Asked '+d.remindDays+'+ days ago and not marked as reviewed. One reminder only.</p>'+d.remind.map(function(x){ return revCard(x,'reminded','Text reminder (draft ready)'); }).join('');
+      if(d.waiting.length) h+='<details><summary>Asked, waiting ('+d.waiting.length+')</summary>'+d.waiting.map(function(x){ return '<div class="row"><span><b>'+esc(x.name)+'</b><br><span class="sub">Asked '+esc(ago(x.asked))+(x.reminded?' · reminded':'')+'</span></span><button type="button" class="btn o sm" data-rev=\''+esc(JSON.stringify({key:x.key,field:'left',name:x.name,bk:x.bk}))+'\'>They left one</button></div>'; }).join('')+'</details>';
+      if(d.done.length) h+='<details><summary>Reviewed ('+d.done.length+')</summary>'+d.done.map(function(x){ return '<div class="row"><span>'+esc(x.name)+'</span><span class="sub">'+esc(day(x.left))+'</span></div>'; }).join('')+'</details>';
+      h+='<h2>Your Google <em>count</em></h2><div class="card"><p class="sub" style="margin:0">Once a week or month, copy the rating and number of reviews from your Google Business Profile. The hub works out how many came in each month.</p><form data-f="rating"><div class="grid3"><label class="f">Rating<input name="rating" inputmode="decimal" placeholder="5.0"></label><label class="f">Reviews<input name="count" inputmode="numeric" placeholder="42"></label><label class="f">Date<input type="date" name="date" value="'+today()+'"></label></div><button class="btn o sm" style="margin-top:10px">Save</button></form>'+(d.ratings.length?d.ratings.slice(0,8).map(function(r){ return '<div class="row"><span>'+esc(day(r.date))+'</span><span><b>'+r.rating+'★</b> · '+r.count+' reviews <button type="button" class="btn q sm" data-ratingdel="'+esc(r.date)+'">Remove</button></span></div>'; }).join(''):'')+'</div>';
+      h+='<h2>Reply to a <em>review</em></h2><div class="card"><p class="sub" style="margin:0">Replying to every review (good and bad) shows people how you handle things. Paste theirs in and get a draft to edit.</p><div class="grid2"><label class="f">Their first name<input data-rr="name"></label><label class="f">Stars<select data-rr="stars"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label></div><label class="f">Service (optional)<select data-rr="svc"><option value="">Not sure</option><option>pre-sale clean</option><option>bond clean</option><option>deep clean</option><option>regular clean</option></select></label><label class="f">What they said (optional)<textarea data-rr="text" placeholder="Paste their review to pick out a detail to thank them for"></textarea></label><button type="button" class="btn o sm" data-rrgo style="margin-top:10px">Write a draft</button><div id="rrOut"></div></div>';
+      return h;
+    }); },
+
+    // ---------------- Agents ----------------
+    agents:function(f){ return load('agents','',f).then(function(d){
+      var h='<p class="lead">For pre-sale work, the agent\'s recommendation is often where the decision is made. Keep every agent moving from first contact to regular partner.</p>';
+      var due=d.list.filter(function(p){return p.due;}).length;
+      h+='<div class="grid3" style="margin-top:12px"><div class="stat hl"><span>Due a touch</span><b>'+due+'</b></div><div class="stat"><span>Active partners</span><b>'+d.active+'</b><small>Job in last 90 days</small></div><div class="stat"><span>In the pipeline</span><b>'+d.list.filter(function(p){return ['target','intro','met'].indexOf(p.stage)>=0;}).length+'</b><small>Not booked yet</small></div></div>';
+      h+='<div class="chips">'+[['','All']].concat(d.stages).map(function(s){ var n=s[0]?d.list.filter(function(p){return p.stage===s[0];}).length:d.list.length; return '<button type="button" class="chip" data-stage="'+s[0]+'" aria-pressed="'+(stageF===s[0])+'">'+esc(s[1])+' '+n+'</button>'; }).join('')+'</div>';
+      h+='<details'+(d.list.length?'':' open')+'><summary>Add an agent to the pipeline</summary>'+agentForm({},d.stages)+'</details>';
+      var list=d.list.filter(function(p){ return !stageF||p.stage===stageF; });
+      if(!list.length) h+='<div class="card empty">No agents here yet.</div>';
+      h+=list.map(function(p){
+        var stage=(d.stages.filter(function(s){return s[0]===p.stage;})[0]||[,p.stage])[1];
+        var s='<div class="card'+(p.due?' due':'')+'"><div style="display:flex;justify-content:space-between;gap:10px"><div style="min-width:0"><h3>'+esc(p.name)+'</h3><p class="sub">'+esc([p.agency,p.suburb].filter(Boolean).join(' · '))+'</p></div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="pill'+(p.stage==='regular'?' ok':p.stage==='first'?' live':'')+'">'+esc(stage)+'</span>'+(p.due?'<span class="pill warn">Due</span>':'')+'</div></div>';
+        if(p.partner) s+='<p class="sub">'+p.partner.jobs+' job'+(p.partner.jobs===1?'':'s')+' · '+money(p.partner.revenue)+(p.partner.upcoming?' · '+p.partner.upcoming+' coming up':'')+(p.partner.lastJob?' · last job '+esc(day(p.partner.lastJob)):'')+'</p>';
+        s+='<p class="sub">Last touch: '+esc(ago(p.last))+(p.next?' · next: '+esc(day(p.next)):'')+'</p>';
+        if(p.quarter&&p.quarter.n) s+='<p class="sub">This quarter: '+p.quarter.n+' listing'+(p.quarter.n===1?'':'s')+(p.wrapSent?' · <b style="color:var(--ok)">wrap-up sent</b>':'')+'</p>';
+        if(p.notes) s+='<p class="sub" style="white-space:pre-wrap">'+esc(p.notes)+'</p>';
+        if(p.draft) s+='<details><summary>Draft message</summary><div class="cap">'+esc(p.draft)+'</div></details>';
+        s+='<div class="acts">'+(p.href?'<a class="btn sm" href="'+esc(p.href)+'" data-alog=\''+esc(JSON.stringify({id:p.id,text:p.stage==='target'?'Intro text sent':p.quarter&&p.quarter.n?'Quarterly wrap-up sent':'Check-in text sent',wrap:!!(p.quarter&&p.quarter.n)}))+'\'>Text (draft ready)</a>':'')+(p.phone?'<a class="btn o sm" href="tel:'+esc(p.phone)+'">Call</a>':'')+'<button type="button" class="btn o sm" data-logopen="'+esc(p.id)+'">Log a touch</button>'+(p.fromRoster?'':'<button type="button" class="btn q sm" data-edit="'+esc(p.id)+'">Edit</button>')+'</div>';
+        if(logAgent===p.id) s+='<form data-f="alog" data-id="'+esc(p.id)+'"><label class="f">What happened<input name="text" maxlength="300" placeholder="e.g. Coffee at the office, gave them flyers"></label><div class="grid2"><label class="f">Next touch<input type="date" name="next"></label><label class="f">Stage<select name="stage">'+d.stages.map(function(x){ return '<option value="'+x[0]+'"'+(x[0]===p.stage?' selected':'')+'>'+esc(x[1])+'</option>'; }).join('')+'</select></label></div><button class="btn sm" style="margin-top:10px">Save</button></form>';
+        if(editAgent===p.id) s+=agentForm(p,d.stages);
+        return s+'</div>';
+      }).join('');
+      h+='<p class="sub" style="margin-top:14px">Agents with jobs come from your portal agents automatically. To give an agent portal access, add them under Real estate agents in the hub. Partners are due a touch every '+d.every+' days (change it in Settings).</p>';
+      return h;
+    }); },
+
+    // ---------------- Past clients ----------------
+    clients:function(f){ return load('clients','',f).then(function(d){
+      var h='<p class="lead">People who already trust you: the cheapest work to win. Offers and check-ins are marketing texts, so they carry an opt-out and never go to anyone who unsubscribed.</p>';
+      h+='<div class="grid3" style="margin-top:12px"><div class="stat"><span>Clients with a mobile</span><b>'+d.consent.clients+'</b></div><div class="stat good"><span>Opted in</span><b>'+d.consent.yes+'</b></div><div class="stat"><span>Unsubscribed</span><b>'+d.consent.out+'</b></div></div>';
+      h+='<h2>Worth a <em>nudge</em> ('+d.nudges.length+')</h2><p class="sub">Deep clean clients coming up to their next one, and bond and pre-sale clients who are moving.</p>';
+      h+=d.nudges.length?d.nudges.map(function(x){ var pill=x.consent==='yes'?'<span class="pill ok">Opted in</span>':x.consent==='out'?'<span class="pill red">Unsubscribed</span>':'<span class="pill">Past client</span>'; return '<div class="card"><div style="display:flex;justify-content:space-between;gap:10px"><div><h3>'+esc(x.name)+'</h3><p class="sub">'+esc(x.why)+'</p></div>'+pill+'</div>'+(x.consent==='out'?'<p class="sub">They unsubscribed, so no marketing texts.</p>':'<div class="cap">'+esc(x.draft)+'</div>')+'<div class="acts">'+(x.href?'<a class="btn sm" href="'+esc(x.href)+'">Text (draft ready)</a>':'')+'<button type="button" class="btn q sm" data-rbdone="'+esc(x.key)+'">Done</button></div></div>'; }).join(''):'<div class="card empty">Nobody due right now.</div>';
+      h+='<h2>Ask for <em>referrals</em></h2><p class="sub">Recently finished clients without a referral link yet. Each link is personal, so any quote request through it is tagged to them.</p>';
+      h+=d.askRef.length?d.askRef.map(function(x){ return '<div class="row"><span><b>'+esc(x.name)+'</b>'+(x.happy?' <span class="pill ok">Really happy</span>':'')+'<br><span class="sub">'+esc(x.service+' · '+day(x.date))+'</span></span>'+(x.phone?'<button type="button" class="btn o sm" data-ref=\''+esc(JSON.stringify({bk:x.bk,phone:x.phone,name:x.name}))+'\'>Make link &amp; text</button>':'<button type="button" class="btn o sm" data-ref=\''+esc(JSON.stringify({bk:x.bk}))+'\'>Copy link</button>')+'</div>'; }).join(''):'<div class="card empty">Everyone recent has a link.</div>';
+      if(d.referred.length) h+='<h2>Referred <em>leads</em></h2>'+d.referred.map(function(r){ return '<div class="card"><div style="display:flex;justify-content:space-between;gap:10px"><div><h3>'+esc(r.name)+'</h3><p class="sub">Sent by '+esc(r.by)+' · '+esc(day(r.at))+(r.won?' · won '+money(r.revenue):'')+'</p></div>'+(r.won?(r.reward?'<span class="pill ok">Thanked '+esc(day(r.reward.at))+'</span>':'<span class="pill warn">Thank-you due</span>'):'<span class="pill">Not booked yet</span>')+'</div>'+(r.won?'<div class="acts"><button type="button" class="btn '+(r.reward?'q':'o')+' sm" data-reward=\''+esc(JSON.stringify({id:r.id,value:!r.reward}))+'\'>'+(r.reward?'Undo':'Mark thank-you given')+'</button></div>':'')+'</div>'; }).join('');
+      if(d.refs.length) h+='<details><summary>All referral links ('+d.refs.length+')</summary>'+d.refs.map(function(r){ return '<div class="row"><span><b>'+esc(r.name||'Client')+'</b><br><span class="sub">'+esc(r.suburb)+(r.n?' · '+r.n+' lead'+(r.n===1?'':'s'):'')+'</span></span><button type="button" class="btn o sm" data-copy="'+esc(r.link)+'">Copy</button></div>'; }).join('')+'</details>';
+      h+='<h2>Marketing <em>consent</em></h2><div class="card"><p class="sub" style="margin:0">Clients opt in with the tick-box on the quote form or when accepting a quote. If someone says yes another way (in person, by email), add them here so there\'s a record. Anyone who replies STOP is unsubscribed by Mobile Message automatically.</p><form data-f="consent"><div class="grid2"><label class="f">Name<input name="name"></label><label class="f">Mobile<input name="phone" inputmode="tel"></label></div><label class="f">How they said yes<input name="how" maxlength="40" placeholder="e.g. Asked in person"></label><button class="btn o sm" style="margin-top:10px">Add</button></form>';
+      if(d.consentList.length) h+='<details><summary>Opted in ('+d.consentList.length+')</summary>'+d.consentList.map(function(c){ return '<div class="row"><span><b>'+esc(c.name||c.phone)+'</b>'+(c.out?' <span class="pill red">Unsubscribed since</span>':'')+'<br><span class="sub">'+esc(c.phone+' · '+c.via+' · '+day(c.at))+'</span></span><button type="button" class="btn q sm" data-consentdel="'+esc(c.phone)+'">Remove</button></div>'; }).join('')+'</details>';
+      return h+'</div>';
+    }); },
+
+    // ---------------- Sources & ads ----------------
+    ads:function(f){ return load('sources','&days='+srcDays,f).then(function(d){
+      var h='<p class="lead">Every lead, quote and won job, traced back to where it came from. Log what you spend so each channel shows its cost per won job.</p>';
+      h+='<div class="chips">'+[[30,'30 days'],[90,'90 days'],[365,'12 months']].map(function(x){ return '<button type="button" class="chip" data-days="'+x[0]+'" aria-pressed="'+(srcDays===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>';
+      h+='<div class="tw"><table><thead><tr><th>Source</th><th class="r">Leads</th><th class="r">Won</th><th class="r">Win %</th><th class="r">Revenue</th></tr></thead><tbody>'+(d.rows.length?d.rows.map(function(x){ return '<tr><td>'+esc(x.source)+'</td><td class="r">'+x.leads+'</td><td class="r">'+x.won+'</td><td class="r">'+(x.rate!=null?x.rate+'%':'–')+'</td><td class="r"><b>'+money(x.revenue)+'</b></td></tr>'; }).join(''):'<tr><td colspan="5" class="sub">No leads in this period.</td></tr>')+'</tbody></table></div>';
+      h+='<p class="sub">Win % = won ÷ quoted. Agent jobs are booked straight onto the roster, so they count as won. Revenue = accepted quote totals.</p>';
+      h+='<h2>Paid <em>channels</em></h2>';
+      h+=d.channels.length?'<div class="tw"><table><thead><tr><th>Channel</th><th class="r">Spend</th><th class="r">Leads</th><th class="r">Won</th><th class="r">Per lead</th><th class="r">Per won job</th><th class="r">Revenue ÷ spend</th></tr></thead><tbody>'+d.channels.map(function(c){ return '<tr><td>'+esc(c.label)+'</td><td class="r">'+money(c.spend)+'</td><td class="r">'+c.leads+'</td><td class="r">'+c.won+'</td><td class="r">'+(c.perLead!=null?money(c.perLead):'–')+'</td><td class="r"><b>'+(c.perWon!=null?money(c.perWon):'–')+'</b></td><td class="r">'+(c.roas!=null?c.roas+'×':'–')+'</td></tr>'; }).join('')+'</tbody></table></div>':'<div class="card empty">No paid spend logged in this period.</div>';
+      if(d.other.expenses||d.other.fixed) h+='<p class="sub">Also in your books under Marketing in this period: '+money(d.other.expenses)+' expenses'+(d.other.fixed?' and '+money(d.other.fixed)+' regular outgoings':'')+'. Log ad spend here by channel to see cost per won job.</p>';
+      h+='<details'+(d.spend.length?'':' open')+'><summary>Log spend</summary><form data-f="spend"><div class="grid2"><label class="f">Month<input type="month" name="month" value="'+today().slice(0,7)+'"></label><label class="f">Amount ($)<input name="amt" inputmode="decimal" placeholder="300"></label></div><label class="f">Channel<select name="channel">'+Object.keys(d.chLabels).map(function(k){ return '<option value="'+k+'">'+esc(d.chLabels[k])+'</option>'; }).join('')+'</select></label><label class="f">Note (optional)<input name="note" maxlength="160" placeholder="e.g. Pre-sale search campaign"></label><button class="btn sm" style="margin-top:10px">Save</button></form></details>';
+      if(d.spend.length) h+='<details><summary>Spend log ('+d.spend.length+')</summary>'+d.spend.map(function(x){ return '<div class="row"><span><b>'+esc(d.chLabels[x.channel]||x.channel)+'</b> '+money(x.amt)+'<br><span class="sub">'+esc(x.month+(x.note?' · '+x.note:''))+'</span></span><button type="button" class="btn q sm" data-spenddel="'+esc(x.id)+'">Remove</button></div>'; }).join('')+'</details>';
+      h+='<h2>Tracked <em>links</em></h2><div class="card"><p class="sub" style="margin:0">Use a tagged link anywhere you promote yourself (an ad, a Google post, Instagram bio, a flyer QR code) so leads from it are labelled automatically.</p><div class="grid2"><label class="f">Where it goes<select data-lb="where"><option value="gbp">Google Business post</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="google-ads">Google Ads</option><option value="flyer">Flyer / QR code</option><option value="email">Email signature</option><option value="agent">Agent handout</option></select></label><label class="f">Service<select data-lb="svc"><option value="">Any</option><option value="presale">Pre-sale</option><option value="deep">Deep</option><option value="bond">Bond</option><option value="regular">Regular</option></select></label></div><label class="f">Campaign name (optional)<input data-lb="camp" placeholder="e.g. spring-presale"></label><div class="cap" id="lbOut"></div><div class="acts"><button type="button" class="btn o sm" data-lbcopy>Copy link</button></div></div>';
+      h+='<h2>Google <em>Ads</em></h2><div class="card"><p style="margin:0">'+d.gclidLeads+' lead'+(d.gclidLeads===1?'':'s')+' from ad clicks in this period, '+d.gclidWon+' won.</p><p class="sub">Google\'s pay-per-lead Local Services Ads aren\'t offered in Australia, so paid search here is standard Google Ads. Telling Google which clicks became paying jobs helps it find more of them.</p><ol class="sub" style="padding-left:18px"><li>Point each ad straight at the quote form with a tracked link from above (Google Ads, plus the service). Google adds its click id on its own.</li><li>In Google Ads: Goals → Conversions → New → Import → Other data sources → Track conversions from clicks. Name it <b>Won job</b>.</li><li>Once a month, download the file below and upload it there (Uploads). Only won jobs from the last 90 days are included.</li></ol><div class="acts"><button type="button" class="btn o sm" data-gclid>Download won-jobs file (CSV)</button></div></div>';
+      return h;
+    }).then(function(h){ setTimeout(buildLink,0); return h; }); },
+
+    // ---------------- Content ----------------
+    content:function(){ return '<p class="lead">Your posts are built from real job photos, which you already take on every clean.</p>'+
+      '<div class="card"><h3>Social &amp; Google posts</h3><p class="sub">A rolling two-week plan for your Google Business Profile and Instagram, with photos picked and captions written. You get a ping on post days. Open it, tap Copy &amp; share, mark it posted.</p><div class="acts"><a class="btn sm" href="/social/">Open posts</a><a class="btn o sm" href="/social/#/how">How &amp; how often</a></div></div>'+
+      '<div class="card"><h3>Quick photo posts</h3><p class="sub">The first after photo from each area of recent pre-sale, bond and deep cleans, with a caption to copy.</p><div class="acts"><a class="btn o sm" href="/desk/#nudges">Open</a></div></div>'+
+      '<div class="card"><h3>Website photos</h3><p class="sub">Choose which job photos appear on bardonclean.au.</p><div class="acts"><a class="btn o sm" href="/demo-photos/">Open</a></div></div>'+
+      '<h2>What the <em>research</em> says</h2><div class="card guide"><ul><li><b>Posts are for converting, not ranking.</b> A controlled study found Google Business posts didn\'t move rankings directly. They do sit on your profile when someone checks you out, so a fresh, real post helps them choose you.</li><li><b>Real photos only.</b> Google can recognise stock and reused images. Your job photos are the advantage.</li><li><b>Reviews move rankings more than posts.</b> If time is short, send review requests before posting.</li><li><b>Check every photo</b> for house numbers, family photos, mail or anything identifying before it goes up.</li></ul></div>'; },
+
+    // ---------------- PR ----------------
+    pr:function(f){ return load('pr','',f).then(function(d){
+      var L=d.list.filter(function(x){ return !prKind||x.kind===prKind; });
+      var h='<p class="lead">Media contacts, pitches and coverage in one place. Only put real coverage on the website.</p>';
+      h+='<div class="chips">'+[['','All'],['contact','Contacts'],['pitch','Pitches'],['coverage','Coverage']].map(function(k){ return '<button type="button" class="chip" data-prk="'+k[0]+'" aria-pressed="'+(prKind===k[0])+'">'+k[1]+'</button>'; }).join('')+'</div>';
+      h+='<details'+(d.list.length?'':' open')+'><summary>Add a contact, pitch or coverage</summary><form data-f="pr"><label class="f">Type<select name="kind"><option value="pitch">Pitch</option><option value="contact">Contact</option><option value="coverage">Coverage</option></select></label><label class="f">Title or name<input name="name" maxlength="160" placeholder="e.g. Founder story pitch"></label><div class="grid2"><label class="f">Outlet<input name="outlet" maxlength="120" placeholder="e.g. The Courier-Mail"></label><label class="f">Contact<input name="contact" maxlength="160" placeholder="Name, email or phone"></label></div><div class="grid2"><label class="f">Status<select name="status"><option>Idea</option><option>Sent</option><option>Followed up</option><option>Interested</option><option>Published</option><option>Not now</option></select></label><label class="f">Date<input type="date" name="date" value="'+today()+'"></label></div><label class="f">Link (optional)<input name="link" placeholder="https://"></label><label class="f">Notes<textarea name="notes"></textarea></label><button class="btn sm" style="margin-top:10px">Save</button></form></details>';
+      h+=L.length?L.map(function(x){ return '<div class="card"><div style="display:flex;justify-content:space-between;gap:10px"><div><h3>'+esc(x.name)+'</h3><p class="sub">'+esc([x.outlet,x.contact,day(x.date)].filter(Boolean).join(' · '))+'</p></div><span class="pill'+(x.kind==='coverage'?' ok':'')+'">'+esc(x.kind==='contact'?'Contact':x.kind==='coverage'?'Coverage':x.status||'Pitch')+'</span></div>'+(x.notes?'<p class="sub" style="white-space:pre-wrap">'+esc(x.notes)+'</p>':'')+'<div class="acts">'+(x.link?'<a class="btn o sm" href="'+esc(x.link)+'" target="_blank" rel="noopener">Open link</a>':'')+'<button type="button" class="btn q sm" data-prdel="'+esc(x.id)+'">Remove</button></div></div>'; }).join(''):'<div class="card empty">Nothing here yet.</div>';
+      h+='<h2>Story <em>angles</em> to work from</h2><div class="card guide"><ul><li><b>The founder:</b> why you started Bardon Clean in 2025, after seeing people have bad experiences with cleaners.</li><li><b>The system:</b> a hub you built yourself, with live job links, after photos and an agent portal.</li><li><b>Seasonal advice:</b> getting a home ready for sale in spring (clean before staging and photos).</li></ul><p class="sub">Pitch with facts you can back up. Keep revenue figures out unless you\'re comfortable seeing them in print.</p></div>';
+      return h;
+    }); },
+
+    // ---------------- Brand ----------------
+    brand:function(f){ return load('brand','',f).then(function(d){
+      var h='<p class="lead">One place for the words and links you reuse in quotes, posts, flyers and pitches, so everything matches. Only facts you can stand behind.</p>';
+      h+='<h2><em>Colours</em> &amp; type</h2><div class="sws">'+[['Terracotta','#C06B3C'],['Cream','#F5F0EB'],['Charcoal','#1A1A1A']].map(function(c){ return '<span><i style="background:'+c[1]+'"></i>'+c[0]+' <b>'+c[1]+'</b><button type="button" class="btn q sm" data-copy="'+c[1]+'">Copy</button></span>'; }).join('')+'</div><p class="sub">Headings: Playfair Display. Body: Inter.</p>';
+      h+='<h2>Copy <em>blocks</em></h2><div id="blocks">'+d.blocks.map(blockRow).join('')+'</div><div class="acts"><button type="button" class="btn o sm" data-addblock>Add a block</button></div>';
+      h+='<h2>Files &amp; <em>links</em></h2><p class="sub">Logo files, flyers, vehicle wrap artwork, founder photos: anything with a link (Google Drive, Dropbox, the website).</p><div id="files">'+d.files.map(fileRow).join('')+'</div><div class="acts"><button type="button" class="btn o sm" data-addfile>Add a link</button></div>';
+      h+='<div class="acts" style="margin-top:18px"><button type="button" class="btn" data-savebrand>Save brand library</button></div>';
+      return h;
+    }); },
+
+    // ---------------- Settings ----------------
+    settings:function(f){ return load('settings','',f).then(function(d){
+      var S=d.settings;
+      var h='<div class="card"><div class="grid2"><label class="f">First-reply target (minutes)<input data-s="respondMins" inputmode="numeric" value="'+S.respondMins+'"></label><label class="f">Google reviews a month (target)<input data-s="reviewTarget" inputmode="numeric" value="'+S.reviewTarget+'"></label><label class="f">Review reminder after (days)<input data-s="reviewRemindDays" inputmode="numeric" value="'+S.reviewRemindDays+'"></label><label class="f">Quiet week if under (% booked)<input data-s="quietPct" inputmode="numeric" value="'+S.quietPct+'"></label><label class="f">Touch partner agents every (days)<input data-s="agentEvery" inputmode="numeric" value="'+S.agentEvery+'"></label></div><button type="button" class="btn sm" data-savesettings style="margin-top:12px">Save</button></div>';
+      h+='<div class="card"><div class="sw"><span><b>Instant "got it" text to new leads</b><br><span class="sub">'+esc(S.ackText)+'</span></span><input type="checkbox" data-set="ackOn"'+(S.ackOn?' checked':'')+'></div><p class="sub">Edit the wording under Leads &amp; speed.</p></div>';
+      h+='<div class="card"><h3>Phone notifications</h3><p class="sub">The Growth hub adds four: a lead waiting past your reply target, review requests ready (10am), quiet weeks ahead and the Monday growth check. Turn any of them off in the hub\'s notification settings.</p></div>';
+      return h;
+    }); },
+
+    guide:function(){ return GUIDE; },
+  };
+
+  function revCard(x,field,label){
+    var mark={key:x.key,field:field,name:x.name,bk:x.bk};
+    return '<div class="card"><div style="display:flex;justify-content:space-between;gap:10px"><div><h3>'+esc(x.name)+'</h3><p class="sub">'+esc(x.service+(x.suburb?' · '+x.suburb:'')+' · finished '+day(x.date))+(x.agent?' · agent job':'')+'</p></div></div><details><summary>See the message</summary><div class="cap">'+esc(x.draft)+'</div></details>'+(x.out?'<p class="sub">They unsubscribed from your texts, so ask in person or by email if at all.</p>':'')+'<div class="acts">'+(x.out?'':textBtn(x.href,label,mark))+(x.href||x.out?'':'<button type="button" class="btn o sm" data-copy="'+esc(x.draft)+'">Copy message</button>')+'<button type="button" class="btn q sm" data-rev=\''+esc(JSON.stringify(mark))+'\'>Mark '+(field==='asked'?'asked':'reminded')+'</button><button type="button" class="btn q sm" data-rev=\''+esc(JSON.stringify({key:x.key,field:'left',name:x.name,bk:x.bk}))+'\'>Already reviewed</button></div></div>';
+  }
+  function agentForm(p,stages){
+    return '<form data-f="agent" data-id="'+esc(p.id||'')+'"><div class="grid2"><label class="f">Name<input name="name" value="'+esc(p.name||'')+'" maxlength="120"></label><label class="f">Agency<input name="agency" value="'+esc(p.agency||'')+'" maxlength="120"></label><label class="f">Mobile<input name="phone" inputmode="tel" value="'+esc(p.phone||'')+'"></label><label class="f">Email<input name="email" type="email" value="'+esc(p.email||'')+'"></label><label class="f">Suburb / office<input name="suburb" value="'+esc(p.suburb||'')+'"></label><label class="f">Stage<select name="stage">'+stages.map(function(x){ return '<option value="'+x[0]+'"'+(x[0]===(p.stage||'target')?' selected':'')+'>'+esc(x[1])+'</option>'; }).join('')+'</select></label></div><label class="f">Next touch<input type="date" name="next" value="'+esc(p.next||'')+'"></label><label class="f">Notes<textarea name="notes">'+esc(p.notes||'')+'</textarea></label><input type="hidden" name="agentId" value="'+esc(p.agentId||'')+'"><div class="acts"><button class="btn sm">Save</button>'+(p.id?'<button type="button" class="btn q sm" data-agentdel="'+esc(p.id)+'">Delete</button>':'')+'</div><div class="err" hidden></div></form>';
+  }
+  function blockRow(b){ return '<div class="card" data-block="'+esc(b.id||'')+'"><input data-k="title" value="'+esc(b.title||'')+'" placeholder="Title" style="font-weight:600"><textarea data-k="text" style="margin-top:8px">'+esc(b.text||'')+'</textarea><div class="acts"><button type="button" class="btn o sm" data-copyblock>Copy text</button><button type="button" class="btn q sm" data-rmrow>Remove</button></div></div>'; }
+  function fileRow(x){ return '<div class="card" data-file="'+esc(x.id||'')+'"><div class="grid2"><input data-k="title" value="'+esc(x.title||'')+'" placeholder="What it is"><input data-k="url" value="'+esc(x.url||'')+'" placeholder="https://"></div><div class="acts">'+(x.url?'<a class="btn o sm" href="'+esc(x.url)+'" target="_blank" rel="noopener">Open</a><button type="button" class="btn o sm" data-copy="'+esc(x.url)+'">Copy link</button>':'')+'<button type="button" class="btn q sm" data-rmrow>Remove</button></div></div>'; }
+
+  function buildLink(){
+    var o=document.getElementById('lbOut'); if(!o) return;
+    var g=function(k){ var e=document.querySelector('[data-lb="'+k+'"]'); return e?e.value.trim():''; };
+    var w=g('where'), svc=g('svc'), camp=g('camp').toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-|-$/g,'');
+    var src={gbp:'gbp',instagram:'instagram',facebook:'facebook','google-ads':'google',flyer:'flyer',email:'email',agent:'agent'}[w];
+    var med={gbp:'post',instagram:'social',facebook:'social','google-ads':'cpc',flyer:'print',email:'email',agent:'print'}[w];
+    var q=['utm_source='+src,'utm_medium='+med];
+    if(camp) q.push('utm_campaign='+camp); else if(svc) q.push('utm_campaign='+svc);
+    if(svc) q.unshift('service='+svc);
+    o.textContent=location.origin+'/quote?'+q.join('&');
+  }
+  function replyDraft(){
+    var g=function(k){ var e=document.querySelector('[data-rr="'+k+'"]'); return e?e.value.trim():''; };
+    var n=g('name')||'there', st=+g('stars')||5, svc=g('svc'), txt=g('text');
+    var team=/team|girls|guys|cleaners|crew|sergio|mariam/i.test(txt), detail=/oven/i.test(txt)?'the oven':/bathroom|shower|grout/i.test(txt)?'the bathroom':/window/i.test(txt)?'the windows':/kitchen/i.test(txt)?'the kitchen':'';
+    var out=[];
+    if(st>=4){
+      out.push('Thanks so much, '+n+'. '+(svc?'We loved looking after your '+svc+'. ':'')+(detail?'Glad '+detail+' came up well. ':'')+(team?'I\'ll make sure the team sees this. ':'I\'ll pass this on to the team. ')+'Hope to see you again. – Jack');
+      out.push('Thank you, '+n+'! '+(svc?'Really glad the '+svc+' hit the mark. ':'Really glad you\'re happy with the result. ')+'Reviews like this make a big difference to a small local team. – Jack, Bardon Clean');
+    } else {
+      out.push('Hi '+n+', thank you for taking the time to share this, and I\'m sorry we fell short'+(svc?' on your '+svc:'')+'. I\'d like to put it right. Please text me on 0468 193 772 or email hello@bardonclean.au so I can look into it personally. – Jack');
+      out.push('Thanks for the honest feedback, '+n+'. That\'s not the standard we aim for and I\'d like to understand what happened. Please get in touch on 0468 193 772 or hello@bardonclean.au. – Jack, Bardon Clean');
+    }
+    document.getElementById('rrOut').innerHTML=out.map(function(t){ return '<div class="cap">'+esc(t)+'</div><div class="acts"><button type="button" class="btn o sm" data-copy="'+esc(t)+'">Copy</button></div>'; }).join('')+'<p class="sub">Edit before posting. Never include private details in a public reply.</p>';
+  }
+
+  var GUIDE='<div class="guide"><p class="lead">The Growth hub turns what the hub already knows (leads, quotes, jobs, photos, clients and the roster) into the handful of marketing jobs worth doing each week. Nothing marketing-related is ever sent without you tapping send, except the optional instant "got it" text.</p>'+
+    '<h3>Your week</h3><ol><li><b>As leads land:</b> your phone pings. Reply fast. If someone waits past your target, you get a second ping.</li><li><b>10am daily:</b> if any finished clients haven\'t been asked for a review, you get a ping. Open Reviews, tap Text (draft ready), send.</li><li><b>Post days:</b> your Google or Instagram post is ready in Social &amp; Google posts.</li><li><b>Monday (15 min):</b> open Overview. Work through "Worth doing now": agents due a touch, past clients to nudge, referral thank-yous. Glance at the four-week bars.</li><li><b>Monthly (30 min):</b> log ad spend in Sources &amp; ads, log your Google rating in Reviews, decide keep, cut or scale for each paid channel. If you run Google Ads, upload the won-jobs file.</li><li><b>Quarterly:</b> send each partner agent their wrap-up from Agents, and refresh your target agent list.</li></ol>'+
+    '<h3>Overview</h3><p>The numbers that change decisions: revenue won by source (and how much comes from agents, repeat and referral clients), leads → quoted → won, your median first-reply time, reviews this month against your target, active agent partners and how many clients have opted in to offers. The four-week bars show how full each week is. If a week is under your quiet-week line, a card lists the cheapest ways to fill it.</p>'+
+    '<h3>Leads &amp; speed</h3><p>Who is waiting on a first reply, with a live clock. Your reply speed over 30 days. The optional instant "got it" text (off by default). Leads, quotes and wins by service.</p>'+
+    '<h3>Reviews</h3><p>Every finished client from the last 45 days appears once, newest first. Tap Text (draft ready) to open the message in Messages; the hub marks them as asked. After a few days they move to one gentle reminder. Mark "They left one" when you see it on Google. Log your Google rating and total now and then so the hub can count new reviews each month. The reply helper drafts responses to good and bad reviews.</p>'+
+    '<h3>Agents</h3><p>Your agent pipeline: Target → Introduced → Met → First job → Regular (or Not now). Portal agents with jobs appear automatically. Each card has a draft for its stage (an intro with the portal demo, a follow-up, or a quarterly wrap-up listing the listings you cleaned for them). Texting from the card logs the touch. Partners are flagged when they haven\'t heard from you in a while.</p>'+
+    '<h3>Past clients</h3><p>Deep-clean clients coming up to their next clean, and bond and pre-sale clients who are moving and may need a clean at the new place. Each nudge includes "Reply STOP to opt out." Anyone who unsubscribed is blocked. Referrals: make a personal link for recent clients in one tap, see who they referred, and mark the thank-you given. Consent: who opted in, how and when.</p>'+
+    '<h3>Sources &amp; ads</h3><p>Every source with leads, wins, win rate and revenue. Log spend by channel to see cost per lead, cost per won job and revenue per dollar. Make tracked links for posts, ads, flyers and QR codes. For Google Ads, download the won-jobs file once a month and upload it to Google Ads so it learns which clicks became paying jobs.</p>'+
+    '<h3>Content, PR and Brand</h3><p>Content links to your posting tools. PR keeps media contacts, pitches and coverage together. Brand holds your colours, approved copy blocks (only facts you\'ve stated) and links to logo files, flyers and photos.</p>'+
+    '<h3>The rules this follows</h3><ul><li><b>Spam Act:</b> marketing texts need consent, must say who they\'re from, and must offer an opt-out. Consent comes from the tick-boxes, and STOP replies are honoured automatically.</li><li><b>Google:</b> ask every client the same way. Don\'t ask only happy clients and don\'t offer anything for reviews.</li><li><b>ACCC:</b> no incentives for reviews. Referral thank-yous are fine and are kept separate from reviews.</li></ul><p class="sub">General information, not legal advice.</p></div>';
+
+  function refresh(){ drop(); render(true); }
+  // Saves while the page navigates to Messages (keepalive lets the request finish).
+  function beacon(body){ drop(); try{ fetch('/api/marketing',{method:'POST',keepalive:true,headers:{'content-type':'application/json','x-admin-key':KEY||''},body:JSON.stringify(body)}); }catch(e){} }
+  app.addEventListener('click',function(e){
+    var b=e.target.closest('button,a[data-mark],a[data-alog]'); if(!b) return;
+    if(b.dataset.tab){ tab=b.dataset.tab; history.replaceState(null,'','#'+tab); render(); window.scrollTo(0,0); return; }
+    if(b.dataset.mark){ beacon(Object.assign({action:'review'},JSON.parse(b.dataset.mark))); return; }
+    if(b.dataset.alog){ beacon(Object.assign({action:'agent-log'},JSON.parse(b.dataset.alog))); return; }
+    if(b.dataset.copy){ copy(b.dataset.copy); return; }
+    if(b.dataset.rev){ api('',Object.assign({action:'review'},JSON.parse(b.dataset.rev))).then(function(){ toast('Saved'); refresh(); }).catch(function(x){ toast(x.message); }); return; }
+    if(b.dataset.ratingdel){ api('',{action:'rating-del',date:b.dataset.ratingdel}).then(refresh); return; }
+    if(b.hasAttribute('data-rrgo')){ replyDraft(); return; }
+    if(b.hasAttribute('data-stage')){ stageF=b.dataset.stage; render(); return; }
+    if(b.dataset.logopen){ logAgent=logAgent===b.dataset.logopen?'':b.dataset.logopen; editAgent=''; render(); return; }
+    if(b.dataset.edit){ editAgent=editAgent===b.dataset.edit?'':b.dataset.edit; logAgent=''; render(); return; }
+    if(b.dataset.agentdel){ if(!confirm('Delete this agent from the pipeline?')) return; api('',{action:'agent-del',id:b.dataset.agentdel}).then(function(){ editAgent=''; refresh(); }); return; }
+    if(b.dataset.rbdone){ api('',{action:'rebook-done',key:b.dataset.rbdone},'/api/plus').then(refresh).catch(function(x){ toast(x.message); }); return; }
+    if(b.dataset.ref){ var r=JSON.parse(b.dataset.ref); b.disabled=true; api('',{action:'link',bk:r.bk,kind:'ref'},'/api/plus').then(function(d){ var link=location.origin+d.link; if(r.phone){ var fn=String(r.name||'').split(/\s+/)[0]||'there'; var msg='Hi '+fn+', Jack from Bardon Clean. Thanks again for having us. If you know anyone who needs a clean, this link sends their request straight to me and lets me know it came from you: '+link+'\n\nReply STOP to opt out.'; location.href='/messages/#/t/'+r.phone+'?name='+encodeURIComponent(r.name||'')+'&draft='+encodeURIComponent(msg); } else { copy(link); refresh(); } }).catch(function(x){ b.disabled=false; toast(x.message); }); return; }
+    if(b.dataset.reward){ api('',Object.assign({action:'reward'},JSON.parse(b.dataset.reward))).then(refresh); return; }
+    if(b.dataset.consentdel){ if(!confirm('Remove this consent record?')) return; api('',{action:'consent-del',phone:b.dataset.consentdel}).then(refresh); return; }
+    if(b.dataset.days){ srcDays=+b.dataset.days; render(); return; }
+    if(b.dataset.spenddel){ api('',{action:'spend-del',id:b.dataset.spenddel}).then(refresh); return; }
+    if(b.hasAttribute('data-lbcopy')){ buildLink(); copy(document.getElementById('lbOut').textContent); return; }
+    if(b.hasAttribute('data-gclid')){ b.disabled=true; fetch('/api/marketing?export=gclid',{headers:{'x-admin-key':KEY}}).then(function(r){ if(!r.ok) throw new Error('Couldn\'t download'); return r.blob(); }).then(function(bl){ var a=document.createElement('a'); a.href=URL.createObjectURL(bl); a.download='bardon-google-ads-won-jobs.csv'; document.body.appendChild(a); a.click(); a.remove(); b.disabled=false; }).catch(function(x){ toast(x.message); b.disabled=false; }); return; }
+    if(b.dataset.prk!=null&&b.hasAttribute('data-prk')){ prKind=b.dataset.prk; render(); return; }
+    if(b.dataset.prdel){ if(!confirm('Remove this?')) return; api('',{action:'pr-del',id:b.dataset.prdel}).then(refresh); return; }
+    if(b.hasAttribute('data-addblock')){ document.getElementById('blocks').insertAdjacentHTML('beforeend',blockRow({})); return; }
+    if(b.hasAttribute('data-addfile')){ document.getElementById('files').insertAdjacentHTML('beforeend',fileRow({})); return; }
+    if(b.hasAttribute('data-rmrow')){ b.closest('.card').remove(); return; }
+    if(b.hasAttribute('data-copyblock')){ copy(b.closest('.card').querySelector('[data-k="text"]').value); return; }
+    if(b.hasAttribute('data-savebrand')){ var rows=function(sel){ return [].map.call(document.querySelectorAll(sel),function(c){ var o={id:c.dataset.block||c.dataset.file}; c.querySelectorAll('[data-k]').forEach(function(i){ o[i.dataset.k]=i.value; }); return o; }); }; api('',{action:'brand-save',blocks:rows('[data-block]'),files:rows('[data-file]')}).then(function(){ toast('Saved'); refresh(); }).catch(function(x){ toast(x.message); }); return; }
+    if(b.hasAttribute('data-saveack')){ api('',{action:'settings',settings:{ackText:document.querySelector('[data-acktext]').value}}).then(function(){ toast('Saved'); refresh(); }).catch(function(x){ toast(x.message); }); return; }
+    if(b.hasAttribute('data-savesettings')){ var p={}; document.querySelectorAll('[data-s]').forEach(function(i){ p[i.dataset.s]=i.value; }); api('',{action:'settings',settings:p}).then(function(){ toast('Saved'); refresh(); }).catch(function(x){ toast(x.message); }); return; }
+  });
+  app.addEventListener('change',function(e){
+    var t=e.target;
+    if(t.dataset.set){ var p={}; p[t.dataset.set]=t.checked; if(t.dataset.set==='ackOn'&&t.checked&&!confirm('Turn on the instant text? Every new quote request with a mobile number will get it straight away, from the business number.')){ t.checked=false; return; } api('',{action:'settings',settings:p}).then(function(){ toast(t.checked?'On':'Off'); drop(); }).catch(function(x){ toast(x.message); }); return; }
+    if(t.dataset.lb) buildLink();
+  });
+  app.addEventListener('input',function(e){ if(e.target.dataset.lb) buildLink(); });
+  app.addEventListener('submit',function(e){
+    var f=e.target, k=f.dataset.f; if(!k) return; e.preventDefault();
+    var bt=f.querySelector('button:not([type=button])'); if(bt) bt.disabled=true;
+    var v={}; [].forEach.call(f.elements,function(i){ if(i.name) v[i.name]=i.value; });
+    function ok(m){ toast(m||'Saved'); editAgent=''; logAgent=''; refresh(); }
+    function fail(x){ if(bt) bt.disabled=false; var er=f.querySelector('.err'); if(er){ er.textContent=x.message; er.hidden=false; } else toast(x.message); }
+    var map={rating:'rating',agent:'agent-save',alog:'agent-log',spend:'spend-add',pr:'pr-save',consent:'consent-add'};
+    if(k==='agent') v.id=f.dataset.id; if(k==='alog') v.id=f.dataset.id;
+    api('',Object.assign({action:map[k]},v)).then(function(){ ok(); }).catch(fail);
+  });
+  window.addEventListener('hashchange',function(){ var t=location.hash.slice(1); if(t&&t!==tab){ tab=t; render(); } });
+  render();
+  if(tab!=='overview') load('overview').then(function(d){ var b=app.querySelector('[data-tab="overview"]'), n=d.todo.reduce(function(a,x){return a+x.n;},0); if(b&&n&&!b.querySelector('.n')) b.insertAdjacentHTML('beforeend','<span class="n">'+n+'</span>'); }).catch(function(){});
+})();
+</script>
+</body></html>
