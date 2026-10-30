@@ -2,7 +2,10 @@
 // like the camera app. Each shot goes straight into the background upload queue
 // (lib/phq.js) via onShot, so nothing waits and nothing is lost if you switch apps.
 //
-//   BCCam.open({ title, kind:'before'|'after', kinds:true, onShot(file, kind), onClose(count) })
+//   BCCam.open({ title, kind:'before'|'after', kinds:true, ghosts:[{id,url,done}], onShot(file, kind, pairId), onClose(count) })
+//   ghosts: this area's before photos. On "after", the current one shows faded over the camera so the
+//   after can be lined up from the same spot. Each shot is linked to that before (pairId) and the
+//   camera moves on to the next before. "done" ones (already lined up) are skipped to start with.
 //   BCCam.supported() -> false if this browser can't show a live camera (use the file picker)
 (function () {
   var css = '' +
@@ -27,7 +30,13 @@
     '.bccam .flash{position:absolute;inset:0;z-index:3;background:#fff;opacity:0;pointer-events:none;transition:opacity .25s}' +
     '.bccam .flash.on{opacity:.7;transition:none}' +
     '.bccam .msg{position:absolute;z-index:2;left:24px;right:24px;top:40%;text-align:center;font-size:16px;line-height:1.4}' +
-    '.bccam .msg button{margin-top:14px}';
+    '.bccam .msg button{margin-top:14px}' +
+    '.bccam .ghost{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:1;opacity:.42;transition:opacity .15s}' +
+    '.bccam [hidden]{display:none!important}.bccam .gbar:not([hidden])+.bot{margin-top:0}' +
+    '.bccam .gbar{position:relative;z-index:2;display:flex;align-items:center;gap:8px;margin:auto 12px 6px;padding:6px;background:rgba(0,0,0,.55);border-radius:14px}' +
+    '.bccam .gbar .gt{flex:1;min-width:0;font:600 13px/1.25 inherit;text-align:center}.bccam .gbar .gt small{display:block;font-weight:400;opacity:.8;font-size:11.5px}' +
+    '.bccam .gbar button{padding:9px 12px;font-size:14px}.bccam .gbar .gth{width:44px;height:44px;border-radius:8px;overflow:hidden;padding:0;position:relative;flex:none}' +
+    '.bccam .gbar .gth img{width:100%;height:100%;object-fit:cover;display:block}.bccam .gbar .gth b{position:absolute;inset:0;display:grid;place-items:center;background:rgba(47,90,53,.6);font-size:18px}';
 
   function supported() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }
 
@@ -57,15 +66,33 @@
     startMotion(); // must be called straight from the tap so iOS can ask
     var kind = o.kind || 'after', count = 0, stream = null, lensWide = false, wideId = '', mainId = '', closed = false, lastUrl = '';
     var el = document.createElement('div'); el.className = 'bccam'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Camera');
-    el.innerHTML = '<video playsinline muted autoplay></video><div class="flash"></div>' +
+    var ghosts = (o.ghosts || []).filter(function (g) { return g && g.url; }), gi = 0, gOn = true, gOp = [0.42, 0.6, 0.25], gOpi = 0, linked = {};
+    ghosts.forEach(function (g) { if (g.done) linked[g.id] = 1; });
+    for (gi = 0; gi < ghosts.length && linked[ghosts[gi].id]; gi++) {} if (gi >= ghosts.length) gi = 0;
+    el.innerHTML = '<video playsinline muted autoplay></video><img class="ghost" alt="" hidden><div class="flash"></div>' +
       '<div class="top"><h4></h4>' + (o.kinds !== false ? '<div class="seg"><button type="button" data-k="before">Before</button><button type="button" data-k="after">After</button></div>' : '') + '<button type="button" class="done">Done</button></div>' +
       '<div class="msg" hidden></div>' +
+      '<div class="gbar" hidden><button type="button" data-g="prev" aria-label="Previous before photo">‹</button><button type="button" class="gth" data-g="vis" aria-label="Show or hide the before photo"></button><div class="gt"></div><button type="button" data-g="fade" aria-label="Change how faded the before photo is">Fade</button><button type="button" data-g="next" aria-label="Next before photo">›</button></div>' +
       '<div class="bot"><button type="button" class="last" aria-label="Photos taken"></button><button type="button" class="shut" aria-label="Take photo"><i></i></button><div class="side"><button type="button" class="lens" hidden aria-label="Switch lens">0.5×</button></div></div>';
     document.body.appendChild(el);
+    var ghost = el.querySelector('.ghost'), gbar = el.querySelector('.gbar');
     var video = el.querySelector('video'), msg = el.querySelector('.msg'), flash = el.querySelector('.flash'), last = el.querySelector('.last'), lens = el.querySelector('.lens');
     el.querySelector('h4').textContent = o.title || 'Photos';
     var prevOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden';
     function paintKind() { Array.prototype.forEach.call(el.querySelectorAll('[data-k]'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.k === kind)); }); }
+    // Line-up: the before photo, faded over the live camera
+    function paintGhost() {
+      var show = kind === 'after' && ghosts.length > 0;
+      gbar.hidden = !show; ghost.hidden = !(show && gOn);
+      if (!show) return;
+      var g = ghosts[gi]; if (ghost.getAttribute('src') !== g.url) ghost.src = g.url;
+      ghost.style.opacity = gOp[gOpi];
+      gbar.querySelector('.gth').innerHTML = '<img alt="" src="' + g.url + '">' + (linked[g.id] ? '<b>✓</b>' : '');
+      var n = Object.keys(linked).length;
+      gbar.querySelector('.gt').innerHTML = (gOn ? 'Line up with before ' : 'Before hidden · ') + (gi + 1) + ' of ' + ghosts.length + '<small>' + (gOn ? 'Match the faded shot, then take it' : 'Tap the photo to show it again') + (n ? ' · ' + n + ' lined up' : '') + '</small>';
+    }
+    function nextGhost() { for (var i = 1; i <= ghosts.length; i++) { var k = (gi + i) % ghosts.length; if (!linked[ghosts[k].id]) { gi = k; return paintGhost(); } } gi = (gi + 1) % ghosts.length; paintGhost(); }
+    var _paintKind = paintKind; paintKind = function () { _paintKind(); paintGhost(); };
     paintKind();
     function say(t, retry) { msg.hidden = !t; msg.innerHTML = ''; if (!t) return; var p = document.createElement('div'); p.textContent = t; msg.appendChild(p); if (retry) { var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Try again'; b.onclick = start; msg.appendChild(b); } }
 
@@ -100,13 +127,14 @@
       c.width = side ? dh : dw; c.height = side ? dw : dh;
       var x = c.getContext('2d'); x.translate(c.width / 2, c.height / 2); x.rotate(r * Math.PI / 180); x.drawImage(video, -dw / 2, -dh / 2, dw, dh);
       flash.classList.add('on'); setTimeout(function () { flash.classList.remove('on'); }, 40);
-      var k = kind, at = Date.now();
+      var k = kind, at = Date.now(), pair = k === 'after' && ghosts.length && gOn ? ghosts[gi].id : '';
+      if (pair) { linked[pair] = 1; if (ghosts.length > 1) setTimeout(nextGhost, 350); else paintGhost(); }
       c.toBlob(function (b) {
         c.width = c.height = 0; if (!b) return;
         var f; try { f = new File([b], 'photo-' + at + '.jpg', { type: 'image/jpeg', lastModified: at }); } catch (e) { f = b; f.lastModified = at; f.name = 'photo.jpg'; }
         count++; if (lastUrl) URL.revokeObjectURL(lastUrl); lastUrl = URL.createObjectURL(b);
         last.innerHTML = '<img alt="" src="' + lastUrl + '"><b>' + count + '</b>';
-        if (o.onShot) o.onShot(f, k);
+        if (o.onShot) o.onShot(f, k, pair);
       }, 'image/jpeg', 0.9);
     }
     function close() {
@@ -123,11 +151,23 @@
       if (b.classList.contains('shut')) return shoot();
       if (b.classList.contains('done') || b.classList.contains('last')) return close();
       if (b.dataset.k) { kind = b.dataset.k; paintKind(); return; }
+      if (b.dataset.g === 'prev') { gi = (gi - 1 + ghosts.length) % ghosts.length; gOn = true; return paintGhost(); }
+      if (b.dataset.g === 'next') { gi = (gi + 1) % ghosts.length; gOn = true; return paintGhost(); }
+      if (b.dataset.g === 'vis') { gOn = !gOn; return paintGhost(); }
+      if (b.dataset.g === 'fade') { gOpi = (gOpi + 1) % gOp.length; gOn = true; return paintGhost(); }
       if (b === lens) { lensWide = !lensWide; lens.textContent = lensWide ? '1×' : '0.5×'; start(); }
     });
     start();
     return { close: close };
   }
 
-  window.BCCam = { open: open, supported: supported };
+  // This area's before photos as line-up ghosts, oldest first; ones already lined up are marked done.
+  function ghostsFor(photos, room, src) {
+    var ps = (photos || []).filter(function (p) { return p.room === room; }), paired = {};
+    ps.forEach(function (p) { if (p.kind === 'after' && p.pair) paired[p.pair] = 1; });
+    return ps.filter(function (p) { return p.kind === 'before'; }).sort(function (a, b) { return String(a.tk || a.at || '').localeCompare(String(b.tk || b.at || '')); })
+      .map(function (p) { return { id: p.id, url: src(p), done: !!paired[p.id] }; });
+  }
+
+  window.BCCam = { open: open, supported: supported, ghostsFor: ghostsFor };
 })();

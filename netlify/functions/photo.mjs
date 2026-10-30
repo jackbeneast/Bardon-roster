@@ -89,7 +89,10 @@ export default async (req) => {
     if (L.photos.length + add.length > LIMIT) return json({ error: `This job is at the ${LIMIT} photo limit. Delete some first.` }, 400);
     const at = new Date().toISOString(), by = admin && !pid ? "admin" : pid;
     const taken = body.taken && typeof body.taken === "object" ? body.taken : {};
-    add.forEach((id) => { const t = Number(taken[id]); L.photos.push({ id, room, kind, by, at, j: hj, ...(t > 1e12 && t < 4e12 ? { tk: new Date(t).toISOString() } : {}) }); });
+    // Afters taken in the line-up camera are linked to the before they were lined up with (same job and area).
+    const pairs = body.pair && typeof body.pair === "object" ? body.pair : {};
+    const befores = new Set(L.photos.filter((p) => p.kind === "before" && (!room || p.room === room)).map((p) => p.id));
+    add.forEach((id) => { const t = Number(taken[id]), pr = String(pairs[id] || ""); L.photos.push({ id, room, kind, by, at, j: hj, ...(t > 1e12 && t < 4e12 ? { tk: new Date(t).toISOString() } : {}), ...(kind === "after" && ID.test(pr) && befores.has(pr) ? { pair: pr } : {}) }); });
     return save({ added: add.length, missing: fresh.length - add.length });
   }
 

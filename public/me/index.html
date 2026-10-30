@@ -421,7 +421,7 @@ function renderRoom(id, room){
   h+='<div class="card" style="display:flex;flex-direction:column;gap:12px;'+(st.photos.length?'':'border:1.5px dashed var(--tcd)')+'"><div class="between"><p class="lbl b">After photos</p><p class="sub">'+(st.photos.length?st.photos.length+' taken':'At least 1 needed')+'</p></div><div class="ph">';
   st.photos.slice(-5).forEach(function(p){ h+='<a href="'+photoSrc(j,p,true)+'" target="_blank" rel="noopener"><img src="'+photoSrc(j,p)+'" alt="'+esc(room)+' after photo" loading="lazy"></a>'; });
   pqOf(j,room).forEach(function(m){ h+='<span class="pq" aria-label="Uploading">'+(m.url?'<img src="'+m.url+'" alt="">':'<img alt="">')+'</span>'; });
-  h+='<button class="add" data-photo>'+I.cam+'Take photo</button></div>'+(window.BCCam&&BCCam.supported()?'<button type="button" class="ghost" data-photolib style="align-self:flex-start">Choose from photo library</button>':'')+'<p class="sub">Doorway shot of the whole room first, then the detail. Nothing personal in shot. They go on the job report.</p></div>';
+  h+='<button class="add" data-photo>'+I.cam+'Take photo</button></div>'+(window.BCCam&&BCCam.supported()?'<button type="button" class="ghost" data-photolib style="align-self:flex-start">Choose from photo library</button>':'')+''+(L.photos.some(function(p){return p.room===room&&p.kind==='before';})?'<p class="sub"><strong>Before photos are waiting.</strong> The camera shows each one faded. Line it up, take the shot, and it moves to the next.</p>':'')+'<p class="sub">Doorway shot of the whole room first, then the detail. Nothing personal in shot. They go on the job report.</p></div>';
   if(FLAG) h+=flagForm(); else h+='<button class="btn o" data-flagopen>'+I.flag+'Flag something</button><p class="sub" style="text-align:center;margin-top:-6px">Damage, something you can\'t get clean, extra work, or low on supplies</p>';
   if(!st.done){
     if(!st.photos.length&&!pqOf(j,room).length) h+='<button class="btn big" disabled>Take an after photo to finish</button>';
@@ -920,8 +920,8 @@ document.addEventListener('click',function(e){
   if(t.dataset.clock){ var j=jobById(t.dataset.j); if(!j) return; busy.clock=true; render();
     live(j,{action:t.dataset.clock==='in'?'arrive':'leave'},t.dataset.clock==='in'?'Clocked in':'Clocked out. Thanks!').then(function(d){ track(t.dataset.clock==='in'?'Clocked in':'Clocked out'); return d; }).catch(function(x){ toast(x.message); }).then(function(){ busy.clock=false; render(); }); return; }
   if(t.hasAttribute('data-photo')){ var jp=jobById(r[1]), room=r[2]; if(!jp) return;
-    if(window.BCCam&&BCCam.supported()&&window.BCPhotoQ){ BCCam.open({title:room, kind:'after', kinds:false,
-      onShot:function(f){ BCPhotoQ.add([f],{jobId:jp.id,pid:PID,room:room,kind:'after'}).catch(function(){ toast('Couldn\'t save that photo. Take it again.'); }); },
+    if(window.BCCam&&BCCam.supported()&&window.BCPhotoQ){ BCCam.open({title:room, kind:'after', kinds:false, ghosts:BCCam.ghostsFor(liveOf(jp).photos,room,function(p){ return photoSrc(jp,p,true); }),
+      onShot:function(f,k,pair){ BCPhotoQ.add([f],{jobId:jp.id,pid:PID,room:room,kind:'after',pair:pair}).catch(function(){ toast('Couldn\'t save that photo. Take it again.'); }); },
       onClose:function(n){ render(); if(n){ toast(n+' photo'+(n===1?'':'s')+' uploading. Carry on.'); track('Took '+n+' photo'+(n===1?'':'s')+' · '+room); } }}); return; }
     pick(true,function(fl){ roomPhotos(jp,room,fl); }); return; }
   if(t.hasAttribute('data-photolib')){ var jl=jobById(r[1]); if(jl) pick(true,function(fl){ roomPhotos(jl,r[2],fl); }); return; }

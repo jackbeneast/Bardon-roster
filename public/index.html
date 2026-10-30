@@ -1464,8 +1464,9 @@ details.olds .tl2{border:0;margin:6px -14px -12px}
   function roomCam(room,kind){
     var ctx=liveOpen&&{jobId:liveOpen.jobId,pid:liveOpen.pid}; if(!ctx) return;
     if(!(window.BCCam&&BCCam.supported()&&window.BCPhotoQ)) return roomPhoto(room,kind);
-    BCCam.open({title:room, kind:kind||'after',
-      onShot:function(f,k){ BCPhotoQ.add([f],{jobId:ctx.jobId,pid:ctx.pid,room:room,kind:k}).then(function(){ phStatus(); },function(){ toast('Couldn\'t save that photo. Take it again.'); }); },
+    var gj=state.jobs.find(function(x){return x.id===ctx.jobId;});
+    BCCam.open({title:room, kind:kind||'after', ghosts:gj?BCCam.ghostsFor(liveOf(gj).photos,room,function(p){ return phSrc(gj,p,true); }):[],
+      onShot:function(f,k,pair){ BCPhotoQ.add([f],{jobId:ctx.jobId,pid:ctx.pid,room:room,kind:k,pair:pair}).then(function(){ phStatus(); },function(){ toast('Couldn\'t save that photo. Take it again.'); }); },
       onClose:function(n){ if(liveOpen&&liveOpen.jobId===ctx.jobId) drawLive(); if(n) toast(n+' photo'+(n>1?'s':'')+' uploading in the background'); }});
   }
   // Camera / library for one room's after photos, tagged on upload.
