@@ -95,6 +95,12 @@ input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible{out
 .shift input,.shift select{margin-top:2px;min-height:42px;padding:8px;font-size:15px}
 .shift .x{height:42px;border:1px solid var(--line);border-radius:6px;background:none;color:var(--meta);font-size:20px;cursor:pointer}
 .shift .jb{grid-column:1/-1;font-size:12px;color:var(--meta);margin-top:-2px}
+.shift .fl{grid-column:1/-1;background:var(--tint);border-left:4px solid var(--terracotta);border-radius:6px;padding:9px 10px;font-size:13px;color:var(--dark)}
+.shift .fl.done{border-left-color:var(--green);background:var(--cream)}
+.shift .fl p{margin:0 0 3px}
+.shift .fl .pk{display:flex;gap:6px;margin-top:7px}
+.shift .fl .pk button{flex:1;min-height:40px;border:1px solid var(--line);border-radius:6px;background:var(--white);font:600 13px var(--sans);color:var(--dark);cursor:pointer;padding:6px}
+.shift .fl .pk button[aria-pressed=true]{background:var(--dark);border-color:var(--dark);color:var(--white)}
 .slipwrap{background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:14px;overflow-x:auto}
 @media (max-width:560px){.slipwrap td,.slipwrap th{padding-left:5px!important;padding-right:5px!important}.slipwrap>div{padding:14px!important}}
 .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
@@ -132,6 +138,9 @@ function addDays(s,n){ var p=s.split('-'), d=new Date(+p[0],+p[1]-1,+p[2]); d.se
 function dnum(s){ return Math.round(Date.parse(s+'T00:00:00Z')/864e5); }
 function mins(t){ return t? +t.slice(0,2)*60 + +t.slice(3,5) : NaN; }
 function r2(v){ return Math.round(v*100)/100; }
+function t12(hm){ if(!hm) return ''; var h=+hm.slice(0,2), m=hm.slice(3,5); return (h%12||12)+(m==='00'?'':':'+m)+(h<12?'am':'pm'); }
+function tclock(iso){ var d=new Date(iso), b=new Date(d.getTime()+10*36e5); return t12(('0'+b.getUTCHours()).slice(-2)+':'+('0'+b.getUTCMinutes()).slice(-2)); }
+function unpicked(){ var n=0; if(RUN) Object.keys(RUN.ppl).forEach(function(id){ var x=RUN.ppl[id]; if(x.on) x.shifts.forEach(function(s){ if(s.chk&&!s.chk.pick) n++; }); }); return n; }
 function toast(m){ var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2600); }
 function initials(n){ return String(n||'?').trim().split(/\s+/).map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase(); }
 function colour(id){ var c=['#C06B3C','#2F5A35','#2D4A6B','#7A5A12','#8A4A1F','#5B4A7A'], h=0; for(var i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0; return c[h%c.length]; }
@@ -190,13 +199,17 @@ function rosterShifts(pid, per){
   (R.jobs||[]).forEach(function(j){
     if(j.sample||j.date<per.start||j.date>per.end||(j.staff||[]).indexOf(pid)<0) return;
     var c=R.confirms&&R.confirms[j.id]&&R.confirms[j.id][pid]; if(c&&c.s==='no') return;
-    var sh=(j.shifts&&j.shifts[pid])||{}, st=sh.start||j.start, en=sh.end||j.end, span=(mins(en)-mins(st))/60, src='rostered';
+    var sh=(j.shifts&&j.shifts[pid])||{}, st=sh.start||j.start, en=sh.end||j.end, rspan=(mins(en)-mins(st))/60, span=rspan, src='rostered';
     var L=(R.live&&R.live[j.id])||{}, ar=L.arrived&&L.arrived[pid], lf=L.left&&L.left[pid];
     if(ar&&lf){ var cs=(Date.parse(lf)-Date.parse(ar))/36e5; if(cs>0&&cs<16){ span=cs; src='clocked'; } }
     if(!(span>0)) return;
-    var hrs=r2(span-(p.lunch&&span>4.5?0.5:0)), d=new Date(j.date+'T00:00:00').getDay();
+    var paid=function(v){ return r2(v-(p.lunch&&v>4.5?0.5:0)); };
+    var hrs=paid(span), d=new Date(j.date+'T00:00:00').getDay();
     var kind=isPH(j.date)?'ph':d===0?'sun':d===6?'sat':(mins(st)<360||mins(en)>1080)?'el':'wk';
-    out.push({date:j.date,hrs:hrs,kind:kind,job:(j.client||'Job')+(j.suburb?', '+j.suburb:'')+' · '+src});
+    var o={date:j.date,hrs:hrs,kind:kind,job:(j.client||'Job')+(j.suburb?', '+j.suburb:'')+' · '+src};
+    // Clocked more than 15 minutes over the rostered shift: Jack picks which to pay.
+    if(src==='clocked'&&rspan>0){ var ros=paid(rspan); if(hrs-ros>0.25) o.chk={ros:ros,clk:hrs,rs:st,re:en,ci:ar,co:lf,pick:''}; }
+    out.push(o);
   });
   return out.sort(function(a,b){return a.date.localeCompare(b.date);});
 }
@@ -210,6 +223,13 @@ function startRun(start){
     ppl[x.id]={on:sh.length>0, shifts:sh, taxOv:old&&c&&old.tax!==c.taxAuto?String(old.tax):'', old:old||null};
   });
   RUN={start:per.start,end:per.end,cycle:per.cycle,paidOn:(function(){ var o=S.slips.filter(function(s){return s.periodEnd===per.end;})[0]; return o?o.paidOn:today(); })(),ppl:ppl,saving:false,err:''};
+}
+function flagBox(s){
+  var c=s.chk; if(!c) return '';
+  var h='<div class="fl'+(c.pick?' done':'')+'"><p><b>Clocked '+P.hrs(r2(c.clk-c.ros))+' hrs over the roster</b></p><p>Rostered '+t12(c.rs)+' – '+t12(c.re)+' · '+P.hrs(c.ros)+' hrs paid</p><p>Clocked '+tclock(c.ci)+' – '+tclock(c.co)+' · '+P.hrs(c.clk)+' hrs paid</p>';
+  h+='<div class="pk"><button type="button" data-pick="ros" aria-pressed="'+(c.pick==='ros')+'">Pay rostered '+P.hrs(c.ros)+'</button><button type="button" data-pick="clk" aria-pressed="'+(c.pick==='clk')+'">Pay clocked '+P.hrs(c.clk)+'</button></div>';
+  if(c.pick==='own') h+='<p style="margin-top:6px">Paying '+P.hrs(s.hrs)+' hrs, typed in.</p>';
+  return h+'</div>';
 }
 function personCalc(pid){
   var x=RUN.ppl[pid], p=prof(pid), c=P.calc({shifts:x.shifts,periodStart:RUN.start,cycle:RUN.cycle,level:p.level||'1',tft:p.tft||'2',rates:paySet().rates,ytdGross:priorGross(pid,RUN.start,RUN.paidOn)});
@@ -401,6 +421,7 @@ function renderRun(){
   h+='<div class="nav"><button data-per="-1" aria-label="Previous pay period">&larr;</button><div class="range">'+fdate(RUN.start).replace(/ \d{4}$/,'')+' – '+fdate(RUN.end)+'<br><small style="font-weight:400;color:var(--meta)">'+(RUN.cycle===2?'Fortnightly':'Weekly')+' pay</small></div><button data-per="1" aria-label="Next pay period">&rarr;</button></div>';
   if(existing) h+='<div class="alert ok">This period was paid on '+fdate(RUN.paidOn)+'. Saving again replaces those payslips with what\'s below.</div>';
   if(RUN.end>=today()) h+='<div class="alert">This pay period hasn\'t finished yet.</div>';
+  var np=unpicked(); if(np) h+='<div class="alert"><b>'+np+' shift'+(np===1?' was':'s were')+' clocked longer than rostered.</b> Choose what to pay for '+(np===1?'it':'each one')+' below. If you asked them to stay back, or they really worked it, pay the clocked hours.</div>';
   h+='<div class="card" style="margin-top:12px"><label class="l">Payment date<input type="date" id="paidOn" value="'+esc(RUN.paidOn)+'"></label></div>';
   ids.forEach(function(id){
     var x=RUN.ppl[id], pr=prof(id), name=nameOf(id), c=calcs[id];
@@ -408,7 +429,7 @@ function renderRun(){
     h+='<div class="person" data-p="'+id+'"><div class="ph"><b>'+esc(name)+'</b><span class="n">'+money(c.net)+'</span></div><p class="hint" style="margin:2px 0 6px">Level '+esc(pr.level||'1')+' · tax-free threshold '+esc((TFT[pr.tft||'2']||'').toLowerCase())+(pr.help?' · <b>HELP debt: set tax below</b>':'')+(x.old?' · replaces '+esc(x.old.num):'')+'</p>';
     x.shifts.forEach(function(s,i){
       var dates=[]; for(var k=0;k<RUN.cycle*7;k++) dates.push(addDays(RUN.start,k));
-      h+='<div class="shift" data-i="'+i+'"><label class="l" style="font-size:12px">Day<select data-f="date">'+dates.map(function(d){return '<option value="'+d+'"'+(d===s.date?' selected':'')+'>'+P.fshort(d)+'</option>';}).join('')+'</select></label><label class="l" style="font-size:12px">Paid hrs<input data-f="hrs" type="number" step="0.25" min="0" inputmode="decimal" value="'+s.hrs+'"></label><label class="l" style="font-size:12px">Rate<select data-f="kind">'+['wk','el','sat','sun','ph'].map(function(k){return '<option value="'+k+'"'+(k===s.kind?' selected':'')+'>'+{wk:'Weekday',el:'Early/late',sat:'Saturday',sun:'Sunday',ph:'Pub. holiday'}[k]+'</option>';}).join('')+'</select></label><button class="x" data-rm aria-label="Remove shift">×</button>'+(s.job?'<span class="jb">'+esc(s.job)+'</span>':'')+'</div>';
+      h+='<div class="shift" data-i="'+i+'"><label class="l" style="font-size:12px">Day<select data-f="date">'+dates.map(function(d){return '<option value="'+d+'"'+(d===s.date?' selected':'')+'>'+P.fshort(d)+'</option>';}).join('')+'</select></label><label class="l" style="font-size:12px">Paid hrs<input data-f="hrs" type="number" step="0.25" min="0" inputmode="decimal" value="'+s.hrs+'"></label><label class="l" style="font-size:12px">Rate<select data-f="kind">'+['wk','el','sat','sun','ph'].map(function(k){return '<option value="'+k+'"'+(k===s.kind?' selected':'')+'>'+{wk:'Weekday',el:'Early/late',sat:'Saturday',sun:'Sunday',ph:'Pub. holiday'}[k]+'</option>';}).join('')+'</select></label><button class="x" data-rm aria-label="Remove shift">×</button>'+(s.job?'<span class="jb">'+esc(s.job)+'</span>':'')+flagBox(s)+'</div>';
     });
     h+='<button class="ghost" data-add>+ Add shift</button>';
     h+='<table class="tbl" style="margin-top:6px">'+c.lines.map(function(l){ return '<tr class="m"><td>'+esc(l.label)+' · '+P.hrs(l.hrs)+' × '+money(l.rate)+'</td><td>'+money(l.amt)+'</td></tr>'; }).join('')+'<tr><td>Gross ('+P.hrs(c.hrs)+' hrs'+(c.otHrs?', '+P.hrs(c.otHrs)+' overtime':'')+')</td><td>'+money(c.gross)+'</td></tr><tr><td>PAYG tax'+(x.taxOv.trim()!==''?' (your figure, calculated '+money(c.taxAuto)+')':'')+'</td><td>−'+money(c.tax)+'</td></tr><tr class="t"><td>Net pay</td><td>'+money(c.net)+'</td></tr><tr class="m"><td>Super 12% of '+money(c.ordPay)+'</td><td>'+money(c.sup)+'</td></tr></table>';
@@ -427,11 +448,12 @@ function renderRun(){
     card.addEventListener('change',function(e){ var f=e.target.dataset.f; if(!f) return;
       if(f==='taxOv'){ x.taxOv=e.target.value; }
       else { var i=+e.target.closest('.shift').dataset.i, s=x.shifts[i];
-        if(f==='hrs') s.hrs=Math.max(0,parseFloat(e.target.value)||0);
+        if(f==='hrs'){ s.hrs=Math.max(0,parseFloat(e.target.value)||0); if(s.chk) s.chk.pick=s.hrs===s.chk.ros?'ros':s.hrs===s.chk.clk?'clk':'own'; }
         else if(f==='date'){ s.date=e.target.value; var d=new Date(s.date+'T00:00:00').getDay(); s.kind=isPH(s.date)?'ph':d===0?'sun':d===6?'sat':(s.kind==='el'?'el':'wk'); delete s.job; }
         else s[f]=e.target.value; }
       x.shifts.sort(function(a,b){return a.date.localeCompare(b.date);}); renderRun(); });
     card.addEventListener('click',function(e){
+      var pk=e.target.closest('[data-pick]'); if(pk){ var s2=x.shifts[+pk.closest('.shift').dataset.i], c2=s2.chk; c2.pick=pk.dataset.pick; s2.hrs=c2[c2.pick]; RUN.err=''; s2.job=(s2.job||'').replace(/ · (clocked|rostered)$/,'')+' · '+(c2.pick==='ros'?'rostered':'clocked'); renderRun(); return; }
       if(e.target.closest('[data-rm]')){ x.shifts.splice(+e.target.closest('.shift').dataset.i,1); if(!x.shifts.length) x.on=false; renderRun(); }
       else if(e.target.closest('[data-add]')){ var last=x.shifts[x.shifts.length-1]; var d=last?addDays(last.date,1):RUN.start; if(d>RUN.end) d=RUN.end; var dw=new Date(d+'T00:00:00').getDay(); x.shifts.push({date:d,hrs:7.5,kind:isPH(d)?'ph':dw===0?'sun':dw===6?'sat':'wk'}); renderRun(); }
       else if(e.target.closest('[data-off]')){ x.on=false; renderRun(); }
@@ -440,6 +462,7 @@ function renderRun(){
   var sv=app.querySelector('#saveRun');
   if(sv) sv.onclick=function(){
     if(!RUN.paidOn){ RUN.err='Pick the payment date.'; renderRun(); return; }
+    var np2=unpicked(); if(np2){ RUN.err='Choose rostered or clocked hours for the '+np2+' flagged shift'+(np2===1?'':'s')+' first.'; renderRun(); return; }
     var slips=on.map(function(id){ var x=RUN.ppl[id], c=calcs[id], pr=prof(id);
       return {id:x.old?x.old.id:undefined,pid:id,name:nameOf(id),level:pr.level||'1',periodStart:RUN.start,periodEnd:RUN.end,paidOn:RUN.paidOn,cycle:RUN.cycle,lines:c.lines,shifts:x.shifts.filter(function(s){return s.hrs>0;}),tax:c.tax,taxAuto:c.taxAuto,superFund:pr.superFund||'',superNo:pr.superNo||'',superPaid:x.old?x.old.superPaid:'',taxPaid:x.old?x.old.taxPaid:''}; });
     if(slips.some(function(s){return !s.lines.length;})){ RUN.err='Someone being paid has no hours. Add their shifts or take them off this run.'; renderRun(); return; }
