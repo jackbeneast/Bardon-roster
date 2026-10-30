@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hub Playbook</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{--tc:#C06B3C;--tcd:#A55830;--dark:#1A1A1A;--cream:#F5F0EB;--body:#4A4A4A;--line:#E4DBD1;--meta:#8A7F75;--soft:#FBF4EE;--ok:#2E7D4F;--okbg:#E3F1E8;--bad:#B3261E;color-scheme:light}
+*{box-sizing:border-box}html,body{background:var(--cream);margin:0}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{font:15.5px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--dark);-webkit-text-size-adjust:100%}
+.w{max-width:680px;margin:0 auto;padding:16px 16px calc(48px + env(safe-area-inset-bottom))}
+a{color:var(--tcd)}
+a.back{color:var(--meta);font-size:14px;text-decoration:none}
+h1{font-family:"Playfair Display",Georgia,serif;font-size:34px;line-height:1.1;margin:14px 0 6px}
+h1 em,h2 em{color:var(--tc)}
+h2{font-family:"Playfair Display",Georgia,serif;font-size:24px;line-height:1.2;margin:34px 0 4px}
+.lede{color:var(--body);margin:0 0 6px}
+.upd{font-size:13px;color:var(--meta);margin:0 0 16px}
+.search{position:sticky;top:0;z-index:5;background:var(--cream);padding:10px 0 8px;margin:0 -2px}
+.search input{width:100%;font:inherit;font-size:16px;padding:12px 14px 12px 40px;border:1.5px solid var(--line);border-radius:12px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A7F75' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") 12px 50%/18px no-repeat}
+.search input:focus{outline:none;border-color:var(--tc)}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 4px}
+.chips::-webkit-scrollbar{display:none}
+.chips a{flex:0 0 auto;font-size:13px;font-weight:600;text-decoration:none;color:var(--dark);background:#fff;border:1px solid var(--line);border-radius:99px;padding:6px 12px}
+.sec-sub{color:var(--meta);font-size:14px;margin:0 0 10px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 10px}
+.card h3{margin:0 0 6px;font-size:16px}
+.rules{padding-left:0;list-style:none;margin:0}
+.rules li{position:relative;padding:0 0 10px 30px}
+.rules li:last-child{padding-bottom:0}
+.rules li::before{content:"";position:absolute;left:0;top:2px;width:20px;height:20px;border-radius:50%;background:var(--okbg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232E7D4F' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12 4 4 8-8'/%3E%3C/svg%3E") center/13px no-repeat}
+details.t{background:#fff;border:1px solid var(--line);border-radius:14px;margin:0 0 8px;overflow:hidden}
+details.t>summary{list-style:none;cursor:pointer;padding:14px 44px 14px 16px;position:relative;font-weight:600;font-size:16px;-webkit-tap-highlight-color:transparent}
+details.t>summary::-webkit-details-marker{display:none}
+details.t>summary small{display:block;font-weight:400;font-size:13.5px;color:var(--meta);margin-top:2px}
+details.t>summary::after{content:"";position:absolute;right:16px;top:50%;width:9px;height:9px;border-right:2px solid var(--meta);border-bottom:2px solid var(--meta);transform:translateY(-70%) rotate(45deg);transition:transform .15s}
+details.t[open]>summary::after{transform:translateY(-30%) rotate(-135deg)}
+details.t[open]>summary{border-bottom:1px solid var(--line)}
+.b{padding:12px 16px 16px}
+.b p{margin:0 0 10px}
+.b h4{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--meta);margin:14px 0 6px}
+.b h4:first-child{margin-top:2px}
+.b ol,.b ul{margin:0 0 10px;padding-left:22px}
+.b li{margin:0 0 5px}
+.where{display:inline-block;font-size:13px;font-weight:600;background:var(--soft);color:var(--tcd);border:1px solid #F0DCCD;border-radius:8px;padding:3px 9px;margin:0 0 10px}
+.where a{text-decoration:none}
+.tip{background:var(--soft);border-left:3px solid var(--tc);border-radius:0 10px 10px 0;padding:10px 12px;margin:10px 0;font-size:14.5px}
+.warn{background:#FBE9E7;border-left:3px solid var(--bad);border-radius:0 10px 10px 0;padding:10px 12px;margin:10px 0;font-size:14.5px}
+.flow{display:grid;grid-template-columns:1fr;gap:0;margin:6px 0 4px}
+.step{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;position:relative;padding-bottom:14px}
+.step:not(:last-child)::before{content:"";position:absolute;left:16px;top:32px;bottom:2px;width:2px;background:var(--line)}
+.step .n{width:34px;height:34px;border-radius:50%;background:var(--tc);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+.step b{display:block;font-size:15px}
+.step span{font-size:14px;color:var(--body)}
+.step a{font-size:13px;font-weight:600}
+.day{display:grid;grid-template-columns:76px 1fr;gap:8px 12px;font-size:14.5px}
+.day dt{font-weight:700;color:var(--tcd)}
+.day dd{margin:0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--meta)}
+tr:last-child td{border-bottom:0}
+kbd{font:600 13px Inter,sans-serif;background:#F1ECE6;border:1px solid var(--line);border-radius:6px;padding:1px 6px;white-space:nowrap}
+.none{display:none;text-align:center;color:var(--meta);padding:30px 0}
+.hide{display:none!important}
+mark{background:#F6DCC8;color:inherit;border-radius:3px;padding:0 1px}
+.log li{margin-bottom:8px}
+.log b{color:var(--tcd)}
+.gate{text-align:center;padding:60px 10px}
+.top-btn{position:fixed;right:14px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:6;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;place-items:center;cursor:pointer}
+.top-btn svg{width:20px;height:20px}
+@media print{.search,.chips,.top-btn,a.back{display:none}details.t{break-inside:avoid}}
+</style><script src="/lib/hubnav.js" data-tabs="tools"></script>
+</head><body><div class="w" id="w">
+<a class="back" href="/?v=more" data-hb>← Back</a>
+<h1>The Hub <em>Playbook</em></h1>
+<p class="lede">How to run Bardon Clean from the hub: every screen, what it's for and how to use it. Search it or tap a topic.</p>
+<p class="upd">Last updated 30 October 2026 · <a href="#changes">What's changed</a></p>
+
+<div class="search"><input id="q" type="search" placeholder="Search: deposit, pay run, photos, passcode…" autocomplete="off" aria-label="Search the playbook"></div>
+<nav class="chips" aria-label="Topics">
+<a href="#start">Start here</a><a href="#flow">Lead to paid</a><a href="#recipes">How do I…</a><a href="#today">Today &amp; desk</a><a href="#pipeline">Pipeline</a><a href="#money">Quotes &amp; invoices</a><a href="#roster">Roster</a><a href="#onday">On the day</a><a href="#clients">Client &amp; agent links</a><a href="#messages">Messages</a><a href="#books">Profit &amp; books</a><a href="#team">Team &amp; pay</a><a href="#teamapp">Team app</a><a href="#growth">Growth</a><a href="#auto">Automatic</a><a href="#safety">Safety nets</a><a href="#help">Fixes</a>
+</nav>
+
+<div id="all">
+
+<!-- ================= START HERE ================= -->
+<section data-s id="start">
+<h2>Start <em>here</em></h2>
+<p class="sec-sub">The five minutes that make everything else make sense.</p>
+
+<div class="card">
+<h3>The rules the hub runs on</h3>
+<ul class="rules">
+<li><b>Nothing reaches a client without you.</b> Every quote, invoice and text opens as a draft for you to check and send. Two exceptions, both off until you switch them on: the instant "got it" text to new leads (Growth hub) and the arrival and finished texts clients can opt in to (Desk → Arrival &amp; finish texts).</li>
+<li><b>One job, one place.</b> A job on the roster carries everything: team, shifts, areas, checklists, photos, notes, the client link, the agent's view and the money.</li>
+<li><b>Multi-day jobs are one job.</b> Add days to a job rather than making new jobs. Clients and agents see one job and one report.</li>
+<li><b>Texts go from the business number</b> (Mobile Message) and every conversation lives in Messages, never your own phone.</li>
+<li><b>Xero stays the official record</b> for GST and BAS. The hub feeds it payments and expenses.</li>
+</ul>
+</div>
+
+<details class="t"><summary>Logging in<small>Your password, and how the team gets in</small></summary><div class="b">
+<span class="where"><a href="/">bardon-roster.netlify.app</a></span>
+<h4>You</h4>
+<ol><li>Open the hub and tap any edit button. The <b>Jack's login</b> sheet opens.</li>
+<li>Enter your password. First time on a device, you choose it. <b>Forgot your password?</b> is on the same sheet.</li>
+<li>Logged in, the six tabs show along the bottom and every owner page (Money, Books, Desk and the rest) works.</li></ol>
+<h4>The team</h4>
+<p>Each person logs in with their mobile number and a 4-digit passcode. You set those in <a href="/passcodes/">Tools → Team passcodes</a>. See <a href="#t-passcodes">Team passcodes</a>.</p>
+<h4>Log out</h4>
+<p>Tools → bottom of the list → <b>Log out of editing</b>. Do it on any phone that isn't yours.</p>
+</div></details>
+
+<details class="t"><summary>Put it on your home screen<small>Opens like an app, straight to Today</small></summary><div class="b">
+<ol><li>Open the hub in <b>Safari</b>.</li><li>Tap <b>Share</b> → <b>Add to Home Screen</b>.</li><li>Open it from the icon and log in once inside it.</li></ol>
+<p>Do the same with this playbook if you like: open it, Share, Add to Home Screen.</p>
+</div></details>
+
+<details class="t"><summary>Getting around<small>The six tabs, Back, search and the bell</small></summary><div class="b">
+<table><tbody>
+<tr><td><b>Today</b></td><td>What's on, what needs you, tomorrow at a glance.</td></tr>
+<tr><td><b>Roster</b></td><td>The calendar. Every job and who's on it, colour-coded by day.</td></tr>
+<tr><td><b>+ Add</b></td><td>The orange button. Add a job, quote, invoice or expense.</td></tr>
+<tr><td><b>Messages</b></td><td>Every text with clients, leads, agents and the team.</td></tr>
+<tr><td><b>Pipeline</b></td><td>Clients from enquiry to follow-up, and hiring from applicant to team member.</td></tr>
+<tr><td><b>Tools</b></td><td>Everything else, grouped: Desk, Clients, Marketing, Money, Team, Roster, Notifications.</td></tr>
+</tbody></table>
+<h4>At the top of every screen</h4>
+<ul><li><b>Back</b> returns to the screen you were actually on, not the home screen.</li>
+<li><b>Search</b> (magnifying glass) finds any job or client.</li>
+<li><b>Bell</b> is Activity: shift replies, quotes opened and accepted, payments, the last 60 days.</li>
+<li><b>Refresh</b> pulls the latest if someone else just changed something.</li></ul>
+</div></details>
+
+<details class="t" id="t-notify"><summary>Phone notifications<small>Get pinged the moment things happen</small></summary><div class="b">
+<span class="where">Tools → Notifications → Phone notifications</span>
+<ol><li>Install the free <b>ntfy</b> app (iPhone or Android). No account needed.</li>
+<li>In the hub, tap <b>Copy channel name</b>.</li>
+<li>In ntfy tap <b>+</b>, paste the name, tap <b>Subscribe</b> and allow notifications.</li>
+<li>Back in the hub, <b>Send test notification</b>.</li></ol>
+<div class="tip">Keep the channel name private. If it ever gets out, make a new one at the bottom of the same sheet.</div>
+<p>Everything you get pinged about also lands under the bell. See <a href="#auto">What happens automatically</a> for the full list.</p>
+</div></details>
+</section>
+
+<!-- ================= FLOW ================= -->
+<section data-s id="flow">
+<h2>Lead to <em>paid</em></h2>
+<p class="sec-sub">The life of a job, and where each step happens.</p>
+<div class="card"><div class="flow">
+<div class="step"><div class="n">1</div><div><b>Enquiry lands</b><span>Website quote form, an agent's booking request, or a phone call. Shows in Pipeline → New and on Today.</span> <a href="#t-requests">How</a></div></div>
+<div class="step"><div class="n">2</div><div><b>Quote it</b><span>Build the quote in Money from the request. Packages build themselves from beds and baths.</span> <a href="#t-quote">How</a></div></div>
+<div class="step"><div class="n">3</div><div><b>Send and follow up</b><span>Send by text or email. You see when they open it. Pipeline → Quoted flags the warm ones.</span> <a href="#t-send">How</a></div></div>
+<div class="step"><div class="n">4</div><div><b>Accepted → on the roster</b><span>They accept online (or you mark it). Turn it into a job, send the booking confirmation.</span> <a href="#t-accept">How</a></div></div>
+<div class="step"><div class="n">5</div><div><b>Deposit</b><span>Send the 50% deposit invoice, due the same day. The booking is tentative until it's paid.</span> <a href="#t-deposit">How</a></div></div>
+<div class="step"><div class="n">6</div><div><b>Team and shifts</b><span>Assign people, set shift times. They confirm with one tap.</span> <a href="#t-addjob">How</a></div></div>
+<div class="step"><div class="n">7</div><div><b>The clean</b><span>Clock in, areas, checklists, before and after photos, notes, lock-up. The client and agent watch it fill in.</span> <a href="#onday">How</a></div></div>
+<div class="step"><div class="n">8</div><div><b>Job ready → next steps</b><span>Pick best before &amp; afters, invoice the balance, send the thank-you with the job link.</span> <a href="#t-ready">How</a></div></div>
+<div class="step"><div class="n">9</div><div><b>Paid, hours logged</b><span>Record payment, log actual hours and costs so you see the job's real hourly rate.</span> <a href="#t-payment">How</a></div></div>
+<div class="step"><div class="n">10</div><div><b>Review and rebook</b><span>Pipeline → Follow up and the Growth hub ask for the review and nudge past clients later.</span> <a href="#t-reviews">How</a></div></div>
+</div></div>
+
+<div class="card" id="rhythm"><h3>Your daily rhythm</h3>
+<dl class="day">
+<dt>Morning</dt><dd>Open <b>Today</b>. Clear "Needs you now", then open <b>The desk</b> (What needs me). Glance at tomorrow.</dd>
+<dt>On a job</dt><dd>Open the job from Today. Arrived, photos, areas, notes. Post an update to the client's feed if it helps.</dd>
+<dt>Finish</dt><dd>Mark ready, lock-up ticked, clock off. Work through <b>Job ready · next steps</b>.</dd>
+<dt>6pm</dt><dd>Log actual hours and costs for today's jobs (you get a ping).</dd>
+<dt>Weekly</dt><dd>Monday: growth and money pings. Run pay. Log any expenses you missed. Two minutes on social posts on post days.</dd>
+</dl></div>
+</section>
+
+<!-- ================= RECIPES ================= -->
+<section data-s id="recipes">
+<h2>How do <em>I…</em></h2>
+<p class="sec-sub">The common jobs, start to finish.</p>
+
+<details class="t"><summary>A new lead came in through the website</summary><div class="b">
+<ol><li>You get a ping. Open <b>Pipeline → New</b> (or Today → Leads and people waiting).</li>
+<li>Read the request: service, property, timing, access and photos.</li>
+<li>Tap <b>Quote it</b>. The quote opens with their details filled in.</li>
+<li>Set bedrooms and bathrooms. The three packages build themselves. Adjust, add extras, then <b>Preview</b> and <b>Send</b>.</li>
+<li>Need more info first? Tap <b>Text</b> on the card. The "first reply" template opens in Messages.</li></ol>
+<div class="tip">The Growth hub tracks how fast you reply to new leads, and pings you if one has been waiting past your reply target (7am to 7pm).</div>
+</div></details>
+
+<details class="t"><summary>Someone rang for a quote</summary><div class="b">
+<ol><li>Pipeline → New → <b>New quote for a phone enquiry</b> (or <b>+ Add → Quote</b>).</li>
+<li>Fill in client, property, service, beds and baths. Send as normal.</li></ol>
+</div></details>
+
+<details class="t"><summary>Book a pre-sale clean from an accepted quote</summary><div class="b">
+<ol><li>Open the quote (ping, Today, or Money → Quotes).</li>
+<li>If they accepted online, it's marked accepted and, if they picked a date, it's already on the roster. If they told you instead, tap their package choice, then <b>Mark accepted</b>.</li>
+<li><b>Approved? Turn into a job</b>: date, team arrival and finish time → <b>Add to roster</b>.</li>
+<li>Under Next steps, <b>Send the deposit invoice</b>.</li>
+<li>Send the <b>Booking confirmation</b> text. It links them to their job page.</li>
+<li>On the roster, open the job: assign the team, check the areas, set the agent if there is one.</li></ol>
+</div></details>
+
+<details class="t"><summary>Finish a job properly</summary><div class="b">
+<ol><li>Every area done with after photos, lock-up ticked.</li>
+<li>Finish tab → mark the job ready → <b>Clock off now</b>.</li>
+<li><b>Best before &amp; afters</b>: pick the pair for each area, or <b>Skip, none</b>. If you skip, nothing tells the client to expect them.</li>
+<li><b>Invoice the balance</b> (the deposit already paid is shown and taken off) and send it. The thank-you and job link go with it.</li>
+<li>Upload the walkthrough video and remaining photos if you have them.</li>
+<li>At 6pm, log actual hours and costs when the ping arrives.</li></ol>
+</div></details>
+
+<details class="t"><summary>Add a new cleaner</summary><div class="b">
+<ol><li>If they applied through the careers page: <b>Pipeline → Hiring</b> → open them → score, notes → <b>Book trial and add to the team list</b>.</li>
+<li>Didn't apply? Tools → <b>Onboarding new starters</b> → <b>+ Add a new starter</b>.</li>
+<li>In Onboarding, send their contract and new starter form (each from the business number).</li>
+<li>Tools → <b>Team passcodes</b> → create their passcode → <b>Text it</b>.</li>
+<li>Tools → Manage team → <b>Send invite</b> to the team app.</li>
+<li>Put their first shift on the roster. First-day info shows on their roster before the day.</li>
+<li>When everything is ticked: <b>All set up: move to On the team</b>.</li></ol>
+</div></details>
+
+<details class="t"><summary>Run the weekly pay</summary><div class="b">
+<ol><li>Tools → <b>Run pay</b> (or Team &amp; pay → Run).</li>
+<li>Check each person's hours. They come from clock-in and clock-off, otherwise the roster. <b>+ Add shift</b> for anything missing.</li>
+<li>Set the payment date and save. Payslips are made.</li>
+<li>Pay the net amounts from the bank, then mark sent. Mark super and PAYG paid when you pay them.</li></ol>
+<div class="tip">Payroll is also set up in Xero. Keep the two matching until you settle on one.</div>
+</div></details>
+
+<details class="t"><summary>A client wants extra work done mid-job</summary><div class="b">
+<ol><li>Desk → Bookings → the job → <b>Extras for their OK</b>.</li>
+<li>What it is, price inc GST, an optional note → <b>Send for their OK</b>.</li>
+<li>They approve or decline on their link. Approved extras go onto the unpaid invoice for that booking, if there is one.</li></ol>
+</div></details>
+
+<details class="t"><summary>Something got damaged</summary><div class="b">
+<ol><li>Desk → Records → <b>Incidents &amp; damage</b> → <b>Log an incident</b>.</li>
+<li>Date, job, what happened, who was on, what you did, photos.</li>
+<li><b>Print or PDF</b> to send your insurer. Tick reported to insurer.</li></ol>
+</div></details>
+
+<details class="t"><summary>Stop servicing someone</summary><div class="b">
+<p>Desk → Records → <b>Do not service</b> → <b>Add someone</b>. If they fill in the quote form, you get a warning and the lead is flagged. Nothing is sent to them.</p>
+</div></details>
+</section>
+
+<!-- ================= TODAY & DESK ================= -->
+<section data-s id="today">
+<h2>Today &amp; <em>the desk</em></h2>
+<p class="sec-sub">Where every day starts.</p>
+
+<details class="t"><summary>Today<small>Your home screen</small></summary><div class="b">
+<span class="where">Tab bar → Today</span>
+<p>From top to bottom:</p>
+<ul><li><b>The desk</b> and <b>Growth hub</b> cards: one tap into each.</li>
+<li><b>Needs you now</b>: shift refusals, accepted quotes, payments, overdue invoices, best before &amp; afters to pick.</li>
+<li><b>On today</b>: each job with quick buttons.</li>
+<li><b>Yesterday, not marked ready</b>: agent jobs you didn't close off.</li>
+<li><b>Leads and people waiting</b>, then <b>When you get a minute</b>.</li>
+<li><b>Tomorrow</b>, and the wage estimate for this pay period.</li></ul>
+<p>If nothing needs you, it says so.</p>
+</div></details>
+
+<details class="t" id="t-desk"><summary>The desk<small>Everything waiting on you, with drafts ready</small></summary><div class="b">
+<span class="where"><a href="/desk/">Tools → Desk</a></span>
+<table><tbody>
+<tr><td><b>What needs me</b></td><td>Leads, hot quotes, unpaid deposits, client feedback, extras and more, most urgent first. Drafts open in Messages. Tap <b>Done</b> to clear one.</td></tr>
+<tr><td><b>Bookings</b></td><td>Live, upcoming and the last 10 days. Per booking: post an update to the client's feed, send extras for their OK, home notes, entry condition report, show or hide the finish estimate.</td></tr>
+<tr><td><b>Money ahead</b></td><td>Coming in (owing, deposits unpaid, booked not invoiced) and going out over 14 days (wages, outgoings, bills), plus GST and income tax to set aside.</td></tr>
+<tr><td><b>Diary</b></td><td>Free days over the next four weeks and leads wanting a date.</td></tr>
+<tr><td><b>Pricing check</b></td><td>Your time estimates per area against what jobs actually took, and suggested updates once an area has been timed on two jobs.</td></tr>
+<tr><td><b>Leads</b></td><td>Where work comes from, by source and agent, with marketing spend alongside.</td></tr>
+<tr><td><b>Nudges</b></td><td>Past clients worth a rebook text, and ready-made posts from recent after photos.</td></tr>
+<tr><td><b>Records</b></td><td>Backups, incidents and damage, do-not-service list.</td></tr>
+</tbody></table>
+<div class="tip">Home notes are kept against the address, so a returning client's notes are already there. The client can edit them too.</div>
+</div></details>
+
+<details class="t"><summary>Search all jobs and clients</summary><div class="b">
+<span class="where">Magnifying glass at the top, or Tools → All jobs &amp; clients</span>
+<p>Type a name, street or suburb. Each client shows their jobs, what's invoiced, paid and owing. Open a client for their full history.</p>
+</div></details>
+
+<details class="t"><summary>Activity (the bell)</summary><div class="b">
+<p>A running log of the last 60 days: shift replies, quotes and invoices opened and accepted, payments and more. The number on the bell is what's new since you last looked.</p>
+</div></details>
+</section>
+
+<!-- ================= PIPELINE ================= -->
+<section data-s id="pipeline">
+<h2><em>Pipeline</em></h2>
+<p class="sec-sub">Two boards: Clients and Hiring. Switch at the top.</p>
+
+<details class="t" id="t-requests"><summary>Clients board<small>New → Quoted → Booked → Follow up</small></summary><div class="b">
+<span class="where">Tab bar → Pipeline → Clients</span>
+<p>The line at the top shows how much is quoted and waiting, and how much is booked.</p>
+<table><tbody>
+<tr><td><b>New</b></td><td>Agent booking requests first, then website enquiries. <b>Quote it</b>, <b>Call</b> or <b>Text</b>.</td></tr>
+<tr><td><b>Quoted</b></td><td>Quotes waiting on a reply: opened or not, draft or sent. Declined and expired quotes from the last 60 days sit in a fold at the bottom.</td></tr>
+<tr><td><b>Booked</b></td><td>Accepted jobs: deposit paid, unpaid or not sent, and whether they're on the roster yet.</td></tr>
+<tr><td><b>Follow up</b></td><td>Finished jobs from the last 30 days: review asks and check-ins.</td></tr>
+</tbody></table>
+</div></details>
+
+<details class="t"><summary>Today-only special<small>A % off if they book today</small></summary><div class="b">
+<p>On a quoted card, offer a percentage off if they book today. You see what they save, then <b>Send offer</b> (texts them) or <b>Apply to the quote without texting</b>. The quote shows the special while it's live. <b>End offer</b> takes it off.</p>
+</div></details>
+
+<details class="t" id="t-hiring"><summary>Hiring board<small>Applied → Screened → Trial → Onboarding → On the team</small></summary><div class="b">
+<span class="where">Pipeline → Hiring</span>
+<p>Applications from your careers page (<a href="/jobs">/jobs</a>) land in Applied. Open one to see their application, then:</p>
+<ol><li>Score them out of 3 on reliability, attitude, availability and (after the trial) quality of work. Add notes from the call.</li>
+<li><b>Phone chat done: mark screened</b>.</li>
+<li>Set a trial date → <b>Book trial and add to the team list</b>. Now you can roster their trial shift.</li>
+<li><b>Trial went well: offer the job</b>. Contract and form go from Onboarding.</li>
+<li><b>All set up: move to On the team</b>. Or <b>Not a fit</b>.</li></ol>
+<p>Each card has <b>Text</b> with the right template for the stage (screening, trial, welcome, decline).</p>
+</div></details>
+</section>
+
+<!-- ================= MONEY ================= -->
+<section data-s id="money">
+<h2>Quotes &amp; <em>invoices</em></h2>
+<p class="sec-sub">Branded quotes and invoices, a client link and a PDF, paid by bank transfer or card.</p>
+
+<details class="t"><summary>The Money home screen</summary><div class="b">
+<span class="where"><a href="/money/">Tools → Quotes &amp; invoices</a></span>
+<p><b>Owed to you</b> and <b>Overdue</b> at the top, then Quotes and Invoices with their status: draft, sent, opened, accepted, paid, overdue. Settings live at the bottom: saved items and scope, package options and hours, business, bank and numbering, and Import from Jobber.</p>
+</div></details>
+
+<details class="t"><summary>Quote requests<small>Your own request form, not Jobber's</small></summary><div class="b">
+<span class="where"><a href="/money/#/requests">Tools → Quote requests</a></span>
+<p>Clients fill in <b>bardon-roster.netlify.app/quote</b>: service, property, timing, access, photos, contact. Each request is here with everything they sent. Open one and tap to quote it. Jobber requests can still be added by hand with <b>+ Add a request from Jobber</b>.</p>
+</div></details>
+
+<details class="t" id="t-quote"><summary>Build a quote<small>Packages, add-ons, price by area, price check</small></summary><div class="b">
+<span class="where">+ Add → Quote, or Quote it from a request</span>
+<ol><li><b>Client</b>: pick a previous client, a roster job, or type new. Mobile and email let you send it.</li>
+<li><b>The job</b>: property, suburb, service date (leave blank to let them pick), service, bedrooms, bathrooms.</li>
+<li><b>Fill in price and scope</b>. For pre-sale and deep cleans, three packages build from beds and baths: all-inclusive down to a budget version.</li>
+<li><b>Add-ons they can tick</b>. Anything a package already covers is hidden for that package. Add-ons with no price show as "priced to your home" and come to you as a request.</li>
+<li>Optional: <b>+ From saved items</b>, <b>+ Price by area</b> (kitchen, bathroom, toilet, laundry, living area) for clients who want less, or <b>+ Blank item</b>.</li>
+<li><b>Details</b>: valid until, deposit to book, note to client, include service policies.</li>
+<li><b>Price check</b> (optional): enter staff hours, your hours and materials to see break-even and the price that pays you and grows the business.</li></ol>
+<div class="tip">Changed a package price by hand? Changing beds or baths won't overwrite it until you tap <b>Rebuild from beds and baths</b>.</div>
+<div class="tip">Your hourly rate for package maths lives in Package options. Clients never see it.</div>
+</div></details>
+
+<details class="t" id="t-send"><summary>Send a quote or invoice</summary><div class="b">
+<ol><li>Open it → <b>Preview</b> to see what the client sees.</li>
+<li><b>Send</b>: choose Text (from the business number, lands in Messages) or email (Open Mail), or copy the message to paste anywhere.</li>
+<li>Edit the wording for this one send if you like. Templates are under Messages → Templates.</li></ol>
+<p>Once sent, changes show on the client's link straight away. The Progress panel shows created, sent, opened by client and paid. <b>Text a reminder</b> when it's sitting.</p>
+</div></details>
+
+<details class="t" id="t-accept"><summary>Accepted → on the roster</summary><div class="b">
+<p>Clients accept online and pick their package (and their date, if you left it blank). If they tell you instead, tap their choice, then <b>Mark accepted</b>.</p>
+<ol><li><b>Approved? Turn into a job</b>: date, team arrives, finishes around → <b>Add to roster</b>. Client, address and service are filled in.</li>
+<li><b>Booking confirmation</b>: check the text and send. It links them to their job page.</li>
+<li>Assign the team on the roster.</li></ol>
+<div class="tip"><b>Clients pick their date</b> (Money settings): set jobs per day, earliest day and weeks ahead. Accepted quotes with no date go straight onto the roster on the day they choose.</div>
+</div></details>
+
+<details class="t" id="t-deposit"><summary>Deposits<small>50% to secure, due the same day</small></summary><div class="b">
+<p>After acceptance, the quote's Next steps show <b>Send the deposit invoice</b>. Pre-sale, deep and bond deposits are due on the day; the booking stays tentative until it's paid. Today and the 4pm ping show any still unpaid.</p>
+</div></details>
+
+<details class="t" id="t-balance"><summary>Balance and full invoices</summary><div class="b">
+<p>From the quote: <b>Invoice the balance</b> after the clean, or <b>Invoice in full</b> if there was no deposit. The invoice shows the full amount, the deposit already paid, and what's left.</p>
+<p>Not from a quote? <b>+ Add → Invoice</b>. Use <b>Already paid → + Add a payment already made</b> for money paid before this invoice. It isn't counted as new money in your books or Xero.</p>
+<p>Link the invoice to the roster job and the job report goes with it.</p>
+</div></details>
+
+<details class="t" id="t-payment"><summary>Record a payment, tips and receipts</summary><div class="b">
+<ul><li>Card payments through Stripe record themselves.</li>
+<li>Bank transfer, cash or other: open the invoice → <b>Record payment</b> → amount, date, how they paid.</li>
+<li>Paid more than the invoice? Tick <b>Tip included</b> or use <b>Add tip</b>. Tips are kept apart from the invoice, the receipt thanks them, and Xero files them separately.</li>
+<li><b>Send a receipt</b> from the invoice. View receipt to save it as a PDF.</li></ul>
+</div></details>
+
+<details class="t"><summary>Regular cleans: Invoice now</summary><div class="b">
+<p>Finished regular cleans from today and yesterday that aren't invoiced show on Today. <b>Invoice now</b> works out hours × your hourly rate + GST, using hours you logged, then clock-in and clock-off, then the roster.</p>
+</div></details>
+
+<details class="t"><summary>Settings worth setting once</summary><div class="b">
+<ul><li><b>Saved items, scope and prices</b>: reusable lines, beds/baths per-visit prices, service policies shown at the end of quotes.</li>
+<li><b>Package options and hours</b>: names, base hours, hours per bed and bath, highlights, full scope, which extras each package covers, your hourly rate.</li>
+<li><b>Business, bank and numbering</b>: details on every document, bank details, card payments, numbering and defaults, Clients pick their date.</li>
+<li><b>Import from Jobber</b>: bring across old quotes and invoices.</li></ul>
+</div></details>
+</section>
+
+<!-- ================= ROSTER ================= -->
+<section data-s id="roster">
+<h2>The <em>roster</em></h2>
+<p class="sec-sub">Who's where, when, and whether they've confirmed.</p>
+
+<details class="t"><summary>Reading the roster</summary><div class="b">
+<span class="where">Tab bar → Roster</span>
+<p>Calendar view by week, days colour-coded. Multi-day jobs show on each of their days. Tap any job to open it. Filter by person to see one cleaner's week.</p>
+</div></details>
+
+<details class="t" id="t-addjob"><summary>Add or edit a job</summary><div class="b">
+<span class="where">+ Add → Job on the roster, or tap a job → Edit</span>
+<ol><li>Client name, street address, suburb, service.</li>
+<li><b>When and who</b>: date, start, finish and the people on it. Someone starting late or leaving early? Set their own <b>shift times</b>.</li>
+<li><b>+ Add another day</b> copies the last day to the next one. Each day shows on the roster and the team confirms each.</li>
+<li><b>Agent</b> and <b>Ready for</b> (photography, open home, settlement, bond inspection) if it's an agent job.</li>
+<li><b>Areas to clean</b>: remove what isn't there, add what is. Every home is different.</li>
+<li>Job price, meeting spot, notes for the team → <b>Save job</b>.</li></ol>
+<div class="tip">The same client booked again on another job? The sheet offers <b>Make it one booking</b> so it's one job and one report.</div>
+<p>From an open job: <b>Job updates</b> (the on-the-day screen), <b>Client view</b>, <b>Text client</b>, <b>Text team</b>, <b>Duplicate</b>, <b>Remove day</b>.</p>
+</div></details>
+
+<details class="t" id="t-confirm"><summary>Shift confirmations</summary><div class="b">
+<p>The team confirms each shift with one tap on the roster or in the team app (<b>I'll be there</b> or <b>Can't</b>, with a reason). You get a ping either way, and at 5pm you get a list of tomorrow's shifts not confirmed and jobs with nobody on them.</p>
+<p>Tools → <b>Shift confirmations</b> shows everything over the next two weeks. Mark one by hand if they replied by text. <b>Changing someone's times resets their confirmation.</b></p>
+</div></details>
+
+<details class="t"><summary>Text the team, copy the roster</summary><div class="b">
+<ul><li><b>Text team</b> (from a job): each person gets their own text from the business number. Alarm and lockbox codes are fine here.</li>
+<li><b>Copy roster to text</b> (Tools): pick everyone or one person, copy the week and paste it anywhere. It asks them to confirm on the roster.</li></ul>
+</div></details>
+
+<details class="t"><summary>First-day info<small>What new starters see before shift one</small></summary><div class="b">
+<p>Tools → <b>First-day info</b>. New starters see it on the roster before their first shift with the date, start time and address filled in from their job. Tick "New starter" against them in Manage team. You get a 5pm ping if they haven't read it.</p>
+</div></details>
+
+<details class="t"><summary>Regular clients</summary><div class="b">
+<span class="where">Tools → Regular clients</span>
+<p><b>+ Add a regular client</b>: name, mobile, address, how often, next visit, times, team, notes. The hub keeps 8 weeks of visits on the roster. Saving updates future visits nobody has confirmed or started yet. <b>Stop this regular client</b> when they finish.</p>
+<p>Regulars still in Jobber show under "From Jobber, not set up here yet". Check them, untick any that have stopped, <b>Bring these over</b>.</p>
+</div></details>
+
+<details class="t"><summary>Manage team and agents</summary><div class="b">
+<ul><li><b>Manage team</b> (Tools → Roster): add people, mobiles, new-starter flag, <b>Photos for clients</b> (only shown once you tick they're OK with it), and team app invites.</li>
+<li><b>Real estate agents</b> (Tools → Clients): add the agent and agency. Each gets a private link showing only the jobs you tag with their name. <b>Text it</b> once. <b>New link</b> if it ever goes to the wrong person.</li></ul>
+</div></details>
+
+<details class="t"><summary>Wage estimate</summary><div class="b">
+<p>Tools → <b>Wage estimate</b>: gross wages and total cost (with super) for this pay period, from the roster. Your own shifts aren't counted. <b>Pay settings</b>: weekly or fortnightly, a period start date, the 30-minute unpaid lunch on shifts over 4½ hours, and extra public holidays (Queensland's for 2026 and 2027 are in).</p>
+</div></details>
+
+<details class="t"><summary>Restock list</summary><div class="b">
+<p>When the team flags a product as running low on a job, it lands on Tools → <b>Restock list</b>. Only you see it. Tap <b>Bought</b> once you have it.</p>
+</div></details>
+</section>
+
+<!-- ================= ON THE DAY ================= -->
+<section data-s id="onday">
+<h2>On the <em>day</em></h2>
+<p class="sec-sub">The job screen: Areas, Photos, Team, Notes, Finish. Everything here feeds the client's link and report.</p>
+
+<details class="t"><summary>Open the job screen</summary><div class="b">
+<p>Today → tap the job (or Roster → job → <b>Job updates</b>). Five tabs along the top. Areas, checklists, photos and notes carry across every day of a multi-day job. Clock in and off is per day.</p>
+<p><b>Client view</b> shows exactly what they see. Your own visits don't count in their engagement.</p>
+</div></details>
+
+<details class="t"><summary>Areas tab<small>Before photos, checklist, after photos</small></summary><div class="b">
+<ol><li>Tap an area. Take before photos.</li>
+<li>Work the checklist. <b>Tick all</b>, then untick what you didn't do. Unticked items don't show on the client's report.</li>
+<li>Take after photos. <b>At least one after photo is needed before an area can be marked done.</b></li></ol>
+<p><b>+ Add or remove areas</b> if the home differs from the booking. Access details the client left are at the top under "From the client: access".</p>
+</div></details>
+
+<details class="t"><summary>Photos tab<small>Quick shots, bulk upload and sorting</small></summary><div class="b">
+<ul><li><b>Quick photo</b>: choose Before or After, tap the area, the camera opens.</li>
+<li><b>Lots from your photo library</b>: upload them all, then file them later under <b>To sort</b>.</li>
+<li>Sorting: tap a photo to see it big and file it. Tap the circles to pick several, or pick the first and last of a run and <b>Select between</b>. Choose before or after, then the area.</li></ul>
+<p>Filed photos show on the client's link under that area.</p>
+</div></details>
+
+<details class="t"><summary>Walkthrough videos<small>The property tour</small></summary><div class="b">
+<p>On the job screen, <b>Add walkthrough video</b>. Long videos are fine. Add several clips and they play in order. Clients and agents see it as a property tour once it's processed.</p>
+<div class="warn">Keep the screen open until the upload finishes. If the signal drops it carries on where it left off. If one says "Didn't process", delete and upload again.</div>
+</div></details>
+
+<details class="t"><summary>Team tab<small>Clock in and off, days</small></summary><div class="b">
+<p>Each person taps <b>I've arrived</b> and <b>Clock off</b>. Hours come from these taps, so clock off when you leave the house. Forgot? <b>Type in times</b>. <b>+ Add another day to this job</b> lives here too.</p>
+<p>You get pinged if someone hasn't checked in 15 minutes after their start, or hasn't clocked off 90 minutes after their end.</p>
+</div></details>
+
+<details class="t"><summary>Notes tab<small>For the agent, and supplies</small></summary><div class="b">
+<ul><li><b>Notes for the agent</b>: anything they should know before photos or buyers, like a cracked oven seal. The agent sees it under "For your attention".</li>
+<li><b>Running low on supplies?</b> Only you see these. They go on the restock list.</li></ul>
+</div></details>
+
+<details class="t" id="t-ready"><summary>Finish tab and Job ready<small>Lock-up, finish time, next steps</small></summary><div class="b">
+<ol><li>Check every area is done, afters are taken and the house is locked up. Tick the <b>lock-up</b> items.</li>
+<li><b>Finish time the agent sees</b>: update the estimated finish if it moves.</li>
+<li>Mark the job ready, then <b>Clock off now</b>.</li>
+<li><b>Job ready · next steps</b> opens:
+<ul><li><b>Best before &amp; afters</b>: pick a pair per area, <b>Skip, none</b>, or <b>Decide later</b>.</li>
+<li><b>Invoice the balance</b>, or send the balance invoice already drafted. The thank-you and job link go with it.</li>
+<li>Or just <b>Send the thank-you &amp; job link</b>. You check the text before it goes.</li></ul></li></ol>
+<div class="tip">Once someone has arrived, the job shows <b>Tell the client we've started</b>: one tap opens the "we're on site" text with their job link.</div>
+</div></details>
+
+<details class="t"><summary>Check for lost progress</summary><div class="b">
+<p>Something missing after a job was edited, moved or merged? Job screen → <b>Check this job for lost progress</b>. It finds photos and ticks saved under areas the job no longer lists, under other jobs for the same client or street, and under jobs no longer on the roster. Tick what belongs and <b>Put it back</b>.</p>
+</div></details>
+</section>
+
+<!-- ================= CLIENT & AGENT LINKS ================= -->
+<section data-s id="clients">
+<h2>Client &amp; <em>agent links</em></h2>
+<p class="sec-sub">What people outside the business see. No logins for them.</p>
+
+<details class="t"><summary>The client's job link</summary><div class="b">
+<p>Every job gets a private link (it goes in the booking confirmation and thank-you texts). It shows:</p>
+<ul><li>Booking details, add to calendar, text Jack.</li>
+<li><b>How do we get in?</b> They fill in keys, parking, pets and notes for the team. (They're told not to put alarm or lockbox codes here.)</li>
+<li><b>Before we arrive</b> and <b>What happens next</b>.</li>
+<li>Live progress while you're cleaning, with the house illustration filling in area by area, the finish estimate, and your feed updates.</li>
+<li>Before &amp; afters first, then every area with its ticked checklist and photos, the property tour, notes for their attention, and lock-up.</li>
+<li><b>Who's looking after the home</b> (first names and photos you've cleared).</li>
+<li><b>How did we go?</b> Really happy → Google review; Something's not right → straight to you. Then <b>Book again</b>.</li></ul>
+<p>Their quote and invoices open from the same place. They can share a view-only copy with someone else.</p>
+</div></details>
+
+<details class="t"><summary>The agent portal</summary><div class="b">
+<p>Each agent's private link shows only their tagged jobs: <b>On site today</b>, <b>Coming up</b>, <b>Handover reports</b>, <b>Price &amp; billing</b> (every quote and invoice for their jobs), your insurance details and a certificate of currency request, <b>Book a clean</b>, and <b>Message Jack</b> (lands in your Messages; your replies reach them by text).</p>
+<p>From a job they can <b>Share with the vendor</b>: the vendor gets that clean only.</p>
+<p>Agent bookings land in Pipeline → New as booking requests.</p>
+</div></details>
+
+<details class="t"><summary>Bond evidence pack</summary><div class="b">
+<p>For bond cleans, a printable pack: the clean, the entry condition report, area by area with photos, notes from the team, and lock-up. Open it from the client link and print or save as PDF for the tenant or agency.</p>
+</div></details>
+
+<details class="t"><summary>Client engagement<small>Who opens what, and for how long</small></summary><div class="b">
+<span class="where"><a href="/engage/">Tools → Client engagement</a></span>
+<p>Per client: links opened, visits and reading time, what they've been sent and an activity timeline. "Engaged" means 3+ minutes or 4+ visits. Your own visits while logged in don't count. Opening a link inside a text preview doesn't count either.</p>
+</div></details>
+
+<details class="t"><summary>Demo links for the website</summary><div class="b">
+<p><b>/demo</b> shows a sample client link and <b>/demo/agent</b> a sample agent portal, for the website and for pitching agents. Tools → <b>Website &amp; demo photos</b> picks which photos they use.</p>
+</div></details>
+</section>
+
+<!-- ================= MESSAGES ================= -->
+<section data-s id="messages">
+<h2><em>Messages</em></h2>
+<p class="sec-sub">Every text, one place, from the business number.</p>
+
+<details class="t"><summary>Texting clients, leads and the team</summary><div class="b">
+<span class="where">Tab bar → Messages</span>
+<ul><li><b>+ New message</b>: type a name or paste a number. New number? <b>Add contact</b> to save a name. You can import contacts from a shared contact file.</li>
+<li>The <b>Team</b> filter shows staff threads.</li>
+<li>Agent portal messages land here too.</li>
+<li>A number that replied STOP is blocked.</li></ul>
+<div class="tip">Not seeing replies arrive live? Tap <b>Turn on replies</b> once. Until then they still show within a minute of opening Messages.</div>
+</div></details>
+
+<details class="t" id="t-templates"><summary>Text templates</summary><div class="b">
+<span class="where">Messages → Templates</span>
+<p>Every client text in the hub: first reply to a lead, booking confirmation, day-before, started, clean done, review asks, hiring stages and more. Grey parts are typed in each time. Edit any, <b>Reset</b> to go back, or <b>+ Add your own template</b>. Save your <b>Google review link</b> here once.</p>
+<p>When a template opens for a send, you can change it for just that text.</p>
+</div></details>
+</section>
+
+<!-- ================= BOOKS ================= -->
+<section data-s id="books">
+<h2>Profit &amp; <em>books</em></h2>
+<p class="sec-sub">What you actually make, per job and per hour.</p>
+
+<details class="t"><summary>Profit &amp; expenses</summary><div class="b">
+<span class="where"><a href="/books/">Tools → Profit &amp; expenses</a></span>
+<p>Profit per hour by service, the coming 28 days, your plan (break-even and goal), profit and loss, GST for BAS, cash in, profit by job and the last six months. "What to do" at the top lists anything missing: unpriced jobs, unlogged hours, expenses not logged for a while.</p>
+<div class="tip">Revenue counts on each job's first day. Wages use actual hours where logged, otherwise rostered hours. Your own hours aren't costed: they show as your $/hr.</div>
+</div></details>
+
+<details class="t" id="t-expense"><summary>Log an expense<small>Snap the receipt, 10 seconds</small></summary><div class="b">
+<span class="where">+ Add → Expense</span>
+<ol><li>Pick up to a handful of receipt photos at once. Claude reads them.</li>
+<li>Check the amount, GST and category, then save.</li>
+<li>No receipt? <b>+ Manual</b>.</li></ol>
+<p><b>Regular outgoings</b>: add everything you pay on repeat (insurance, phone, software, fuel) once and it's counted automatically. Go through the list and tap <b>Don't pay</b> on what doesn't apply.</p>
+</div></details>
+
+<details class="t"><summary>Log actual hours and costs per job</summary><div class="b">
+<p>At 6pm you get a ping for today's finished jobs. Open each and log the real total hours and any costs. That turns into the job's real hourly rate and profit, and feeds the Pricing check on the desk.</p>
+</div></details>
+
+<details class="t"><summary>Xero</summary><div class="b">
+<p>Every payment you receive and every expense you log goes to Xero as Receive Money and Spend Money (receipt attached), with GST split out. Nothing goes across as an invoice or bill, so Ignite's invoice and bill limits don't bite. It syncs every 15 minutes. Match them to your bank feed in Xero's reconcile screen.</p>
+<p>Setup (once, on a laptop) is step by step on the Books page under <b>Xero for BAS</b>. Set GST to the cash basis in Xero.</p>
+</div></details>
+
+<details class="t"><summary>Jobber sync</summary><div class="b">
+<p>While regulars are still in Jobber: paste Jobber's calendar link (Settings → Calendar sync) under Books → <b>Jobber sync</b>. Recurring visits come onto the roster every 6 hours and keep their times in step. One-off Jobber jobs are listed for you to add or ignore.</p>
+</div></details>
+
+<details class="t"><summary>Price calculator</summary><div class="b">
+<span class="where"><a href="/pricing/">Tools → Price calculator</a></span>
+<p>Service, beds, baths, cleaners and hours, your hours, travel and costs. It shows break-even, your pay after tax, what's kept to grow, the client price inc GST and the 50% deposit, then <b>Start a quote</b>. "How past jobs went" compares with real logged jobs. Set your targets and overheads once.</p>
+</div></details>
+</section>
+
+<!-- ================= TEAM ================= -->
+<section data-s id="team">
+<h2>Team &amp; <em>pay</em></h2>
+<p class="sec-sub">From applicant to paid, with every record in one place.</p>
+
+<details class="t"><summary>Onboarding new starters</summary><div class="b">
+<span class="where">Tools → Onboarding new starters</span>
+<p>Everyone from trial shift to day one. Each card shows what's done: contract, new starter form, first-day info, shirt given. <b>Next</b> tells you the one thing to do. Every text goes from the business number and shows in Messages.</p>
+<p>Each starter gets a personal onboarding page with their first-day details, and a personal new starter form link (prefilled).</p>
+</div></details>
+
+<details class="t"><summary>Employment contracts</summary><div class="b">
+<span class="where">Tools → Employment contracts</span>
+<p>Add name, email, start date. <b>Email it</b>, <b>Text it</b> or <b>Copy link</b>. When they sign, it moves to Signed by itself, you get a ping, and their hiring card ticks Contract. <b>View signed copy</b> to print or save the PDF.</p>
+</div></details>
+
+<details class="t"><summary>Team profiles</summary><div class="b">
+<span class="where"><a href="/team/">Tools → Team profiles &amp; pay runs</a></span>
+<p>The new starter form fills each profile: contact, tax, super, bank, ID, availability and paperwork ticks. Private details are hidden until you tap <b>Show in full</b>.</p>
+<div class="tip">Once someone is set up in Xero payroll and your bank payees, <b>Delete private details</b> removes their TFN, bank, passport and ID photo from the hub.</div>
+<p>Each profile also has this financial year's totals, every payslip, and their <b>pay link</b>.</p>
+</div></details>
+
+<details class="t"><summary>Pay runs and payslips</summary><div class="b">
+<p>See <b>How do I… → Run the weekly pay</b>. Each payslip can be emailed, copied as text or marked sent. The top of Team &amp; pay shows super owing and PAYG held for the ATO, and warns when super is overdue.</p>
+<p>Each person's <b>pay link</b> shows their own payslips and year to date. <b>Text it</b> once. Shared with the wrong person? <b>Replace their link</b>: the old one stops working straight away.</p>
+<div class="warn">HELP repayments aren't worked out automatically yet. Use the tax override on their pay.</div>
+</div></details>
+
+<details class="t" id="t-passcodes"><summary>Team passcodes</summary><div class="b">
+<span class="where"><a href="/passcodes/">Tools → Team passcodes</a></span>
+<p>Each person logs in to the roster and team app with their mobile and a 4-digit passcode. <b>Create passcode</b> (random) or type one and <b>Use this</b>, then <b>Text it</b>. It's only shown once.</p>
+<ul><li>5 wrong tries locks them out for 15 minutes. 10 in a row locks it until you <b>Unlock</b> it here (you get a ping).</li>
+<li>Logins last 7 days.</li>
+<li>Setting a new passcode logs them out everywhere. <b>Turn off login</b> when someone leaves.</li></ul>
+</div></details>
+</section>
+
+<!-- ================= TEAM APP ================= -->
+<section data-s id="teamapp">
+<h2>The <em>team app</em></h2>
+<p class="sec-sub">What your cleaners use on their phones, and how you edit it.</p>
+
+<details class="t"><summary>What a cleaner sees</summary><div class="b">
+<span class="where"><a href="/me/#/who">Tools → Team app: see it as a cleaner</a></span>
+<ul><li><b>Today</b>: their job, the brief, their areas, this week's focus. Confirm shifts.</li>
+<li><b>Before you go in</b>: set up and read the brief.</li>
+<li>Per area: before photos, the checklist with timers, after photos. The camera shows each before photo faded so they line up the after.</li>
+<li><b>Flag something</b>: damage, something that won't come clean, extra work, or low supplies.</li>
+<li><b>Wrap up and clock out</b>: last checks, lock-up, leaving the house.</li>
+<li><b>My pay</b>, <b>My shifts</b> (24 hrs notice to change), and kind words from clients.</li>
+<li><b>Toolkit</b>: every guide, searchable. "Don't remember it. Look it up."</li></ul>
+<p>Their ticks and photos go straight onto the job report.</p>
+</div></details>
+
+<details class="t"><summary>Edit the toolkit</summary><div class="b">
+<span class="where"><a href="/me/#/kit">Tools → Team app: toolkit, focus &amp; rules</a></span>
+<p>Tap any guide → <b>Edit</b>. Each has: the non-negotiables, done means, what you need, step by step, never, easy to miss, and pictures (your photos replace the drawings). <b>+ Add</b> a new guide.</p>
+<div class="tip">End any step with <kbd>[5 min]</kbd> or <kbd>[30 sec]</kbd> and it gets a timer button. Checklist timers have their own settings: 0 turns one off.</div>
+<p><b>Focus</b>: this week's headline on everyone's Today screen, plus who the team calls. <b>Rules</b>: the non-negotiables.</p>
+</div></details>
+
+<details class="t"><summary>Welcome tour and invites</summary><div class="b">
+<p>New team members see the welcome tour the first time they open the app. Edit it under <a href="/me/#/tour">Team app: welcome tour</a>. Put a word in *asterisks* for italics. After a big change, tick <b>Show the tour again to everyone</b>.</p>
+<p>Send each person their invite from Manage team.</p>
+</div></details>
+
+<details class="t"><summary>Who's using it</summary><div class="b">
+<span class="where"><a href="/teamengage/">Tools → Team app: who's using it</a></span>
+<p>Who's opened it, added it to their home screen, finished the tour, and comes back. Most-read guides: a guide read a lot can mean it's useful, or that the standard isn't clear yet.</p>
+</div></details>
+</section>
+
+<!-- ================= GROWTH ================= -->
+<section data-s id="growth">
+<h2><em>Growth</em></h2>
+<p class="sec-sub">Marketing measured in leads, won jobs and revenue.</p>
+
+<details class="t"><summary>Growth hub</summary><div class="b">
+<span class="where"><a href="/marketing/">Today → Growth hub</a></span>
+<p><b>Your week</b> shows what's worth doing now and the numbers: won (90 days), leads (30 days), median first reply, Google reviews this month, active agent partners, clients opted in to offers. Then tabs:</p>
+<table><tbody>
+<tr><td><b>Leads &amp; speed</b></td><td>Who's waiting on a first reply, reply speed, the optional instant "got it" text (confirms receipt only, no prices, no promised reply time; off until you switch it on).</td></tr>
+<tr><td><b>Reviews</b></td><td>Everyone who's finished gets asked the same way. Ready to ask, one gentle reminder, they left one. Log your Google count weekly or monthly.</td></tr>
+<tr><td><b>Agents</b></td><td>Agent pipeline and who's due a catch-up.</td></tr>
+<tr><td><b>Past clients</b></td><td>Worth a nudge, referral asks, referred leads, marketing consent.</td></tr>
+<tr><td><b>Sources &amp; ads</b></td><td>Where work comes from, paid channels, spend per won job, tracked links, Google Ads.</td></tr>
+<tr><td><b>Content, PR and brand</b></td><td>Media opportunities, pitches and coverage, story angles, colours and type, copy blocks, files and links.</td></tr>
+</tbody></table>
+</div></details>
+
+<details class="t" id="t-reviews"><summary>Asking for reviews</summary><div class="b">
+<p>Growth hub → Reviews. Drafts are written for each finished client. Tap one, check it, send. One reminder only, after a few days. Google doesn't allow asking only the happy ones, so everyone gets asked the same way. You get a 10am ping when asks are ready.</p>
+</div></details>
+
+<details class="t"><summary>Media opportunities<small>PR from the morning news</small></summary><div class="b">
+<p>Each morning the hub reads the news and flags stories you could comment on: why now, your angle, who to pitch, and a draft pitch email. <b>Rewrite</b>, <b>Add to my pitches</b> or <b>Not relevant</b>. Tap for story ideas any time.</p>
+<div class="warn">Drafts only. Check every line is true before it goes out.</div>
+</div></details>
+
+<details class="t"><summary>Social &amp; Google posts</summary><div class="b">
+<span class="where"><a href="/social/">Tools → Social &amp; Google posts</a></span>
+<p>Posts are made from your job photos with captions written. On post days you get an 8am ping. Open the post → it saves the image and copies the caption → follow the steps for Google or Instagram → <b>Mark posted</b>. Missed ones wait a week.</p>
+<ul><li><b>Photo &amp; video ideas</b>: shot ideas for the next job.</li>
+<li><b>How &amp; how often</b>: your posting rhythm and why.</li>
+<li><b>Other platforms</b>: which are worth it and which to skip for now.</li></ul>
+<div class="tip">Check each photo for anything private before posting. <b>Never use this photo</b> removes one for good.</div>
+</div></details>
+
+<details class="t"><summary>Website &amp; demo photos</summary><div class="b">
+<p><a href="/demo-photos/">Tools → Website &amp; demo photos</a>: page by page, choose which job photos the website and demo links use.</p>
+</div></details>
+</section>
+
+<!-- ================= AUTOMATIC ================= -->
+<section data-s id="auto">
+<h2>What happens <em>automatically</em></h2>
+<p class="sec-sub">Pings to you, and the few things that run on their own. None of these message clients.</p>
+<div class="card">
+<table><thead><tr><th>When</th><th>What you get</th></tr></thead><tbody>
+<tr><td>Any time</td><td>Shift accepted or refused, quote accepted, payment received, new quote request, client texts and feedback, access details added by a client, team flags and low supplies, someone clocking off, a job marked ready, contract signed, new starter form in, a team login locked.</td></tr>
+<tr><td>15 min after start</td><td>Someone hasn't checked in.</td></tr>
+<tr><td>90 min after end</td><td>Someone hasn't clocked off.</td></tr>
+<tr><td>1 hr after finish</td><td>Job not marked ready (and the agent still sees it in progress).</td></tr>
+<tr><td>7am–7pm</td><td>A new lead waiting past your reply target.</td></tr>
+<tr><td>8am, post days</td><td>Today's Google or Instagram post is ready.</td></tr>
+<tr><td>10am</td><td>Review requests ready.</td></tr>
+<tr><td>4pm</td><td>Deposit invoices still unpaid.</td></tr>
+<tr><td>5pm</td><td>Tomorrow: unconfirmed shifts, jobs with nobody on them, new starters who haven't read their info.</td></tr>
+<tr><td>6pm</td><td>Log today's actual hours and costs.</td></tr>
+<tr><td>Ongoing</td><td>Quotes opened 3+ days ago and not accepted, quotes about to expire, overdue invoices.</td></tr>
+<tr><td>Monday</td><td>7am last week's numbers; growth check and quiet weeks ahead.</td></tr>
+<tr><td>Morning</td><td>Media opportunities from the news.</td></tr>
+</tbody></table>
+</div>
+<div class="card"><h3>Running in the background</h3>
+<ul class="rules">
+<li>Regular clients: 8 weeks of visits kept on the roster.</li>
+<li>Jobber recurring visits synced every 6 hours (while connected).</li>
+<li>Payments and expenses sent to Xero every 15 minutes (while connected).</li>
+<li>Nightly backup of every hub record.</li>
+</ul></div>
+</section>
+
+<!-- ================= SAFETY ================= -->
+<section data-s id="safety">
+<h2>Safety <em>nets</em></h2>
+
+<details class="t"><summary>Backups</summary><div class="b">
+<p>The hub backs itself up every night. Desk → Records → <b>Backups</b>: <b>Back up now</b> before anything big, and <b>Download everything</b> every month or so into Google Drive, so there's a copy outside Netlify.</p>
+</div></details>
+
+<details class="t"><summary>Privacy and access</summary><div class="b">
+<ul><li>Hub pages are hidden from search engines.</li>
+<li>Client, agent, vendor and pay links are private, unguessable links. Replace any that goes to the wrong person.</li>
+<li>Team passcodes lock after repeated wrong tries.</li>
+<li>Alarm and lockbox codes go by private text, never on the client link or job notes clients can see.</li>
+<li>Delete TFN, bank and ID details from the hub once they're in Xero and your bank.</li></ul>
+</div></details>
+</section>
+
+<!-- ================= HELP ================= -->
+<section data-s id="help">
+<h2>Quick <em>fixes</em></h2>
+
+<details class="t"><summary>A page says "Log in first"</summary><div class="b"><p>Open the hub home, log in with your password, then go back to the page. Each device and the home-screen app need their own login.</p></div></details>
+<details class="t"><summary>Something looks out of date</summary><div class="b"><p>Tap <b>Refresh</b> at the top. If you've just deployed a change, close and reopen the home-screen app.</p></div></details>
+<details class="t"><summary>A text didn't send</summary><div class="b"><p>Check Messages for the "Mobile Message isn't connected" banner, and that the number didn't reply STOP. While it isn't connected, texts open on your own phone instead of going from the business number.</p></div></details>
+<details class="t"><summary>Photos or ticks went missing</summary><div class="b"><p>Job screen → <b>Check this job for lost progress</b>. Also check <b>To sort</b> on the Photos tab.</p></div></details>
+<details class="t"><summary>A cleaner can't log in</summary><div class="b"><p>Tools → Team passcodes: check they have a mobile on file and a passcode set; <b>Unlock</b> if locked, or give them a new one.</p></div></details>
+<details class="t"><summary>Someone's hours look wrong on pay</summary><div class="b"><p>Hours come from clock-in and clock-off where used, otherwise the roster, minus the unpaid lunch on long shifts. Fix the times on the job's Team tab or in the pay run before saving.</p></div></details>
+<details class="t"><summary>Xero sync shows a problem</summary><div class="b"><p>Books → Xero: anything that "didn't go across" is listed. Reload accounts from Xero and check the account mappings, then save.</p></div></details>
+</section>
+
+<!-- ================= CHANGES ================= -->
+<section data-s id="changes">
+<h2>What's <em>changed</em></h2>
+<p class="sec-sub">This playbook is updated every time the hub changes. Newest first.</p>
+<div class="card"><ul class="log" style="padding-left:18px;margin:0">
+<li><b>30 Oct 2026</b> · Playbook added to the hub. Covers every screen as of today, including the best before &amp; afters prompt at the end of each job, media opportunities with more story and photo ideas, and the bond evidence pack.</li>
+</ul></div>
+</section>
+
+</div>
+<p class="none" id="none">Nothing matches that. Try a simpler word, like "pay" or "photo".</p>
+</div>
+<button type="button" class="top-btn" id="top" aria-label="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+<script>
+(function(){
+  var q=document.getElementById('q'), all=document.getElementById('all'), none=document.getElementById('none');
+  var secs=[].slice.call(all.querySelectorAll('section[data-s]'));
+  var items=[].slice.call(all.querySelectorAll('details.t, .card'));
+  items.forEach(function(el){ el._html=el.innerHTML; el._txt=el.textContent.toLowerCase(); });
+  function esc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+  function mark(el,words){
+    el.innerHTML=el._html; if(!words.length) return;
+    var src='('+words.map(esc).join('|')+')', re=new RegExp(src,'gi'), has=new RegExp(src,'i');
+    var w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null), n, list=[];
+    while((n=w.nextNode())) if(has.test(n.nodeValue)) list.push(n);
+    list.forEach(function(t){ var s=document.createElement('span'); s.innerHTML=t.nodeValue.replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}).replace(re,'<mark>$1</mark>'); t.parentNode.replaceChild(s,t); });
+  }
+  var timer;
+  function run(){
+    var v=q.value.trim().toLowerCase(), words=v.split(/\s+/).filter(function(x){return x.length>1;}), any=false;
+    items.forEach(function(el){
+      var hit=!words.length || words.every(function(x){ return el._txt.indexOf(x)>=0; });
+      el.classList.toggle('hide',!hit);
+      mark(el, hit?words:[]);
+      if(el.tagName==='DETAILS') el.open=!!(words.length&&hit);
+      if(hit) any=true;
+    });
+    secs.forEach(function(s){
+      var vis=[].some.call(s.querySelectorAll('details.t, .card'),function(x){ return !x.classList.contains('hide'); });
+      s.classList.toggle('hide',!vis);
+    });
+    none.style.display=any?'none':'block';
+  }
+  q.addEventListener('input',function(){ clearTimeout(timer); timer=setTimeout(run,120); });
+  // Open a topic when linked to it directly
+  function openHash(){ var id=location.hash.slice(1); if(!id) return; var el=document.getElementById(id); if(el&&el.tagName==='DETAILS'){ el.open=true; setTimeout(function(){ el.scrollIntoView({block:'start'}); },30); } }
+  window.addEventListener('hashchange',openHash); openHash();
+  all.addEventListener('click',function(e){ var a=e.target.closest('a[href^="#"]'); if(!a) return; var el=document.getElementById(a.getAttribute('href').slice(1)); if(el&&el.tagName==='DETAILS') el.open=true; });
+  var top=document.getElementById('top');
+  window.addEventListener('scroll',function(){ top.style.display=window.scrollY>900?'grid':'none'; },{passive:true});
+  top.onclick=function(){ window.scrollTo({top:0,behavior:'smooth'}); };
+})();
+</script>
+</body></html>
