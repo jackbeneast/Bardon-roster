@@ -109,6 +109,7 @@ export default async (req) => {
   if (b.action === "save") {
     if (typeof b.cap === "string") { post.cap = b.cap.slice(0, 2200); post.edited = 1; }
     if (typeof b.head === "string") { post.head = b.head.replace(/[\r\n]+/g, " ").slice(0, 60); post.edited = 1; }
+    if (typeof b.note === "string") post.note = b.note.slice(0, 400);
     if (b.txt !== undefined) post.txt = b.txt ? 1 : 0;
     for (const k of ["fx", "fy"]) if (b[k] !== undefined) post[k] = Math.max(0, Math.min(1, Number(b[k]) || 0));
     await savePosts(s, posts);
@@ -146,7 +147,9 @@ export default async (req) => {
     const bins = await Promise.all(post.ph.map((x) => thumb(s, x)));
     if (bins.some((x) => !x)) { const np = await swapPhoto(s, id); return json({ ok: true, post: np, again: !!(np && np.ph.length), note: "A photo was missing, so it's been swapped." }); }
     let w;
-    try { w = await writeCaption(post, bins.map(b64)); }
+    const recent = posts.filter((p) => p.id !== id && p.ch === post.ch && p.cap && p.date <= post.date).sort((a, c) => c.date.localeCompare(a.date)).slice(0, 6)
+      .map((p) => { const ls = p.cap.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#")); return `${ls[0]}${ls.length > 1 ? ` … ${ls[ls.length - 1]}` : ""}`.slice(0, 220); });
+    try { w = await writeCaption(post, bins.map(b64), { recent }); }
     catch (e) { return json({ error: e.message }, e.status || 502); }
     if (w.priv || (!w.usable && !post.lu)) {
       const np = await swapPhoto(s, id, { reject: true });

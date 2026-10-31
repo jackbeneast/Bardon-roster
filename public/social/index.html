@@ -64,6 +64,7 @@ h3{font:600 15.5px/1.3 var(--sans);color:var(--d);margin:0}
 label.l{display:block;font:600 13px var(--sans);color:var(--d);margin:14px 0 6px}
 textarea,input[type=text],select{width:100%;font:400 15px/1.5 var(--sans);color:var(--d);background:var(--w);border:1.5px solid var(--l);border-radius:9px;padding:10px 12px}
 textarea{min-height:220px;resize:vertical}
+textarea.note{min-height:76px}
 .cnt{font-size:12px;color:var(--m);text-align:right;margin-top:4px}
 .tog{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--w);border:1px solid var(--l);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px;color:var(--d)}
 .tog input{width:22px;height:22px;accent-color:var(--t)}
@@ -285,7 +286,8 @@ function viewPost(p){
   if(p.kind!=='pair'&&p.txt) h+='<label class="l" for="hd">Headline</label><input type="text" id="hd" maxlength="60" value="'+esc(p.head||'')+'">';
   h+='<label class="l" for="fpos">Photo position</label><input type="range" id="fpos" min="0" max="100" value="'+Math.round(((cur.axis==='x'?p.fx:p.fy)==null?.5:(cur.axis==='x'?p.fx:p.fy))*100)+'" aria-label="Move the photo within the frame">';
   h+='<label class="l" for="cap">'+(p.ch==='gbp'?'Post text':'Caption')+'</label><textarea id="cap"'+(writing[p.id]?' readonly':'')+'>'+esc(p.cap||'')+'</textarea><div class="cnt" id="cnt">'+(p.cap||'').length+(p.ch==='gbp'?' / 1500':' / 2200')+'</div>';
-  h+='<div class="ctl"><button type="button" class="btn sm" data-rewrite'+(D.ai&&!writing[p.id]?'':' disabled')+'>'+(p.ai?'Rewrite with Claude':'Write with Claude')+'</button>'+(p.ch==='gbp'?'<button type="button" class="btn sm" data-copylink>Copy button link</button>':'')+'</div>';
+  if(D.ai&&!p.status) h+='<label class="l" for="note">Anything about this job? <span style="font-weight:400;color:var(--m,#777)">(optional)</span></label><textarea id="note" class="note" maxlength="400" placeholder="e.g. 50-year-old oven, three hours on the door glass alone. Or a pet peeve, a funny moment, how the client reacted.">'+esc(p.note||'')+'</textarea>';
+  h+='<div class="ctl"><button type="button" class="btn sm" data-rewrite'+(D.ai&&!writing[p.id]?'':' disabled')+'>'+((p.note||'').trim()?'Write it with my note':(p.ai?'Rewrite with Claude':'Write with Claude'))+'</button>'+(p.ch==='gbp'?'<button type="button" class="btn sm" data-copylink>Copy button link</button>':'')+'</div>';
   h+='<h2>How to post <em>this one</em></h2>'+stepsFor(p);
   if(p.ch==='gbp') h+='<div class="row2"><a class="btn" href="https://www.google.com/search?q=my+business" target="_blank" rel="noopener">Open my Google profile</a></div>';
   else h+='<div class="row2"><a class="btn" href="instagram://camera" data-ig>Open Instagram</a></div>';
@@ -542,7 +544,7 @@ document.addEventListener('click',function(e){
     inLine(function(){ return api('POST',{action:'swap',id:p.id,kind:t.getAttribute('data-swap')||'',reject:rej}); }).then(function(d){ put(d.post); cur.blob=null; if(cur.url){ URL.revokeObjectURL(cur.url); cur.url=null; } render(); if(D.ai&&!d.post.edited&&(d.post.ph||[]).length) queueWrite(p.id,true); if(!(d.post.ph||[]).length) toast('No other photos left to use right now'); }).catch(function(x){ t.disabled=false; toast(x.message); });
     return;
   }
-  if(t.hasAttribute('data-rewrite')&&p){ delete notes[p.id]; queueWrite(p.id,true); render(); return; }
+  if(t.hasAttribute('data-rewrite')&&p){ if(noteT){ clearTimeout(noteT); noteT=null; var ne=document.getElementById('note'); if(ne) save(p.id,{note:ne.value},true); } delete notes[p.id]; queueWrite(p.id,true); render(); return; }
   if(t.hasAttribute('data-extra')){
     t.disabled=true;
     inLine(function(){ return api('POST',{action:'extra',ch:t.getAttribute('data-extra')}); }).then(function(d){ put(d.post); location.hash='#/p/'+d.post.id; }).catch(function(x){ t.disabled=false; toast(x.message); });
@@ -551,10 +553,11 @@ document.addEventListener('click',function(e){
 var armed=null;
 function confirmSoft(t){ if(armed===t){ armed=null; return true; } armed=t; var was=t.textContent; t.textContent='Tap again to confirm'; setTimeout(function(){ if(armed===t){ armed=null; t.textContent=was; } },3000); return false; }
 function download(p){ var a=document.createElement('a'); a.href=cur.url; a.download=fileName(p); document.body.appendChild(a); a.click(); a.remove(); }
-var capT=null;
+var noteT,capT=null;
 document.addEventListener('input',function(e){
   var p=cur&&byId(cur.id); var t=e.target;
   if(t.id==='cap'&&p){ p.cap=t.value; p.edited=1; var c=document.getElementById('cnt'); if(c) c.textContent=t.value.length+(p.ch==='gbp'?' / 1500':' / 2200'); clearTimeout(capT); capT=setTimeout(function(){ save(p.id,{cap:t.value},true); },700); }
+  if(t.id==='note'&&p){ var had=!!(p.note||'').trim(); p.note=t.value; clearTimeout(noteT); noteT=setTimeout(function(){ save(p.id,{note:t.value},true); },600); if(had!==!!t.value.trim()){ var rb=document.querySelector('[data-rewrite]'); if(rb) rb.textContent=t.value.trim()?'Write it with my note':(p.ai?'Rewrite with Claude':'Write with Claude'); } }
   if(t.id==='hd'&&p){ p.head=t.value; clearTimeout(capT); capT=setTimeout(function(){ save(p.id,{head:t.value},true); makeImage(p); },500); }
   if(t.id==='fpos'&&p){ var v=+t.value/100; if(cur.axis==='x') p.fx=v; else p.fy=v; clearTimeout(capT); capT=setTimeout(function(){ makeImage(p); save(p.id,cur.axis==='x'?{fx:v}:{fy:v},true); },180); }
 });
