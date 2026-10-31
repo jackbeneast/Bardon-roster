@@ -112,10 +112,23 @@
       tab('/?v=more','Tools',I.grid,TABS==='tools')+'</div>';
     document.body.appendChild(n); document.body.classList.add('hn');
     // Make way for the keyboard while typing.
-    var t=null;
+    // The bar only comes back once the keyboard has actually gone (iPhone
+    // otherwise strands it a keyboard-height up the screen), and is re-laid
+    // out so iOS pins it back to the bottom.
+    var t=null, VV=window.visualViewport;
     function typing(el){ return el && (el.tagName==='TEXTAREA' || el.isContentEditable || el.tagName==='SELECT' || (el.tagName==='INPUT' && !/^(checkbox|radio|button|submit|range|color|file|reset|image)$/i.test(el.type))); }
+    function kbUp(){ return !!VV && (window.innerHeight - VV.height) > 120; }
+    function settle(){
+      clearTimeout(t);
+      if(typing(document.activeElement) || kbUp()){ document.body.classList.add('hn-kb'); return; }
+      if(!document.body.classList.contains('hn-kb')) return;
+      document.body.classList.remove('hn-kb');
+      n.style.display='none'; void n.offsetHeight; n.style.display='';
+    }
     document.addEventListener('focusin',function(e){ clearTimeout(t); if(typing(e.target)) document.body.classList.add('hn-kb'); });
-    document.addEventListener('focusout',function(){ clearTimeout(t); t=setTimeout(function(){ if(!typing(document.activeElement)) document.body.classList.remove('hn-kb'); },120); });
+    document.addEventListener('focusout',function(){ clearTimeout(t); t=setTimeout(settle,150); });
+    if(VV) VV.addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(settle,80); });
+    window.addEventListener('pageshow',function(){ setTimeout(settle,50); });
   }
   if(document.body) mount(); else document.addEventListener('DOMContentLoaded',mount);
 })();

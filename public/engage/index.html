@@ -36,8 +36,8 @@ h2 em{font-style:italic;font-weight:500}
 .ld .row1{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .ld .nm{font:600 15px/1.3 var(--sans);color:var(--dark)}
 .ld .pc{font:700 18px/1 var(--serif);color:var(--dark);font-variant-numeric:tabular-nums}
-.bar{height:8px;border-radius:4px;background:var(--cream-dark);margin:7px 0 6px;overflow:hidden}
-.bar i{display:block;height:100%;border-radius:4px;background:var(--terracotta)}
+.obar{height:8px;border-radius:4px;background:var(--cream-dark);margin:7px 0 6px;overflow:hidden}
+.obar i{display:block;height:100%;border-radius:4px;background:var(--terracotta)}
 .ld .mt{font-size:13px;color:var(--meta)}
 .ld .mt b{color:var(--dark);font-weight:600}
 
@@ -155,7 +155,7 @@ function lands(){
   var h='<h2>What <em>lands</em></h2><div class="card lands">';
   rows.forEach(function(t){ var x=S[t], rate=x.sent?Math.round(x.opened/x.sent*100):null, avg=x.opened?x.ms/x.opened:0, per=x.opened?(x.opens/x.opened):0;
     h+='<div class="ld"><div class="row1"><span class="nm">'+TYPE[t]+'</span><span class="pc">'+(rate==null?x.opened+' opened':rate+'%')+'</span></div>';
-    if(rate!=null) h+='<div class="bar" role="img" aria-label="'+rate+'% opened"><i style="width:'+rate+'%"></i></div>';
+    if(rate!=null) h+='<div class="obar" role="img" aria-label="'+rate+'% opened"><i style="width:'+rate+'%"></i></div>';
     h+='<div class="mt">'+(x.sent?'<b>'+x.opened+'</b> of '+x.sent+' opened · ':'')+(x.opened?'avg <b>'+dur(avg)+'</b> reading · '+(Math.round(per*10)/10)+' opens each'+(x.acted?' · '+x.acted+' tapped through':''):'none opened yet')+'</div></div>'; });
   h+='</div><p class="note">Reading time only counts while the page is on their screen.'+(L.since?' Counting things sent since '+fday(L.since)+'.':'')+'</p>';
   return h;
